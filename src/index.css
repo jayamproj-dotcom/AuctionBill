@@ -59,10 +59,6 @@
 }
 
 
-/* Google Fonts Import */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Hind+Madurai:wght@300;400;500;600;700&family=Mukta+Malar:wght@200;300;400;500;600;700;800&display=swap');
-
-
 /* Reset & Base Styles */
 * {
   margin: 0;
