@@ -318,13 +318,16 @@ function TodayAuction() {
                 <div className="header-top">
                     <h1>Today Auction</h1>
                     <div className="header-actions">
-                         <label className="toggle-hidden">
+                        <label className="toggle-switch">
                             <input 
                                 type="checkbox" 
                                 checked={showHidden} 
                                 onChange={(e) => setShowHidden(e.target.checked)} 
                             />
-                            Show Disabled
+                            <span className="slider"></span>
+                            <span className="toggle-label">
+                                {showHidden ? '🚫 Hide Disabled' : '👁️ Show Disabled'}
+                            </span>
                         </label>
                         <button className="btn btn-primary" onClick={() => setShowAddProduct(true)}>
                             <span><Plus /></span>
