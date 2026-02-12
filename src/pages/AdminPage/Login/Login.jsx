@@ -20,17 +20,19 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // 🔐 TEMP login check (replace with API later)
-    if (form.username === "admin" && form.password === "admin@123") {
-      // store login state if needed
-      localStorage.setItem("adminLoggedIn", "true");
+    // Check credentials from localStorage or use defaults
+    const storedCreds = JSON.parse(localStorage.getItem('adminCredentials')) || {
+      username: 'admin',
+      password: 'admin@123'
+    };
 
+    if (form.username === storedCreds.username && form.password === storedCreds.password) {
+      localStorage.setItem("adminLoggedIn", "true");
       navigate("/admin");
     } else {
       alert("Invalid username or password");
     }
   };
-
   return (
     <div className="login-page">
       <div className="login-card">
@@ -66,6 +68,12 @@ const Login = () => {
             Login
           </button>
         </form>
+        
+        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+          <p style={{ fontSize: '0.85rem', color: '#666' }}>
+            System Administrator? <a href="/saas-admin" style={{ color: '#6366f1', fontWeight: '600', textDecoration: 'none' }}>Go to SaaS Panel</a>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,53 @@
+/* CommissionRecord.css */
+
+.summary-card-margin {
+    margin-top: 1rem;
+}
+
+.monthly-breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+.monthly-card {
+    padding: 0.75rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.monthly-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.monthly-amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-amber);
+}
+
+.filter-card-margin {
+    margin-top: 1rem;
+}
+
+.clear-filters-btn {
+    margin-top: 0.5rem;
+}
+
+.commission-details-header {
+    margin-top: 1.5rem;
+}
+
+.commission-value-large {
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+@media (max-width: 480px) {
+    .monthly-breakdown-grid {
+        grid-template-columns: 1fr;
+    }
+}

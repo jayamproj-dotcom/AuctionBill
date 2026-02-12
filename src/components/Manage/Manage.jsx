@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { getAuctionData, saveAuctionData, initialData } from '../../utils/localStorage';
+import './Manage.css';
+
 
 function Manage() {
     const [stats, setStats] = useState({
@@ -17,7 +20,7 @@ function Manage() {
     }, []);
 
     const loadStats = () => {
-        const data = JSON.parse(localStorage.getItem('auctionData'));
+        const data = getAuctionData();
         if (data) {
             const availableProducts = data.products.filter(p => p.status === 'available').length;
             const soldProducts = data.products.filter(p => p.status === 'sold').length;
@@ -37,15 +40,8 @@ function Manage() {
         }
     };
 
-    const handleClearData = () => {
-        if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
-            localStorage.removeItem('auctionData');
-            window.location.reload();
-        }
-    };
-
     const handleExportData = () => {
-        const data = JSON.parse(localStorage.getItem('auctionData'));
+        const data = getAuctionData();
         const dataStr = JSON.stringify(data, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(dataBlob);
@@ -53,6 +49,39 @@ function Manage() {
         link.href = url;
         link.download = `auction-data-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
+    };
+
+    const handleChangePassword = () => {
+        const oldPassword = prompt('Enter Current Admin Password:');
+        const storedCreds = JSON.parse(localStorage.getItem('adminCredentials')) || {
+            username: 'admin',
+            password: 'admin@123'
+        };
+
+        if (oldPassword === storedCreds.password) {
+            const newPassword = prompt('Enter New Admin Password:');
+            if (newPassword && newPassword.length >= 4) {
+                const confirmPass = prompt('Confirm New Admin Password:');
+                if (newPassword === confirmPass) {
+                    const newCreds = { ...storedCreds, password: newPassword };
+                    localStorage.setItem('adminCredentials', JSON.stringify(newCreds));
+                    alert('Admin password changed successfully!');
+                } else {
+                    alert('Passwords do not match!');
+                }
+            } else if (newPassword) {
+                alert('Password must be at least 4 characters long!');
+            }
+        } else if (oldPassword !== null) {
+            alert('Incorrect current password!');
+        }
+    };
+
+    const handleClearData = () => {
+        if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
+            saveAuctionData(initialData);
+            window.location.reload();
+        }
     };
 
     return (
@@ -76,8 +105,8 @@ function Manage() {
 
             <div className="content-body">
                 {/* System Overview */}
-                <div className="card fade-in" style={{ marginBottom: '2rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem' }}>System Overview</h3>
+                <div className="card fade-in card-margin-bottom">
+                    <h3 className="heading-margin-bottom">System Overview</h3>
                     <div className="stats-grid">
                         <div className="stat-card">
                             <div className="stat-header">
@@ -122,9 +151,9 @@ function Manage() {
                 </div>
 
                 {/* Product Status */}
-                <div className="card fade-in" style={{ marginBottom: '2rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem' }}>Product Status</h3>
-                    <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+                <div className="card fade-in card-margin-bottom">
+                    <h3 className="heading-margin-bottom">Product Status</h3>
+                    <div className="stats-grid stats-grid-flexible">
                         <div className="stat-card">
                             <div className="stat-header">
                                 <div>
@@ -148,9 +177,9 @@ function Manage() {
                 </div>
 
                 {/* Financial Overview */}
-                <div className="card fade-in" style={{ marginBottom: '2rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem' }}>Financial Overview</h3>
-                    <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+                <div className="card fade-in card-margin-bottom">
+                    <h3 className="heading-margin-bottom">Financial Overview</h3>
+                    <div className="stats-grid stats-grid-flexible">
                         <div className="stat-card">
                             <div className="stat-header">
                                 <div>
@@ -188,21 +217,31 @@ function Manage() {
                     </div>
                 </div>
 
+                {/* Security Actions */}
+                <div className="card fade-in card-margin-bottom">
+                    <h3 className="heading-margin-bottom">System Security</h3>
+                    <div className="action-row">
+                        <div>
+                            <h4 className="subheading-margin-bottom">Admin Credentials</h4>
+                            <p className="text-muted-small">
+                                Change your administrative login password
+                            </p>
+                        </div>
+                        <button className="btn btn-warning" onClick={handleChangePassword}>
+                            <span>🔑</span>
+                            Change Password
+                        </button>
+                    </div>
+                </div>
+
                 {/* System Actions */}
                 <div className="card fade-in">
-                    <h3 style={{ marginBottom: '1.5rem' }}>System Actions</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div style={{
-                            padding: '1.5rem',
-                            backgroundColor: 'var(--bg-tertiary)',
-                            borderRadius: 'var(--radius-md)',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                        }}>
+                    <h3 className="heading-margin-bottom">System Actions</h3>
+                    <div className="flex-column-gap">
+                        <div className="action-row">
                             <div>
-                                <h4 style={{ marginBottom: '0.5rem' }}>Export System Data</h4>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0 }}>
+                                <h4 className="subheading-margin-bottom">Export System Data</h4>
+                                <p className="text-muted-small">
                                     Download all auction data as JSON file for backup
                                 </p>
                             </div>
@@ -212,24 +251,15 @@ function Manage() {
                             </button>
                         </div>
 
-                        <div style={{
-                            padding: '1.5rem',
-                            backgroundColor: 'var(--bg-tertiary)',
-                            borderRadius: 'var(--radius-md)',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            border: '1px solid var(--error)'
-                        }}>
+                        <div className="action-row-error">
                             <div>
-                                <h4 style={{ marginBottom: '0.5rem', color: 'var(--error)' }}>Clear All Data</h4>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0 }}>
+                                <h4 className="subheading-error">Clear All Data</h4>
+                                <p className="text-muted-small">
                                     Remove all sellers, buyers, products, and transactions. This cannot be undone.
                                 </p>
                             </div>
                             <button
-                                className="btn"
-                                style={{ backgroundColor: 'var(--error)', color: 'white' }}
+                                className="btn btn-error-solid"
                                 onClick={handleClearData}
                             >
                                 <span>🗑️</span>
@@ -240,24 +270,24 @@ function Manage() {
                 </div>
 
                 {/* System Info */}
-                <div className="card fade-in" style={{ marginTop: '2rem' }}>
-                    <h3 style={{ marginBottom: '1.5rem' }}>System Information</h3>
-                    <div style={{ display: 'grid', gap: '0.75rem', fontSize: '0.875rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>Application Name:</span>
-                            <span style={{ fontWeight: '600' }}>AuctionBill Management System</span>
+                <div className="card fade-in card-margin-top">
+                    <h3 className="heading-margin-bottom">System Information</h3>
+                    <div className="info-grid">
+                        <div className="info-row">
+                            <span className="label-muted">Application Name:</span>
+                            <span className="font-semibold">AuctionBill Management System</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>Version:</span>
-                            <span style={{ fontWeight: '600' }}>1.0.0</span>
+                        <div className="info-row">
+                            <span className="label-muted">Version:</span>
+                            <span className="font-semibold">1.0.0</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>Storage:</span>
-                            <span style={{ fontWeight: '600' }}>Local Storage (Browser)</span>
+                        <div className="info-row">
+                            <span className="label-muted">Storage:</span>
+                            <span className="font-semibold">Local Storage (Browser)</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>Last Updated:</span>
-                            <span style={{ fontWeight: '600' }}>{new Date().toLocaleDateString()}</span>
+                        <div className="info-row">
+                            <span className="label-muted">Last Updated:</span>
+                            <span className="font-semibold">{new Date().toLocaleDateString()}</span>
                         </div>
                     </div>
                 </div>

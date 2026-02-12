@@ -1,0 +1,34 @@
+/* Dashboard.css */
+
+.dashboard-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.filter-card {
+    margin-top: 1rem;
+}
+
+.filter-grid-custom {
+    grid-template-columns: 1fr 1fr;
+}
+
+.filter-grid-single {
+    grid-template-columns: 1fr;
+}
+
+.full-width-select, .full-width-input {
+    width: 100%;
+}
+
+.section-margin-top {
+    margin-top: 1.5rem;
+}
+@media (max-width: 480px) {
+    .dashboard-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-grid-custom {
+        grid-template-columns: 1fr;
+    }
+}

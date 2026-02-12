@@ -1,0 +1,73 @@
+.pending-products-container {
+    padding: 20px;
+}
+
+.pending-product-card {
+    border: 1px solid #ff9800; /* Orange border for warning/pending */
+    background-color: #fffaf0;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pending-product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.pending-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-pending-action {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.return-btn {
+    background-color: #ef4444; /* Red */
+    border-color: #ef4444;
+}
+
+.return-btn:hover {
+    background-color: #dc2626;
+}
+
+.back-today-btn {
+    background-color: #10b981; /* Green */
+    border-color: #10b981;
+}
+
+.back-today-btn:hover {
+    background-color: #059669;
+}
+
+.pending-badge {
+    background-color: #f59e0b;
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.date-info {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+/* Responsive */
+@media (max-width: 480px) {
+    .pending-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}

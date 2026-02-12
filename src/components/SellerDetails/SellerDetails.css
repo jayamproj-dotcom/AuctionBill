@@ -1,0 +1,86 @@
+/* SellerDetails.css */
+
+.clickable-card {
+    cursor: pointer;
+}
+
+.profile-container {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    background-color: var(--bg-tertiary);
+}
+
+.profile-layout {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.status-toggle-btn {
+    min-width: 120px;
+}
+
+.sales-volume-row {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.sales-total-value {
+    font-size: 1.25rem;
+}
+
+.history-title {
+    margin-bottom: 1rem;
+}
+
+.history-table-wrapper {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.history-table {
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+.history-table td.empty-td {
+    text-align: center;
+    padding: 2rem;
+}
+
+.product-name-bold {
+    font-weight: 600;
+}
+@media (max-width: 580px) {
+    .profile-layout {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .profile-actions {
+        width: 100%;
+        align-items: stretch;
+    }
+    
+    .status-toggle-btn {
+        width: 100%;
+    }
+}
+
+.history-table-wrapper {
+    overflow-x: auto;
+}
