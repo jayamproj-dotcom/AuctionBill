@@ -3,6 +3,7 @@ import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './PendingProducts.css';
 import '../TodayAuction/TodayAuction.css'; // Reusing base card styles
+import {Undo2, ListFilterPlus} from 'lucide-react';
 
 function PendingProducts() {
     const [pendingProducts, setPendingProducts] = useState([]);
@@ -155,13 +156,13 @@ function PendingProducts() {
                                             className="btn btn-error btn-pending-action return-btn"
                                             onClick={() => handleReturnClick(product)}
                                         >
-                                            ↩️ Return
+                                            <Undo2 /> Return
                                         </button>
                                         <button 
                                             className="btn btn-success btn-pending-action back-today-btn"
                                             onClick={() => handleBackToToday(product)}
                                         >
-                                            📤 To Today
+                                            <ListFilterPlus /> To Today
                                         </button>
                                     </div>
                                 </div>

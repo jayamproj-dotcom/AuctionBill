@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
 import './History.css';
+import {ArrowRightLeft, Download,ShoppingCart,HandCoins,Package} from 'lucide-react';
 
 
 function History() {
@@ -58,7 +59,7 @@ function History() {
                     <h1>History</h1>
                     <div className="header-actions">
                         <button className="btn btn-outline btn-sm">
-                            <span>📥</span>
+                            <span><Download /></span>
                         </button>
                     </div>
                 </div>
@@ -74,7 +75,7 @@ function History() {
                 <div className="stats-grid fade-in">
                     <div className="stat-card">
                         <div className="stat-header">
-                            <div className="stat-icon">📊</div>
+                            <div className="stat-icon"><ArrowRightLeft /></div>
                             <div>
                                 <div className="stat-value">{filteredTransactions.length}</div>
                                 <div className="stat-label">Transactions</div>
@@ -84,7 +85,7 @@ function History() {
 
                     <div className="stat-card">
                         <div className="stat-header">
-                            <div className="stat-icon">💵</div>
+                            <div className="stat-icon"><ShoppingCart /></div>
                             <div>
                                 <div className="stat-value">₹{(stats.total / 1000).toFixed(0)}K</div>
                                 <div className="stat-label">Total Sales</div>
@@ -94,7 +95,7 @@ function History() {
 
                     <div className="stat-card">
                         <div className="stat-header">
-                            <div className="stat-icon">💰</div>
+                            <div className="stat-icon"><HandCoins /></div>
                             <div>
                                 <div className="stat-value">₹{(stats.commission / 1000).toFixed(1)}K</div>
                                 <div className="stat-label">Commission</div>
@@ -104,7 +105,7 @@ function History() {
 
                     <div className="stat-card">
                         <div className="stat-header">
-                            <div className="stat-icon">📦</div>
+                            <div className="stat-icon"><Package /></div>
                             <div>
                                 <div className="stat-value">{stats.totalQty}</div>
                                 <div className="stat-label">Total Qty</div>

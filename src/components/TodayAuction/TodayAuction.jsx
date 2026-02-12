@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './TodayAuction.css';
-
+import { Plus, Trash2, Edit2, X, Eye, EyeOff, PackageSearch } from 'lucide-react';
 
 function TodayAuction() {
     const [products, setProducts] = useState([]);
@@ -330,7 +330,7 @@ function TodayAuction() {
                             </span>
                         </label>
                         <button className="btn btn-primary" onClick={() => setShowAddProduct(true)}>
-                            <span>➕</span>
+                            <span><Plus /></span>
                             Add Product
                         </button>
                     </div>
@@ -350,7 +350,7 @@ function TodayAuction() {
                 <div className="card-list fade-in">
                     {products.length === 0 ? (
                         <div className="empty-state">
-                            <div className="empty-state-icon">📦</div>
+                            <div className="empty-state-icon"><PackageSearch /></div>
                             <p>No products available for auction today</p>
                         </div>
                     ) : (
@@ -372,15 +372,13 @@ function TodayAuction() {
                                         </div>
                                         <div className="action-buttons">
                                             <button className="icon-btn" onClick={() => toggleProductStatus(product.id)} title={product.isActive === false ? "Enable" : "Disable"}>
-                                                {product.isActive === false ? '👁️' : '🚫'}
+                                                {product.isActive === false ? <Eye /> : <EyeOff />}
                                             </button>
                                             <button className="icon-btn edit" onClick={() => openEditModal(product)} title="Edit">
-                                                ✏️
+                                                <Edit2 />
                                             </button>
                                             <button className="icon-btn delete" onClick={() => handleDeleteClick(product.id)} title="Delete">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-trash3" viewBox="0 0 16 16">
-                                                    <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"/>
-                                                </svg>
+                                                <Trash2 />
                                             </button>
                                         </div>
                                     </div>
@@ -454,7 +452,7 @@ function TodayAuction() {
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Add New Product</h3>
-                            <button className="modal-close" onClick={() => setShowAddProduct(false)}>×</button>
+                            <button className="modal-close" onClick={() => setShowAddProduct(false)}><X /></button>
                         </div>
                         <form onSubmit={handleAddProduct}>
                             <div className="modal-body">
@@ -833,7 +831,7 @@ function TodayAuction() {
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Sell Product: {selectedProduct.name}</h3>
-                            <button className="modal-close" onClick={() => setShowSellModal(false)}>×</button>
+                            <button className="modal-close" onClick={() => setShowSellModal(false)}><X /></button>
                         </div>
                         <form onSubmit={handleSellProduct}>
                             <div className="modal-body">

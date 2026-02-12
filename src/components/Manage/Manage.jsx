@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAuctionData, saveAuctionData, initialData } from '../../utils/localStorage';
 import './Manage.css';
-
+import {Download,BadgeIndianRupee,ArrowRightLeft,BrushCleaning,KeyRound,BanknoteArrowUp,Package2,PackageOpen,ChartNoAxesColumn,Users,ShoppingCart,Package, HandCoins} from 'lucide-react';
 
 function Manage() {
     const [stats, setStats] = useState({
@@ -91,7 +91,7 @@ function Manage() {
                     <h1>Manage System</h1>
                     <div className="header-actions">
                         <button className="btn btn-outline" onClick={handleExportData}>
-                            <span>📥</span>
+                            <span><Download /></span>
                             Export Data
                         </button>
                     </div>
@@ -114,7 +114,7 @@ function Manage() {
                                     <div className="stat-value">{stats.totalSellers}</div>
                                     <div className="stat-label">Total Sellers</div>
                                 </div>
-                                <div className="stat-icon">👤</div>
+                                <div className="stat-icon"><Users/></div>
                             </div>
                         </div>
 
@@ -124,7 +124,7 @@ function Manage() {
                                     <div className="stat-value">{stats.totalBuyers}</div>
                                     <div className="stat-label">Total Buyers</div>
                                 </div>
-                                <div className="stat-icon">🛒</div>
+                                <div className="stat-icon"><ShoppingCart /></div>
                             </div>
                         </div>
 
@@ -134,7 +134,7 @@ function Manage() {
                                     <div className="stat-value">{stats.totalProducts}</div>
                                     <div className="stat-label">Total Products</div>
                                 </div>
-                                <div className="stat-icon">📦</div>
+                                <div className="stat-icon"><Package /></div>
                             </div>
                         </div>
 
@@ -144,7 +144,7 @@ function Manage() {
                                     <div className="stat-value">{stats.totalTransactions}</div>
                                     <div className="stat-label">Total Transactions</div>
                                 </div>
-                                <div className="stat-icon">📊</div>
+                                <div className="stat-icon"><ChartNoAxesColumn /></div>
                             </div>
                         </div>
                     </div>
@@ -160,7 +160,7 @@ function Manage() {
                                     <div className="stat-value">{stats.availableProducts}</div>
                                     <div className="stat-label">Available Products</div>
                                 </div>
-                                <div className="stat-icon">✅</div>
+                                <div className="stat-icon"><PackageOpen /></div>
                             </div>
                         </div>
 
@@ -170,7 +170,7 @@ function Manage() {
                                     <div className="stat-value">{stats.soldProducts}</div>
                                     <div className="stat-label">Sold Products</div>
                                 </div>
-                                <div className="stat-icon">💵</div>
+                                <div className="stat-icon"><Package2 /></div>
                             </div>
                         </div>
                     </div>
@@ -186,7 +186,7 @@ function Manage() {
                                     <div className="stat-value">₹{stats.totalRevenue.toLocaleString()}</div>
                                     <div className="stat-label">Total Revenue</div>
                                 </div>
-                                <div className="stat-icon">💰</div>
+                                <div className="stat-icon"><BanknoteArrowUp /></div>
                             </div>
                         </div>
 
@@ -196,7 +196,7 @@ function Manage() {
                                     <div className="stat-value">₹{stats.totalCommission.toLocaleString()}</div>
                                     <div className="stat-label">Total Commission Earned</div>
                                 </div>
-                                <div className="stat-icon">💵</div>
+                                <div className="stat-icon"><HandCoins/></div>
                             </div>
                         </div>
 
@@ -211,7 +211,7 @@ function Manage() {
                                     </div>
                                     <div className="stat-label">Avg Commission Rate</div>
                                 </div>
-                                <div className="stat-icon">📈</div>
+                                <div className="stat-icon"><ChartNoAxesColumn/></div>
                             </div>
                         </div>
                     </div>
@@ -228,7 +228,7 @@ function Manage() {
                             </p>
                         </div>
                         <button className="btn btn-warning" onClick={handleChangePassword}>
-                            <span>🔑</span>
+                            <span><KeyRound/></span>
                             Change Password
                         </button>
                     </div>
@@ -246,7 +246,7 @@ function Manage() {
                                 </p>
                             </div>
                             <button className="btn btn-primary" onClick={handleExportData}>
-                                <span>📥</span>
+                                <span><Download/></span>
                                 Export
                             </button>
                         </div>
@@ -262,7 +262,7 @@ function Manage() {
                                 className="btn btn-error-solid"
                                 onClick={handleClearData}
                             >
-                                <span>🗑️</span>
+                                <span><BrushCleaning/></span>
                                 Clear Data
                             </button>
                         </div>
