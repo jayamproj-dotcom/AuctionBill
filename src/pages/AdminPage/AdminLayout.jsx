@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar.jsx";
 import "./Admin.css";
+import logo from "../../assets/images/logo.png";
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -21,7 +22,10 @@ const AdminLayout = () => {
         <button className="menu-toggle" onClick={toggleSidebar}>
           ☰
         </button>
-        <h2>🔨 Auction Billing</h2>
+        <div className="header-logo">
+          <img src={logo} alt="Logo" />
+          <h2>Auction Billing</h2>
+        </div>
         <div className="header-spacer"></div> {/* Spacer for centering */}
       </div>
 

@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Notification.css';
+import { Bell } from 'lucide-react';
 
 const Notification = ({ expiryDate }) => {
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const navigate = useNavigate();
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
         if (!expiryDate) return;
@@ -53,6 +55,25 @@ const Notification = ({ expiryDate }) => {
         checkExpiry();
     }, [expiryDate]);
 
+    // Handle outside click
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        } else {
+            document.removeEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isOpen]);
+
     const handleToggle = () => {
         setIsOpen(!isOpen);
         if (!isOpen) {
@@ -68,9 +89,9 @@ const Notification = ({ expiryDate }) => {
     };
 
     return (
-        <div className="notification-icon-container">
+        <div className="notification-icon-container" ref={dropdownRef}>
             <div className="icon-btn" onClick={handleToggle} style={{ position: 'relative' }}>
-                🔔
+                <Bell />
                 {unreadCount > 0 && <span className="notification-count">{unreadCount}</span>}
             </div>
 
@@ -87,8 +108,8 @@ const Notification = ({ expiryDate }) => {
                             </div>
                         ) : (
                             notifications.map(notif => (
-                                <div 
-                                    key={notif.id} 
+                                <div
+                                    key={notif.id}
                                     className={`notification-item ${notif.type}`}
                                     onClick={() => handleNotificationClick(notif.link)}
                                     style={{ cursor: 'pointer' }}

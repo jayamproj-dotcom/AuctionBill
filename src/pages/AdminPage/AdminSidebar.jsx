@@ -1,12 +1,16 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import {House,ChartSpline,PackageSearch,History,User,ShoppingCart,Settings,Handshake,Gem} from "lucide-react";
+import logo from "../../assets/images/logo-sidebar.png"
 
 const AdminSidebar = ({ isOpen, onClose }) => {
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <div className="logo-icon">🔨</div>
+          <div className="logo-icon">
+            <img src={logo} alt="logo" />
+          </div>
           <div className="logo-text">
             <h2>Auction Billing</h2>
             <p>Management System</p>
@@ -23,7 +27,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon">📊</span>
+          <span className="nav-icon"><House /></span>
           <span>Dashboard</span>
         </NavLink>
 
@@ -32,7 +36,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon">🔨</span>
+          <span className="nav-icon"><ChartSpline/></span>
           <span>Today Auction</span>
         </NavLink>
 
@@ -41,7 +45,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon">⏳</span>
+          <span className="nav-icon"><PackageSearch/></span>
           <span>Pending Products</span>
         </NavLink>
 
@@ -50,7 +54,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon">📜</span>
+          <span className="nav-icon"><History/></span>
           <span>History</span>
         </NavLink>
 
@@ -59,7 +63,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon">👤</span>
+          <span className="nav-icon"><User/></span>
           <span>Seller Details</span>
         </NavLink>
 
@@ -68,7 +72,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon">🛒</span>
+          <span className="nav-icon"><ShoppingCart/></span>
           <span>Buyer Details</span>
         </NavLink>
 
@@ -77,7 +81,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon">💰</span>
+          <span className="nav-icon"><Handshake /></span>
           <span>Commission Record</span>
         </NavLink>
 
@@ -86,7 +90,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon">⚙️</span>
+          <span className="nav-icon"><Settings/></span>
           <span>Manage</span>
         </NavLink>
         <NavLink
@@ -94,7 +98,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
             onClick={onClose}
         >
-            <span className="nav-icon">💎</span>
+            <span className="nav-icon"><Gem/></span>
             <span>Subscription Plan</span>
         </NavLink>
       </nav>
