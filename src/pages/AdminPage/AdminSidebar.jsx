@@ -1,9 +1,19 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
-import {House,ChartSpline,PackageSearch,History,User,ShoppingCart,Settings,Handshake,Gem} from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { House, ChartSpline, PackageSearch, History, User, ShoppingCart, Settings, Handshake, Gem, LogOut } from "lucide-react";
 import logo from "../../assets/images/logo-sidebar.png"
 
 const AdminSidebar = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    localStorage.removeItem("adminLoggedIn");
+    localStorage.removeItem("adminCredentials");
+    onClose();
+    navigate("/");
+  };
+
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
@@ -36,7 +46,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon"><ChartSpline/></span>
+          <span className="nav-icon"><ChartSpline /></span>
           <span>Today Auction</span>
         </NavLink>
 
@@ -45,7 +55,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon"><PackageSearch/></span>
+          <span className="nav-icon"><PackageSearch /></span>
           <span>Pending Products</span>
         </NavLink>
 
@@ -54,7 +64,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon"><History/></span>
+          <span className="nav-icon"><History /></span>
           <span>History</span>
         </NavLink>
 
@@ -63,7 +73,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon"><User/></span>
+          <span className="nav-icon"><User /></span>
           <span>Seller Details</span>
         </NavLink>
 
@@ -72,7 +82,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon"><ShoppingCart/></span>
+          <span className="nav-icon"><ShoppingCart /></span>
           <span>Buyer Details</span>
         </NavLink>
 
@@ -90,17 +100,26 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon"><Settings/></span>
+          <span className="nav-icon"><Settings /></span>
           <span>Manage</span>
         </NavLink>
         <NavLink
-            to="/admin/subscription"
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-            onClick={onClose}
+          to="/admin/subscription"
+          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          onClick={onClose}
         >
-            <span className="nav-icon"><Gem/></span>
-            <span>Subscription Plan</span>
+          <span className="nav-icon"><Gem /></span>
+          <span>Subscription Plan</span>
         </NavLink>
+
+        <a
+          href="/"
+          className="nav-item text-danger"
+          onClick={handleLogout}
+        >
+          <span className="nav-icon"><LogOut /></span>
+          <span>Logout</span>
+        </a>
       </nav>
     </aside>
   );
