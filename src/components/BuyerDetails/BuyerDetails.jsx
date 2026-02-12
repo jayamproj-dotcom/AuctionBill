@@ -242,8 +242,9 @@ function BuyerDetails() {
                 <div className="header-top">
                     <h1>Buyers</h1>
                     <div className="header-actions">
-                        <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
+                        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
                             <span>➕</span>
+                            Add Buyer
                         </button>
                     </div>
                 </div>
@@ -553,10 +554,10 @@ function BuyerDetails() {
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowAddModal(false)}>
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn btn-primary btn-sm">
+                                <button type="submit" className="btn btn-primary">
                                     Add Buyer
                                 </button>
                             </div>
