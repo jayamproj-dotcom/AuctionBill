@@ -358,8 +358,9 @@ function SellerDetails() {
                 <div className="header-top">
                     <h1>Sellers</h1>
                     <div className="header-actions">
-                        <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>
+                        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
                             <span><Plus/></span>
+                            Add Seller
                         </button>
                     </div>
                 </div>

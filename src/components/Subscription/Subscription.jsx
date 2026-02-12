@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { jsPDF } from 'jspdf';
 import './Subscription.css';
+import { CreditCard, CheckCircle2, TrendingUp, Check, Plus, FileText, Download } from 'lucide-react';
 
 const Subscription = () => {
     // Define available plans
@@ -107,7 +108,7 @@ const Subscription = () => {
         <div className="subscription-container fade-in">
             <div className="content-header">
                 <div className="header-top">
-                    <h1>Subscription & Billing</h1>
+                    <h1><CreditCard className="header-icon" /> Subscription & Billing</h1>
                     <div className="header-actions">
                         <span className="plan-badge">{subscription.plan} Member</span>
                     </div>
@@ -154,7 +155,7 @@ const Subscription = () => {
                                 <h4>Included Features:</h4>
                                 <ul>
                                     {subscription.features.map((feature, index) => (
-                                        <li key={index}>✅ {feature}</li>
+                                        <li key={index}><CheckCircle2 size={16} className="text-success" /> {feature}</li>
                                     ))}
                                 </ul>
                             </div>
@@ -163,19 +164,19 @@ const Subscription = () => {
                         {/* Available Upgrades Section */}
                         {upgradeOptions.length > 0 && (
                             <div className="upgrade-section">
-                                <h3 className="section-subtitle">Available Upgrades</h3>
+                                <h3 className="section-subtitle"><TrendingUp size={18} /> Available Upgrades</h3>
                                 <div className="upgrade-grid">
-                                    {upgradeOptions.map(plan => (
-                                        <div key={plan.id} className="subs-card upgrade-card">
+                                    {upgradeOptions.map((plan, index) => (
+                                        <div key={index} className="subs-card upgrade-card">
                                             <div className="upgrade-header">
                                                 <h4>{plan.name}</h4>
                                                 <div className="upgrade-price">₹{plan.price.toLocaleString()}<span>/yr</span></div>
                                             </div>
                                             <ul className="upgrade-features">
                                                 {plan.features.slice(0, 3).map((f, i) => (
-                                                    <li key={i}>• {f}</li>
+                                                    <li key={i}><Check size={14} /> {f}</li>
                                                 ))}
-                                                {plan.features.length > 3 && <li>+ more...</li>}
+                                                {plan.features.length > 3 && <li><Plus size={14} /> {plan.features.length - 3} more...</li>}
                                             </ul>
                                             <button className="btn btn-primary upgrade-btn">Upgrade to {plan.name}</button>
                                         </div>
@@ -188,7 +189,7 @@ const Subscription = () => {
                     {/* Right Column: Invoices */}
                     <div className="right-column">
                         <div className="subs-card invoice-card">
-                            <h3>Billing History</h3>
+                            <h3><FileText size={18} /> Billing History</h3>
                             <div className="invoice-list">
                                 <div className="invoice-header-row">
                                     <span>Invoice ID</span>
@@ -197,17 +198,18 @@ const Subscription = () => {
                                     <span>Status</span>
                                     <span>Action</span>
                                 </div>
-                                {invoices.map((invoice) => (
-                                    <div key={invoice.id} className="invoice-row">
+                                {invoices.map((invoice, index) => (
+                                    <div key={index} className="invoice-row">
                                         <span className="inv-id">{invoice.id}</span>
                                         <span className="inv-date">{invoice.date}</span>
                                         <span className="inv-amount">₹{invoice.amount.toLocaleString()}</span>
                                         <span className="inv-status"><span className="badge-paid">{invoice.status}</span></span>
                                         <button 
-                                            className="btn-download"
+                                            className="btn-download icon-btn"
                                             onClick={() => handleDownloadInvoice(invoice)}
+                                            title="Download Invoice"
                                         >
-                                            ⬇
+                                            <Download size={18} />
                                         </button>
                                     </div>
                                 ))}
