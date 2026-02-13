@@ -217,7 +217,9 @@
 .toggle-switch input:checked + .slider {
     background-color: #10b981; /* Success Green for ON state */
     border-color: #059669;
+   
 }
+
 
 .toggle-switch input:checked + .slider:before {
     transform: translateX(22px);
@@ -225,7 +227,7 @@
 
 /* Label Styling */
 .toggle-label {
-    font-size: 0.95rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-secondary);
     transition: color 0.3s;

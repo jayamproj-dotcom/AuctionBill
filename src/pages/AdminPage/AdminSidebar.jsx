@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { House, ChartSpline, PackageSearch, History, User, ShoppingCart, Settings, Handshake, Gem, LogOut } from "lucide-react";
+import { House, ChartSpline,UserCog, PackageSearch, History, User, ShoppingCart, Settings, Handshake, Gem, LogOut } from "lucide-react";
 import logo from "../../assets/images/logo-sidebar.png"
 
 const AdminSidebar = ({ isOpen, onClose }) => {
@@ -73,7 +73,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon"><User /></span>
+          <span className="nav-icon"><UserCog /></span>
           <span>Seller Details</span>
         </NavLink>
 
@@ -100,8 +100,8 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
-          <span className="nav-icon"><Settings /></span>
-          <span>Manage</span>
+          <span className="nav-icon"><User /></span>
+          <span>Profile</span>
         </NavLink>
         <NavLink
           to="/admin/subscription"

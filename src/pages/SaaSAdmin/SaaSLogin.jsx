@@ -26,13 +26,13 @@ const SaaSLogin = () => {
 
         if (!credentials.username.trim()) {
             newErrors.username = "Username is required";
-        } else if (credentials.username !== ADMIN_USER) {
+        } else if (credentials.username.trim() !== ADMIN_USER) {
             newErrors.username = "Invalid username";
         }
 
         if (!credentials.password) {
             newErrors.password = "Password is required";
-        } else if (credentials.password !== ADMIN_PASS) {
+        } else if (credentials.password.trim() !== ADMIN_PASS) {
             newErrors.password = "Invalid password";
         }
 

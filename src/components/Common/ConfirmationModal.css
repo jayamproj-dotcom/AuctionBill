@@ -55,6 +55,12 @@
     color: #3b82f6;
 }
 
+/* Success Variant (Green) */
+.success .confirm-modal-icon {
+    background-color: #dcfce7;
+    color: #16a34a;
+}
+
 .confirm-modal-title {
     font-size: 1.25rem;
     font-weight: 700;
@@ -127,6 +133,15 @@
 
 .btn-confirm.warning:hover {
     background-color: #b45309;
+}
+
+/* Success Actions */
+.btn-confirm.success {
+    background-color: #16a34a;
+}
+
+.btn-confirm.success:hover {
+    background-color: #15803d;
 }
 
 /* Animations */

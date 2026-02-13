@@ -97,19 +97,21 @@ const SaaSLayout = () => {
               <button className="saas-btn btn-sm btn-outline icon-only">
                   <Bell size={20} />
               </button>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {/* <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#6366f1', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700' }}>
                    SA
                 </div>
                 <span className="saas-admin-name" style={{ fontSize: '0.875rem', fontWeight: '500' }}>Super Admin</span>
-              </div>
+              </div> */}
             </div>
           </div>
         </header>
 
-        <section className="saas-content">
-          <Outlet />
-        </section>
+        <div className="saas-scroll-wrapper">
+          <section className="saas-content">
+            <Outlet />
+          </section>
+        </div>
       </main>
     </div>
   );

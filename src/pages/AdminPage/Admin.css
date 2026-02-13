@@ -554,6 +554,19 @@ a .stat-card:hover {
 
 /* Phones (325px - 480px) */
 @media (max-width: 480px) {
+    /* Enable full page scrolling on mobile to prevent headers from taking up fixed space */
+    .main-content {
+        display: block;
+        overflow-y: auto;
+    }
+
+    .content-body {
+        overflow: visible;
+        height: auto;
+        flex: none;
+        padding-bottom: 2rem;
+    }
+
     .stats-grid {
         grid-template-columns: 1fr;
         /* Stack cards vertically */

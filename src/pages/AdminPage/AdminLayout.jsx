@@ -5,12 +5,23 @@ import "./Admin.css";
 import logo from "../../assets/images/logo.png";
 import user from "../../assets/images/user.png";
 import { LogOut, User, KeyRound } from "lucide-react";
+import { googleLogout } from '@react-oauth/google';
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
   const navigate = useNavigate();
+  const isLoggedIn = localStorage.getItem("adminLoggedIn") === "true";
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate("/");
+    }
+  }, [isLoggedIn, navigate]);
+
+  // If not logged in, don't render anything (prevents flash of content)
+  if (!isLoggedIn) return null;
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -26,8 +37,13 @@ const AdminLayout = () => {
   };
 
   const handleLogout = () => {
+    googleLogout(); // Sign out from Google
     localStorage.removeItem("adminLoggedIn");
-    localStorage.removeItem("adminCredentials"); // Optional: clear creds too if needed
+    localStorage.removeItem("adminCredentials"); 
+    localStorage.removeItem("adminUserEmail");
+    localStorage.removeItem("adminUserName");
+    localStorage.removeItem("adminUserPhoto");
+    
     setProfileOpen(false);
     navigate("/");
   };
@@ -47,6 +63,10 @@ const AdminLayout = () => {
   }, []);
 
 
+  // Retrieve user info
+  const userName = localStorage.getItem("adminUserName") || "Admin";
+  const userPhoto = localStorage.getItem("adminUserPhoto") || user;
+
   return (
     <div className="app-container">
       {/* Mobile Header */}
@@ -62,15 +82,36 @@ const AdminLayout = () => {
 
         <div className="header-profile-container" ref={profileRef}>
           <div className="header-profile" onClick={toggleProfile}>
-            <p>Admin</p>
-            <img src={user} alt="User" />
+            <p>{userName}</p>
+            <img 
+              src={userPhoto} 
+              alt="User" 
+              referrerPolicy="no-referrer"
+              style={{ borderRadius: '50%', objectFit: 'cover' }} 
+              onError={(e) => {e.target.src = user}} 
+            />
           </div>
 
           {profileOpen && (
             <div className="profile-dropdown">
-              <div className="dropdown-item" onClick={() => navigate('/admin/manage')}>
-                <KeyRound size={16} />
-                <span>Change Password</span>
+              {/* Dropdown Header with Profile Info */}
+              <div style={{ padding: '15px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>
+                  <img 
+                      src={userPhoto} 
+                      alt="Profile" 
+                      style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover', marginBottom: '8px', border: '2px solid #f3f4f6' }}
+                      onError={(e) => {e.target.src = user}}
+                  />
+                  <div style={{ fontWeight: '600', fontSize: '0.95rem', color: '#111827' }}>{userName}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis' }}>{localStorage.getItem('adminUserEmail')}</div>
+              </div>
+
+              <div className="dropdown-item" onClick={() => {
+                  navigate('/admin/manage');
+                  setProfileOpen(false);
+              }}>
+                <User size={16} /> {/* Changed icon to User */}
+                <span>My Profile</span>
               </div>
               <div className="dropdown-divider"></div>
               <div className="dropdown-item text-danger" onClick={handleLogout}>

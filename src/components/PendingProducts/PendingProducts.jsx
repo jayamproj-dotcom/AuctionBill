@@ -34,6 +34,9 @@ function PendingProducts() {
     const [isReturnConfirmOpen, setIsReturnConfirmOpen] = useState(false);
     const [productToReturn, setProductToReturn] = useState(null);
 
+    const [isMoveToTodayConfirmOpen, setIsMoveToTodayConfirmOpen] = useState(false);
+    const [productToMove, setProductToMove] = useState(null);
+
     const handleReturnClick = (product) => {
         setProductToReturn(product);
         setIsReturnConfirmOpen(true);
@@ -56,15 +59,22 @@ function PendingProducts() {
     };
 
     const handleBackToToday = (product) => {
-        if (window.confirm(`Move "${product.name}" back to Today's Auction?`)) {
+        setProductToMove(product);
+        setIsMoveToTodayConfirmOpen(true);
+    };
+
+    const confirmMoveToToday = () => {
+        if (productToMove) {
             const data = getAuctionData();
-            const index = data.products.findIndex(p => p.id === product.id);
+            const index = data.products.findIndex(p => p.id === productToMove.id);
             if (index !== -1) {
                 // Update date to today
                 data.products[index].date = today;
                 saveAuctionData(data);
                 loadPendingProducts(today);
             }
+            setIsMoveToTodayConfirmOpen(false);
+            setProductToMove(null);
         }
     };
 
@@ -80,6 +90,17 @@ function PendingProducts() {
                 confirmText="Yes, Return"
                 cancelText="Cancel"
                 variant="warning"
+            />
+            <ConfirmationModal 
+                isOpen={isMoveToTodayConfirmOpen}
+                onClose={() => setIsMoveToTodayConfirmOpen(false)}
+                onConfirm={confirmMoveToToday}
+                title="Move to Today's Auction"
+                message={`Are you sure you want to move "${productToMove?.name || 'this product'}" back to Today's Auction?`}
+                subMessage="This item will appear in the active auction list for today."
+                confirmText="Yes, Move"
+                cancelText="Cancel"
+                variant="success"
             />
             <div className="content-header">
                 <div className="header-top">
