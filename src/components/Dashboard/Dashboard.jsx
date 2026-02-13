@@ -22,6 +22,9 @@ function Dashboard() {
     useEffect(() => {
         calculateStats();
     }, [dateFilter, customDate]);
+    console.log(getAuctionData);
+
+    
 
     const getDateRange = (filter) => {
         const today = new Date();
@@ -74,6 +77,8 @@ function Dashboard() {
 
     const calculateStats = () => {
         const data = getAuctionData();
+        console.log(data);
+        
         
         // Get today's date for today's auctions
         const today = new Date().toISOString().split('T')[0];
