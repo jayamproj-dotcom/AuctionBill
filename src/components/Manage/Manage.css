@@ -91,12 +91,4 @@
     flex: 1;
 }
 
-/* Hide scrollbar but keep functionality */
-.manage-container .content-body {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-}
 
-.manage-container .content-body::-webkit-scrollbar {
-    display: none;
-}
