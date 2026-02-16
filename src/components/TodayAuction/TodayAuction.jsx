@@ -395,10 +395,12 @@ function TodayAuction() {
         setShowSellModal(true);
     };
 
-    const capitalizeFirst = (text) => {
-        if (!text) return '';
-        return text.charAt(0).toUpperCase() + text.slice(1);
-    };
+const capitalizeFirst = (text) => {
+  if (text == null) return "";
+  const str = String(text);
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
 
 
     return (
@@ -470,13 +472,13 @@ function TodayAuction() {
 
                                             <div className="action-buttons">
                                                 <button className="icon-btn" onClick={() => toggleProductStatus(product.id)} title={product.isActive === false ? "Enable" : "Disable"}>
-                                                    {product.isActive === false ? <Eye /> : <EyeOff />}
+                                                    {product.isActive === false ? <Eye size={18} /> : <EyeOff size={18} />}
                                                 </button>
                                                 <button className="icon-btn edit" onClick={() => openEditModal(product)} title="Edit">
-                                                    <Edit2 />
+                                                    <Edit2 size={18} />
                                                 </button>
                                                 <button className="icon-btn delete" onClick={() => handleDeleteClick(product.id)} title="Delete">
-                                                    <Trash2 />
+                                                    <Trash2 size={18} />
                                                 </button>
                                             </div>
                                         </div>
@@ -674,7 +676,7 @@ function TodayAuction() {
                                                                 className="icon-btn delete"
                                                                 onClick={() => handleDeleteVariant(v.id)}
                                                             >
-                                                                <Trash2 size={16} />
+                                                                <Trash2 size={18} />
                                                             </button>
                                                         </td>
                                                     </tr>

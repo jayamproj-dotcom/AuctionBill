@@ -394,7 +394,7 @@ function SellerDetails() {
                                         e.stopPropagation();
                                         handleDeleteClick(seller.id);
                                     }} title="Delete Seller">
-                                       <Trash2/>
+                                       <Trash2 size={18} />
                                     </button>
                                 </div>
                                 
@@ -519,7 +519,7 @@ function SellerDetails() {
                                                             onClick={() => openPaymentModal(t)}
                                                             title="Update Payment"
                                                         >
-                                                            <Pencil/>
+                                                            <Pencil size={18} />
                                                         </button>
                                                     </td>
                                                 </tr>
