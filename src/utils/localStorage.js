@@ -52,7 +52,8 @@ export const initialData = {
         {
             id: 1,
             name: 'Salem Turmeric',
-            seller_id: 1,
+            sellerId: 1,
+            sellerName: 'Ramesh Kumar',
             status: 'available',
             isActive: true,
             date: '2026-02-14',
@@ -72,7 +73,8 @@ export const initialData = {
         {
             id: 2,
             name: 'Madurai Jasmine Flowers',
-            seller_id: 2,
+            sellerId: 2,
+            sellerName: 'Murugan',
             status: 'available',
             isActive: true,
             date: '2026-02-14',
@@ -92,7 +94,8 @@ export const initialData = {
         {
             id: 3,
             name: 'Erode Turmeric Powder',
-            seller_id: 1,
+            sellerId: 1,
+            sellerName: 'Ramesh Kumar',
             status: 'available',
             isActive: true,
             date: '2026-02-14',
@@ -112,7 +115,8 @@ export const initialData = {
         {
             id: 4,
             name: 'Coimbatore Coconut',
-            seller_id: 2,
+            sellerId: 2,
+            sellerName: 'Murugan',
             status: 'available',
             isActive: true,
             date: '2026-02-14',
@@ -134,54 +138,43 @@ export const initialData = {
     transactions: [
         {
             id: 1,
-            date: '2026-02-06',
-            product_id: 1,
-            variant_id: 101,
+            date: "2026-02-06",
+
+            sellerId: 1,
+            buyerId: 1,
+
+            productId: 1,
+            variantId: 101,
+
             quantity: 50,
-            unit: 'kg',
-            seller_id: 1,
-            buyer_id: 1,
-            price: 600000,
-            commission: 30000,
+            unit: "kg",
+
+            finalAmount: 600000,   // This is final auction value
+
             commissionPercent: 5,
-            paymentStatus: 'Paid',
+            commission: 30000,     // 5% of finalAmount
+
+            netAmount: 570000,     // finalAmount - commission
+
+            paymentStatus: "Paid",
             amountPaid: 600000,
-            balance: 0
-        },
-        {
-            id: 2,
-            date: '2026-02-05',
-            product_id: 2,
-            variant_id: 201,
-            quantity: 20,
-            unit: 'kg',
-            seller_id: 2,
-            buyer_id: 2,
-            price: 6000,
-            commission: 480,
-            commissionPercent: 8,
-            paymentStatus: 'Part Paid',
-            amountPaid: 3000,
-            balance: 3000
-        },
-        {
-            id: 3,
-            date: '2026-02-04',
-            product_id: 4,
-            variant_id: 401,
-            quantity: 200,
-            unit: 'qty',
-            seller_id: 2,
-            buyer_id: 1,
-            price: 5000,
-            commission: 200,
-            commissionPercent: 4,
-            paymentStatus: 'Paid',
-            amountPaid: 5000,
-            balance: 0
+            balance: 0,
+
+            payments: [
+                {
+                    id: 1,
+                    date: "2026-02-06",
+                    amount: 600000
+                }
+            ]
         }
     ]
+
 };
+
+
+
+
 
 
 
