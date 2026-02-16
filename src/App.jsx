@@ -28,6 +28,19 @@ function App() {
   // Global safety check for corrupted localStorage data
   useEffect(() => {
     getAuctionData(); // This will trigger the healing/fallback logic in the utility
+
+   
+    const handleWheel = () => {
+      if (document.activeElement.type === "number") {
+        document.activeElement.blur();
+      }
+    };
+
+    document.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      document.removeEventListener("wheel", handleWheel);
+    };
   }, []);
 
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID; // Loaded from .env

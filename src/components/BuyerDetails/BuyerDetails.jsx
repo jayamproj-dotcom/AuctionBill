@@ -279,7 +279,7 @@ function BuyerDetails() {
                                         e.stopPropagation();
                                         handleDeleteClick(buyer.id);
                                     }} title="Delete Buyer">
-                                        <Trash2/>
+                                        <Trash2 size={18} />
                                     </button>
                                     <div className="badge badge-warning type-badge-abs">
                                         {buyer.buyerType || 'Retailer'}
@@ -402,7 +402,7 @@ function BuyerDetails() {
                                                             onClick={() => openPaymentModal(t)}
                                                             title="Update Payment"
                                                         >
-                                                            <Pencil/>
+                                                            <Pencil size={18} />
                                                         </button>
                                                     </td>
                                                 </tr>

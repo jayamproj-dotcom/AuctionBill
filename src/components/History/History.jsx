@@ -59,7 +59,7 @@ function History() {
                     <h1>History</h1>
                     <div className="header-actions">
                         <button className="btn btn-outline btn-sm">
-                            <span><Download /></span>
+                            <span><Download size={18} /></span>
                         </button>
                     </div>
                 </div>

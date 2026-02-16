@@ -217,19 +217,6 @@ function Dashboard() {
                         </div>
                     </Link>
 
-                    {/* <div className="stat-card">
-                        <div className="stat-header">
-                            <div className="stat-icon">📦</div>
-                            <div>
-                                <div className="stat-value">{stats.totalQty}</div>
-                                <div className="stat-label">Total Qty</div>
-                            </div>
-                        </div>
-                        <div className="stat-change positive">
-                            <span>📅</span>
-                            <span>{getFilterLabel()}</span>
-                        </div>
-                    </div> */}
                 </div>
 
                 {/* Date Filter Selection */}
