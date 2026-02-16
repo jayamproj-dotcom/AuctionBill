@@ -19,6 +19,10 @@ import SubscriptionManagement from "./pages/SaaSAdmin/SubscriptionManagement.jsx
 import GlobalSettings from "./pages/SaaSAdmin/GlobalSettings.jsx";
 import SaaSLogin from "./pages/SaaSAdmin/SaaSLogin.jsx";
 import { getAuctionData } from "./utils/localStorage";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 function App() {
   // Global safety check for corrupted localStorage data
@@ -26,40 +30,55 @@ function App() {
     getAuctionData(); // This will trigger the healing/fallback logic in the utility
   }, []);
 
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID; // Loaded from .env
+
   return (
-    <BrowserRouter basename="/auctionbilling">
-      <Routes>
-        {/* Admin Login */}
-        <Route path="/" element={<AdminLogin />} />
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <BrowserRouter basename="/auctionbilling">
+        <Routes>
+          {/* Admin Login */}
+          <Route path="/" element={<AdminLogin />} />
 
-        {/* Admin area with nested routes */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="today-auction" element={<TodayAuction />} />
-          <Route path="pending-products" element={<PendingProducts />} />
-          <Route path="history" element={<History />} />
-          <Route path="seller-details" element={<SellerDetails />} />
-          <Route path="buyer-details" element={<BuyerDetails />} />
-          <Route path="commission" element={<CommissionRecord />} />
-          <Route path="manage" element={<Manage />} />
-          <Route path="subscription" element={<Subscription />} />
-        </Route>
+          {/* Admin area with nested routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="today-auction" element={<TodayAuction />} />
+            <Route path="pending-products" element={<PendingProducts />} />
+            <Route path="history" element={<History />} />
+            <Route path="seller-details" element={<SellerDetails />} />
+            <Route path="buyer-details" element={<BuyerDetails />} />
+            <Route path="commission" element={<CommissionRecord />} />
+            <Route path="manage" element={<Manage />} />
+            <Route path="subscription" element={<Subscription />} />
+          </Route>
 
-        {/* SaaS Admin Login */}
-        <Route path="/saas-admin" element={<SaaSLogin />} />
+          {/* SaaS Admin Login */}
+          <Route path="/saas-admin" element={<SaaSLogin />} />
 
-        {/* SaaS Admin Area */}
-        <Route path="/saas" element={<SaaSLayout />}>
-          <Route index element={<SaaSDashboard />} />
-          <Route path="dashboard" element={<SaaSDashboard />} />
-          <Route path="purchases" element={<Purchases />} />
-          <Route path="vendors" element={<VendorManagement />} />
-          <Route path="subscriptions" element={<SubscriptionManagement />} />
-          <Route path="settings" element={<GlobalSettings />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+          {/* SaaS Admin Area */}
+          <Route path="/saas" element={<SaaSLayout />}>
+            <Route index element={<SaaSDashboard />} />
+            <Route path="dashboard" element={<SaaSDashboard />} />
+            <Route path="purchases" element={<Purchases />} />
+            <Route path="vendors" element={<VendorManagement />} />
+            <Route path="subscriptions" element={<SubscriptionManagement />} />
+            <Route path="settings" element={<GlobalSettings />} />
+          </Route>
+        </Routes>
+        
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={true}
+          closeOnClick
+          pauseOnHover
+          draggable
+          theme="light"
+        />
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { ChartNoAxesCombined,Users,UsersRound,HandCoins,BadgeIndianRupee,Bell} from "lucide-react";
 import { getAuctionData } from '../../utils/localStorage';
 import Notification from '../Common/Notification';
 import './Dashboard.css';
@@ -21,6 +22,9 @@ function Dashboard() {
     useEffect(() => {
         calculateStats();
     }, [dateFilter, customDate]);
+    console.log(getAuctionData);
+
+    
 
     const getDateRange = (filter) => {
         const today = new Date();
@@ -73,6 +77,8 @@ function Dashboard() {
 
     const calculateStats = () => {
         const data = getAuctionData();
+        console.log(data);
+        
         
         // Get today's date for today's auctions
         const today = new Date().toISOString().split('T')[0];
@@ -135,7 +141,7 @@ function Dashboard() {
                 <div className="stats-grid dashboard-stats-grid fade-in">
                     <div className="stat-card">
                         <div className="stat-header">
-                            <div className="stat-icon">🔨</div>
+                            <div className="stat-icon"><ChartNoAxesCombined /></div>
                             <Link to="/admin/today-auction"><div>
                                 <div className="stat-value">{stats.todayAuctions}</div>
                                 <div className="stat-label">Today</div>
@@ -150,7 +156,7 @@ function Dashboard() {
                     <Link to="/admin/seller-details">
                         <div className="stat-card">
                             <div className="stat-header">
-                                <div className="stat-icon">👤</div>
+                                <div className="stat-icon"><Users /></div>
                                 <div>
                                     <div className="stat-value">{stats.totalSellers}</div>
                                     <div className="stat-label">Sellers</div>
@@ -166,7 +172,7 @@ function Dashboard() {
                     <Link to="/admin/buyer-details">
                         <div className="stat-card">
                             <div className="stat-header">
-                                <div className="stat-icon">🛒</div>
+                                <div className="stat-icon"><UsersRound /></div>
                                 <div>
                                     <div className="stat-value">{stats.totalBuyers}</div>
                                     <div className="stat-label">Buyers</div>
@@ -182,7 +188,7 @@ function Dashboard() {
                     <Link to="/admin/history">
                         <div className="stat-card">
                             <div className="stat-header">
-                                <div className="stat-icon">💵</div>
+                                <div className="stat-icon"><BadgeIndianRupee /></div>
                                 <div>
                                     <div className="stat-value">₹{(stats.totalSales / 1000).toFixed(0)}K</div>
                                     <div className="stat-label">Sales</div>
@@ -198,7 +204,7 @@ function Dashboard() {
                     <Link to="/admin/commission">
                         <div className="stat-card">
                             <div className="stat-header">
-                                <div className="stat-icon">💰</div>
+                                <div className="stat-icon"><HandCoins /></div>
                                 <div>
                                     <div className="stat-value">₹{(stats.totalCommission / 1000).toFixed(1)}K</div>
                                     <div className="stat-label">Commission</div>

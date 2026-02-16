@@ -1,29 +1,51 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { User, Eye, EyeOff } from "lucide-react";
 import './SaaSAdmin.css';
 
 const SaaSLogin = () => {
     const [credentials, setCredentials] = useState({ username: '', password: '' });
-    const [error, setError] = useState('');
+    const [errors, setErrors] = useState({});
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
-        setCredentials({ ...credentials, [e.target.name]: e.target.value });
-        setError('');
+        const { name, value } = e.target;
+        setCredentials({ ...credentials, [name]: value });
+
+        // Clear error as user types
+        if (errors[name]) {
+            setErrors({ ...errors, [name]: '' });
+        }
+    };
+
+    const validate = () => {
+        const newErrors = {};
+        const ADMIN_USER = "admin";
+        const ADMIN_PASS = "admin@123";
+
+        if (!credentials.username.trim()) {
+            newErrors.username = "Username is required";
+        } else if (credentials.username.trim() !== ADMIN_USER) {
+            newErrors.username = "Invalid username";
+        }
+
+        if (!credentials.password) {
+            newErrors.password = "Password is required";
+        } else if (credentials.password.trim() !== ADMIN_PASS) {
+            newErrors.password = "Invalid password";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleLogin = (e) => {
         e.preventDefault();
-        
-        // Hardcoded credentials for SaaS Admin
-        const ADMIN_USER = "admin";
-        const ADMIN_PASS = "admin@123";
 
-        if (credentials.username === ADMIN_USER && credentials.password === ADMIN_PASS) {
+        if (validate()) {
             localStorage.setItem('saas_admin_token', 'true');
             navigate('/saas/dashboard');
-        } else {
-            setError('Invalid username or password');
         }
     };
 
@@ -31,43 +53,53 @@ const SaaSLogin = () => {
         <div className="saas-login-container">
             <div className="saas-login-card fade-in">
                 <div className="saas-login-header">
-                  
                     <p className="saas-subtitle">Super Admin Access</p>
                 </div>
 
-                <form onSubmit={handleLogin} className="saas-login-form">
+                <form onSubmit={handleLogin} className="saas-login-form" noValidate>
                     <div className="saas-form-group">
                         <label className="saas-label">Username</label>
-                        <input
-                            type="text"
-                            name="username"
-                            className="saas-input"
-                            value={credentials.username}
-                            onChange={handleChange}
-                            placeholder="Enter admin username"
-                            required
-                        />
+                        <div className="saas-input-container">
+                            <User size={18} className="saas-input-icon" />
+                            <input
+                                type="text"
+                                name="username"
+                                className={`saas-input saas-input-with-icon ${errors.username ? 'input-error' : ''}`}
+                                value={credentials.username}
+                                onChange={handleChange}
+                                placeholder="Enter admin username"
+                            />
+                        </div>
+                        {errors.username && <span className="error-msg">{errors.username}</span>}
                     </div>
 
                     <div className="saas-form-group">
                         <label className="saas-label">Password</label>
-                        <input
-                            type="password"
-                            name="password"
-                            className="saas-input"
-                            value={credentials.password}
-                            onChange={handleChange}
-                            placeholder="Enter admin password"
-                            required
-                        />
+                        <div className="saas-input-container">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                className={`saas-input saas-input-with-toggle ${errors.password ? 'input-error' : ''}`}
+                                value={credentials.password}
+                                onChange={handleChange}
+                                placeholder="Enter admin password"
+                            />
+                            <button
+                                type="button"
+                                className="saas-password-toggle"
+                                onClick={() => setShowPassword(!showPassword)}
+                                tabIndex="-1"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                        {errors.password && <span className="error-msg">{errors.password}</span>}
                     </div>
-
-                    {error && <div className="saas-error-message">{error}</div>}
 
                     <button type="submit" className="saas-btn btn-primary saas-login-btn">
                         Login to Dashboard
                     </button>
-                    
+
                     <div className="saas-login-footer">
                         <a href="/" className="saas-link">Back to Main App</a>
                     </div>

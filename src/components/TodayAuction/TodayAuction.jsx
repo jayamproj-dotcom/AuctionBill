@@ -2,7 +2,72 @@ import { useState, useEffect } from 'react';
 import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './TodayAuction.css';
+import { toast } from 'react-toastify';
+import { Plus, Trash2, Edit2, X, Eye, EyeOff, PackageSearch } from 'lucide-react';
 
+const SearchableSelect = ({ options, value, onChange, placeholder, required, label }) => {
+    const [searchTerm, setSearchTerm] = useState(value || '');
+    const [isOpen, setIsOpen] = useState(false);
+
+    useEffect(() => {
+        setSearchTerm(value || '');
+    }, [value]);
+
+    const filteredOptions = options.filter(opt =>
+        opt.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleSelect = (opt) => {
+        onChange(opt);
+        setSearchTerm(opt.name);
+        setIsOpen(false);
+    };
+
+    return (
+        <div className="form-group" style={{ position: 'relative' }}>
+            <label className="form-label">{label}</label>
+            <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setIsOpen(true);
+                    if (e.target.value === '') onChange({ id: '', name: '' });
+                }}
+                onFocus={() => setIsOpen(true)}
+                onBlur={() => {
+                    setTimeout(() => {
+                        const match = options.find(o => o.name.toLowerCase() === searchTerm.toLowerCase());
+                        if (match) {
+                            if (match.name !== value) onChange(match);
+                        } else {
+                            onChange({ id: '', name: '' });
+                            setSearchTerm('');
+                        }
+                        setIsOpen(false);
+                    }, 200);
+                }}
+                placeholder={placeholder}
+                required={required}
+                autoComplete="off"
+            />
+            {isOpen && filteredOptions.length > 0 && (
+                <ul className="dropdown-options">
+                    {filteredOptions.map(opt => (
+                        <li
+                            key={opt.id}
+                            onMouseDown={() => handleSelect(opt)}
+                            className="dropdown-item"
+                        >
+                            {opt.name}
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+        </div>
+    );
+};
 
 function TodayAuction() {
     const [products, setProducts] = useState([]);
@@ -13,32 +78,63 @@ function TodayAuction() {
     const [showSellModal, setShowSellModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [editingProduct, setEditingProduct] = useState(null);
-    const [tempVariety, setTempVariety] = useState('');
     const [showHidden, setShowHidden] = useState(false);
 
     const [newProduct, setNewProduct] = useState({
         name: '',
-        seller: '',
-        price: '',
-        credit: '',
+        sellerId: '',
+        sellerName: '',
+        date: new Date().toISOString().split('T')[0],
+        variants: []
+    });
+
+    const [variantData, setVariantData] = useState({
+        variety: '',
         quality: 'Good',
-        quantity: 1,
-        unit: 'qty',
-        commission: 10,
-        image: '',
-        varieties: [],
+        quantity: '',
+        unit: 'kg',
+        commission: ''
     });
 
     const [imagePreview, setImagePreview] = useState(null);
 
     const [saleData, setSaleData] = useState({
-        buyer: '',
+        buyerId: '',
+        buyerName: '',
+        variantId: '',
         finalPrice: '',
         qtyToSell: '',
         paymentStatus: 'Paid',
         amountPaid: '',
-        variety: '', 
     });
+
+    const resetVariantData = () => {
+        setVariantData({
+            variety: '',
+            quality: 'Good',
+            quantity: '',
+            unit: 'kg',
+            commission: ''
+        });
+    };
+
+    const resetProductForm = () => {
+        setNewProduct({
+            name: '',
+            sellerId: '',
+            sellerName: '',
+            date: new Date().toISOString().split('T')[0],
+            variants: [],
+            image: ''
+        });
+        setImagePreview(null);
+        resetVariantData();
+    };
+
+    const closeAddModal = () => {
+        setShowAddProduct(false);
+        resetProductForm();
+    };
 
     const handleImageUpload = (e, target = 'new') => {
         const file = e.target.files[0];
@@ -62,44 +158,6 @@ function TodayAuction() {
         }
     };
 
-    const addVariety = (target) => {
-        if (!tempVariety.trim()) return;
-        
-        const varietyObj = { name: tempVariety.trim(), active: true };
-
-        if (target === 'new') {
-            setNewProduct({
-                ...newProduct,
-                varieties: [...(newProduct.varieties || []), varietyObj] // Store object
-            });
-        } else {
-            setEditingProduct({
-                ...editingProduct,
-                varieties: [...(editingProduct.varieties || []), varietyObj]
-            });
-        }
-        setTempVariety('');
-    };
-
-    const toggleVarietyStatus = (index, target) => {
-        if (target === 'new') {
-            const updated = [...(newProduct.varieties || [])];
-            const v = updated[index];
-            // Handle legacy string if any
-            if (typeof v === 'string') updated[index] = { name: v, active: false };
-            else updated[index] = { ...v, active: !v.active };
-            
-            setNewProduct({ ...newProduct, varieties: updated });
-        } else {
-             const updated = [...(editingProduct.varieties || [])];
-            const v = updated[index];
-            if (typeof v === 'string') updated[index] = { name: v, active: false };
-            else updated[index] = { ...v, active: !v.active };
-            
-            setEditingProduct({ ...editingProduct, varieties: updated });
-        }
-    };
-
     const toggleProductStatus = (id) => {
         const data = getAuctionData();
         const index = data.products.findIndex(p => p.id === id);
@@ -112,16 +170,35 @@ function TodayAuction() {
         }
     };
 
-    const removeVariety = (index, target) => {
-        if (target === 'new') {
-            const updated = [...(newProduct.varieties || [])];
-            updated.splice(index, 1);
-            setNewProduct({ ...newProduct, varieties: updated });
-        } else {
-            const updated = [...(editingProduct.varieties || [])];
-            updated.splice(index, 1);
-            setEditingProduct({ ...editingProduct, varieties: updated });
+    const handleAddVariant = () => {
+        if (!variantData.variety || !variantData.quantity) {
+            toast.error("Please add at least Variety and Quantity");
+            return;
         }
+
+        const newVariant = {
+            id: Date.now(),
+            ...variantData,
+            commission: parseFloat(variantData.commission) || 0,
+            quantity: parseFloat(variantData.quantity)
+        };
+
+        setNewProduct({
+            ...newProduct,
+            variants: [...newProduct.variants, newVariant]
+        });
+
+        toast.success("Variant added successfully");
+
+        resetVariantData();
+    };
+
+
+    const handleDeleteVariant = (id) => {
+        setNewProduct({
+            ...newProduct,
+            variants: newProduct.variants.filter(v => v.id !== id)
+        });
     };
 
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -144,9 +221,14 @@ function TodayAuction() {
     };
 
     const openEditModal = (product) => {
-        setEditingProduct({ ...product, varieties: product.varieties || [] });
+        // Find seller name from ID
+        const seller = sellers.find(s => s.id === product.sellerId);
+        setEditingProduct({
+            ...product,
+            varieties: product.varieties || '',
+            sellerName: seller ? seller.name : ''
+        });
         setImagePreview(product.image);
-        setTempVariety('');
         setShowEditProduct(true);
     };
 
@@ -154,15 +236,13 @@ function TodayAuction() {
         e.preventDefault();
         const data = getAuctionData();
         const index = data.products.findIndex(p => p.id === editingProduct.id);
-        
+
         if (index !== -1) {
             data.products[index] = {
                 ...editingProduct,
-                price: parseFloat(editingProduct.price),
-                credit: parseFloat(editingProduct.credit) || 0,
-                quantity: parseInt(editingProduct.quantity),
-                commission: parseFloat(editingProduct.commission),
-                varieties: editingProduct.varieties,
+                // Ensure variants are preserved or updated if we add editing logic later
+                variants: editingProduct.variants,
+                // price, quantity, etc. are now in variants or removed
             };
             saveAuctionData(data);
             setShowEditProduct(false);
@@ -189,40 +269,47 @@ function TodayAuction() {
 
     const handleAddProduct = (e) => {
         e.preventDefault();
+
+        if (!newProduct.name) {
+            toast.error("Product name is required");
+            return;
+        }
+
+        if (!newProduct.sellerId) {
+            toast.error("Please select a seller");
+            return;
+        }
+
+        if (!newProduct.variants || newProduct.variants.length === 0) {
+            toast.error("Add at least one variant before saving product");
+            return;
+        }
+
         const data = getAuctionData();
 
+        let id = data.products.length + 1;
+
         const product = {
-            id: Date.now(),
-            ...newProduct,
-            price: parseFloat(newProduct.price),
-            credit: parseFloat(newProduct.credit) || 0,
-            quantity: parseInt(newProduct.quantity),
-            commission: parseFloat(newProduct.commission),
+            id: id,
+            name: newProduct.name,
+            sellerId: newProduct.sellerId,
+            date: newProduct.date || new Date().toISOString().split('T')[0],
             status: 'available',
             isActive: true,
-            varieties: newProduct.varieties || [],
+            variants: newProduct.variants,
+            image: newProduct.image
         };
 
         data.products.push(product);
         saveAuctionData(data);
 
-        setNewProduct({
-            name: '',
-            seller: '',
-            price: '',
-            credit: '',
-            quality: 'Good',
-            quantity: 1,
-            unit: 'qty',
-            commission: 10,
-            image: '',
-            varieties: [],
-        });
-        setImagePreview(null);
-        setTempVariety('');
+        toast.success("Product added successfully");
+
+        resetProductForm();
         setShowAddProduct(false);
         loadData();
     };
+
 
     const handleSellProduct = (e) => {
         e.preventDefault();
@@ -230,23 +317,30 @@ function TodayAuction() {
 
         // Update product status/quantity
         const productIndex = data.products.findIndex(p => p.id === selectedProduct.id);
+        const product = data.products[productIndex];
+
+        // Find the variant
+        const variantIndex = product.variants.findIndex(v => v.id == saleData.variantId);
+        if (variantIndex === -1) return; // Should not happen
+
+        const variant = product.variants[variantIndex];
         const sellQty = parseFloat(saleData.qtyToSell) || 0;
-        
-        if (sellQty >= data.products[productIndex].quantity) {
-            data.products[productIndex].status = 'sold';
-            data.products[productIndex].quantity = 0;
+
+        if (sellQty >= variant.quantity) {
+            // Sold out this variant
+            product.variants[variantIndex].quantity = 0;
+            // Check if all variants are sold out? 
+            // For now, if all quantities are 0, mark product properly if needed, but 'status' was on product level.
+            // Let's keep product 'available' unless all variants zero? 
+            // Or just rely on visual disabled state if quantity 0.
         } else {
-            const currentQty = data.products[productIndex].quantity;
-            const currentPrice = data.products[productIndex].price;
-            // Recalculate base price for remaining stock
-            data.products[productIndex].price = (currentPrice / currentQty) * (currentQty - sellQty);
-            data.products[productIndex].quantity = currentQty - sellQty;
+            product.variants[variantIndex].quantity = variant.quantity - sellQty;
         }
 
         // Add transaction
         const finalPrice = parseFloat(saleData.finalPrice);
-        const commission = (finalPrice * selectedProduct.commission) / 100;
-        
+        const commission = (finalPrice * variant.commission) / 100;
+
         let amountPaid = 0;
         if (saleData.paymentStatus === 'Paid') amountPaid = finalPrice;
         else if (saleData.paymentStatus === 'Part Paid') amountPaid = parseFloat(saleData.amountPaid) || 0;
@@ -255,26 +349,25 @@ function TodayAuction() {
         const transaction = {
             transaction: 0,
             date: new Date().toISOString().split('T')[0],
-            product: saleData.variety ? `${selectedProduct.name} - ${saleData.variety}` : selectedProduct.name,
+            product: `${product.name} - ${variant.variety}`,
+            productId: product.id,
+            activeVariantId: variant.id,
             quantity: parseFloat(saleData.qtyToSell),
-            unit: selectedProduct.unit || 'qty',
-            seller: selectedProduct.seller,
-            buyer: saleData.buyer,
+            unit: variant.unit || 'qty',
+            sellerId: product.sellerId,
+            buyerId: saleData.buyerId,
             price: finalPrice,
             commission: commission,
-            commissionPercent: selectedProduct.commission,
+            commissionPercent: variant.commission,
             paymentStatus: saleData.paymentStatus,
             amountPaid: amountPaid,
             balance: finalPrice - amountPaid,
             // Seller specific fields
             netAmount: finalPrice - commission,
-            credit: selectedProduct.credit || 0, // Pass credit to transaction
+            credit: 0,
             sellerPaymentStatus: 'Pending',
             sellerAmountPaid: 0
         };
-
-        // Clear credit from product so it's only applied once
-        data.products[productIndex].credit = 0;
 
         // Fix ID generation to avoid potential collisions if rapid clicks
         transaction.id = Date.now();
@@ -282,7 +375,7 @@ function TodayAuction() {
         data.transactions.push(transaction);
         saveAuctionData(data);
 
-        setSaleData({ buyer: '', finalPrice: '', qtyToSell: '', paymentStatus: 'Paid', amountPaid: '', variety: '' });
+        setSaleData({ buyerId: '', buyerName: '', variantId: '', finalPrice: '', qtyToSell: '', paymentStatus: 'Paid', amountPaid: '' });
         setShowSellModal(false);
         setSelectedProduct(null);
         loadData();
@@ -290,20 +383,27 @@ function TodayAuction() {
 
     const openSellModal = (product) => {
         setSelectedProduct(product);
-        setSaleData({ 
-            buyer: '', 
-            finalPrice: product.price,
-            qtyToSell: product.quantity,
+        setSaleData({
+            buyerId: '',
+            buyerName: '',
+            variantId: '',
+            finalPrice: '',
+            qtyToSell: '',
             paymentStatus: 'Paid',
             amountPaid: '',
-            variety: ''
         });
         setShowSellModal(true);
     };
 
+    const capitalizeFirst = (text) => {
+        if (!text) return '';
+        return text.charAt(0).toUpperCase() + text.slice(1);
+    };
+
+
     return (
         <>
-            <ConfirmationModal 
+            <ConfirmationModal
                 isOpen={isDeleteConfirmOpen}
                 onClose={() => setIsDeleteConfirmOpen(false)}
                 onConfirm={confirmDeleteProduct}
@@ -318,16 +418,19 @@ function TodayAuction() {
                 <div className="header-top">
                     <h1>Today Auction</h1>
                     <div className="header-actions">
-                         <label className="toggle-hidden">
-                            <input 
-                                type="checkbox" 
-                                checked={showHidden} 
-                                onChange={(e) => setShowHidden(e.target.checked)} 
+                        <label className="toggle-switch">
+                            <input
+                                type="checkbox"
+                                checked={showHidden}
+                                onChange={(e) => setShowHidden(e.target.checked)}
                             />
-                            Show Disabled
+                            <span className="slider"></span>
+                            <span className="toggle-label">
+                                {showHidden ? '🚫 Hide Disabled' : '👁️ Show Disabled'}
+                            </span>
                         </label>
                         <button className="btn btn-primary" onClick={() => setShowAddProduct(true)}>
-                            <span>➕</span>
+                            <span><Plus /></span>
                             Add Product
                         </button>
                     </div>
@@ -347,7 +450,7 @@ function TodayAuction() {
                 <div className="card-list fade-in">
                     {products.length === 0 ? (
                         <div className="empty-state">
-                            <div className="empty-state-icon">📦</div>
+                            <div className="empty-state-icon"><PackageSearch /></div>
                             <p>No products available for auction today</p>
                         </div>
                     ) : (
@@ -355,91 +458,85 @@ function TodayAuction() {
                             {products
                                 .filter(p => showHidden || p.isActive !== false)
                                 .map(product => (
-                                <div key={product.id} className={`data-card product-card ${product.isActive === false ? 'product-disabled' : ''}`}>
-                                    <div className="data-card-header product-card-header">
-                                        <div className="data-card-title product-card-title">
-                                        {product.name}
-                                        {product.varieties && product.varieties.length > 0
-                                            ? ` - ${product.varieties
-                                                .filter(v => typeof v === 'string' || v.active !== false) // Show only active varieties in title
-                                                .map(v => (typeof v === 'string' ? v : v.name))
-                                                .join(', ')}`
-                                            : ''}
-                                        {product.isActive === false && <span className="badge badge-error ml-2">Disabled</span>}
-                                        </div>
-                                        <div className="action-buttons">
-                                            <button className="icon-btn" onClick={() => toggleProductStatus(product.id)} title={product.isActive === false ? "Enable" : "Disable"}>
-                                                {product.isActive === false ? '👁️' : '🚫'}
-                                            </button>
-                                            <button className="icon-btn edit" onClick={() => openEditModal(product)} title="Edit">
-                                                ✏️
-                                            </button>
-                                            <button className="icon-btn delete" onClick={() => handleDeleteClick(product.id)} title="Delete">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-trash3" viewBox="0 0 16 16">
-                                                    <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5ZM11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H2.506a.58.58 0 0 0-.01 0H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1h-.995a.59.59 0 0 0-.01 0H11Zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5h9.916Zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47ZM8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5Z"/>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    
-                                    <div className="data-card-body product-card-body">
-                                        <div className="product-image-container">
-                                            {product.image ? (
-                                                <img 
-                                                    src={product.image} 
-                                                    alt={product.name}
-                                                    className={`product-image ${product.isActive === false ? 'grayscale' : ''}`}
-                                                />
-                                            ) : (
-                                                <span className="product-image-placeholder">📦</span>
-                                            )}
+                                    <div key={product.id} className={`data-card product-card ${product.isActive === false ? 'product-disabled' : ''}`}>
+                                        <div className="data-card-header product-card-header">
+                                            <div className="data-card-title product-card-title">
+                                                {capitalizeFirst(product.name)}
+                                                {product.varieties ? ` - ${capitalizeFirst(product.varieties)}` : ''}
+                                                {product.isActive === false && (
+                                                    <span className="badge badge-error ml-2">Disabled</span>
+                                                )}
+                                            </div>
+
+                                            <div className="action-buttons">
+                                                <button className="icon-btn" onClick={() => toggleProductStatus(product.id)} title={product.isActive === false ? "Enable" : "Disable"}>
+                                                    {product.isActive === false ? <Eye /> : <EyeOff />}
+                                                </button>
+                                                <button className="icon-btn edit" onClick={() => openEditModal(product)} title="Edit">
+                                                    <Edit2 />
+                                                </button>
+                                                <button className="icon-btn delete" onClick={() => handleDeleteClick(product.id)} title="Delete">
+                                                    <Trash2 />
+                                                </button>
+                                            </div>
                                         </div>
 
-                                        <div className="data-card-subtitle product-card-subtitle">
-                                            Seller: <strong>{product.seller}</strong>
-                                        </div>
 
-                                        <div className="data-row">
-                                            <span className="data-label">Base Price</span>
-                                            <span className="data-value">₹{product.price.toLocaleString()}</span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Quality</span>
-                                            <span className="data-value">
-                                                <span className={`badge ${product.quality === 'Excellent' ? 'badge-success' :
-                                                        product.quality === 'Good' ? 'badge-warning' : 'badge-error'
-                                                    }`}>
-                                                    {product.quality}
-                                                </span>
-                                            </span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Qty / Unit</span>
-                                            <span className="data-value">{product.quantity} {product.unit || 'qty'}</span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Comm %</span>
-                                            <span className="data-value text-amber">{product.commission}%</span>
-                                        </div>
-                                        {/* {product.credit > 0 && (
+                                        <div className="data-card-body product-card-body">
+                                            <div className="product-image-container">
+                                                {product.image ? (
+                                                    <img
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        className={`product-image ${product.isActive === false ? 'grayscale' : ''}`}
+                                                    />
+                                                ) : (
+                                                    <span className="product-image-placeholder">📦</span>
+                                                )}
+                                            </div>
+
+                                            <div className="data-card-subtitle product-card-subtitle">
+                                                Seller: <strong>{sellers.find(s => s.id === product.sellerId)?.name}</strong>
+                                            </div>
+
+                                            <div className="product-variants">
+                                                {product.variants && product.variants.map(v => (
+                                                    <div key={v.id} className="variant-box" style={{
+                                                        background: 'rgba(255,255,255,0.05)',
+                                                        padding: '8px',
+                                                        borderRadius: '4px',
+                                                        marginBottom: '4px',
+                                                        fontSize: '0.9em'
+                                                    }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                                                            <span>{capitalizeFirst(v.variety)}</span>
+                                                            <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`} style={{ fontSize: '0.7em', padding: '2px 6px' }}>{v.quality}</span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                                            <span>{v.quantity} {v.unit}</span>
+                                                            <span className="text-amber">{v.commission}% Comm</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {/* {product.credit > 0 && (
                                             <div className="data-row">
                                                 <span className="data-label">Credit</span>
                                                 <span className="data-value text-error">₹{product.credit.toLocaleString()}</span>
                                             </div>
                                         )} */}
+                                        </div>
+                                        <div className="data-card-footer product-card-footer">
+                                            <button
+                                                className="btn btn-success sell-btn-full"
+                                                onClick={() => openSellModal(product)}
+                                                disabled={product.isActive === false}
+                                            >
+                                                Sell
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="data-card-footer product-card-footer">
-                                        <button
-                                            className="btn btn-success sell-btn-full"
-                                            onClick={() => openSellModal(product)}
-                                            disabled={product.isActive === false}
-                                        >
-                                            Sell
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     )}
                 </div>
@@ -447,157 +544,145 @@ function TodayAuction() {
 
             {/* Add Product Modal */}
             {showAddProduct && (
-                <div className="modal-overlay" onClick={() => setShowAddProduct(false)}>
+                <div className="modal-overlay" onClick={closeAddModal}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Add New Product</h3>
-                            <button className="modal-close" onClick={() => setShowAddProduct(false)}>×</button>
+                            <button className="modal-close" onClick={closeAddModal}><X /></button>
                         </div>
                         <form onSubmit={handleAddProduct}>
                             <div className="modal-body">
+                                <div className="form-group">
+                                    <label className="form-label">Auction Date</label>
+                                    <input
+                                        type="date"
+                                        value={newProduct.date}
+                                        onChange={(e) => setNewProduct({ ...newProduct, date: e.target.value })}
+                                        disabled
+                                    />
+                                </div>
+
                                 <div className="form-group">
                                     <label className="form-label">Product Name</label>
                                     <input
                                         type="text"
                                         value={newProduct.name}
-                                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value.replace(/\s/g, '').toLowerCase() })}
                                         placeholder="e.g. Vintage Clock, Fruits..."
                                         required
                                     />
                                 </div>
 
-                                           <div className="form-group">
-                                    <label className="form-label">Varieties (Optional)</label>
-                                    <div className="variety-input-group">
+                                <SearchableSelect
+                                    label="Seller"
+                                    options={sellers}
+                                    value={newProduct.sellerName}
+                                    onChange={(seller) =>
+                                        setNewProduct({
+                                            ...newProduct,
+                                            sellerId: seller.id,
+                                            sellerName: seller.name
+                                        })
+                                    }
+                                    placeholder="Type to search seller..."
+                                    required
+                                />
+
+                                <div className="form-group">
+                                    <label className="form-label">Variants</label>
+                                    <div className="variant-row">
                                         <input
                                             type="text"
-                                            value={tempVariety}
-                                            onChange={(e) => setTempVariety(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    e.preventDefault();
-                                                    addVariety('new');
-                                                }
-                                            }}
-                                            placeholder="e.g. Rasakadali, Red..."
+                                            placeholder="Variety"
+                                            value={variantData.variety}
+                                            onChange={(e) =>
+                                                setVariantData({ ...variantData, variety: e.target.value.toLowerCase() })
+                                            }
                                         />
-                                        <button 
-                                            type="button" 
-                                            className="btn btn-secondary btn-sm"
-                                            onClick={() => addVariety('new')}
-                                        >
-                                            Add
-                                        </button>
-                                    </div>
-                                    <div className="variety-tags">
-                                        {(newProduct.varieties || []).map((v, i) => {
-                                            const vName = typeof v === 'string' ? v : v.name;
-                                            const isActive = typeof v === 'string' ? true : v.active;
-                                            return (
-                                                <span key={i} className={`variety-tag ${!isActive ? 'variety-disabled' : ''}`}>
-                                                    <span 
-                                                        className="variety-toggle" 
-                                                        onClick={() => toggleVarietyStatus(i, 'new')}
-                                                        title={isActive ? "Disable" : "Enable"}
-                                                    >
-                                                        {isActive ? '🟢' : '⚪'}
-                                                    </span>
-                                                    {vName}
-                                                    <span 
-                                                        className="variety-tag-remove"
-                                                        onClick={() => removeVariety(i, 'new')}
-                                                    >×</span>
-                                                </span>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Seller</label>
-                                    <input
-                                        type="text"
-                                        list="seller-list"
-                                        value={newProduct.seller}
-                                        onChange={(e) => setNewProduct({ ...newProduct, seller: e.target.value })}
-                                        placeholder="Type to search seller..."
-                                        required
-                                    />
-                                </div>
-                                <div className="form-grid">
-                                    <div className="form-group">
-                                        <label className="form-label">Base Price (₹)</label>
-                                        <input
-                                            type="number"
-                                            value={newProduct.price}
-                                            onChange={(e) => setNewProduct({ ...newProduct, price: Math.max(0, e.target.value) })}
-                                            placeholder="Base Price"
-                                            min="0"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Credit / Advance (₹)</label>
-                                        <input
-                                            type="number"
-                                            value={newProduct.credit}
-                                            onChange={(e) => setNewProduct({ ...newProduct, credit: Math.max(0, e.target.value) })}
-                                            placeholder="Optional Credit"
-                                            min="0"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Quality</label>
+
                                         <select
-                                            value={newProduct.quality}
-                                            onChange={(e) => setNewProduct({ ...newProduct, quality: e.target.value })}
+                                            value={variantData.quality}
+                                            onChange={(e) =>
+                                                setVariantData({ ...variantData, quality: e.target.value })
+                                            }
                                         >
                                             <option value="Excellent">Excellent</option>
                                             <option value="Good">Good</option>
                                             <option value="Fair">Fair</option>
                                         </select>
-                                    </div>
-                                </div>
-                                <div className="form-grid">
-                                    <div className="form-group">
-                                        <label className="form-label">Quantity</label>
-                                        <div className="qty-input-group">
-                                            <input
-                                                type="number"
-                                                value={newProduct.quantity}
-                                                onChange={(e) => setNewProduct({ ...newProduct, quantity: e.target.value })}
-                                                min="1"
-                                                placeholder="Qty"
-                                                className="qty-input-main"
-                                                required
-                                            />
-                                            <select
-                                                value={newProduct.unit}
-                                                onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })}
-                                                className="qty-input-unit"
-                                                required
-                                            >
-                                                <option value="qty">qty</option>
-                                                <option value="kg">kg</option>
-                                                <option value="pcs">pcs</option>
-                                                <option value="ltr">ltr</option>
-                                                <option value="box">box</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Commission %</label>
+
                                         <input
                                             type="number"
-                                            value={newProduct.commission}
-                                            onChange={(e) => setNewProduct({ ...newProduct, commission: Math.max(0, Math.min(100, e.target.value)) })}
-                                            min="0"
-                                            max="100"
-                                            step="0.1"
-                                            placeholder="%"
-                                            required
+                                            placeholder="Qty"
+                                            value={variantData.quantity}
+                                            onChange={(e) =>
+                                                setVariantData({ ...variantData, quantity: e.target.value })
+                                            }
                                         />
+
+                                        <select
+                                            value={variantData.unit}
+                                            onChange={(e) =>
+                                                setVariantData({ ...variantData, unit: e.target.value })
+                                            }
+                                        >
+                                            <option value="kg">kg</option>
+                                            <option value="qty">qty</option>
+                                            <option value="pcs">pcs</option>
+                                            <option value="ltr">ltr</option>
+                                            <option value="box">box</option>
+                                        </select>
+
+                                        <input
+                                            type="number"
+                                            placeholder="Comm %"
+                                            value={variantData.commission}
+                                            onChange={(e) =>
+                                                setVariantData({ ...variantData, commission: e.target.value })
+                                            }
+                                        />
+
+                                        <button type="button" className="btn btn-primary" style={{ padding: '8px 12px' }} onClick={handleAddVariant}>
+                                            Add
+                                        </button>
                                     </div>
                                 </div>
+                                {newProduct.variants && newProduct.variants.length > 0 && (
+                                    <div className="table-responsive" style={{ marginTop: '10px', maxHeight: '200px', overflowY: 'auto' }}>
+                                        <table className="variant-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9em' }}>
+                                            <thead>
+                                                <tr style={{ borderBottom: '1px solid #444', textAlign: 'left' }}>
+                                                    <th style={{ padding: '8px' }}>Variety</th>
+                                                    <th style={{ padding: '8px' }}>Quality</th>
+                                                    <th style={{ padding: '8px' }}>Qty</th>
+                                                    <th style={{ padding: '8px' }}>Unit</th>
+                                                    <th style={{ padding: '8px' }}>Comm %</th>
+                                                    <th style={{ padding: '8px' }}>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {newProduct.variants.map(v => (
+                                                    <tr key={v.id} style={{ borderBottom: '1px solid #333' }}>
+                                                        <td style={{ padding: '8px' }}>{v.variety}</td>
+                                                        <td style={{ padding: '8px' }}>{v.quality}</td>
+                                                        <td style={{ padding: '8px' }}>{v.quantity}</td>
+                                                        <td style={{ padding: '8px' }}>{v.unit}</td>
+                                                        <td style={{ padding: '8px' }}>{v.commission}%</td>
+                                                        <td style={{ padding: '8px' }}>
+                                                            <button
+                                                                type="button"
+                                                                className="icon-btn delete"
+                                                                onClick={() => handleDeleteVariant(v.id)}
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                                 <div className="form-group">
                                     <label className="form-label">Product Image</label>
                                     <input
@@ -608,18 +693,18 @@ function TodayAuction() {
                                     />
                                     {imagePreview && (
                                         <div className="image-preview-container">
-                                            <img 
-                                                src={imagePreview} 
+                                            <img
+                                                src={imagePreview}
                                                 alt="Preview"
                                                 className="image-preview"
                                             />
                                         </div>
                                     )}
                                 </div>
-                     
+
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowAddProduct(false)}>
+                                <button type="button" className="btn btn-secondary" onClick={closeAddModal}>
                                     Cancel
                                 </button>
                                 <button type="submit" className="btn btn-primary">
@@ -648,146 +733,68 @@ function TodayAuction() {
                         <form onSubmit={handleEditProduct}>
                             <div className="modal-body">
                                 <div className="form-group">
+                                    <label className="form-label">Auction Date</label>
+                                    <input
+                                        type="date"
+                                        value={editingProduct.date}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, date: e.target.value })}
+                                        required
+                                        disabled
+                                    />
+                                </div>
+
+                                <div className="form-group">
                                     <label className="form-label">Product Name</label>
                                     <input
                                         type="text"
                                         value={editingProduct.name}
-                                        onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value.replace(/\s/g, '').toLowerCase() })}
                                         placeholder="Product Name"
                                         required
                                     />
                                 </div>
-                                <div className="form-group">
-                                    <label className="form-label">Varieties</label>
-                                    <div className="variety-input-group">
-                                        <input
-                                            type="text"
-                                            value={tempVariety}
-                                            onChange={(e) => setTempVariety(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    e.preventDefault();
-                                                    addVariety('edit');
-                                                }
-                                            }}
-                                            placeholder="e.g. Rasakadali, Red..."
-                                        />
-                                        <button 
-                                            type="button" 
-                                            className="btn btn-secondary btn-sm"
-                                            onClick={() => addVariety('edit')}
-                                        >
-                                            Add
-                                        </button>
-                                    </div>
-                                    <div className="variety-tags">
-                                        {(editingProduct.varieties || []).map((v, i) => {
-                                             const vName = typeof v === 'string' ? v : v.name;
-                                             const isActive = typeof v === 'string' ? true : v.active;
-                                             return (
-                                                <span key={i} className={`variety-tag ${!isActive ? 'variety-disabled' : ''}`}>
-                                                    <span 
-                                                        className="variety-toggle" 
-                                                        onClick={() => toggleVarietyStatus(i, 'edit')}
-                                                        title={isActive ? "Disable" : "Enable"}
-                                                    >
-                                                         {isActive ? '🟢' : '⚪'}
-                                                    </span>
-                                                    {vName}
-                                                    <span 
-                                                        className="variety-tag-remove"
-                                                        onClick={() => removeVariety(i, 'edit')}
-                                                    >×</span>
-                                                </span>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Seller</label>
-                                    <input
-                                        type="text"
-                                        list="seller-list"
-                                        value={editingProduct.seller}
-                                        onChange={(e) => setEditingProduct({ ...editingProduct, seller: e.target.value })}
-                                        placeholder="Type to search seller..."
-                                        required
-                                    />
-                                </div>
-                                <div className="form-grid">
+                                <SearchableSelect
+                                    label="Seller"
+                                    options={sellers}
+                                    value={editingProduct.sellerName}
+                                    onChange={(seller) => setEditingProduct({
+                                        ...editingProduct,
+                                        sellerId: seller.id,
+                                        sellerName: seller.name
+                                    })}
+                                    placeholder="Type to search seller..."
+                                    required
+                                />
+
+                                {editingProduct.variants && editingProduct.variants.length > 0 && (
                                     <div className="form-group">
-                                        <label className="form-label">Base Price (₹)</label>
-                                        <input
-                                            type="number"
-                                            value={editingProduct.price}
-                                            onChange={(e) => setEditingProduct({ ...editingProduct, price: Math.max(0, e.target.value) })}
-                                            placeholder="Base Price"
-                                            min="0"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Credit / Advance (₹)</label>
-                                        <input
-                                            type="number"
-                                            value={editingProduct.credit}
-                                            onChange={(e) => setEditingProduct({ ...editingProduct, credit: Math.max(0, e.target.value) })}
-                                            placeholder="Optional Credit"
-                                            min="0"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Quality</label>
-                                        <select
-                                            value={editingProduct.quality}
-                                            onChange={(e) => setEditingProduct({ ...editingProduct, quality: e.target.value })}
-                                        >
-                                            <option value="Excellent">Excellent</option>
-                                            <option value="Good">Good</option>
-                                            <option value="Fair">Fair</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="form-grid">
-                                    <div className="form-group">
-                                        <label className="form-label">Quantity</label>
-                                        <div className="qty-input-group">
-                                            <input
-                                                type="number"
-                                                value={editingProduct.quantity}
-                                                onChange={(e) => setEditingProduct({ ...editingProduct, quantity: e.target.value })}
-                                                min="1"
-                                                placeholder="Qty"
-                                                className="qty-input-main"
-                                                required
-                                            />
-                                            <select
-                                                value={editingProduct.unit}
-                                                onChange={(e) => setEditingProduct({ ...editingProduct, unit: e.target.value })}
-                                                className="qty-input-unit"
-                                            >
-                                                <option value="qty">qty</option>
-                                                <option value="kg">kg</option>
-                                                <option value="pcs">pcs</option>
-                                                <option value="ltr">ltr</option>
-                                                <option value="box">box</option>
-                                            </select>
+                                        <label className="form-label">Variants (Read-only)</label>
+                                        <div className="table-responsive" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                            <table className="variant-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9em' }}>
+                                                <thead>
+                                                    <tr style={{ borderBottom: '1px solid #444', textAlign: 'left' }}>
+                                                        <th style={{ padding: '8px' }}>Variety</th>
+                                                        <th style={{ padding: '8px' }}>Quality</th>
+                                                        <th style={{ padding: '8px' }}>Qty</th>
+                                                        <th style={{ padding: '8px' }}>Unit</th>
+                                                        <th style={{ padding: '8px' }}>Comm %</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {editingProduct.variants.map(v => (
+                                                        <tr key={v.id} style={{ borderBottom: '1px solid #333' }}>
+                                                            <td style={{ padding: '8px' }}>{v.variety}</td>
+                                                            <td style={{ padding: '8px' }}>{v.quality}</td>
+                                                            <td style={{ padding: '8px' }}>{v.quantity}</td>
+                                                            <td style={{ padding: '8px' }}>{v.unit}</td>
+                                                            <td style={{ padding: '8px' }}>{v.commission}%</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Commission %</label>
-                                        <input
-                                            type="number"
-                                            value={editingProduct.commission}
-                                            onChange={(e) => setEditingProduct({ ...editingProduct, commission: Math.max(0, Math.min(100, e.target.value)) })}
-                                            min="0"
-                                            max="100"
-                                            step="0.1"
-                                            placeholder="%"
-                                            required
-                                        />
-                                    </div>
-                                </div>
+                                )}
                                 <div className="form-group">
                                     <label className="form-label">Product Image</label>
                                     <input
@@ -798,15 +805,15 @@ function TodayAuction() {
                                     />
                                     {imagePreview && (
                                         <div className="image-preview-container">
-                                            <img 
-                                                src={imagePreview} 
+                                            <img
+                                                src={imagePreview}
                                                 alt="Preview"
                                                 className="image-preview"
                                             />
                                         </div>
                                     )}
                                 </div>
-                                
+
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={() => {
@@ -830,107 +837,117 @@ function TodayAuction() {
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Sell Product: {selectedProduct.name}</h3>
-                            <button className="modal-close" onClick={() => setShowSellModal(false)}>×</button>
+                            <button className="modal-close" onClick={() => setShowSellModal(false)}><X /></button>
                         </div>
                         <form onSubmit={handleSellProduct}>
                             <div className="modal-body">
+                                <SearchableSelect
+                                    label="Buyer"
+                                    options={buyers}
+                                    value={saleData.buyerName}
+                                    onChange={(buyer) => setSaleData({
+                                        ...saleData,
+                                        buyerId: buyer.id,
+                                        buyerName: buyer.name
+                                    })}
+                                    placeholder="Type to search buyer..."
+                                    required
+                                />
+
                                 <div className="form-group">
-                                    <label className="form-label">Buyer</label>
-                                    <input
-                                        type="text"
-                                        list="buyer-list"
-                                        value={saleData.buyer}
-                                        onChange={(e) => setSaleData({ ...saleData, buyer: e.target.value })}
-                                        placeholder="Type to search buyer..."
+                                    <label className="form-label">Select Variant</label>
+                                    <select
+                                        value={saleData.variantId}
+                                        onChange={(e) =>
+                                            setSaleData({ ...saleData, variantId: e.target.value })
+                                        }
                                         required
-                                    />
+                                        className="form-input"
+                                    >
+                                        <option value="">-- Select Variant --</option>
+                                        {selectedProduct.variants && selectedProduct.variants.map(v => (
+                                            <option key={v.id} value={v.id} disabled={v.quantity <= 0}>
+                                                {capitalizeFirst(v.variety)} - {v.quality} - {v.quantity} {v.unit} ({v.commission}%)
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
-                                {selectedProduct.varieties && selectedProduct.varieties.length > 0 && (
-                                    <div className="form-group">
-                                        <label className="form-label">Variety</label>
-                                        <select
-                                            value={saleData.variety}
-                                            onChange={(e) => setSaleData({ ...saleData, variety: e.target.value })}
-                                            required
-                                        >
-                                            <option value="">Select Variety</option>
-                                            {selectedProduct.varieties
-                                                .filter(v => typeof v === 'string' || v.active !== false) // Only active
-                                                .map((v, i) => {
-                                                    const vName = typeof v === 'string' ? v : v.name;
-                                                    return <option key={i} value={vName}>{vName}</option>;
-                                                })
-                                            }
-                                        </select>
-                                    </div>
-                                )}
-                                <div className="form-group">
-                                    <label className="form-label">Quantity to Sell ({selectedProduct.unit})</label>
-                                    <input
-                                        type="number"
-                                        value={saleData.qtyToSell}
-                                        onChange={(e) => setSaleData({ ...saleData, qtyToSell: e.target.value })}
-                                        max={selectedProduct.quantity}
-                                        min="0.1"
-                                        step="0.1"
-                                        placeholder={`Max: ${selectedProduct.quantity}`}
-                                        required
-                                    />
-                                    <small className="form-hint">
-                                        Remaining: {(selectedProduct.quantity - (parseFloat(saleData.qtyToSell) || 0)).toFixed(2)} {selectedProduct.unit}
-                                    </small>
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Final Price (₹)</label>
-                                    <input
-                                        type="number"
-                                        value={saleData.finalPrice}
-                                        onChange={(e) => setSaleData({ ...saleData, finalPrice: Math.max(0, e.target.value) })}
-                                        placeholder="Selling Price"
-                                        min="0"
-                                        required
-                                    />
-                                </div>
-                                <div className="form-grid qty-input-group">
-                                    <div className="form-group">
-                                        <label className="form-label">Payment Status</label>
-                                        <select
-                                            value={saleData.paymentStatus}
-                                            onChange={(e) => setSaleData({ ...saleData, paymentStatus: e.target.value })}
-                                            required
-                                        >
-                                            <option value="Paid">Paid</option>
-                                            <option value="Part Paid">Part Paid</option>
-                                            <option value="Pending">Pending</option>
-                                        </select>
-                                    </div>
-                                    {saleData.paymentStatus === 'Part Paid' && (
-                                        <div className="form-group">
-                                            <label className="form-label">Amount Paid (₹)</label>
-                                            <input
-                                                type="number"
-                                                value={saleData.amountPaid}
-                                                onChange={(e) => setSaleData({ ...saleData, amountPaid: Math.max(0, Math.min(saleData.finalPrice, e.target.value)) })}
-                                                max={saleData.finalPrice}
-                                                min="0"
-                                                placeholder="Received amount"
-                                                required
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="card calc-card">
-                                    <p className="calc-row">
-                                        <strong>Commission ({selectedProduct.commission}%):</strong>{' '}
-                                        <span className="text-amber">
-                                            ₹{((parseFloat(saleData.finalPrice) || 0) * selectedProduct.commission / 100).toLocaleString()}
-                                        </span>
-                                    </p>
-                                    <p className="calc-row-last">
-                                        <strong>Seller Receives:</strong>{' '}
-                                        ₹{((parseFloat(saleData.finalPrice) || 0) * (100 - selectedProduct.commission) / 100).toLocaleString()}
-                                    </p>
-                                </div>
+
+                                {saleData.variantId && (() => {
+                                    const v = selectedProduct.variants.find(val => val.id == saleData.variantId);
+                                    if (!v) return null;
+                                    return (
+                                        <>
+                                            <div className="form-group">
+                                                <label className="form-label">Quantity to Sell ({v.unit})</label>
+                                                <input
+                                                    type="number"
+                                                    value={saleData.qtyToSell}
+                                                    onChange={(e) => setSaleData({ ...saleData, qtyToSell: e.target.value })}
+                                                    max={v.quantity}
+                                                    min="0.1"
+                                                    step="0.1"
+                                                    placeholder={`Max: ${v.quantity}`}
+                                                    required
+                                                />
+                                                <small className="form-hint">
+                                                    Remaining: {(v.quantity - (parseFloat(saleData.qtyToSell) || 0)).toFixed(2)} {v.unit}
+                                                </small>
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">Final Price (₹)</label>
+                                                <input
+                                                    type="number"
+                                                    value={saleData.finalPrice}
+                                                    onChange={(e) => setSaleData({ ...saleData, finalPrice: Math.max(0, e.target.value) })}
+                                                    placeholder="Selling Price"
+                                                    min="0"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="form-grid qty-input-group">
+                                                <div className="form-group">
+                                                    <label className="form-label">Payment Status</label>
+                                                    <select
+                                                        value={saleData.paymentStatus}
+                                                        onChange={(e) => setSaleData({ ...saleData, paymentStatus: e.target.value })}
+                                                        required
+                                                    >
+                                                        <option value="Paid">Paid</option>
+                                                        <option value="Part Paid">Part Paid</option>
+                                                        <option value="Pending">Pending</option>
+                                                    </select>
+                                                </div>
+                                                {saleData.paymentStatus === 'Part Paid' && (
+                                                    <div className="form-group">
+                                                        <label className="form-label">Amount Paid (₹)</label>
+                                                        <input
+                                                            type="number"
+                                                            value={saleData.amountPaid}
+                                                            onChange={(e) => setSaleData({ ...saleData, amountPaid: Math.max(0, Math.min(saleData.finalPrice, e.target.value)) })}
+                                                            max={saleData.finalPrice}
+                                                            min="0"
+                                                            placeholder="Received amount"
+                                                            required
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="card calc-card">
+                                                <p className="calc-row">
+                                                    <strong>Commission ({v.commission}%):</strong>{' '}
+                                                    <span className="text-amber">
+                                                        ₹{((parseFloat(saleData.finalPrice) || 0) * v.commission / 100).toLocaleString()}
+                                                    </span>
+                                                </p>
+                                                <p className="calc-row-last">
+                                                    <strong>Seller Receives:</strong>{' '}
+                                                    ₹{((parseFloat(saleData.finalPrice) || 0) * (100 - v.commission) / 100).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowSellModal(false)}>
@@ -944,12 +961,14 @@ function TodayAuction() {
                     </div>
                 </div>
             )}
+
             {/* Datalists for Autocomplete */}
             <datalist id="seller-list">
                 {sellers.map(seller => (
                     <option key={seller.id} value={seller.name} />
                 ))}
             </datalist>
+
             <datalist id="buyer-list">
                 {buyers.map(buyer => (
                     <option key={buyer.id} value={buyer.name} />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import './SaaSAdmin.css';
 import { Link } from 'react-router-dom';
+import { Users, Crown, Banknote, Hourglass, Settings, Trash2 } from 'lucide-react';
 
 const SaaSDashboard = () => {
   const [stats, setStats] = useState({
@@ -19,27 +20,27 @@ const SaaSDashboard = () => {
   return (
     <div className="fade-in">
       <div className="saas-stats-grid">
-    <Link 
-  to="/saas/vendors" 
-  className="saas-stat-card saas-no-decoration" 
->
-  <div className="saas-stat-header">
-    <div className="saas-stat-icon icon-blue">🏢</div>
-  </div>
+            <Link 
+          to="/saas/vendors" 
+          className="saas-stat-card saas-no-decoration" 
+        >
+          <div className="saas-stat-header">
+            <div className="saas-stat-icon icon-blue"><Users size={32} /></div>
+          </div>
 
-  <div className="saas-stat-value">
-    {stats.totalVendors}
-  </div>
+          <div className="saas-stat-value">
+            {stats.totalVendors}
+          </div>
 
-  <div className="saas-stat-label">
-    Total Vendors
-  </div>
-</Link>
+          <div className="saas-stat-label">
+            Total Vendors
+          </div>
+        </Link>
 
 
         <div className="saas-stat-card">
           <div className="saas-stat-header">
-            <div className="saas-stat-icon icon-green">💎</div>
+            <div className="saas-stat-icon icon-green"><Crown size={32} /></div>
           </div>
           <div className="saas-stat-value">{stats.activeSubscriptions}</div>
           <div className="saas-stat-label">Active Subscriptions</div>
@@ -47,7 +48,7 @@ const SaaSDashboard = () => {
 
         <div className="saas-stat-card">
           <div className="saas-stat-header">
-            <div className="saas-stat-icon icon-amber">💰</div>
+            <div className="saas-stat-icon icon-amber"><Banknote size={32} /></div>
           </div>
           <div className="saas-stat-value">₹{stats.monthlyRevenue.toLocaleString()}</div>
           <div className="saas-stat-label">Monthly Revenue</div>
@@ -55,7 +56,7 @@ const SaaSDashboard = () => {
 
         <div className="saas-stat-card">
           <div className="saas-stat-header">
-            <div className="saas-stat-icon icon-rose">⏳</div>
+            <div className="saas-stat-icon icon-rose"><Hourglass size={32} /></div>
           </div>
           <div className="saas-stat-value">{stats.pendingApprovals}</div>
           <div className="saas-stat-label">Pending Approvals</div>
@@ -96,7 +97,14 @@ const SaaSDashboard = () => {
                   </td>
                   <td>{vendor.joined}</td>
                   <td>
-                    <button className="saas-btn btn-sm btn-outline">Manage</button>
+                    <div className="action-buttons">
+                        <button className="icon-btn edit" title="Manage Vendor">
+                            <Settings size={18} />
+                        </button>
+                         <button className="icon-btn delete" title="Delete Vendor">
+                            <Trash2 size={18} />
+                        </button>
+                    </div>
                   </td>
                 </tr>
               ))}

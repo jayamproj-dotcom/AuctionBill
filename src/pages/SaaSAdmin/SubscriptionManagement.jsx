@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
+import { Plus, X } from 'lucide-react';
 
 const SubscriptionManagement = () => {
   const [plans, setPlans] = useState([
@@ -73,7 +74,7 @@ const SubscriptionManagement = () => {
     <div className="fade-in">
       <div className="saas-flex-end saas-mb-15">
         <button className="saas-btn btn-primary" onClick={handleAddPlan}>
-          + Add New Plan
+          <span><Plus /></span> Add New Plan
         </button>
       </div>
 
@@ -133,7 +134,7 @@ const SubscriptionManagement = () => {
                 onClick={() => setIsModalOpen(false)}
                 className="saas-modal-close-btn"
               >
-                ×
+                <X size={20} />
               </button>
             </div>
             <div className="saas-modal-content">

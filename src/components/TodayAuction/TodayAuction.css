@@ -161,14 +161,85 @@
 }
 
 /* Enable/Disable Styles */
-.toggle-hidden {
-    display: flex;
+/* Custom Toggle Switch - Enhanced */
+.toggle-switch {
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    margin-right: 16px;
-    font-size: 0.9em;
     cursor: pointer;
+    user-select: none;
+    margin-right: 1.5rem;
+    position: relative;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.toggle-switch:hover {
+    background-color: rgba(0, 0, 0, 0.05); /* Subtle hover background */
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+/* The Slider Container */
+.slider {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+    background-color: #e5e7eb; /* Light gray for OFF state */
+    border-radius: 34px;
+    transition: .4s cubic-bezier(0.4, 0.0, 0.2, 1); /* Smoother transition */
+    border: 1px solid #d1d5db;
+    margin-right: 12px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.06); /* Inner shadow for depth */
+}
+
+/* The Knob */
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: .4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Drop shadow for the knob */
+}
+
+/* Checked State */
+.toggle-switch input:checked + .slider {
+    background-color: #10b981; /* Success Green for ON state */
+    border-color: #059669;
+   
+}
+
+
+.toggle-switch input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+/* Label Styling */
+.toggle-label {
+    font-size: 0.8rem;
+    font-weight: 600;
     color: var(--text-secondary);
+    transition: color 0.3s;
+    letter-spacing: 0.01em;
+}
+
+.toggle-switch input:checked ~ .toggle-label {
+    color: var(--text-primary); /* Darker text when active */
+}
+
+.toggle-switch:hover .toggle-label {
+    color: var(--primary-color);
 }
 
 .product-disabled {
@@ -214,7 +285,6 @@
     }
     
     .data-card-header {
-        flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
     }
@@ -275,4 +345,66 @@
         margin-right: 0;
         margin-bottom: 5px;
     }
+}
+
+
+.dropdown-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    z-index: 1000;
+    list-style: none;
+    padding: 0;
+    margin: 0.25rem 0 0 0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-tertiary);
+}
+
+
+.variant-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Tablet */
+@media (max-width: 992px) {
+  .variant-row {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .variant-row {
+    grid-template-columns: 1fr;
+  }
+
+  .variant-row input,
+  .variant-row select,
+  .variant-row button {
+    width: 100%;
+  }
+
+  .variant-row button {
+    margin-top: 5px;
+  }
 }

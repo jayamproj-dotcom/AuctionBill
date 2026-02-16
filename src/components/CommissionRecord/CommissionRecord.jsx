@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
 import './CommissionRecord.css';
-
+import {Download,BadgeIndianRupee,ArrowRightLeft,ChartNoAxesColumn} from 'lucide-react';
 
 function CommissionRecord() {
     const [commissions, setCommissions] = useState([]);
@@ -63,7 +63,7 @@ function CommissionRecord() {
                     <h1>Commission</h1>
                     <div className="header-actions">
                         <button className="btn btn-outline btn-sm">
-                            <span>📥</span>
+                            <span><Download /></span>
                         </button>
                     </div>
                 </div>
@@ -79,7 +79,7 @@ function CommissionRecord() {
                 <div className="stats-grid fade-in">
                     <div className="stat-card">
                         <div className="stat-header">
-                            <div className="stat-icon">💰</div>
+                            <div className="stat-icon"><BadgeIndianRupee /></div>
                             <div>
                                 <div className="stat-value">₹{(getTotalCommission() / 1000).toFixed(1)}K</div>
                                 <div className="stat-label">Total</div>
@@ -89,7 +89,7 @@ function CommissionRecord() {
 
                     <div className="stat-card">
                         <div className="stat-header">
-                            <div className="stat-icon">📊</div>
+                            <div className="stat-icon"><ArrowRightLeft /></div>
                             <div>
                                 <div className="stat-value">{filteredCommissions.length}</div>
                                 <div className="stat-label">Transactions</div>
@@ -99,7 +99,7 @@ function CommissionRecord() {
 
                     <div className="stat-card">
                         <div className="stat-header">
-                            <div className="stat-icon">📈</div>
+                            <div className="stat-icon"><ChartNoAxesColumn /></div>
                             <div>
                                 <div className="stat-value">
                                     {filteredCommissions.length > 0

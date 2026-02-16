@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { House, ShoppingCart, Users, Gem, Settings, LogOut, Menu, X, Bell } from 'lucide-react';
 import './SaaSAdmin.css';
 
 const SaaSLayout = () => {
@@ -28,11 +29,11 @@ const SaaSLayout = () => {
   };
 
   const navItems = [
-    { path: '/saas', label: 'Dashboard', icon: '📊' },
-    { path: '/saas/purchases', label: 'Purchases', icon: '💳' },
-    { path: '/saas/vendors', label: 'Vendors', icon: '🏢' },
-    { path: '/saas/subscriptions', label: 'Subscriptions', icon: '💎' },
-    { path: '/saas/settings', label: 'Global Settings', icon: '⚙️' },
+    { path: '/saas', label: 'Dashboard', icon: <House size={20} /> },
+    { path: '/saas/purchases', label: 'Purchases', icon: <ShoppingCart size={20} /> },
+    { path: '/saas/vendors', label: 'Vendors', icon: <Users size={20} /> },
+    { path: '/saas/subscriptions', label: 'Subscriptions', icon: <Gem size={20} /> },
+    { path: '/saas/settings', label: 'Global Settings', icon: <Settings size={20} /> },
   ];
 
   return (
@@ -51,7 +52,7 @@ const SaaSLayout = () => {
             className="saas-close-sidebar"
             onClick={() => setIsSidebarOpen(false)}
           >
-            ×
+            <X size={24} />
           </button>
         </div>
         
@@ -63,15 +64,15 @@ const SaaSLayout = () => {
               className={`saas-nav-item ${location.pathname === item.path ? 'active' : ''}`}
               onClick={() => setIsSidebarOpen(false)}
             >
-              <span>{item.icon}</span>
+              <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
             </Link>
           ))}
         </nav>
 
         <div className="saas-sidebar-footer">
-          <div className="saas-nav-item" onClick={handleLogout} style={{ cursor: 'pointer' }}>
-            <span>🚪</span>
+          <div className="saas-nav-item logout-btn" onClick={handleLogout} style={{ cursor: 'pointer' }}>
+            <span className="nav-icon"><LogOut size={20} /></span>
             <span>Logout</span>
           </div>
         </div>
@@ -85,7 +86,7 @@ const SaaSLayout = () => {
               className="saas-mobile-toggle"
               onClick={() => setIsSidebarOpen(true)}
             >
-              ☰
+              <Menu size={24} />
             </button>
             <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>
               {navItems.find(n => n.path === location.pathname)?.label || 'Admin'}
@@ -93,20 +94,24 @@ const SaaSLayout = () => {
           </div>
           <div className="saas-header-right">
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <button className="saas-btn btn-sm btn-outline">🔔</button>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button className="saas-btn btn-sm btn-outline icon-only">
+                  <Bell size={20} />
+              </button>
+              {/* <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#6366f1', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700' }}>
                    SA
                 </div>
                 <span className="saas-admin-name" style={{ fontSize: '0.875rem', fontWeight: '500' }}>Super Admin</span>
-              </div>
+              </div> */}
             </div>
           </div>
         </header>
 
-        <section className="saas-content">
-          <Outlet />
-        </section>
+        <div className="saas-scroll-wrapper">
+          <section className="saas-content">
+            <Outlet />
+          </section>
+        </div>
       </main>
     </div>
   );
