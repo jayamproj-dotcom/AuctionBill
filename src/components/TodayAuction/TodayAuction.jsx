@@ -258,13 +258,15 @@ function TodayAuction() {
 
     const loadData = () => {
         const data = getAuctionData();
+        const today = new Date().toISOString().split('T')[0];
+
         // Load all available products. Sort by ID (desc) to show newest first.
         const sortedProducts = data.products
-            .filter(p => p.status === 'available')
+            .filter(p => (p.status === 'available' || p.status === 'soldout') && p.date === today)
             .sort((a, b) => b.id - a.id);
         setProducts(sortedProducts);
-        setSellers(data.sellers);
-        setBuyers(data.buyers);
+        setSellers(data.sellers.filter(s => s.status === 'active'));
+        setBuyers(data.buyers.filter(b => b.status === 'active'));
     };
 
     const handleAddProduct = (e) => {
@@ -337,40 +339,57 @@ function TodayAuction() {
             product.variants[variantIndex].quantity = variant.quantity - sellQty;
         }
 
+        // Check if all variants are sold out
+        const allSoldOut = product.variants.every(v => v.quantity <= 0);
+        if (allSoldOut) {
+            product.status = 'soldout';
+        }
+
         // Add transaction
         const finalPrice = parseFloat(saleData.finalPrice);
-        const commission = (finalPrice * variant.commission) / 100;
+
+        const totalAmount = finalPrice;
+        const totalCommission = (totalAmount * variant.commission) / 100;
 
         let amountPaid = 0;
-        if (saleData.paymentStatus === 'Paid') amountPaid = finalPrice;
+        if (saleData.paymentStatus === 'Paid') amountPaid = totalAmount;
         else if (saleData.paymentStatus === 'Part Paid') amountPaid = parseFloat(saleData.amountPaid) || 0;
         else amountPaid = 0;
 
         const transaction = {
-            transaction: 0,
+            id: Date.now(),
             date: new Date().toISOString().split('T')[0],
-            product: `${product.name} - ${variant.variety}`,
-            productId: product.id,
-            activeVariantId: variant.id,
-            quantity: parseFloat(saleData.qtyToSell),
-            unit: variant.unit || 'qty',
+
             sellerId: product.sellerId,
             buyerId: saleData.buyerId,
-            price: finalPrice,
-            commission: commission,
+
+            productId: product.id,
+            variantId: variant.id,
+
+            quantity: parseFloat(saleData.qtyToSell),
+            unit: variant.unit || 'qty',
+
+            finalAmount: totalAmount, // This is final auction value (total price)
+
             commissionPercent: variant.commission,
+            commission: totalCommission, // 5% of finalAmount
+
+            netAmount: totalAmount - totalCommission, // finalAmount - commission
+
             paymentStatus: saleData.paymentStatus,
             amountPaid: amountPaid,
-            balance: finalPrice - amountPaid,
-            // Seller specific fields
-            netAmount: finalPrice - commission,
-            credit: 0,
-            sellerPaymentStatus: 'Pending',
-            sellerAmountPaid: 0
+            balance: totalAmount - amountPaid,
+
+            payments: [
+                {
+                    id: Date.now(),
+                    date: new Date().toISOString().split('T')[0],
+                    amount: amountPaid
+                }
+            ]
         };
 
-        // Fix ID generation to avoid potential collisions if rapid clicks
-        transaction.id = Date.now();
+
 
         data.transactions.push(transaction);
         saveAuctionData(data);
@@ -481,7 +500,6 @@ function TodayAuction() {
                                             </div>
                                         </div>
 
-
                                         <div className="data-card-body product-card-body">
                                             <div className="product-image-container">
                                                 {product.image ? (
@@ -526,15 +544,22 @@ function TodayAuction() {
                                             </div>
                                         )} */}
                                         </div>
+
                                         <div className="data-card-footer product-card-footer">
                                             <button
                                                 className="btn btn-success sell-btn-full"
                                                 onClick={() => openSellModal(product)}
-                                                disabled={product.isActive === false}
+                                                disabled={product.isActive === false || product.status === 'soldout'}
                                             >
                                                 Sell
                                             </button>
                                         </div>
+
+                                        {product.status === 'soldout' && (
+                                            <div className="soldout-overlay">
+                                                SOLD OUT
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                         </div>
@@ -615,6 +640,7 @@ function TodayAuction() {
                                             type="number"
                                             placeholder="Qty"
                                             value={variantData.quantity}
+                                            min={1}
                                             onChange={(e) =>
                                                 setVariantData({ ...variantData, quantity: e.target.value })
                                             }
@@ -636,6 +662,7 @@ function TodayAuction() {
                                         <input
                                             type="number"
                                             placeholder="Comm %"
+                                            min={0}
                                             value={variantData.commission}
                                             onChange={(e) =>
                                                 setVariantData({ ...variantData, commission: e.target.value })
@@ -883,10 +910,23 @@ function TodayAuction() {
                                                 <input
                                                     type="number"
                                                     value={saleData.qtyToSell}
-                                                    onChange={(e) => setSaleData({ ...saleData, qtyToSell: e.target.value })}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        if (val === '') {
+                                                            setSaleData({ ...saleData, qtyToSell: '' });
+                                                        } else {
+                                                            const numVal = parseFloat(val);
+                                                            if (numVal > v.quantity) {
+                                                                toast.error(`Quantity cannot exceed ${v.quantity} ${v.unit}`);
+                                                                setSaleData({ ...saleData, qtyToSell: v.quantity });
+                                                            } else {
+                                                                setSaleData({ ...saleData, qtyToSell: val });
+                                                            }
+                                                        }
+                                                    }}
                                                     max={v.quantity}
-                                                    min="0.1"
-                                                    step="0.1"
+                                                    min="1"
+                                                    step="1"
                                                     placeholder={`Max: ${v.quantity}`}
                                                     required
                                                 />

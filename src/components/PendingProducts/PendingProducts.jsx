@@ -3,11 +3,12 @@ import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './PendingProducts.css';
 import '../TodayAuction/TodayAuction.css'; // Reusing base card styles
-import {Undo2, ListFilterPlus} from 'lucide-react';
+import { Undo2, ListFilterPlus } from 'lucide-react';
 
 function PendingProducts() {
     const [pendingProducts, setPendingProducts] = useState([]);
     const [today, setToday] = useState('');
+    const [sellers, setSellers] = useState([]);
 
     useEffect(() => {
         const todayStr = new Date().toISOString().split('T')[0];
@@ -18,14 +19,22 @@ function PendingProducts() {
     const loadPendingProducts = (currentDate) => {
         const data = getAuctionData();
         if (data && data.products) {
+            setSellers(data.sellers || []);
             const filtered = data.products.filter(p => {
                 if (p.status !== 'available') return false;
-                
+                if (p.isActive === false) return false;
+
                 // Determine product date (fallback to id timestamp if no explicit date)
                 const pDate = p.date || new Date(p.id).toISOString().split('T')[0];
-                
+
                 // Show if date is less than today (yesterday or older)
-                return pDate < currentDate;
+                if (pDate >= currentDate) return false;
+
+                // Check if any variant has quantity > 0
+                if (p.variants && p.variants.some(v => v.quantity > 0)) {
+                    return true;
+                }
+                return false;
             });
             setPendingProducts(filtered);
         }
@@ -78,9 +87,10 @@ function PendingProducts() {
         }
     };
 
+
     return (
         <>
-            <ConfirmationModal 
+            <ConfirmationModal
                 isOpen={isReturnConfirmOpen}
                 onClose={() => setIsReturnConfirmOpen(false)}
                 onConfirm={confirmReturnProduct}
@@ -91,7 +101,7 @@ function PendingProducts() {
                 cancelText="Cancel"
                 variant="warning"
             />
-            <ConfirmationModal 
+            <ConfirmationModal
                 isOpen={isMoveToTodayConfirmOpen}
                 onClose={() => setIsMoveToTodayConfirmOpen(false)}
                 onConfirm={confirmMoveToToday}
@@ -131,21 +141,15 @@ function PendingProducts() {
                                     <div className="data-card-header product-card-header">
                                         <div className="data-card-title product-card-title">
                                             {product.name}
-                                            {product.varieties && product.varieties.length > 0
-                                                ? ` - ${product.varieties
-                                                    .filter(v => typeof v === 'string' || v.active !== false)
-                                                    .map(v => (typeof v === 'string' ? v : v.name))
-                                                    .join(', ')}`
-                                                : ''}
                                         </div>
                                         <span className="pending-badge">Pending</span>
                                     </div>
-                                    
+
                                     <div className="data-card-body product-card-body">
                                         <div className="product-image-container">
                                             {product.image ? (
-                                                <img 
-                                                    src={product.image} 
+                                                <img
+                                                    src={product.image}
                                                     alt={product.name}
                                                     className="product-image"
                                                 />
@@ -155,31 +159,43 @@ function PendingProducts() {
                                         </div>
 
                                         <div className="data-card-subtitle product-card-subtitle">
-                                            Seller: <strong>{product.seller}</strong>
+                                            Seller: <strong>{sellers.find(s => s.id === product.sellerId)?.name || 'Unknown'}</strong>
                                         </div>
 
                                         <div className="date-info">
                                             <span>📅 Created: {product.date || new Date(product.id).toLocaleDateString()}</span>
                                         </div>
 
-                                        <div className="data-row">
-                                            <span className="data-label">Base Price</span>
-                                            <span className="data-value">₹{product.price.toLocaleString()}</span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Qty / Unit</span>
-                                            <span className="data-value">{product.quantity} {product.unit || 'qty'}</span>
+                                        <div className="product-variants">
+                                            {product.variants && product.variants.map(v => (
+                                                <div key={v.id} className="variant-box" style={{
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    padding: '8px',
+                                                    borderRadius: '4px',
+                                                    marginBottom: '4px',
+                                                    fontSize: '0.9em'
+                                                }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                                                        <span>{v.variety}</span>
+                                                        <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`} style={{ fontSize: '0.7em', padding: '2px 6px' }}>{v.quality}</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                                        <span>{v.quantity} {v.unit}</span>
+                                                        <span className="text-amber">{v.commission}% Comm</span>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
 
                                     <div className="data-card-footer product-card-footer pending-actions">
-                                        <button 
+                                        <button
                                             className="btn btn-error btn-pending-action return-btn"
                                             onClick={() => handleReturnClick(product)}
                                         >
                                             <Undo2 /> Return
                                         </button>
-                                        <button 
+                                        <button
                                             className="btn btn-success btn-pending-action back-today-btn"
                                             onClick={() => handleBackToToday(product)}
                                         >
