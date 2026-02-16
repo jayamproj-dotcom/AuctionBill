@@ -92,6 +92,7 @@ function TodayAuction() {
         variety: '',
         quality: 'Good',
         quantity: '',
+        pendingQuantity: '',
         unit: 'kg',
         commission: ''
     });
@@ -180,7 +181,8 @@ function TodayAuction() {
             id: Date.now(),
             ...variantData,
             commission: parseFloat(variantData.commission) || 0,
-            quantity: parseFloat(variantData.quantity)
+            quantity: parseFloat(variantData.quantity),
+            pendingQuantity: parseFloat(variantData.quantity)
         };
 
         setNewProduct({
@@ -328,19 +330,19 @@ function TodayAuction() {
         const variant = product.variants[variantIndex];
         const sellQty = parseFloat(saleData.qtyToSell) || 0;
 
-        if (sellQty >= variant.quantity) {
+        if (sellQty >= variant.pendingQuantity) {
             // Sold out this variant
-            product.variants[variantIndex].quantity = 0;
+            product.variants[variantIndex].pendingQuantity = 0;
             // Check if all variants are sold out? 
             // For now, if all quantities are 0, mark product properly if needed, but 'status' was on product level.
             // Let's keep product 'available' unless all variants zero? 
             // Or just rely on visual disabled state if quantity 0.
         } else {
-            product.variants[variantIndex].quantity = variant.quantity - sellQty;
+            product.variants[variantIndex].pendingQuantity = variant.pendingQuantity - sellQty;
         }
 
         // Check if all variants are sold out
-        const allSoldOut = product.variants.every(v => v.quantity <= 0);
+        const allSoldOut = product.variants.every(v => v.pendingQuantity <= 0);
         if (allSoldOut) {
             product.status = 'soldout';
         }
@@ -531,7 +533,7 @@ function TodayAuction() {
                                                             <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`} style={{ fontSize: '0.7em', padding: '2px 6px' }}>{v.quality}</span>
                                                         </div>
                                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                                                            <span>{v.quantity} {v.unit}</span>
+                                                            <span>{v.pendingQuantity} {v.unit}</span>
                                                             <span className="text-amber">{v.commission}% Comm</span>
                                                         </div>
                                                     </div>

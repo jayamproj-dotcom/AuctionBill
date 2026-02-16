@@ -63,6 +63,7 @@ export const initialData = {
                     variety: 'Standard',
                     quality: 'Good',
                     quantity: 100,
+                    pendingQuantity: 100,
                     unit: 'kg',
                     commission: 5,
                     pricePerUnit: 12000
@@ -84,6 +85,7 @@ export const initialData = {
                     variety: 'Fresh Morning',
                     quality: 'Good',
                     quantity: 50,
+                    pendingQuantity: 50,
                     unit: 'kg',
                     commission: 8,
                     pricePerUnit: 300
@@ -105,6 +107,7 @@ export const initialData = {
                     variety: 'Premium',
                     quality: 'Good',
                     quantity: 75,
+                    pendingQuantity: 75,
                     unit: 'kg',
                     commission: 6,
                     pricePerUnit: 9000
@@ -126,6 +129,7 @@ export const initialData = {
                     variety: 'Medium Size',
                     quality: 'Good',
                     quantity: 500,
+                    pendingQuantity: 500,
                     unit: 'qty',
                     commission: 4,
                     pricePerUnit: 25

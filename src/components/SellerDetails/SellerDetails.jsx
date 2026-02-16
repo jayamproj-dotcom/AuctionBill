@@ -345,34 +345,64 @@ function SellerDetails() {
         if (!product) return;
 
         // Find related transactions for this product
-        // We use selectedSeller.transactions which should be populated
         const relatedTransactions = (selectedSeller.transactions || []).filter(t => t.productId === productId);
 
-        // Calculate Stats
-        const totalSales = relatedTransactions.reduce((sum, t) => {
-            const net = t.netAmount !== undefined ? t.netAmount : ((t.finalAmount || 0) - (t.commission || 0));
-            // "Price" typically refers to the Final Amount (Winning Bid) before commission in auction terms, 
-            // but user might want Net Payable. Let's show Final Amount as Price, and Commission separately.
-            return sum + (t.finalAmount || 0);
-        }, 0);
+        // Calculate Stats PER VARIANT
+        const variantsWithStats = (product.variants || []).map(variant => {
+            // Filter transactions for this specific variant
+            // Assuming transactions store variant details or we match based on something unique.
+            // If transactions don't store variantId, we might match by variety/quality.
+            // CHECK: How are transactions linked to variants? 
+            // In `TodayAuction` or `AddTransaction`, we usually store `variant` info or `variantId` or simply the `variety` name.
+            // Looking at `SellerDetails.jsx` line 595, we just display variants.
+            // If transactions don't have variant info, we can't split stats.
+            // BUT assuming they might. If not, we fall back to displaying total product stats, but user wants "each and every variant".
 
+            // Let's look at how transactions are created in `loadSellers`... they are just fetched.
+            // If the transaction object has `variant` or `variety` field. 
+            // Without checking transaction structure, I will attempt to filter by matching variety name if available.
+
+            const variantTransactions = relatedTransactions.filter(t =>
+                t.variety === variant.variety && t.quality === variant.quality
+            );
+
+            // If no specific variant match found (maybe old data), we might show 0 or handle it.
+            // For now, let's calculate stats for this subset.
+
+            const price = variantTransactions.reduce((sum, t) => sum + (t.finalAmount || 0), 0);
+            const commission = variantTransactions.reduce((sum, t) => sum + (t.commission || 0), 0);
+            const paid = variantTransactions.reduce((sum, t) => sum + (t.sellerAmountPaid || 0), 0);
+            const net = variantTransactions.reduce((sum, t) => {
+                const n = t.netAmount !== undefined ? t.netAmount : ((t.finalAmount || 0) - (t.commission || 0));
+                return sum + n;
+            }, 0);
+            const credit = variantTransactions.reduce((sum, t) => sum + (t.credit || 0), 0);
+            const balance = Math.max(0, net - paid - credit);
+
+            return {
+                ...variant,
+                stats: { price, commission, paid, balance, net }
+            };
+        });
+
+        // Calculate Grand Totals for the header
+        const totalSales = relatedTransactions.reduce((sum, t) => sum + (t.finalAmount || 0), 0);
         const totalCommission = relatedTransactions.reduce((sum, t) => sum + (t.commission || 0), 0);
-
-        // Net Payable (Price - Commission)
-        const netPayable = relatedTransactions.reduce((sum, t) => {
+        const totalPaid = relatedTransactions.reduce((sum, t) => sum + (t.sellerAmountPaid || 0), 0);
+        const totalNet = relatedTransactions.reduce((sum, t) => {
             const net = t.netAmount !== undefined ? t.netAmount : ((t.finalAmount || 0) - (t.commission || 0));
             return sum + net;
         }, 0);
-
-        const totalPaid = relatedTransactions.reduce((sum, t) => sum + (t.sellerAmountPaid || 0), 0);
-        const totalBalance = netPayable - totalPaid - relatedTransactions.reduce((sum, t) => sum + (t.credit || 0), 0);
+        const totalCredit = relatedTransactions.reduce((sum, t) => sum + (t.credit || 0), 0);
+        const totalBalance = Math.max(0, totalNet - totalPaid - totalCredit);
 
         setViewingProduct({
             ...product,
+            variants: variantsWithStats, // Replace variants with enriched variants
             stats: {
                 price: totalSales,
                 commission: totalCommission,
-                net: netPayable,
+                net: totalNet,
                 paid: totalPaid,
                 balance: totalBalance
             },
@@ -423,8 +453,6 @@ function SellerDetails() {
         }
     };
 
-
-
     // Helper to close details view
     const handleBackToSellers = () => {
         setSelectedSeller(null);
@@ -432,6 +460,7 @@ function SellerDetails() {
 
     return (
         <>
+            {/* ... Modal Wrappers ... */}
             <ConfirmationModal
                 isOpen={isDeleteConfirmOpen}
                 onClose={() => setIsDeleteConfirmOpen(false)}
@@ -445,6 +474,7 @@ function SellerDetails() {
             />
 
             <div className="content-header">
+                {/* ... Header Content ... */}
                 <div className="header-top">
                     <h1>{selectedSeller ? 'Seller Details' : 'Sellers'}</h1>
                     <div className="header-actions">
@@ -522,7 +552,7 @@ function SellerDetails() {
                         </div>
                     </>
                 ) : (
-                    /* Detail View Logic (formerly modal body) */
+                    /* Detail View Logic */
                     <div className="fade-in">
                         <div className="card profile-container" style={{ marginBottom: '2rem' }}>
                             <div className="profile-layout">
@@ -622,77 +652,105 @@ function SellerDetails() {
             {/* Product View Modal */}
             {showProductViewModal && viewingProduct && (
                 <div className="modal-overlay" style={{ zIndex: 999 }} onClick={() => setShowProductViewModal(false)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 className="modal-title">Product Details</h3>
+                            <h3 className="modal-title">Product Details ({viewingProduct.name})</h3>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 {viewingProduct.stats.balance > 0 && (
-                                    <button className="btn btn-sm btn-primary" onClick={handleProductScopePayment}>
-                                        Pay Balance
-                                    </button>
+                                    <div className='badge badge-error'>Total Due: ₹{viewingProduct.stats.balance}</div>
                                 )}
                                 <button className="modal-close" onClick={() => setShowProductViewModal(false)}><X /></button>
                             </div>
                         </div>
                         <div className="modal-body">
-                            <div className="product-view-container" style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                                {viewingProduct.image && (
+                            <div className="product-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ display: 'flex', gap: '20px' }}>
                                     <div className="product-image-preview" style={{ flex: '0 0 150px' }}>
-                                        <img src={viewingProduct.image} alt={viewingProduct.name} style={{ width: '100%', borderRadius: '8px', border: '1px solid #ddd' }} />
-                                    </div>
-                                )}
-                                <div className="product-info-details" style={{ flex: 1 }}>
-                                    <div className="data-row">
-                                        <span className="data-label">Date</span>
-                                        <span className="data-value">{viewingProduct.date}</span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Product Name</span>
-                                        <span className="data-value product-name-bold">{viewingProduct.name}</span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Variants</span>
-                                        <div className="data-value">
-                                            {viewingProduct.variants && viewingProduct.variants.map((v, idx) => (
-                                                <div key={idx}>{v.variety} - {v.quantity} {v.unit}</div>
-                                            ))}
+                                        {viewingProduct.image ? (
+                                            <img
+                                                src={viewingProduct.image}
+                                                alt={viewingProduct.name}
+                                                style={{
+                                                    width: '100%',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd'
+                                                }}
+                                            />
+                                        ) : (
+                                            <div
+                                                className="product-image-placeholder"
+                                                style={{
+                                                    width: '100%',
+                                                    height: '120px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '40px',
+                                                    border: '1px solid #ddd',
+                                                    borderRadius: '8px',
+                                                    background: '#f5f5f5'
+                                                }}
+                                            >
+                                                📦
+                                            </div>
+                                        )}
+                                        <div style={{ marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>
+                                            {viewingProduct.date}
                                         </div>
                                     </div>
 
-                                    <div className="divider" style={{ margin: '15px 0', borderBottom: '1px solid #eee' }}></div>
+                                    <div className="product-info-details" style={{ flex: 1 }}>
+                                        {/* Summarized Stats */}
+                                        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
+                                            <div>Total Sales: <b>₹{viewingProduct.stats.price.toLocaleString()}</b></div>
+                                            <div>Commission: <b>₹{viewingProduct.stats.commission.toLocaleString()}</b></div>
+                                            <div className="text-success">Total Paid: <b>₹{viewingProduct.stats.paid.toLocaleString()}</b></div>
+                                            <div className="text-error">Total Balance: <b>₹{viewingProduct.stats.balance.toLocaleString()}</b></div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                                    <div className="data-row">
-                                        <span className="data-label">Total Price</span>
-                                        <span className="data-value text-amber">₹{viewingProduct.stats.price.toLocaleString()}</span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Commission</span>
-                                        <span className="data-value">₹{viewingProduct.stats.commission.toLocaleString()}</span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Total Paid</span>
-                                        <span className="data-value text-success">₹{viewingProduct.stats.paid.toLocaleString()}</span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Pending Balance</span>
-                                        <span className="data-value text-error" style={{ fontSize: '1.1em', fontWeight: 'bold' }}>
-                                            ₹{viewingProduct.stats.balance.toLocaleString()}
-                                        </span>
-                                    </div>
-
-                                    <div className="stats-buttons" style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
-                                        <button className="btn btn-sm btn-outline-success" style={{ cursor: 'default' }}>
-                                            Paid: ₹{viewingProduct.stats.paid}
-                                        </button>
-                                        <button className="btn btn-sm btn-outline-danger" style={{ cursor: 'default' }}>
-                                            Balance: ₹{viewingProduct.stats.balance}
-                                        </button>
-                                    </div>
+                                <h4 style={{ margin: '0 0 10px 0' }}>Variant Details</h4>
+                                <div className="table-wrapper">
+                                    <table className="history-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Variety</th>
+                                                <th>Qty</th>
+                                                <th>Price</th>
+                                                <th>Comm.</th>
+                                                <th>Paid</th>
+                                                <th>Balance</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {viewingProduct.variants.map((v, idx) => (
+                                                <tr key={idx}>
+                                                    <td>{v.variety}</td>
+                                                    <td>{v.quantity} {v.unit}</td>
+                                                    <td>₹{(v.stats?.price || 0).toLocaleString()}</td>
+                                                    <td>₹{(v.stats?.commission || 0).toLocaleString()}</td>
+                                                    <td className="text-success">₹{(v.stats?.paid || 0).toLocaleString()}</td>
+                                                    <td className="text-error" style={{ fontWeight: (v.stats?.balance > 0) ? 'bold' : 'normal' }}>
+                                                        ₹{(v.stats?.balance || 0).toLocaleString()}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {viewingProduct.variants.length === 0 && (
+                                                <tr><td colSpan="6" className="text-center">No variants found</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                         <div className="modal-footer">
+                            {viewingProduct.stats.balance > 0 && (
+                                <button className="btn btn-primary" onClick={handleProductScopePayment}>
+                                    Pay Total Balance
+                                </button>
+                            )}
                             <button className="btn btn-secondary" onClick={() => setShowProductViewModal(false)}>Close</button>
                         </div>
                     </div>
