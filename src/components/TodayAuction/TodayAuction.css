@@ -1,0 +1,410 @@
+/* TodayAuction.css */
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.product-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.product-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.product-card-body {
+    flex: 1;
+}
+
+.product-image-container {
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    overflow: hidden;
+    height: 160px;
+    background-color: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-image-placeholder {
+    font-size: 3rem;
+}
+
+.product-card-subtitle {
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+}
+
+.product-card-footer {
+    border-top: 1px solid var(--border-color);
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+}
+
+.sell-btn-full {
+    width: 100%;
+    padding: 0.6rem;
+}
+
+.qty-input-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.qty-input-main {
+    flex: 2;
+}
+
+.qty-input-unit {
+    flex: 1;
+}
+
+.image-upload-input {
+    padding: 0.75rem;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.image-preview-container {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.image-preview {
+    max-width: 200px;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+}
+
+.form-hint {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+.calc-card {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--bg-tertiary);
+}
+
+.calc-row {
+    margin-bottom: 0.5rem;
+}
+
+.calc-row-last {
+    margin-bottom: 0;
+}
+
+.variety-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.variety-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.variety-tag {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.variety-tag-remove {
+    cursor: pointer;
+    color: var(--error-color, #ef4444);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+.variety-tag-remove:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Enable/Disable Styles */
+/* Custom Toggle Switch - Enhanced */
+.toggle-switch {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    margin-right: 1.5rem;
+    position: relative;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.toggle-switch:hover {
+    background-color: rgba(0, 0, 0, 0.05); /* Subtle hover background */
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+/* The Slider Container */
+.slider {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+    background-color: #e5e7eb; /* Light gray for OFF state */
+    border-radius: 34px;
+    transition: .4s cubic-bezier(0.4, 0.0, 0.2, 1); /* Smoother transition */
+    border: 1px solid #d1d5db;
+    margin-right: 12px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.06); /* Inner shadow for depth */
+}
+
+/* The Knob */
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: .4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Drop shadow for the knob */
+}
+
+/* Checked State */
+.toggle-switch input:checked + .slider {
+    background-color: #10b981; /* Success Green for ON state */
+    border-color: #059669;
+   
+}
+
+
+.toggle-switch input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+/* Label Styling */
+.toggle-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: color 0.3s;
+    letter-spacing: 0.01em;
+}
+
+.toggle-switch input:checked ~ .toggle-label {
+    color: var(--text-primary); /* Darker text when active */
+}
+
+.toggle-switch:hover .toggle-label {
+    color: var(--primary-color);
+}
+
+.product-disabled {
+    opacity: 0.6;
+    background: var(--bg-tertiary);
+    border: 1px dashed var(--border-color);
+}
+
+.product-disabled:hover {
+    opacity: 0.9;
+    border: 1px solid var(--border-color);
+    box-shadow: none;
+}
+
+.variety-tag.variety-disabled {
+    background: var(--bg-tertiary); /* Use tertiary for disabled */
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+    text-decoration: line-through; /* Visual cue */
+}
+
+.variety-toggle {
+    margin-right: 5px;
+    font-size: 0.8em;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.2s;
+}
+
+.variety-toggle:hover {
+    opacity: 0.8;
+    transform: scale(1.1);
+}
+
+.grayscale {
+    filter: grayscale(100%);
+}
+
+/* Responsive adjustments for 325px and up */
+@media (max-width: 480px) {
+    .products-grid {
+        grid-template-columns: 1fr; /* Single column on small screens */
+    }
+    
+    .data-card-header {
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .action-buttons {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .modal {
+        width: 95%;
+        margin: 1rem;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .qty-input-group {
+        flex-direction: column;
+    }
+    
+    .variety-input-group {
+        flex-direction: column;
+    }
+    
+    .variety-input-group button {
+         width: 100%;
+    }
+}
+
+@media (max-width: 325px) {
+    .product-image-container {
+        height: 140px;
+    }
+    
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .header-actions {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .header-actions button {
+        width: 100%;
+    }
+
+    .toggle-hidden {
+        margin-right: 0;
+        margin-bottom: 5px;
+    }
+}
+
+
+.dropdown-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    z-index: 1000;
+    list-style: none;
+    padding: 0;
+    margin: 0.25rem 0 0 0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-tertiary);
+}
+
+
+.variant-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Tablet */
+@media (max-width: 992px) {
+  .variant-row {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .variant-row {
+    grid-template-columns: 1fr;
+  }
+
+  .variant-row input,
+  .variant-row select,
+  .variant-row button {
+    width: 100%;
+  }
+
+  .variant-row button {
+    margin-top: 5px;
+  }
+}

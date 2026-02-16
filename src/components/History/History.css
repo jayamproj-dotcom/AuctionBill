@@ -1,0 +1,23 @@
+/* History.css */
+
+.filter-card-margin {
+    margin-top: 1rem;
+}
+
+.clear-filters-btn {
+    margin-top: 0.5rem;
+}
+
+.section-header-margin {
+    margin-top: 1.5rem;
+}
+
+.data-row-divider {
+    margin-top: 0.25rem;
+    padding-top: 0.25rem;
+    border-top: 1px dashed var(--border-color);
+}
+
+.font-bold {
+    font-weight: 700;
+}
