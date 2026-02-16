@@ -19,6 +19,8 @@ import SubscriptionManagement from "./pages/SaaSAdmin/SubscriptionManagement.jsx
 import GlobalSettings from "./pages/SaaSAdmin/GlobalSettings.jsx";
 import SaaSLogin from "./pages/SaaSAdmin/SaaSLogin.jsx";
 import { getAuctionData } from "./utils/localStorage";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
@@ -64,6 +66,17 @@ function App() {
             <Route path="settings" element={<GlobalSettings />} />
           </Route>
         </Routes>
+        
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={true}
+          closeOnClick
+          pauseOnHover
+          draggable
+          theme="light"
+        />
       </BrowserRouter>
     </GoogleOAuthProvider>
   );
