@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './BuyerDetails.css';
-import {Plus,Pencil,Trash2, X,ShoppingCart, Search} from 'lucide-react';
+import { Plus, Pencil, Trash2, X, ShoppingCart, Search } from 'lucide-react';
 
 function BuyerDetails() {
     const [buyers, setBuyers] = useState([]);
@@ -17,19 +17,20 @@ function BuyerDetails() {
         email: '',
         buyerType: 'Retailer'
     });
+    const [activeTab, setActiveTab] = useState('purchases');
+
     // Payment Modal State
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [currentTransaction, setCurrentTransaction] = useState(null);
-    const [paymentForm, setPaymentForm] = useState({
-        status: 'Pending',
-        amountPaid: 0,
-        balance: 0
-    });
+    const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false);
+    const [paymentConfig, setPaymentConfig] = useState(null);
+    const [paymentAmount, setPaymentAmount] = useState('');
+    const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+    const [paymentNote, setPaymentNote] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         loadBuyers();
     }, []);
+
     const loadBuyers = () => {
         const data = getAuctionData();
         if (data && data.buyers) {
@@ -48,21 +49,42 @@ function BuyerDetails() {
             });
             setTransactions(sortedTransactions);
 
-            // Calculate total purchases for each buyer
+            const allPayments = data.buyerPayments || [];
+
+            // Calculate total purchases and payments for each buyer
             const buyersWithStats = data.buyers.map(buyer => {
                 const buyerTransactions = sortedTransactions.filter(t => t.buyerId === buyer.id);
+                const buyerPayments = allPayments.filter(p => p.buyerId === buyer.id);
+
                 const totalPurchases = buyerTransactions.reduce((sum, t) => sum + t.finalAmount, 0);
+                const totalPaid = buyerPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+                const balance = totalPurchases - totalPaid;
                 const totalItems = buyerTransactions.length;
-                return { ...buyer, totalPurchases, totalItems };
+
+                return {
+                    ...buyer,
+                    totalPurchases,
+                    totalItems,
+                    totalPaid,
+                    balance,
+                    transactions: buyerTransactions,
+                    payments: buyerPayments
+                };
             });
             setBuyers(buyersWithStats);
         }
     };
+
     const openDetailsModal = (buyer) => {
-        const buyerTransactions = transactions.filter(t => t.buyerId === buyer.id);
-        setSelectedBuyer({ ...buyer, transactions: buyerTransactions });
-        setShowDetailsModal(true);
+        // Re-fetch fresh data to ensure we have latest payments/transactions
+        const data = getAuctionData();
+        const freshBuyer = buyers.find(b => b.id === buyer.id);
+        if (freshBuyer) {
+            setSelectedBuyer(freshBuyer);
+            setShowDetailsModal(true);
+        }
     };
+
     const handleToggleStatus = (id) => {
         const data = getAuctionData();
         const index = data.buyers.findIndex(b => b.id === id);
@@ -76,6 +98,7 @@ function BuyerDetails() {
             }
         }
     };
+
     const handleResetPassword = (id) => {
         const newPassword = prompt('Enter new password:');
         if (newPassword) {
@@ -88,6 +111,7 @@ function BuyerDetails() {
             }
         }
     };
+
     const handleAddBuyer = (e) => {
         e.preventDefault();
         const data = getAuctionData();
@@ -126,42 +150,75 @@ function BuyerDetails() {
             setBuyerToDelete(null);
         }
     };
-    
 
-            // Update currently selected buyer view
-            if (selectedBuyer) {
-                const updatedTransactions = data.transactions.filter(t => t.buyer === selectedBuyer.name);
-                setSelectedBuyer(prev => ({ ...prev, transactions: updatedTransactions }));
-            }
-            setShowPaymentModal(false);
+    const handleRecordPayment = (e) => {
+        e.preventDefault();
+        const amount = parseFloat(paymentAmount);
+
+        if (isNaN(amount) || amount <= 0) {
+            alert("Please enter a valid amount.");
+            return;
         }
-    };    const handleAmountPaidChange = (e) => {
-        const val = parseFloat(e.target.value);
-        const price = currentTransaction.price;
-        
-        // If val is NaN (empty), treat as 0 for calculation but keep input clean
-        const effectiveVal = isNaN(val) ? 0 : val;
-        const newBalance = Math.max(0, price - effectiveVal);
-        
-        setPaymentForm({
-            ...paymentForm,
-            amountPaid: e.target.value, // Keep raw input
-            balance: newBalance
-        });
-};    const handleBalanceChange = (e) => {
-        const val = parseFloat(e.target.value);
-        const price = currentTransaction.price;
-        
-        // If val is NaN (empty), treat as 0 for calculation but keep input clean
-        const effectiveVal = isNaN(val) ? 0 : val;
-        const newPaid = Math.max(0, price - effectiveVal);
-        
-        setPaymentForm({
-            ...paymentForm,
-            balance: e.target.value, // Keep raw input
-            amountPaid: newPaid
-        });
+
+        const data = getAuctionData();
+
+        const newPayment = {
+            id: Date.now(),
+            buyerId: selectedBuyer.id,
+            date: paymentDate,
+            amount: amount,
+            method: "Cash",
+            note: paymentNote || 'Global Payment',
+            reference: `PAY-${Date.now()}`
+        };
+
+        if (!data.buyerPayments) {
+            data.buyerPayments = [];
+        }
+        data.buyerPayments.push(newPayment);
+
+        saveAuctionData(data);
+
+        // Refresh data
+        loadBuyers();
+
+        // Update local selected buyer
+        // (loadBuyers updates 'buyers' state, we need to find the updated buyer and set it)
+        // Helper to do this cleanly:
+        const updatedBuyer = data.buyers.find(b => b.id === selectedBuyer.id);
+        // We need to re-calculate stats for this buyer similar to loadBuyers or just rely on loadBuyers + useEffect/callback
+        // Simplest is to manually update specific fields for immediate UI feedback or just close modal and let React handle it via effect if dependencies were right (but they aren't).
+        // Let's rely on the fact we called loadBuyers(), we need to fetch that new object from the new 'buyers' state... 
+        // actually accessing state immediately after set is bad.
+        // So we manually construct the update for selectedBuyer to keep modal open and fresh.
+
+        const currentTotalPaid = (selectedBuyer.totalPaid || 0) + amount;
+        const currentBalance = (selectedBuyer.balance || 0) - amount;
+
+        setSelectedBuyer(prev => ({
+            ...prev,
+            payments: [...(prev.payments || []), newPayment],
+            totalPaid: currentTotalPaid,
+            balance: currentBalance
+        }));
+
+        setShowRecordPaymentModal(false);
+        setPaymentAmount('');
+        setPaymentNote('');
+        alert(`Payment of ₹${amount} recorded successfully.`);
     };
+
+    const openPaymentModal = () => {
+        setPaymentConfig({
+            targetName: selectedBuyer.name,
+            maxAmount: selectedBuyer.balance
+        });
+        setPaymentAmount('');
+        setPaymentDate(new Date().toISOString().split('T')[0]);
+        setPaymentNote('');
+        setShowRecordPaymentModal(true);
+    };
+
     return (
         <>
             <ConfirmationModal
@@ -191,7 +248,7 @@ function BuyerDetails() {
                     <span>Buyers</span>
                 </div>
             </div>
-    <div className="content-body">
+            <div className="content-body">
                 <div className="section-header">
                     <h3 className="section-title">All Buyers ({buyers.length})</h3>
                 </div>
@@ -211,7 +268,7 @@ function BuyerDetails() {
                         </div>
                     </div>
                 </div>
-         <div className="card-list fade-in">
+                <div className="card-list fade-in">
                     {buyers.length === 0 ? (
                         <div className="empty-state">
                             <div className="empty-state-icon"><ShoppingCart /></div>
@@ -221,49 +278,55 @@ function BuyerDetails() {
                         buyers
                             .filter(buyer => buyer.name.toLowerCase().includes(searchQuery.toLowerCase()))
                             .map(buyer => (
-                            <div key={buyer.id} className="data-card clickable-card" onClick={() => openDetailsModal(buyer)}>
-                                <div className="data-card-header">
-                                    <div>
-                                        <div className="data-card-title">{buyer.name}</div>
-                                        <div className="data-card-subtitle">{buyer.contact}</div>
+                                <div key={buyer.id} className="data-card clickable-card" onClick={() => openDetailsModal(buyer)}>
+                                    <div className="data-card-header">
+                                        <div>
+                                            <div className="data-card-title">{buyer.name}</div>
+                                            <div className="data-card-subtitle">{buyer.contact}</div>
+                                        </div>
+                                        <button className="icon-btn delete" onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteClick(buyer.id);
+                                        }} title="Delete Buyer">
+                                            <Trash2 size={18} />
+                                        </button>
+                                        <div className="badge badge-warning type-badge-abs">
+                                            {buyer.buyerType || 'Retailer'}
+                                        </div>
                                     </div>
-                                    <button className="icon-btn delete" onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteClick(buyer.id);
-                                    }} title="Delete Buyer">
-                                        <Trash2 size={18} />
-                                    </button>
-                                    <div className="badge badge-warning type-badge-abs">
-                                        {buyer.buyerType || 'Retailer'}
-                                    </div>
-                                </div>
 
-                                <div className="data-card-body">
-                                    <div className="data-row">
-                                        <span className="data-label">Address</span>
-                                        <span className="data-value">{buyer.address}</span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Login Access</span>
-                                        <span className={`data-value badge ${buyer.status === 'inactive' ? 'badge-error' : 'badge-success'}`}>
-                                            {buyer.status === 'inactive' ? 'Disabled' : 'Enabled'}
-                                        </span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Items Purchased</span>
-                                        <span className="data-value">{buyer.totalItems || 0}</span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Total Purchases</span>
-                                        <span className="data-value text-amber">₹{(buyer.totalPurchases || 0).toLocaleString()}</span>
+                                    <div className="data-card-body">
+                                        <div className="data-row">
+                                            <span className="data-label">Address</span>
+                                            <span className="data-value">{buyer.address}</span>
+                                        </div>
+                                        <div className="data-row">
+                                            <span className="data-label">Login Access</span>
+                                            <span className={`data-value badge ${buyer.status === 'inactive' ? 'badge-error' : 'badge-success'}`}>
+                                                {buyer.status === 'inactive' ? 'Disabled' : 'Enabled'}
+                                            </span>
+                                        </div>
+                                        <div className="data-row">
+                                            <span className="data-label">Items Purchased</span>
+                                            <span className="data-value">{buyer.totalItems || 0}</span>
+                                        </div>
+                                        <div className="data-row">
+                                            <span className="data-label">Total Purchases</span>
+                                            <span className="data-value text-amber">₹{(buyer.totalPurchases || 0).toLocaleString()}</span>
+                                        </div>
+                                        <div className="data-row">
+                                            <span className="data-label">Balance</span>
+                                            <span className={`data-value ${buyer.balance > 0 ? 'text-error' : 'text-success'}`}>
+                                                ₹{(buyer.balance || 0).toLocaleString()}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))
+                            ))
                     )}
                 </div>
             </div>
-           {/* Buyer Detail Modal */}
+            {/* Buyer Detail Modal */}
             {showDetailsModal && selectedBuyer && (
                 <div className="modal-overlay" onClick={() => setShowDetailsModal(false)}>
                     <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
@@ -299,47 +362,112 @@ function BuyerDetails() {
                                         >
                                             {selectedBuyer.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
                                         </button>
-                                        {/* <button 
-                                            className="btn btn-secondary btn-sm action-btn-fixed"
-                                            onClick={() => handleResetPassword(selectedBuyer.id)}
+                                        <button
+                                            className="btn btn-primary btn-sm action-btn-fixed"
+                                            onClick={openPaymentModal}
+                                            disabled={selectedBuyer.balance <= 0}
                                         >
-                                            Reset Password
-                                        </button> */}
+                                            Add Payment
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="data-row volume-row">
                                     <span className="data-label">Total Purchase Volume</span>
                                     <span className="data-value text-amber volume-value">₹{selectedBuyer.totalPurchases.toLocaleString()}</span>
                                 </div>
+                                <div className="data-row volume-row">
+                                    <span className="data-label">Total Paid</span>
+                                    <span className="data-value text-success volume-value">₹{selectedBuyer.totalPaid.toLocaleString()}</span>
+                                </div>
+                                <div className="data-row volume-row">
+                                    <span className="data-label">Outstanding Balance</span>
+                                    <span className="data-value text-error volume-value">₹{selectedBuyer.balance.toLocaleString()}</span>
+                                </div>
                             </div>
 
-                            <h4 className="history-title">Purchase History ({selectedBuyer.transactions.length})</h4>
-                            <div className="table-wrapper history-table-wrapper">
-                                <table className="history-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Product</th>
-                                            <th>Price</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {selectedBuyer.transactions.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="3" className="empty-td">No purchases yet</td>
-                                            </tr>
-                                        ) : (
-                                            selectedBuyer.transactions.map(t => (
-                                                <tr key={t.id}>
-                                                    <td>{t.date}</td>
-                                                    <td className="bold-product">{t.productName}</td>
-                                                    <td className="text-amber">₹{t.finalAmount.toLocaleString()}</td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
+                            <div className="history-tabs">
+                                <button
+                                    className={`tab-button ${activeTab === 'purchases' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('purchases')}
+                                >
+                                    Purchase History ({selectedBuyer.transactions.length})
+                                </button>
+                                <button
+                                    className={`tab-button ${activeTab === 'payments' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('payments')}
+                                >
+                                    Payment History ({selectedBuyer.payments ? selectedBuyer.payments.length : 0})
+                                </button>
                             </div>
+
+                            {activeTab === 'purchases' ? (
+                                <div className="table-wrapper history-table-wrapper">
+                                    <table className="history-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Product</th>
+                                                <th>Price</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {selectedBuyer.transactions.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="3" className="empty-td">No purchases yet</td>
+                                                </tr>
+                                            ) : (
+                                                selectedBuyer.transactions.map(t => (
+                                                    <tr key={t.id}>
+                                                        <td>{t.date}</td>
+                                                        <td className="bold-product">{t.productName}</td>
+                                                        <td className="text-amber">₹{t.finalAmount.toLocaleString()}</td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colSpan="2" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total:</td>
+                                                <td className="text-amber" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.totalPurchases.toLocaleString()}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="table-wrapper history-table-wrapper">
+                                    <table className="history-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Note</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {(!selectedBuyer.payments || selectedBuyer.payments.length === 0) ? (
+                                                <tr>
+                                                    <td colSpan="3" className="empty-td">No payments recorded</td>
+                                                </tr>
+                                            ) : (
+                                                selectedBuyer.payments.sort((a, b) => new Date(b.date) - new Date(a.date)).map(p => (
+                                                    <tr key={p.id}>
+                                                        <td>{p.date}</td>
+                                                        <td>{p.note}</td>
+                                                        <td className="text-success">₹{parseFloat(p.amount).toLocaleString()}</td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colSpan="2" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Paid:</td>
+                                                <td className="text-success" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.totalPaid.toLocaleString()}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            )}
+
                         </div>
                         <div className="modal-footer">
                             <button className="btn btn-secondary" onClick={() => setShowDetailsModal(false)}>Close</button>
@@ -347,77 +475,70 @@ function BuyerDetails() {
                     </div>
                 </div>
             )}
-            {/* Payment Update Modal */}
-            {/* {showPaymentModal && currentTransaction && (
-                <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
+
+            {/* Record Payment Modal */}
+            {showRecordPaymentModal && selectedBuyer && (
+                <div className="modal-overlay" onClick={() => setShowRecordPaymentModal(false)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 className="modal-title">Update Payment Details</h3>
-                            <button className="modal-close" onClick={() => setShowPaymentModal(false)}><X/></button>
+                            <h3 className="modal-title">Record Payment</h3>
+                            <button className="modal-close" onClick={() => setShowRecordPaymentModal(false)}><X /></button>
                         </div>
-                        <form onSubmit={handleUpdatePayment}>
+                        <form onSubmit={handleRecordPayment}>
                             <div className="modal-body">
-                                <div className="data-row payment-row">
-                                    <span className="data-label">Product</span>
-                                    <span className="data-value">{currentTransaction.product}</span>
+                                <div className="data-row" style={{ marginBottom: '1rem' }}>
+                                    <span className="data-label">Buyer Name</span>
+                                    <span className="data-value">{selectedBuyer.name}</span>
                                 </div>
-                                <div className="data-row payment-row">
-                                    <span className="data-label">Total Price</span>
-                                    <span className="data-value text-amber">₹{currentTransaction.price.toLocaleString()}</span>
+                                <div className="data-row" style={{ marginBottom: '1rem' }}>
+                                    <span className="data-label">Outstanding Balance</span>
+                                    <span className="data-value text-error">₹{selectedBuyer.balance.toLocaleString()}</span>
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Payment Status</label>
-                                    <select
-                                        value={paymentForm.status}
-                                        onChange={(e) => setPaymentForm({...paymentForm, status: e.target.value})}
-                                        disabled={currentTransaction.paymentStatus === 'Paid'}
-                                    >
-                                        <option value="Pending" disabled={currentTransaction.paymentStatus === 'Paid' || (currentTransaction.amountPaid > 0)}>Pending</option>
-                                        <option value="Part Paid">Part Paid</option>
-                                        <option value="Paid">Paid</option>
-                                    </select>
+                                    <label className="form-label">Payment Date</label>
+                                    <input
+                                        type="date"
+                                        value={paymentDate}
+                                        onChange={(e) => setPaymentDate(e.target.value)}
+                                        required
+                                    />
                                 </div>
-
-                                {paymentForm.status === 'Part Paid' && (
-                                    <>
-                                        <div className="form-group">
-                                            <label className="form-label">Amount Paid (₹)</label>
-                                            <input
-                                                type="number"
-                                                value={paymentForm.amountPaid}
-                                                onChange={handleAmountPaidChange}
-                                                max={currentTransaction.price}
-                                                min={currentTransaction.amountPaid || 0}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Balance Amount (₹)</label>
-                                            <input
-                                                type="number"
-                                                value={paymentForm.balance}
-                                                onChange={handleBalanceChange}
-                                                max={currentTransaction.price}
-                                                min="0"
-                                                required
-                                            />
-                                        </div>
-                                    </>
-                                )}
+                                <div className="form-group">
+                                    <label className="form-label">Amount (₹)</label>
+                                    <input
+                                        type="number"
+                                        value={paymentAmount}
+                                        onChange={(e) => setPaymentAmount(e.target.value)}
+                                        min="1"
+                                        placeholder="Enter amount"
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Note</label>
+                                    <input
+                                        type="text"
+                                        value={paymentNote}
+                                        onChange={(e) => setPaymentNote(e.target.value)}
+                                        placeholder="e.g. Cash / UPI"
+                                    />
+                                </div>
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowPaymentModal(false)}>
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowRecordPaymentModal(false)}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn btn-primary btn-sm">
-                                    Update Payment
+                                <button type="submit" className="btn btn-primary">
+                                    Save Payment
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
-            )} */}
+            )}
+
 
 
             {/* Add Buyer Modal */}
@@ -494,6 +615,7 @@ function BuyerDetails() {
             )}
         </>
     );
+
 }
 
 export default BuyerDetails;

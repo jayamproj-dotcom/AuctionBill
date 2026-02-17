@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
 import './History.css';
-import { ArrowRightLeft, Download, ShoppingCart, HandCoins, Package } from 'lucide-react';
+import { ArrowRightLeft, Download, ShoppingCart, HandCoins, Package,Search  } from 'lucide-react';
 
 
 function History() {

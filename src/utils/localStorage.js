@@ -165,7 +165,10 @@ export const initialData = {
         //     amount: 50000,
         //     reason: "Advance given before auction"
         // }
-    ]
+    ],
+
+    // 🔥 New Table: buyerPayments (Money Received from Buyer)
+    buyerPayments: []
 };
 
 export const getAuctionData = () => {

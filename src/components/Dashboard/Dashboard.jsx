@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChartNoAxesCombined,Users,UsersRound,HandCoins,BadgeIndianRupee,Bell, ArrowDownLeft, ArrowUpRight, Filter, Calendar} from "lucide-react";
+import { ChartNoAxesCombined, Users, UsersRound, HandCoins, BadgeIndianRupee, Bell, ArrowDownLeft, ArrowUpRight, Filter, Calendar } from "lucide-react";
 import { getAuctionData } from '../../utils/localStorage';
 import Notification from '../Common/Notification';
 import './Dashboard.css';
@@ -110,6 +110,22 @@ function Dashboard() {
         const totalCommission = filtered.reduce((sum, t) => sum + (t.commissionAmount || 0), 0);
         const totalQty = filtered.reduce((sum, t) => sum + (parseFloat(t.quantity) || 0), 0);
 
+        // Calculate Pay In (Buyer Payments)
+        const buyerPayments = data.buyerPayments || [];
+        const filteredPayIn = buyerPayments.filter(p => {
+            const pDate = new Date(p.date);
+            return pDate >= dateRange.start && pDate < dateRange.end;
+        });
+        const totalPayIn = filteredPayIn.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+        // Calculate Pay Out (Seller Payments)
+        const sellerPayments = data.sellerPayments || [];
+        const filteredPayOut = sellerPayments.filter(p => {
+            const pDate = new Date(p.date);
+            return pDate >= dateRange.start && pDate < dateRange.end;
+        });
+        const totalPayOut = filteredPayOut.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
         setStats({
             totalBuyers: data.buyers.length,
             totalSellers: data.sellers.length,
@@ -117,6 +133,8 @@ function Dashboard() {
             totalCommission,
             todayAuctions: todayTransactions.length,
             totalQty,
+            totalPayIn,
+            totalPayOut
         });
 
         setFilteredTransactions(filtered);
@@ -143,8 +161,8 @@ function Dashboard() {
                         <div className="dashboard-filter-container">
                             <div className="filter-dropdown-wrapper">
                                 <Filter className="filter-icon" size={16} />
-                                <select 
-                                    value={dateFilter} 
+                                <select
+                                    value={dateFilter}
                                     onChange={(e) => setDateFilter(e.target.value)}
                                     className="dashboard-filter-select"
                                 >
@@ -156,12 +174,12 @@ function Dashboard() {
                                     <option value="custom">Custom Date</option>
                                 </select>
                             </div>
-                            
+
                             {dateFilter === 'custom' && (
                                 <div className="custom-date-wrapper fade-in">
                                     <Calendar className="calendar-icon" size={16} />
-                                    <input 
-                                        type="date" 
+                                    <input
+                                        type="date"
                                         value={customDate}
                                         onChange={(e) => setCustomDate(e.target.value)}
                                         max={new Date().toISOString().split('T')[0]}
@@ -235,7 +253,7 @@ function Dashboard() {
                         <div className="stat-header">
                             <div className="stat-icon"><ArrowDownLeft className="text-success" /></div>
                             <div>
-                                <div className="stat-value">₹67.5K</div>
+                                <div className="stat-value">₹{((stats.totalPayIn || 0) / 1000).toFixed(1)}K</div>
                                 <div className="stat-label">Pay In</div>
                             </div>
                         </div>
@@ -249,7 +267,7 @@ function Dashboard() {
                         <div className="stat-header">
                             <div className="stat-icon"><ArrowUpRight className="text-danger" /></div>
                             <div>
-                                <div className="stat-value">₹55.1K</div>
+                                <div className="stat-value">₹{((stats.totalPayOut || 0) / 1000).toFixed(1)}K</div>
                                 <div className="stat-label">Pay Out</div>
                             </div>
                         </div>

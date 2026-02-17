@@ -359,36 +359,35 @@ function SellerDetails() {
                                 </div>
                             ) : (
                                 sellers
-                                    .filter(seller => seller.name.toLowerCase().includes(searchQuery.toLowerCase()))
                                     .map(seller => (
-                                    <div key={seller.id} className="data-card clickable-card" onClick={() => openDetailsModal(seller)}>
-                                        <div className="data-card-header">
-                                            <div>
-                                                <div className="data-card-title">{seller.name}</div>
-                                                <div className="data-card-subtitle">{seller.contact}</div>
+                                        <div key={seller.id} className="data-card clickable-card" onClick={() => openDetailsModal(seller)}>
+                                            <div className="data-card-header">
+                                                <div>
+                                                    <div className="data-card-title">{seller.name}</div>
+                                                    <div className="data-card-subtitle">{seller.contact}</div>
+                                                </div>
+                                                <button className="icon-btn delete" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteClick(seller.id);
+                                                }} title="Delete Seller">
+                                                    <Trash2 size={18} />
+                                                </button>
                                             </div>
-                                            <button className="icon-btn delete" onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteClick(seller.id);
-                                            }} title="Delete Seller">
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
 
-                                        <div className="data-card-body">
-                                            <div className="data-row">
-                                                <span className="data-label">Address</span>
-                                                <span className="data-value">{seller.address}</span>
-                                            </div>
-                                            <div className="data-row">
-                                                <span className="data-label">Login Access</span>
-                                                <span className={`data-value badge ${seller.loginAccess === 'inactive' ? 'badge-error' : 'badge-success'}`}>
-                                                    {seller.loginAccess === 'inactive' ? 'Disabled' : 'Enabled'}
-                                                </span>
+                                            <div className="data-card-body">
+                                                <div className="data-row">
+                                                    <span className="data-label">Address</span>
+                                                    <span className="data-value">{seller.address}</span>
+                                                </div>
+                                                <div className="data-row">
+                                                    <span className="data-label">Login Access</span>
+                                                    <span className={`data-value badge ${seller.loginAccess === 'inactive' ? 'badge-error' : 'badge-success'}`}>
+                                                        {seller.loginAccess === 'inactive' ? 'Disabled' : 'Enabled'}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))
+                                    ))
                             )}
                         </div>
                     </>

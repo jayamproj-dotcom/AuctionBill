@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
 import './CommissionRecord.css';
-import { Download, BadgeIndianRupee, ArrowRightLeft, ChartNoAxesColumn } from 'lucide-react';
+import { Download, BadgeIndianRupee, ArrowRightLeft, ChartNoAxesColumn, Search } from 'lucide-react';
 
 function CommissionRecord() {
     const [commissions, setCommissions] = useState([]);
