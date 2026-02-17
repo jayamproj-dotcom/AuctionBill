@@ -446,3 +446,108 @@
 .product-card.product-disabled {
   opacity: 0.7;
 }
+
+/* Extracted Inline Styles */
+.form-group-relative {
+    position: relative;
+}
+
+.search-card {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+}
+
+.search-form-group {
+    margin-bottom: 0;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.variant-box {
+    background: rgba(255, 255, 255, 0.05); /* or var(--bg-tertiary) */
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-size: 0.9em;
+}
+
+.variant-box-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+}
+
+.variant-badge {
+    font-size: 0.7em;
+    padding: 2px 6px;
+}
+
+.variant-box-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+}
+
+.add-variant-btn {
+    padding: 8px 12px;
+}
+
+.table-responsive-variants {
+    margin-top: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.variant-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.variant-table-th {
+    border-bottom: 1px solid #444; 
+    text-align: left;
+    padding: 8px;
+}
+
+.variant-table-tr {
+    border-bottom: 1px solid #333; 
+}
+
+.variant-table-tr-header {
+    border-bottom: 1px solid #444;
+    text-align: left;
+}
+
+.variant-table-td {
+    padding: 8px;
+}
+
+/* Search Box Styles */
+.search-icon-container {
+    position: relative;
+}
+
+.search-input-wrapper {
+    position: relative;
+}
+
+.search-input-wrapper input {
+    padding-right: 40px;
+    width: 100%;
+}
+
+.search-icon-absolute {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}

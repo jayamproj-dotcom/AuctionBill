@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
 import './CommissionRecord.css';
-import {Download,BadgeIndianRupee,ArrowRightLeft,ChartNoAxesColumn} from 'lucide-react';
+import {Download,BadgeIndianRupee,ArrowRightLeft,ChartNoAxesColumn, Search} from 'lucide-react';
 
 function CommissionRecord() {
     const [commissions, setCommissions] = useState([]);
@@ -139,12 +139,16 @@ function CommissionRecord() {
                     <div className="form-grid">
                         <div className="form-group">
                             <label className="form-label">Search</label>
-                            <input
-                                type="text"
-                                placeholder="Product or seller..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type="text"
+                                    placeholder="Product or seller..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    style={{ paddingRight: '35px', width: '100%' }}
+                                />
+                                <Search size={18} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                            </div>
                         </div>
                         <div className="form-group">
                             <label className="form-label">Date</label>

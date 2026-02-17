@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal.jsx';
-import { Trash2, X } from 'lucide-react';
+import { Trash2, X, Search, Plus, Edit } from 'lucide-react';
 
 const VendorManagement = () => {
+  const role = localStorage.getItem('saas_role');
   const [vendors, setVendors] = useState([
     { 
         id: 1, 
@@ -59,10 +60,73 @@ const VendorManagement = () => {
     },
   ]);
 
+  const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(null);
+  const [editingVendor, setEditingVendor] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [vendorToDelete, setVendorToDelete] = useState(null);
+  
+  const [newVendor, setNewVendor] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    plan: 'Basic',
+    status: 'Active'
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewVendor(prev => ({
+        ...prev,
+        [name]: value
+    }));
+  };
+
+  const handleAddSubmit = (e) => {
+    e.preventDefault();
+    const vendorToAdd = {
+        ...newVendor,
+        id: vendors.length + 1,
+        joinedDate: new Date().toISOString().split('T')[0],
+        lastLogin: 'Never',
+        totalAuctions: 0,
+        revenue: '₹0'
+    };
+    setVendors([...vendors, vendorToAdd]);
+    setIsAddModalOpen(false);
+    setNewVendor({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        plan: 'Basic',
+        status: 'Active'
+    });
+  };
+
+  const handleEditClick = (vendor) => {
+    setEditingVendor({ ...vendor });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditingVendor(prev => ({
+        ...prev,
+        [name]: value
+    }));
+  };
+
+  const handleUpdateSubmit = (e) => {
+    e.preventDefault();
+    setVendors(vendors.map(v => v.id === editingVendor.id ? editingVendor : v));
+    setIsEditModalOpen(false);
+    setEditingVendor(null);
+  };
 
   const handleRowClick = (vendor) => {
     setSelectedVendor(vendor);
@@ -100,12 +164,21 @@ const VendorManagement = () => {
         <div className="saas-card-header">
           <h3 className="saas-text-lg saas-font-semibold">Manage Vendors</h3>
           <div className="saas-flex saas-gap-05">
-            <input 
-              type="text" 
-              placeholder="Search vendors..." 
-              className="saas-input saas-search-input" 
-            />
-            <button className="saas-btn btn-primary">Add Vendor</button>
+            <div className="saas-search-icon-container">
+                <input 
+                  type="text" 
+                  placeholder="Search vendors..." 
+                  className="saas-input saas-search-input-wrapper" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Search size={18} className="saas-search-icon-absolute" />
+            </div>
+            {role !== 'subadmin' && (
+              <button className="saas-btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
+                  <Plus size={18} /> Add Vendor
+              </button>
+            )}
           </div>
         </div>
         <div className="saas-table-container">
@@ -120,7 +193,11 @@ const VendorManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {vendors.map((vendor) => (
+              {vendors.filter(vendor => 
+                vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                vendor.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                vendor.phone.includes(searchQuery)
+              ).map((vendor) => (
                 <tr 
                     key={vendor.id} 
                     onClick={() => handleRowClick(vendor)}
@@ -143,16 +220,30 @@ const VendorManagement = () => {
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <div className="saas-flex saas-gap-075">
-                      <button 
-                         className="icon-btn delete" 
-                         title="Delete Vendor"
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           handleDeleteClick(vendor);
-                         }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {role !== 'subadmin' && (
+                        <>
+                          <button 
+                             className="icon-btn edit" 
+                             title="Edit Vendor"
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               handleEditClick(vendor);
+                             }}
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button 
+                             className="icon-btn delete" 
+                             title="Delete Vendor"
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               handleDeleteClick(vendor);
+                             }}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -161,6 +252,185 @@ const VendorManagement = () => {
           </table>
         </div>
       </div>
+
+      {/* Add Vendor Modal */}
+      {isAddModalOpen && (
+        <div className="saas-modal-overlay" onClick={() => setIsAddModalOpen(false)}>
+            <div className="saas-modal" onClick={e => e.stopPropagation()}>
+                <div className="saas-modal-header">
+                    <h3 className="saas-text-xl saas-font-semibold">Add New Vendor</h3>
+                    <button 
+                        onClick={() => setIsAddModalOpen(false)}
+                        className="saas-modal-close-btn"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+                <form onSubmit={handleAddSubmit}>
+                    <div className="saas-modal-content">
+                        <div className="inner-grid-2">
+                            <div className="form-group">
+                                <label className="saas-label">Vendor Name *</label>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    value={newVendor.name} 
+                                    onChange={handleInputChange} 
+                                    className="saas-input" 
+                                    required 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="saas-label">Email Address *</label>
+                                <input 
+                                    type="email" 
+                                    name="email" 
+                                    value={newVendor.email} 
+                                    onChange={handleInputChange} 
+                                    className="saas-input" 
+                                    required 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="saas-label">Phone Number *</label>
+                                <input 
+                                    type="tel" 
+                                    name="phone" 
+                                    value={newVendor.phone} 
+                                    onChange={handleInputChange} 
+                                    className="saas-input" 
+                                    required 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="saas-label">Plan</label>
+                                <select 
+                                    name="plan" 
+                                    value={newVendor.plan} 
+                                    onChange={handleInputChange} 
+                                    className="saas-select"
+                                >
+                                    <option value="Basic">Basic</option>
+                                    <option value="Premium">Premium</option>
+                                    <option value="Enterprise">Enterprise</option>
+                                </select>
+                            </div>
+                            <div className="form-group full-width">
+                                <label className="saas-label">Address</label>
+                                <textarea 
+                                    name="address" 
+                                    value={newVendor.address} 
+                                    onChange={handleInputChange} 
+                                    className="saas-textarea" 
+                                    rows="2"
+                                ></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="saas-modal-footer">
+                        <button type="button" className="saas-btn btn-secondary" onClick={() => setIsAddModalOpen(false)}>Cancel</button>
+                        <button type="submit" className="saas-btn btn-primary">Add Vendor</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+      )}
+
+      {/* Edit Vendor Modal */}
+      {isEditModalOpen && editingVendor && (
+        <div className="saas-modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+            <div className="saas-modal" onClick={e => e.stopPropagation()}>
+                <div className="saas-modal-header">
+                    <h3 className="saas-text-xl saas-font-semibold">Edit Vendor</h3>
+                    <button 
+                        onClick={() => setIsEditModalOpen(false)}
+                        className="saas-modal-close-btn"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+                <form onSubmit={handleUpdateSubmit}>
+                    <div className="saas-modal-content">
+                        <div className="inner-grid-2">
+                            <div className="form-group">
+                                <label className="saas-label">Vendor Name *</label>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    value={editingVendor.name} 
+                                    onChange={handleEditChange} 
+                                    className="saas-input" 
+                                    required 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="saas-label">Email Address *</label>
+                                <input 
+                                    type="email" 
+                                    name="email" 
+                                    value={editingVendor.email} 
+                                    onChange={handleEditChange} 
+                                    className="saas-input" 
+                                    required 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="saas-label">Phone Number *</label>
+                                <input 
+                                    type="tel" 
+                                    name="phone" 
+                                    value={editingVendor.phone} 
+                                    onChange={handleEditChange} 
+                                    className="saas-input" 
+                                    required 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="saas-label">Plan</label>
+                                <select 
+                                    name="plan" 
+                                    value={editingVendor.plan} 
+                                    onChange={handleEditChange} 
+                                    className="saas-select"
+                                >
+                                    <option value="Basic">Basic</option>
+                                    <option value="Premium">Premium</option>
+                                    <option value="Enterprise">Enterprise</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="saas-label">Status</label>
+                                <select 
+                                    name="status" 
+                                    value={editingVendor.status} 
+                                    onChange={handleEditChange} 
+                                    className="saas-select"
+                                >
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
+                            </div>
+                            <div className="form-group full-width">
+                                <label className="saas-label">Address</label>
+                                <textarea 
+                                    name="address" 
+                                    value={editingVendor.address} 
+                                    onChange={handleEditChange} 
+                                    className="saas-textarea" 
+                                    rows="2"
+                                ></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="saas-modal-footer">
+                        <button type="button" className="saas-btn btn-secondary" onClick={() => setIsEditModalOpen(false)}>Cancel</button>
+                        <button type="submit" className="saas-btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+      )}
 
       {/* Detailed Info Modal */}
       {isModalOpen && selectedVendor && (

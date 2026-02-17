@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './SellerDetails.css';
-import { Plus, Pencil, Trash2, X, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Eye, Search } from 'lucide-react';
 
 function SellerDetails() {
     const [sellers, setSellers] = useState([]);
@@ -24,6 +24,7 @@ function SellerDetails() {
         amountPaid: 0,
         balance: 0
     });
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Bulk Payment Modal State
     const [showBulkPaymentModal, setShowBulkPaymentModal] = useState(false);
@@ -482,6 +483,23 @@ function SellerDetails() {
                             <h3 className="section-title">All Sellers ({sellers.length})</h3>
                         </div>
 
+                        {/* Search Bar */}
+                        <div className="card fade-in search-card" style={{ marginBottom: '1.5rem', padding: '1rem' }}>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Search seller by name..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="search-input"
+                                        style={{ width: '100%', padding: '10px 40px 10px 15px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                                    />
+                                    <Search size={20} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="card-list fade-in">
                             {sellers.length === 0 ? (
                                 <div className="empty-state">
@@ -489,7 +507,9 @@ function SellerDetails() {
                                     <p>No sellers registered yet</p>
                                 </div>
                             ) : (
-                                sellers.map(seller => (
+                                sellers
+                                    .filter(seller => seller.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                                    .map(seller => (
                                     <div key={seller.id} className="data-card clickable-card" onClick={() => openDetailsModal(seller)}>
                                         <div className="data-card-header">
                                             <div>
@@ -567,64 +587,129 @@ function SellerDetails() {
                             </div>
                         </div>
 
-                            <h4 className="history-title">Selled Items History ({selectedSeller.transactions.length})</h4>
-                            <div className="table-wrapper history-table-wrapper">
-                                <table className="history-table">
-                                    <thead>
+                        <h4 className="history-title">Submitted Products ({selectedSeller.products?.length || 0})</h4>
+                        <div className="table-wrapper history-table-wrapper">
+                            <table className="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Product</th>
+                                        <th>Variant (Qty)</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(!selectedSeller.products || selectedSeller.products.length === 0) ? (
                                         <tr>
-                                            <th>Date</th>
-                                            <th>Product</th>
-                                            <th>Buyer</th>
-                                            <th>Price</th>
-                                            <th>Credit</th>
-                                            <th>Paid</th>
-                                            <th>Balance</th>
-                                            <th>Status</th>
-                                            <th>Action</th>
+                                            <td colSpan="5" className="empty-td">No items submitted yet</td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {selectedSeller.transactions.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="9" className="empty-td">No items sold yet</td>
+                                    ) : (
+                                        selectedSeller.products.map(p => (
+                                            <tr key={p.id}>
+                                                <td>{p.date}</td>
+                                                <td className="product-name-bold">{p.name}</td>
+                                                <td>
+                                                    {p.variants && p.variants.map((v, idx) => (
+                                                        <div key={idx} style={{ fontSize: '0.9em' }}>
+                                                            {v.variety} - {v.quantity} {v.unit}
+                                                        </div>
+                                                    ))}
+                                                </td>
+                                                <td>
+                                                    <span className={`badge ${p.status === 'soldout' ? 'badge-error' : 'badge-success'}`}>
+                                                        {p.status}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button className="btn btn-sm btn-info" onClick={() => handleViewProduct(p.id)} title="View Details" style={{ marginRight: '5px' }}>
+                                                        <Eye size={16} />
+                                                    </button>
+                                                    {/* <button className="btn btn-sm btn-primary" onClick={() => handlePayBalance(p.id)}>
+                                                        Pay
+                                                    </button> */}
+                                                </td>
                                             </tr>
-                                        ) : (
-                                            selectedSeller.transactions.map(t => {
-                                                const netAmount = t.netAmount !== undefined ? t.netAmount : (t.price - t.commission);
-                                                const paid = t.sellerAmountPaid || 0;
-                                                const credit = t.credit || 0;
-                                                const balance = netAmount - paid - credit;
-                                                const status = t.sellerPaymentStatus || 'Pending';
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+            </div>
 
-                                                return (
-                                                <tr key={t.id}>
-                                                    <td>{t.date}</td>
-                                                    <td className="product-name-bold">{t.product}</td>
-                                                    <td>{t.buyer}</td>
-                                                    <td className="text-amber">₹{netAmount.toLocaleString()}</td>
-                                                    <td className="text-error">₹{credit.toLocaleString()}</td>
-                                                    <td className="text-success">₹{paid.toLocaleString()}</td>
-                                                    <td className="text-error">₹{balance.toLocaleString()}</td>
-                                                    <td>
-                                                        <span className={`badge ${status === 'Paid' ? 'badge-success' : status === 'Part Paid' ? 'badge-warning' : 'badge-error'}`}>
-                                                            {status}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <button 
-                                                            className="icon-btn edit"
-                                                            onClick={() => openPaymentModal(t)}
-                                                            title="Update Payment"
-                                                        >
-                                                            <Pencil/>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                                );
-                                            })
-                                        )}
-                                    </tbody>
-                                </table>
+            {/* Product View Modal */}
+            {showProductViewModal && viewingProduct && (
+                <div className="modal-overlay" style={{ zIndex: 999 }} onClick={() => setShowProductViewModal(false)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Product Details</h3>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                {viewingProduct.stats.balance > 0 && (
+                                    <button className="btn btn-sm btn-primary" onClick={handleProductScopePayment}>
+                                        Pay Balance
+                                    </button>
+                                )}
+                                <button className="modal-close" onClick={() => setShowProductViewModal(false)}><X /></button>
+                            </div>
+                        </div>
+                        <div className="modal-body">
+                            <div className="product-view-container" style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                                {viewingProduct.image && (
+                                    <div className="product-image-preview" style={{ flex: '0 0 150px' }}>
+                                        <img src={viewingProduct.image} alt={viewingProduct.name} style={{ width: '100%', borderRadius: '8px', border: '1px solid #ddd' }} />
+                                    </div>
+                                )}
+                                <div className="product-info-details" style={{ flex: 1 }}>
+                                    <div className="data-row">
+                                        <span className="data-label">Date</span>
+                                        <span className="data-value">{viewingProduct.date}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">Product Name</span>
+                                        <span className="data-value product-name-bold">{viewingProduct.name}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">Variants</span>
+                                        <div className="data-value">
+                                            {viewingProduct.variants && viewingProduct.variants.map((v, idx) => (
+                                                <div key={idx}>{v.variety} - {v.quantity} {v.unit}</div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="divider" style={{ margin: '15px 0', borderBottom: '1px solid #eee' }}></div>
+
+                                    <div className="data-row">
+                                        <span className="data-label">Total Price</span>
+                                        <span className="data-value text-amber">₹{viewingProduct.stats.price.toLocaleString()}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">Commission</span>
+                                        <span className="data-value">₹{viewingProduct.stats.commission.toLocaleString()}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">Total Paid</span>
+                                        <span className="data-value text-success">₹{viewingProduct.stats.paid.toLocaleString()}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">Pending Balance</span>
+                                        <span className="data-value text-error" style={{ fontSize: '1.1em', fontWeight: 'bold' }}>
+                                            ₹{viewingProduct.stats.balance.toLocaleString()}
+                                        </span>
+                                    </div>
+
+                                    <div className="stats-buttons" style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
+                                        <button className="btn btn-sm btn-outline-success" style={{ cursor: 'default' }}>
+                                            Paid: ₹{viewingProduct.stats.paid}
+                                        </button>
+                                        <button className="btn btn-sm btn-outline-danger" style={{ cursor: 'default' }}>
+                                            Balance: ₹{viewingProduct.stats.balance}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="modal-footer">

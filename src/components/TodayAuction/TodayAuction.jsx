@@ -3,7 +3,7 @@ import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './TodayAuction.css';
 import { toast } from 'react-toastify';
-import { Plus, Trash2, Edit2, X, Eye, EyeOff, PackageSearch } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Eye, EyeOff, PackageSearch, Search } from 'lucide-react';
 
 const SearchableSelect = ({ options, value, onChange, placeholder, required, label }) => {
     const [searchTerm, setSearchTerm] = useState(value || '');
@@ -24,7 +24,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, required, lab
     };
 
     return (
-        <div className="form-group" style={{ position: 'relative' }}>
+        <div className="form-group form-group-relative">
             <label className="form-label">{label}</label>
             <input
                 type="text"
@@ -78,7 +78,8 @@ function TodayAuction() {
     const [showSellModal, setShowSellModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [editingProduct, setEditingProduct] = useState(null);
-    const [showHidden, setShowHidden] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
 
     const [newProduct, setNewProduct] = useState({
         name: '',
@@ -439,17 +440,7 @@ const capitalizeFirst = (text) => {
                 <div className="header-top">
                     <h1>Today Auction</h1>
                     <div className="header-actions">
-                        <label className="toggle-switch">
-                            <input
-                                type="checkbox"
-                                checked={showHidden}
-                                onChange={(e) => setShowHidden(e.target.checked)}
-                            />
-                            <span className="slider"></span>
-                            <span className="toggle-label">
-                                {showHidden ? '🚫 Hide Disabled' : '👁️ Show Disabled'}
-                            </span>
-                        </label>
+
                         <button className="btn btn-primary" onClick={() => setShowAddProduct(true)}>
                             <span><Plus /></span>
                             Add Product
@@ -468,6 +459,22 @@ const capitalizeFirst = (text) => {
                     <h3 className="section-title">Available Products ({products.length})</h3>
                 </div>
 
+                {/* Search Bar */}
+                <div className="card fade-in search-card">
+                    <div className="form-group search-form-group">
+                        <div className="search-icon-container">
+                            <input
+                                type="text"
+                                placeholder="Search by product, seller, or variant..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="search-input"
+                            />
+                            <Search size={20} className="search-icon-absolute" />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="card-list fade-in">
                     {products.length === 0 ? (
                         <div className="empty-state">
@@ -477,7 +484,16 @@ const capitalizeFirst = (text) => {
                     ) : (
                         <div className="products-grid">
                             {products
-                                .filter(p => showHidden || p.isActive !== false)
+                                .filter(product => {
+                                    if (!searchQuery) return true;
+                                    const query = searchQuery.toLowerCase();
+                                    const seller = sellers.find(s => s.id === product.sellerId);
+                                    const sellerName = seller ? seller.name.toLowerCase() : '';
+                                    const productName = product.name.toLowerCase();
+                                    const hasMatchingVariant = product.variants && product.variants.some(v => v.variety.toLowerCase().includes(query));
+                                    
+                                    return sellerName.includes(query) || productName.includes(query) || hasMatchingVariant;
+                                })
                                 .map(product => (
                                     <div key={product.id} className={`data-card product-card ${product.isActive === false ? 'product-disabled' : ''}`}>
                                         <div className="data-card-header product-card-header">
@@ -521,18 +537,12 @@ const capitalizeFirst = (text) => {
 
                                             <div className="product-variants">
                                                 {product.variants && product.variants.map(v => (
-                                                    <div key={v.id} className="variant-box" style={{
-                                                        background: 'rgba(255,255,255,0.05)',
-                                                        padding: '8px',
-                                                        borderRadius: '4px',
-                                                        marginBottom: '4px',
-                                                        fontSize: '0.9em'
-                                                    }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                                                    <div key={v.id} className="variant-box">
+                                                        <div className="variant-box-header">
                                                             <span>{capitalizeFirst(v.variety)}</span>
-                                                            <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`} style={{ fontSize: '0.7em', padding: '2px 6px' }}>{v.quality}</span>
+                                                            <span className={`badge variant-badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`}>{v.quality}</span>
                                                         </div>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                                        <div className="variant-box-footer">
                                                             <span>{v.quantity} {v.unit}</span>
                                                             <span className="text-amber">{v.commission}% Comm</span>
                                                         </div>
@@ -671,33 +681,33 @@ const capitalizeFirst = (text) => {
                                             }
                                         />
 
-                                        <button type="button" className="btn btn-primary" style={{ padding: '8px 12px' }} onClick={handleAddVariant}>
+                                        <button type="button" className="btn btn-primary add-variant-btn" onClick={handleAddVariant}>
                                             Add
                                         </button>
                                     </div>
                                 </div>
                                 {newProduct.variants && newProduct.variants.length > 0 && (
-                                    <div className="table-responsive" style={{ marginTop: '10px', maxHeight: '200px', overflowY: 'auto' }}>
-                                        <table className="variant-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9em' }}>
+                                    <div className="table-responsive table-responsive-variants">
+                                        <table className="variant-table">
                                             <thead>
-                                                <tr style={{ borderBottom: '1px solid #444', textAlign: 'left' }}>
-                                                    <th style={{ padding: '8px' }}>Variety</th>
-                                                    <th style={{ padding: '8px' }}>Quality</th>
-                                                    <th style={{ padding: '8px' }}>Qty</th>
-                                                    <th style={{ padding: '8px' }}>Unit</th>
-                                                    <th style={{ padding: '8px' }}>Comm %</th>
-                                                    <th style={{ padding: '8px' }}>Action</th>
+                                                <tr className="variant-table-th">
+                                                    <th className="variant-table-th">Variety</th>
+                                                    <th className="variant-table-th">Quality</th>
+                                                    <th className="variant-table-th">Qty</th>
+                                                    <th className="variant-table-th">Unit</th>
+                                                    <th className="variant-table-th">Comm %</th>
+                                                    <th className="variant-table-th">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {newProduct.variants.map(v => (
-                                                    <tr key={v.id} style={{ borderBottom: '1px solid #333' }}>
-                                                        <td style={{ padding: '8px' }}>{v.variety}</td>
-                                                        <td style={{ padding: '8px' }}>{v.quality}</td>
-                                                        <td style={{ padding: '8px' }}>{v.quantity}</td>
-                                                        <td style={{ padding: '8px' }}>{v.unit}</td>
-                                                        <td style={{ padding: '8px' }}>{v.commission}%</td>
-                                                        <td style={{ padding: '8px' }}>
+                                                    <tr key={v.id} className="variant-table-tr">
+                                                        <td className="variant-table-td">{v.variety}</td>
+                                                        <td className="variant-table-td">{v.quality}</td>
+                                                        <td className="variant-table-td">{v.quantity}</td>
+                                                        <td className="variant-table-td">{v.unit}</td>
+                                                        <td className="variant-table-td">{v.commission}%</td>
+                                                        <td className="variant-table-td">
                                                             <button
                                                                 type="button"
                                                                 className="icon-btn delete"
@@ -798,25 +808,25 @@ const capitalizeFirst = (text) => {
                                 {editingProduct.variants && editingProduct.variants.length > 0 && (
                                     <div className="form-group">
                                         <label className="form-label">Variants (Read-only)</label>
-                                        <div className="table-responsive" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                            <table className="variant-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9em' }}>
+                                        <div className="table-responsive-variants">
+                                            <table className="variant-table">
                                                 <thead>
-                                                    <tr style={{ borderBottom: '1px solid #444', textAlign: 'left' }}>
-                                                        <th style={{ padding: '8px' }}>Variety</th>
-                                                        <th style={{ padding: '8px' }}>Quality</th>
-                                                        <th style={{ padding: '8px' }}>Qty</th>
-                                                        <th style={{ padding: '8px' }}>Unit</th>
-                                                        <th style={{ padding: '8px' }}>Comm %</th>
+                                                    <tr className="variant-table-tr-header">
+                                                        <th className="variant-table-th">Variety</th>
+                                                        <th className="variant-table-th">Quality</th>
+                                                        <th className="variant-table-th">Qty</th>
+                                                        <th className="variant-table-th">Unit</th>
+                                                        <th className="variant-table-th">Comm %</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {editingProduct.variants.map(v => (
-                                                        <tr key={v.id} style={{ borderBottom: '1px solid #333' }}>
-                                                            <td style={{ padding: '8px' }}>{v.variety}</td>
-                                                            <td style={{ padding: '8px' }}>{v.quality}</td>
-                                                            <td style={{ padding: '8px' }}>{v.quantity}</td>
-                                                            <td style={{ padding: '8px' }}>{v.unit}</td>
-                                                            <td style={{ padding: '8px' }}>{v.commission}%</td>
+                                                        <tr key={v.id} className="variant-table-tr">
+                                                            <td className="variant-table-td">{v.variety}</td>
+                                                            <td className="variant-table-td">{v.quality}</td>
+                                                            <td className="variant-table-td">{v.quantity}</td>
+                                                            <td className="variant-table-td">{v.unit}</td>
+                                                            <td className="variant-table-td">{v.commission}%</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>

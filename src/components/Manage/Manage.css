@@ -91,4 +91,168 @@
     flex: 1;
 }
 
+/* Extracted Inline Styles */
+.manage-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
 
+.profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 2rem;
+}
+
+.profile-image-container {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.profile-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #f3f4f6;
+}
+
+.profile-upload-label {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: #4f46e5;
+    color: white;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-upload-input {
+    display: none;
+}
+
+.profile-name {
+    margin: 0;
+}
+
+.profile-email {
+    color: #6b7280;
+    margin: 5px 0 0 0;
+}
+
+.manage-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.manage-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #374151;
+}
+
+.input-icon-wrapper {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}
+
+.input-icon-map {
+    position: absolute;
+    left: 12px;
+    top: 15px;
+    color: #9ca3af;
+}
+
+.manage-input {
+    width: 100%;
+    padding-left: 40px !important; /* Force override saas-admin rules if conflict */
+}
+
+.manage-input-disabled {
+    background-color: #f9fafb;
+    cursor: default;
+}
+
+.manage-input-enabled {
+    background-color: white;
+    cursor: text;
+}
+
+.manage-textarea {
+    width: 100%;
+    padding-left: 40px;
+    min-height: 100px;
+    padding-top: 12px;
+}
+
+.google-managed-badge {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: #9ca3af;
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.security-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.security-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #111827;
+}
+
+.password-hint {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.edit-btn {
+    padding: 10px 24px !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cancel-btn {
+    padding: 10px 24px !important;
+}
+
+.save-btn {
+    padding: 10px 24px !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}

@@ -21,3 +21,24 @@
 .font-bold {
     font-weight: 700;
 }
+/* Search Box Styles */
+.search-icon-container {
+    position: relative;
+}
+
+.search-input-wrapper {
+    position: relative;
+}
+
+.search-input-wrapper input {
+    padding-right: 35px;
+    width: 100%;
+}
+
+.search-icon-absolute {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}

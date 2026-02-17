@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './BuyerDetails.css';
-import {Plus,Pencil,Trash2, X,ShoppingCart} from 'lucide-react';
+import {Plus,Pencil,Trash2, X,ShoppingCart, Search} from 'lucide-react';
 
 function BuyerDetails() {
     const [buyers, setBuyers] = useState([]);
@@ -25,11 +25,11 @@ function BuyerDetails() {
         amountPaid: 0,
         balance: 0
     });
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         loadBuyers();
     }, []);
-
     const loadBuyers = () => {
         const data = getAuctionData();
         if (data && data.buyers) {
@@ -51,13 +51,11 @@ function BuyerDetails() {
             setBuyers(buyersWithStats);
         }
     };
-
     const openDetailsModal = (buyer) => {
         const buyerTransactions = transactions.filter(t => t.buyer === buyer.name);
         setSelectedBuyer({ ...buyer, transactions: buyerTransactions });
         setShowDetailsModal(true);
     };
-
     const handleToggleStatus = (id) => {
         const data = getAuctionData();
         const index = data.buyers.findIndex(b => b.id === id);
@@ -71,7 +69,6 @@ function BuyerDetails() {
             }
         }
     };
-
     const handleResetPassword = (id) => {
         const newPassword = prompt('Enter new password:');
         if (newPassword) {
@@ -84,7 +81,6 @@ function BuyerDetails() {
             }
         }
     };
-
     const handleAddBuyer = (e) => {
         e.preventDefault();
         const data = getAuctionData();
@@ -122,9 +118,7 @@ function BuyerDetails() {
             setIsDeleteConfirmOpen(false);
             setBuyerToDelete(null);
         }
-    };
-
-    const openPaymentModal = (transaction) => {
+    }; const openPaymentModal = (transaction) => {
         setCurrentTransaction(transaction);
         const price = transaction.price;
         const paid = transaction.amountPaid || 0;
@@ -137,12 +131,9 @@ function BuyerDetails() {
         });
         setShowPaymentModal(true);
     };
-
     const handleUpdatePayment = (e) => {
         e.preventDefault();
-        if (!currentTransaction) return;
-
-        // Validation: Cannot pay less than what was already paid
+        if (!currentTransaction) return;       // Validation: Cannot pay less than what was already paid
         const previousPaid = currentTransaction.amountPaid || 0;
         let newPaidInput = parseFloat(paymentForm.amountPaid) || 0;
         
@@ -150,17 +141,13 @@ function BuyerDetails() {
             alert(`Amount cannot be less than previously paid amount (₹${previousPaid})`);
             return;
         }
-
         const data = getAuctionData();
         const index = data.transactions.findIndex(t => t.id === currentTransaction.id);
-
         if (index !== -1) {
             const price = data.transactions[index].price;
             let paid = parseFloat(paymentForm.amountPaid) || 0;
             let status = paymentForm.status;
-            let balance = parseFloat(paymentForm.balance) || 0;
-
-            // Logic validations based on status change vs manual edits
+            let balance = parseFloat(paymentForm.balance) || 0;         // Logic validations based on status change vs manual edits
             if (status === 'Paid') {
                 paid = price;
                 balance = 0;
@@ -183,7 +170,6 @@ function BuyerDetails() {
                 amountPaid: paid,
                 balance: balance
             };
-
             saveAuctionData(data);
             loadBuyers();
 
@@ -194,9 +180,7 @@ function BuyerDetails() {
             }
             setShowPaymentModal(false);
         }
-    };
-
-    const handleAmountPaidChange = (e) => {
+    };    const handleAmountPaidChange = (e) => {
         const val = parseFloat(e.target.value);
         const price = currentTransaction.price;
         
@@ -209,9 +193,7 @@ function BuyerDetails() {
             amountPaid: e.target.value, // Keep raw input
             balance: newBalance
         });
-    };
-
-    const handleBalanceChange = (e) => {
+};    const handleBalanceChange = (e) => {
         const val = parseFloat(e.target.value);
         const price = currentTransaction.price;
         
@@ -225,7 +207,6 @@ function BuyerDetails() {
             amountPaid: newPaid
         });
     };
-
     return (
         <>
             <ConfirmationModal 
@@ -255,20 +236,36 @@ function BuyerDetails() {
                     <span>Buyers</span>
                 </div>
             </div>
-
-            <div className="content-body">
+    <div className="content-body">
                 <div className="section-header">
                     <h3 className="section-title">All Buyers ({buyers.length})</h3>
                 </div>
 
-                <div className="card-list fade-in">
+                <div className="card fade-in search-card">
+                    <div className="form-group search-form-group">
+                        <div style={{ position: 'relative' }}>
+                            <input
+                                type="text"
+                                placeholder="Search buyer by name..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="search-input"
+                                style={{ paddingRight: '40px', width: '100%' }}
+                            />
+                            <Search size={20} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                        </div>
+                    </div>
+                </div>
+         <div className="card-list fade-in">
                     {buyers.length === 0 ? (
                         <div className="empty-state">
                             <div className="empty-state-icon"><ShoppingCart/></div>
                             <p>No buyers registered yet</p>
                         </div>
                     ) : (
-                        buyers.map(buyer => (
+                        buyers
+                            .filter(buyer => buyer.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                            .map(buyer => (
                             <div key={buyer.id} className="data-card clickable-card" onClick={() => openDetailsModal(buyer)}>
                                 <div className="data-card-header">
                                     <div>
@@ -311,8 +308,7 @@ function BuyerDetails() {
                     )}
                 </div>
             </div>
-
-            {/* Buyer Detail Modal */}
+           {/* Buyer Detail Modal */}
             {showDetailsModal && selectedBuyer && (
                 <div className="modal-overlay" onClick={() => setShowDetailsModal(false)}>
                     <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
@@ -418,7 +414,6 @@ function BuyerDetails() {
                     </div>
                 </div>
             )}
-
             {/* Payment Update Modal */}
             {showPaymentModal && currentTransaction && (
                 <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
@@ -429,11 +424,11 @@ function BuyerDetails() {
                         </div>
                         <form onSubmit={handleUpdatePayment}>
                             <div className="modal-body">
-                                <div className="data-row" style={{marginBottom: '1rem'}}>
+                                <div className="data-row payment-row">
                                     <span className="data-label">Product</span>
                                     <span className="data-value">{currentTransaction.product}</span>
                                 </div>
-                                <div className="data-row" style={{marginBottom: '1rem'}}>
+                                <div className="data-row payment-row">
                                     <span className="data-label">Total Price</span>
                                     <span className="data-value text-amber">₹{currentTransaction.price.toLocaleString()}</span>
                                 </div>

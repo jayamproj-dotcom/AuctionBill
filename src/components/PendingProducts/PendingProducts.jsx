@@ -3,12 +3,13 @@ import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './PendingProducts.css';
 import '../TodayAuction/TodayAuction.css'; // Reusing base card styles
-import { Undo2, ListFilterPlus } from 'lucide-react';
+import { Undo2, ListFilterPlus, Search } from 'lucide-react';
 
 function PendingProducts() {
     const [pendingProducts, setPendingProducts] = useState([]);
     const [today, setToday] = useState('');
     const [sellers, setSellers] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const todayStr = new Date().toISOString().split('T')[0];
@@ -128,6 +129,22 @@ function PendingProducts() {
                     <h3 className="section-title">Unsold Products from Previous Days ({pendingProducts.length})</h3>
                 </div>
 
+                {/* Search Bar */}
+                <div className="card fade-in search-card">
+                    <div className="form-group search-form-group">
+                        <div className="search-icon-container">
+                            <input
+                                type="text"
+                                placeholder="Search by product, seller, or variant..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="search-input"
+                            />
+                            <Search size={20} className="search-icon-absolute" />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="card-list fade-in">
                     {pendingProducts.length === 0 ? (
                         <div className="empty-state">
@@ -136,7 +153,18 @@ function PendingProducts() {
                         </div>
                     ) : (
                         <div className="products-grid">
-                            {pendingProducts.map(product => (
+                            {pendingProducts
+                                .filter(product => {
+                                    if (!searchQuery) return true;
+                                    const query = searchQuery.toLowerCase();
+                                    const seller = sellers.find(s => s.id === product.sellerId);
+                                    const sellerName = seller ? seller.name.toLowerCase() : '';
+                                    const productName = product.name.toLowerCase();
+                                    const hasMatchingVariant = product.variants && product.variants.some(v => v.variety.toLowerCase().includes(query));
+                                    
+                                    return sellerName.includes(query) || productName.includes(query) || hasMatchingVariant;
+                                })
+                                .map(product => (
                                 <div key={product.id} className="data-card product-card pending-product-card">
                                     <div className="data-card-header product-card-header">
                                         <div className="data-card-title product-card-title">
@@ -168,18 +196,12 @@ function PendingProducts() {
 
                                         <div className="product-variants">
                                             {product.variants && product.variants.map(v => (
-                                                <div key={v.id} className="variant-box" style={{
-                                                    background: 'rgba(255,255,255,0.05)',
-                                                    padding: '8px',
-                                                    borderRadius: '4px',
-                                                    marginBottom: '4px',
-                                                    fontSize: '0.9em'
-                                                }}>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                                                <div key={v.id} className="variant-box">
+                                                    <div className="variant-box-header">
                                                         <span>{v.variety}</span>
-                                                        <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`} style={{ fontSize: '0.7em', padding: '2px 6px' }}>{v.quality}</span>
+                                                        <span className={`badge variant-badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`}>{v.quality}</span>
                                                     </div>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                                    <div className="variant-box-footer">
                                                         <span>{v.quantity} {v.unit}</span>
                                                         <span className="text-amber">{v.commission}% Comm</span>
                                                     </div>

@@ -87,7 +87,7 @@ const AdminLayout = () => {
               src={userPhoto} 
               alt="User" 
               referrerPolicy="no-referrer"
-              style={{ borderRadius: '50%', objectFit: 'cover' }} 
+              className="header-profile-img"
               onError={(e) => {e.target.src = user}} 
             />
           </div>
@@ -95,15 +95,15 @@ const AdminLayout = () => {
           {profileOpen && (
             <div className="profile-dropdown">
               {/* Dropdown Header with Profile Info */}
-              <div style={{ padding: '15px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>
+              <div className="profile-dropdown-header">
                   <img 
                       src={userPhoto} 
                       alt="Profile" 
-                      style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover', marginBottom: '8px', border: '2px solid #f3f4f6' }}
+                      className="profile-dropdown-img"
                       onError={(e) => {e.target.src = user}}
                   />
-                  <div style={{ fontWeight: '600', fontSize: '0.95rem', color: '#111827' }}>{userName}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis' }}>{localStorage.getItem('adminUserEmail')}</div>
+                  <div className="profile-dropdown-name">{userName}</div>
+                  <div className="profile-dropdown-email">{localStorage.getItem('adminUserEmail')}</div>
               </div>
 
               <div className="dropdown-item" onClick={() => {

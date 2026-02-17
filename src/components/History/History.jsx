@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
 import './History.css';
-import {ArrowRightLeft, Download,ShoppingCart,HandCoins,Package} from 'lucide-react';
+import {ArrowRightLeft, Download,ShoppingCart,HandCoins,Package, Search} from 'lucide-react';
 
 
 function History() {
@@ -119,12 +119,16 @@ function History() {
                     <div className="form-grid">
                         <div className="form-group">
                             <label className="form-label">Search</label>
-                            <input
-                                type="text"
-                                placeholder="Product, seller, buyer..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
+                            <div className="search-icon-container">
+                                <input
+                                    type="text"
+                                    placeholder="Product, seller, buyer..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="search-input-wrapper"
+                                />
+                                <Search size={18} className="search-icon-absolute" />
+                            </div>
                         </div>
                         <div className="form-group">
                             <label className="form-label">Date</label>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChartNoAxesCombined,Users,UsersRound,HandCoins,BadgeIndianRupee,Bell} from "lucide-react";
+import { ChartNoAxesCombined,Users,UsersRound,HandCoins,BadgeIndianRupee,Bell, ArrowDownLeft, ArrowUpRight, Filter, Calendar} from "lucide-react";
 import { getAuctionData } from '../../utils/localStorage';
 import Notification from '../Common/Notification';
 import './Dashboard.css';
@@ -91,8 +91,8 @@ function Dashboard() {
             return transDate >= dateRange.start && transDate < dateRange.end;
         });
 
-        const totalSales = filtered.reduce((sum, t) => sum + t.price, 0);
-        const totalCommission = filtered.reduce((sum, t) => sum + t.commission, 0);
+        const totalSales = filtered.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
+        const totalCommission = filtered.reduce((sum, t) => sum + (Number(t.commission) || 0), 0);
         const totalQty = filtered.reduce((sum, t) => sum + (parseFloat(t.quantity) || 0), 0);
 
         setStats({
@@ -125,6 +125,37 @@ function Dashboard() {
                 <div className="header-top">
                     <h1>Dashboard</h1>
                     <div className="header-actions">
+                        <div className="dashboard-filter-container">
+                            <div className="filter-dropdown-wrapper">
+                                <Filter className="filter-icon" size={16} />
+                                <select 
+                                    value={dateFilter} 
+                                    onChange={(e) => setDateFilter(e.target.value)}
+                                    className="dashboard-filter-select"
+                                >
+                                    <option value="today">Today</option>
+                                    <option value="yesterday">Yesterday</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="year">This Year</option>
+                                    <option value="custom">Custom Date</option>
+                                </select>
+                            </div>
+                            
+                            {dateFilter === 'custom' && (
+                                <div className="custom-date-wrapper fade-in">
+                                    <Calendar className="calendar-icon" size={16} />
+                                    <input 
+                                        type="date" 
+                                        value={customDate}
+                                        onChange={(e) => setCustomDate(e.target.value)}
+                                        max={new Date().toISOString().split('T')[0]}
+                                        className="dashboard-date-input"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
                         <Notification expiryDate="2026-02-15" />
                         {/* Demo Button removed */}
                     </div>
@@ -139,7 +170,7 @@ function Dashboard() {
             <div className="content-body">
                 {/* Stats Grid - 5 Cards */}
                 <div className="stats-grid dashboard-stats-grid fade-in">
-                    <div className="stat-card">
+                    {/* <div className="stat-card">
                         <div className="stat-header">
                             <div className="stat-icon"><ChartNoAxesCombined /></div>
                             <Link to="/admin/today-auction"><div>
@@ -151,7 +182,7 @@ function Dashboard() {
                             <span>📅</span>
                             <span>Live Count</span>
                         </div>
-                    </div>
+                    </div> */}
 
                     <Link to="/admin/seller-details">
                         <div className="stat-card">
@@ -184,6 +215,34 @@ function Dashboard() {
                             </div>
                         </div>
                     </Link>
+
+                    <div className="stat-card">
+                        <div className="stat-header">
+                            <div className="stat-icon"><ArrowDownLeft className="text-success" /></div>
+                            <div>
+                                <div className="stat-value">₹67.5K</div>
+                                <div className="stat-label">Pay In</div>
+                            </div>
+                        </div>
+                        <div className="stat-change positive">
+                            <span>↑</span>
+                            <span>{getFilterLabel()}</span>
+                        </div>
+                    </div>
+
+                    <div className="stat-card">
+                        <div className="stat-header">
+                            <div className="stat-icon"><ArrowUpRight className="text-danger" /></div>
+                            <div>
+                                <div className="stat-value">₹55.1K</div>
+                                <div className="stat-label">Pay Out</div>
+                            </div>
+                        </div>
+                        <div className="stat-change positive">
+                            <span>↑</span>
+                            <span>{getFilterLabel()}</span>
+                        </div>
+                    </div>
 
                     <Link to="/admin/history">
                         <div className="stat-card">
@@ -219,38 +278,8 @@ function Dashboard() {
 
                 </div>
 
-                {/* Date Filter Selection */}
-                <div className="card filter-card fade-in">
-                    <div className={`form-grid ${dateFilter === 'custom' ? 'filter-grid-custom' : 'filter-grid-single'}`}>
-                        <div className="form-group">
-                            <label className="form-label">Quick Filter</label>
-                            <select 
-                                value={dateFilter} 
-                                onChange={(e) => setDateFilter(e.target.value)}
-                                className="full-width-select"
-                            >
-                                <option value="today">Today</option>
-                                <option value="yesterday">Yesterday</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                                <option value="year">This Year</option>
-                                <option value="custom">📅 Custom Date</option>
-                            </select>
-                        </div>
-                        {dateFilter === 'custom' && (
-                            <div className="form-group fade-in">
-                                <label className="form-label">Pick a Date</label>
-                                <input 
-                                    type="date" 
-                                    value={customDate}
-                                    onChange={(e) => setCustomDate(e.target.value)}
-                                    max={new Date().toISOString().split('T')[0]}
-                                    className="full-width-input"
-                                />
-                            </div>
-                        )}
-                    </div>
-                </div>
+                {/* Date Filter Selection Moved to Header */}
+                {/* <div className="card filter-card fade-in"> ... </div> (Removed) */}
 
                 {/* Recent Transactions - Mobile Card List */}
                 <div className="section-header section-margin-top">
@@ -289,11 +318,11 @@ function Dashboard() {
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Price</span>
-                                        <span className="data-value">₹{transaction.price.toLocaleString()}</span>
+                                        <span className="data-value">₹{transaction.price && typeof transaction.price === 'number' ? transaction.price.toLocaleString() : '0'}</span>
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Commission</span>
-                                        <span className="data-value text-amber">₹{transaction.commission.toLocaleString()}</span>
+                                        <span className="data-value text-amber">₹{transaction.commission && typeof transaction.commission === 'number' ? transaction.commission.toLocaleString() : '0'}</span>
                                     </div>
                                 </div>
 

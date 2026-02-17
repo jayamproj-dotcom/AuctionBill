@@ -71,7 +71,7 @@ const SaaSLayout = () => {
         </nav>
 
         <div className="saas-sidebar-footer">
-          <div className="saas-nav-item logout-btn" onClick={handleLogout} style={{ cursor: 'pointer' }}>
+          <div className="saas-nav-item logout-btn" onClick={handleLogout}>
             <span className="nav-icon"><LogOut size={20} /></span>
             <span>Logout</span>
           </div>
@@ -88,12 +88,12 @@ const SaaSLayout = () => {
             >
               <Menu size={24} />
             </button>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>
+            <h2 className="saas-header-title-text">
               {navItems.find(n => n.path === location.pathname)?.label || 'Admin'}
             </h2>
           </div>
           <div className="saas-header-right">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="saas-header-right-content">
               <button className="saas-btn btn-sm btn-outline icon-only">
                   <Bell size={20} />
               </button>

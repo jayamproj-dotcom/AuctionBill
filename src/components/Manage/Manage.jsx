@@ -55,31 +55,18 @@ function Manage() {
                 </div>
             </div>
 
-            <div className="content-body" style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <div className="content-body manage-content">
                 <div className="card">
-                    <div className="profile-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #eee', paddingBottom: '2rem' }}>
-                        <div className="profile-image-container" style={{ position: 'relative', marginBottom: '1rem' }}>
+                    <div className="profile-header">
+                        <div className="profile-image-container">
                             <img 
                                 src={profile.photo || "https://via.placeholder.com/150"} 
                                 alt="Profile" 
                                 referrerPolicy="no-referrer"
-                                style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #f3f4f6' }}
+                                className="profile-img"
                                 onError={(e) => {e.target.src = "https://via.placeholder.com/150"}}
                             />
-                            <label htmlFor="photo-upload" style={{ 
-                                position: 'absolute', 
-                                bottom: '5px', 
-                                right: '5px', 
-                                backgroundColor: '#4f46e5', 
-                                color: 'white', 
-                                padding: '8px', 
-                                borderRadius: '50%', 
-                                cursor: 'pointer',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
+                            <label htmlFor="photo-upload" className="profile-upload-label">
                                 <Camera size={18} />
                                 <input 
                                     id="photo-upload" 
@@ -99,76 +86,72 @@ function Manage() {
                                             reader.readAsDataURL(file);
                                         }
                                     }}
-                                    style={{ display: 'none' }} 
+                                    className="profile-upload-input" 
                                 />
                             </label>
                         </div>
-                        <h2 style={{ margin: 0 }}>{profile.name || 'Admin User'}</h2>
-                        <p style={{ color: '#6b7280', margin: '5px 0 0 0' }}>{profile.email}</p>
+                        <h2 className="profile-name">{profile.name || 'Admin User'}</h2>
+                        <p className="profile-email">{profile.email}</p>
                     </div>
 
                     <div className="profile-form">
-                        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>Full Name</label>
-                            <div style={{ position: 'relative' }}>
-                                <User size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                        <div className="form-group manage-form-group">
+                            <label className="manage-label">Full Name</label>
+                            <div className="input-icon-wrapper">
+                                <User size={18} className="input-icon" />
                                 <input 
                                     type="text" 
                                     name="name" 
                                     value={profile.name} 
                                     onChange={handleChange}
                                     disabled={!isEditing}
-                                    className="saas-input"
-                                    style={{ width: '100%', paddingLeft: '40px', backgroundColor: !isEditing ? '#f9fafb' : 'white', cursor: !isEditing ? 'default' : 'text' }}
+                                    className={`saas-input manage-input ${!isEditing ? 'manage-input-disabled' : 'manage-input-enabled'}`}
                                     placeholder="Enter your name"
                                 />
                             </div>
                         </div>
 
-                        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>Email Address</label>
-                            <div style={{ position: 'relative' }}>
-                                <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                        <div className="form-group manage-form-group">
+                            <label className="manage-label">Email Address</label>
+                            <div className="input-icon-wrapper">
+                                <Mail size={18} className="input-icon" />
                                 <input 
                                     type="email" 
                                     name="email" 
                                     value={profile.email} 
                                     disabled
-                                    className="saas-input"
-                                    style={{ width: '100%', paddingLeft: '40px', backgroundColor: '#f9fafb', cursor: 'not-allowed', color: '#6b7280' }}
+                                    className="saas-input manage-input manage-input-disabled"
                                 />
-                                <span style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', fontSize:'10px', color:'#9ca3af', background:'#f3f4f6', padding:'2px 6px', borderRadius:'4px'}}>Managed by Google</span>
+                                <span className="google-managed-badge">Managed by Google</span>
                             </div>
                         </div>
 
-                        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>Phone Number</label>
-                            <div style={{ position: 'relative' }}>
-                                <Phone size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                        <div className="form-group manage-form-group">
+                            <label className="manage-label">Phone Number</label>
+                            <div className="input-icon-wrapper">
+                                <Phone size={18} className="input-icon" />
                                 <input 
                                     type="tel" 
                                     name="phone" 
                                     value={profile.phone} 
                                     onChange={handleChange}
                                     disabled={!isEditing}
-                                    className="saas-input"
-                                    style={{ width: '100%', paddingLeft: '40px', backgroundColor: !isEditing ? '#f9fafb' : 'white', cursor: !isEditing ? 'default' : 'text' }}
+                                    className={`saas-input manage-input ${!isEditing ? 'manage-input-disabled' : 'manage-input-enabled'}`}
                                     placeholder="Enter phone number"
                                 />
                             </div>
                         </div>
 
-                        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>Address</label>
-                            <div style={{ position: 'relative' }}>
-                                <MapPin size={18} style={{ position: 'absolute', left: '12px', top: '15px', color: '#9ca3af' }} />
+                        <div className="form-group manage-form-group">
+                            <label className="manage-label">Address</label>
+                            <div className="input-icon-wrapper">
+                                <MapPin size={18} className="input-icon-map" />
                                 <textarea 
                                     name="address" 
                                     value={profile.address} 
                                     onChange={handleChange}
                                     disabled={!isEditing}
-                                    className="saas-input"
-                                    style={{ width: '100%', paddingLeft: '40px', minHeight: '100px', paddingTop: '12px', backgroundColor: !isEditing ? '#f9fafb' : 'white', cursor: !isEditing ? 'default' : 'text' }}
+                                    className={`saas-input manage-textarea ${!isEditing ? 'manage-input-disabled' : 'manage-input-enabled'}`}
                                     placeholder="Enter your address"
                                 />
                             </div>
@@ -176,41 +159,40 @@ function Manage() {
 
                         {/* Password Management Section - Only show when editing? Or always show but disabled? Let's hide it when not editing to keep profile clean */}
                         {isEditing && (
-                        <div style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                            <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: '#111827' }}>Security Settings</h3>
+                        <div className="security-section">
+                            <h3 className="security-title">Security Settings</h3>
                             <div className="form-group">
-                                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.5rem', color: '#374151' }}>Set Login Password</label>
-                                <div style={{ position: 'relative' }}>
-                                    <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                <label className="manage-label">Set Login Password</label>
+                                <div className="input-icon-wrapper">
+                                    <Lock size={18} className="input-icon" />
                                     <input 
                                         type="password" 
                                         name="password" 
                                         value={profile.password || ''} 
                                         onChange={handleChange}
-                                        className="saas-input"
-                                        style={{ width: '100%', paddingLeft: '40px' }}
+                                        className="saas-input manage-input"
                                         placeholder="Set a password for email login"
                                     />
                                 </div>
-                                <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.5rem' }}>
+                                <p className="password-hint">
                                     (Leave blank to keep current password)
                                 </p>
                             </div>
                         </div>
                         )}
 
-                        <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                        <div className="form-actions">
                             {!isEditing ? (
-                                <button className="btn btn-primary" onClick={() => setIsEditing(true)} style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <button className="btn btn-primary edit-btn" onClick={() => setIsEditing(true)}>
                                     <User size={18} />
                                     Edit Profile
                                 </button>
                             ) : (
                                 <>
-                                    <button className="btn btn-outline" onClick={() => {setIsEditing(false); window.location.reload();}} style={{ padding: '10px 24px' }}>
+                                    <button className="btn btn-outline cancel-btn" onClick={() => {setIsEditing(false); window.location.reload();}}>
                                         Cancel
                                     </button>
-                                    <button className="btn btn-primary" onClick={handleSave} style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <button className="btn btn-primary save-btn" onClick={handleSave}>
                                         <Save size={18} />
                                         Save Profile
                                     </button>
