@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
 import './CommissionRecord.css';
-import {Download,BadgeIndianRupee,ArrowRightLeft,ChartNoAxesColumn} from 'lucide-react';
+import { Download, BadgeIndianRupee, ArrowRightLeft, ChartNoAxesColumn } from 'lucide-react';
 
 function CommissionRecord() {
     const [commissions, setCommissions] = useState([]);
@@ -20,7 +20,18 @@ function CommissionRecord() {
     const loadCommissions = () => {
         const data = getAuctionData();
         if (data && data.transactions) {
-            setCommissions(data.transactions.sort((a, b) => new Date(b.date) - new Date(a.date)));
+            const enriched = data.transactions.map(t => {
+                const product = data.products.find(p => p.id === t.productId);
+                const seller = data.sellers.find(s => s.id === t.sellerId);
+                return {
+                    ...t,
+                    productName: product ? product.name : 'Unknown Product',
+                    sellerName: seller ? seller.name : 'Unknown Seller',
+                    commissionAmount: t.commissionAmount || 0,
+                    finalAmount: t.finalAmount || 0
+                };
+            });
+            setCommissions(enriched.sort((a, b) => new Date(b.date) - new Date(a.date)));
         }
     };
 
@@ -29,8 +40,8 @@ function CommissionRecord() {
 
         if (searchTerm) {
             filtered = filtered.filter(c =>
-                c.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                c.seller.toLowerCase().includes(searchTerm.toLowerCase())
+                c.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                c.sellerName.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -42,14 +53,14 @@ function CommissionRecord() {
     };
 
     const getTotalCommission = () => {
-        return filteredCommissions.reduce((sum, c) => sum + c.commission, 0);
+        return filteredCommissions.reduce((sum, c) => sum + (c.commissionAmount || 0), 0);
     };
 
     const getCommissionByMonth = () => {
         const monthlyData = {};
         filteredCommissions.forEach(c => {
             const month = c.date.substring(0, 7); // YYYY-MM
-            monthlyData[month] = (monthlyData[month] || 0) + c.commission;
+            monthlyData[month] = (monthlyData[month] || 0) + (c.commissionAmount || 0);
         });
         return monthlyData;
     };
@@ -181,25 +192,25 @@ function CommissionRecord() {
                             <div key={commission.id} className="data-card">
                                 <div className="data-card-header">
                                     <div>
-                                        <div className="data-card-title">{commission.product}</div>
+                                        <div className="data-card-title">{commission.productName}</div>
                                         <div className="data-card-subtitle">{commission.date}</div>
                                     </div>
                                     <div className="badge badge-success">{commission.commissionPercent}%</div>
                                 </div>
-                                
+
                                 <div className="data-card-body">
                                     <div className="data-row">
                                         <span className="data-label">Seller</span>
-                                        <span className="data-value">{commission.seller}</span>
+                                        <span className="data-value">{commission.sellerName}</span>
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Sale Price</span>
-                                        <span className="data-value">₹{commission.price.toLocaleString()}</span>
+                                        <span className="data-value">₹{(commission.finalAmount || 0).toLocaleString()}</span>
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Commission</span>
                                         <span className="data-value text-amber commission-value-large">
-                                            ₹{commission.commission.toLocaleString()}
+                                            ₹{(commission.commissionAmount || 0).toLocaleString()}
                                         </span>
                                     </div>
                                 </div>

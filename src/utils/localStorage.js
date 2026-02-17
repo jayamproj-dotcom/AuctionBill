@@ -6,7 +6,6 @@ export const initialData = {
             contact: '9876543210',
             email: 'ramesh@example.com',
             address: 'Salem, Tamil Nadu',
-            totalSales: 45000,
             status: 'active',
             password: '123'
         },
@@ -16,7 +15,6 @@ export const initialData = {
             contact: '9876543211',
             email: 'murugan@example.com',
             address: 'Madurai, Tamil Nadu',
-            totalSales: 32000,
             status: 'active',
             password: '123'
         }
@@ -29,7 +27,6 @@ export const initialData = {
             contact: '9876543220',
             email: 'arun@example.com',
             address: 'Chennai, Tamil Nadu',
-            totalPurchases: 28000,
             buyerType: 'Wholesale',
             status: 'active',
             password: '123'
@@ -40,14 +37,13 @@ export const initialData = {
             contact: '9876543221',
             email: 'lakshmi@example.com',
             address: 'Coimbatore, Tamil Nadu',
-            totalPurchases: 19000,
             buyerType: 'Retailer',
             status: 'active',
             password: '123'
         }
     ],
 
-    // 🔥 Updated Product Structure
+    // 🔥 Updated Product Structure (Stock Info Only)
     products: [
         {
             id: 1,
@@ -63,10 +59,8 @@ export const initialData = {
                     variety: 'Standard',
                     quality: 'Good',
                     quantity: 100,
-                    pendingQuantity: 100,
                     unit: 'kg',
-                    commission: 5,
-                    pricePerUnit: 12000
+                    commissionPercent: 5
                 }
             ]
         },
@@ -85,10 +79,8 @@ export const initialData = {
                     variety: 'Fresh Morning',
                     quality: 'Good',
                     quantity: 50,
-                    pendingQuantity: 50,
                     unit: 'kg',
-                    commission: 8,
-                    pricePerUnit: 300
+                    commissionPercent: 8
                 }
             ]
         },
@@ -107,10 +99,8 @@ export const initialData = {
                     variety: 'Premium',
                     quality: 'Good',
                     quantity: 75,
-                    pendingQuantity: 75,
                     unit: 'kg',
-                    commission: 6,
-                    pricePerUnit: 9000
+                    commissionPercent: 6
                 }
             ]
         },
@@ -129,58 +119,54 @@ export const initialData = {
                     variety: 'Medium Size',
                     quality: 'Good',
                     quantity: 500,
-                    pendingQuantity: 500,
                     unit: 'qty',
-                    commission: 4,
-                    pricePerUnit: 25
+                    commissionPercent: 4
                 }
             ]
         }
     ],
 
-    // 🔥 Updated Transactions (Now Includes variant_id)
+    // 🔥 Updated Transactions (Pure Sales Record)
     transactions: [
         {
             id: 1,
             date: "2026-02-06",
-
             sellerId: 1,
             buyerId: 1,
-
             productId: 1,
             variantId: 101,
-
             quantity: 50,
-            unit: "kg",
-
-            finalAmount: 600000,   // This is final auction value
-
+            rate: 12000,
+            finalAmount: 600000,
             commissionPercent: 5,
-            commission: 30000,     // 5% of finalAmount
-
-            netAmount: 570000,     // finalAmount - commission
-
-            paymentStatus: "Paid",
-            amountPaid: 600000,
-            balance: 0,
-
-            payments: [
-                {
-                    id: 1,
-                    date: "2026-02-06",
-                    amount: 600000
-                }
-            ]
+            commissionAmount: 30000,
+            netAmount: 570000
         }
+    ],
+
+    // 🔥 New Table: sellerPayments (Money Paid to Seller)
+    sellerPayments: [
+        {
+            id: 1,
+            sellerId: 1,
+            date: "2026-02-06",
+            amount: 570000, // Full payment example
+            method: "Cash",
+            reference: "PAY-001"
+        }
+    ],
+
+    // 🔥 New Table: sellerCredits (Advance Given)
+    sellerCredits: [
+        // {
+        //     id: 1,
+        //     sellerId: 1,
+        //     date: "2026-02-01",
+        //     amount: 50000,
+        //     reason: "Advance given before auction"
+        // }
     ]
-
 };
-
-
-
-
-
-
 
 export const getAuctionData = () => {
     try {
