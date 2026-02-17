@@ -13,7 +13,7 @@ function History() {
     useEffect(() => {
         loadTransactions();
     }, []);
-
+   
     useEffect(() => {
         filterTransactions();
     }, [searchTerm, dateFilter, transactions]);
