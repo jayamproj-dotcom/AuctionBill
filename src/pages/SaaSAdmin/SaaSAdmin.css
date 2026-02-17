@@ -355,7 +355,7 @@
   cursor: pointer;
   border: 1px solid transparent;
   gap: 0.5rem;
-  margin: 10px;
+
 }
 
 .btn-primary {
@@ -478,7 +478,7 @@
 .saas-select,
 .saas-textarea {
   width: 100%;
-  padding: 0.625rem 0.875rem;
+  padding: 0.625rem 1.875rem;
   border-radius: 0.5rem;
   border: 1px solid var(--saas-border);
   font-size: 0.875rem;
@@ -1049,3 +1049,35 @@ body.saas-admin-active {
   padding-right: 2.5rem !important;
   /* Space for right icon */
 }
+
+/* Logout Button & Admin Profile Styles */
+.logout-btn {
+  cursor: pointer;
+}
+
+.saas-admin-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Search Box Styles for SaaS Pages */
+.saas-search-icon-container {
+  position: relative;
+}
+
+.saas-search-input-wrapper {
+  position: relative;
+}
+
+.saas-search-input-wrapper input {
+  padding-right: 40px;
+}
+
+.saas-search-icon-absolute {
+  position: absolute;
+  right: 12px;
+  top: 36%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+

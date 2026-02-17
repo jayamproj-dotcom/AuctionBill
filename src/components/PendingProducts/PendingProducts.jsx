@@ -3,11 +3,13 @@ import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './PendingProducts.css';
 import '../TodayAuction/TodayAuction.css'; // Reusing base card styles
-import {Undo2, ListFilterPlus} from 'lucide-react';
+import { Undo2, ListFilterPlus, Search } from 'lucide-react';
 
 function PendingProducts() {
     const [pendingProducts, setPendingProducts] = useState([]);
     const [today, setToday] = useState('');
+    const [sellers, setSellers] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const todayStr = new Date().toISOString().split('T')[0];
@@ -18,14 +20,38 @@ function PendingProducts() {
     const loadPendingProducts = (currentDate) => {
         const data = getAuctionData();
         if (data && data.products) {
+            setSellers(data.sellers || []);
             const filtered = data.products.filter(p => {
                 if (p.status !== 'available') return false;
-                
-                // Determine product date (fallback to id timestamp if no explicit date)
+                if (p.isActive === false) return false;
+
+                // Determine product date
                 const pDate = p.date || new Date(p.id).toISOString().split('T')[0];
-                
-                // Show if date is less than today (yesterday or older)
-                return pDate < currentDate;
+
+                // Show only if date is less than today
+                if (pDate >= currentDate) return false;
+
+                // Check if any variant is unsold
+                if (p.variants) {
+                    const productTransactions = (data.transactions || []).filter(t => t.productId === p.id);
+
+                    // We need to check if ANY variant has remaining stock
+                    return p.variants.some(v => {
+                        const variantTransactions = productTransactions.filter(t => t.variantId === v.id);
+                        const sold = variantTransactions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
+                        return (v.quantity - sold) > 0;
+                    });
+                }
+                return false;
+            }).map(p => {
+                // Enrich variants with sold stats for display
+                const productTransactions = (data.transactions || []).filter(t => t.productId === p.id);
+                const enrichedVariants = (p.variants || []).map(v => {
+                    const variantTransactions = productTransactions.filter(t => t.variantId === v.id);
+                    const sold = variantTransactions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
+                    return { ...v, soldQuantity: sold, remaining: v.quantity - sold };
+                });
+                return { ...p, variants: enrichedVariants };
             });
             setPendingProducts(filtered);
         }
@@ -78,9 +104,10 @@ function PendingProducts() {
         }
     };
 
+
     return (
         <>
-            <ConfirmationModal 
+            <ConfirmationModal
                 isOpen={isReturnConfirmOpen}
                 onClose={() => setIsReturnConfirmOpen(false)}
                 onConfirm={confirmReturnProduct}
@@ -91,7 +118,7 @@ function PendingProducts() {
                 cancelText="Cancel"
                 variant="warning"
             />
-            <ConfirmationModal 
+            <ConfirmationModal
                 isOpen={isMoveToTodayConfirmOpen}
                 onClose={() => setIsMoveToTodayConfirmOpen(false)}
                 onConfirm={confirmMoveToToday}
@@ -118,6 +145,22 @@ function PendingProducts() {
                     <h3 className="section-title">Unsold Products from Previous Days ({pendingProducts.length})</h3>
                 </div>
 
+                {/* Search Bar */}
+                <div className="card fade-in search-card">
+                    <div className="form-group search-form-group">
+                        <div className="search-icon-container">
+                            <input
+                                type="text"
+                                placeholder="Search by product, seller, or variant..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="search-input"
+                            />
+                            <Search size={20} className="search-icon-absolute" />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="card-list fade-in">
                     {pendingProducts.length === 0 ? (
                         <div className="empty-state">
@@ -126,26 +169,31 @@ function PendingProducts() {
                         </div>
                     ) : (
                         <div className="products-grid">
-                            {pendingProducts.map(product => (
+                            {pendingProducts
+                                .filter(product => {
+                                    if (!searchQuery) return true;
+                                    const query = searchQuery.toLowerCase();
+                                    const seller = sellers.find(s => s.id === product.sellerId);
+                                    const sellerName = seller ? seller.name.toLowerCase() : '';
+                                    const productName = product.name.toLowerCase();
+                                    const hasMatchingVariant = product.variants && product.variants.some(v => v.variety.toLowerCase().includes(query));
+                                    
+                                    return sellerName.includes(query) || productName.includes(query) || hasMatchingVariant;
+                                })
+                                .map(product => (
                                 <div key={product.id} className="data-card product-card pending-product-card">
                                     <div className="data-card-header product-card-header">
                                         <div className="data-card-title product-card-title">
                                             {product.name}
-                                            {product.varieties && product.varieties.length > 0
-                                                ? ` - ${product.varieties
-                                                    .filter(v => typeof v === 'string' || v.active !== false)
-                                                    .map(v => (typeof v === 'string' ? v : v.name))
-                                                    .join(', ')}`
-                                                : ''}
                                         </div>
                                         <span className="pending-badge">Pending</span>
                                     </div>
-                                    
+
                                     <div className="data-card-body product-card-body">
                                         <div className="product-image-container">
                                             {product.image ? (
-                                                <img 
-                                                    src={product.image} 
+                                                <img
+                                                    src={product.image}
                                                     alt={product.name}
                                                     className="product-image"
                                                 />
@@ -155,31 +203,37 @@ function PendingProducts() {
                                         </div>
 
                                         <div className="data-card-subtitle product-card-subtitle">
-                                            Seller: <strong>{product.seller}</strong>
+                                            Seller: <strong>{sellers.find(s => s.id === product.sellerId)?.name || 'Unknown'}</strong>
                                         </div>
 
                                         <div className="date-info">
                                             <span>📅 Created: {product.date || new Date(product.id).toLocaleDateString()}</span>
                                         </div>
 
-                                        <div className="data-row">
-                                            <span className="data-label">Base Price</span>
-                                            <span className="data-value">₹{product.price.toLocaleString()}</span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Qty / Unit</span>
-                                            <span className="data-value">{product.quantity} {product.unit || 'qty'}</span>
+                                        <div className="product-variants">
+                                            {product.variants && product.variants.map(v => (
+                                                <div key={v.id} className="variant-box">
+                                                    <div className="variant-box-header">
+                                                        <span>{v.variety}</span>
+                                                        <span className={`badge variant-badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`}>{v.quality}</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                                        <span>{v.remaining} {v.unit}</span>
+                                                        <span className="text-amber">{v.commission}% Comm</span>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
 
                                     <div className="data-card-footer product-card-footer pending-actions">
-                                        <button 
+                                        <button
                                             className="btn btn-error btn-pending-action return-btn"
                                             onClick={() => handleReturnClick(product)}
                                         >
                                             <Undo2 /> Return
                                         </button>
-                                        <button 
+                                        <button
                                             className="btn btn-success btn-pending-action back-today-btn"
                                             onClick={() => handleBackToToday(product)}
                                         >

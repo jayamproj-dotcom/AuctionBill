@@ -3,7 +3,7 @@ import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './TodayAuction.css';
 import { toast } from 'react-toastify';
-import { Plus, Trash2, Edit2, X, Eye, EyeOff, PackageSearch } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Eye, EyeOff, PackageSearch, Search } from 'lucide-react';
 
 const SearchableSelect = ({ options, value, onChange, placeholder, required, label }) => {
     const [searchTerm, setSearchTerm] = useState(value || '');
@@ -24,7 +24,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, required, lab
     };
 
     return (
-        <div className="form-group" style={{ position: 'relative' }}>
+        <div className="form-group form-group-relative">
             <label className="form-label">{label}</label>
             <input
                 type="text"
@@ -78,7 +78,8 @@ function TodayAuction() {
     const [showSellModal, setShowSellModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [editingProduct, setEditingProduct] = useState(null);
-    const [showHidden, setShowHidden] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
 
     const [newProduct, setNewProduct] = useState({
         name: '',
@@ -92,8 +93,12 @@ function TodayAuction() {
         variety: '',
         quality: 'Good',
         quantity: '',
+        sellQuantity: 0,
         unit: 'kg',
-        commission: ''
+        commission: '',
+        commissionAmountForSellQuantity: 0,
+        priceAmountForSellQuantity: 0,
+        balance: 0,
     });
 
     const [imagePreview, setImagePreview] = useState(null);
@@ -114,7 +119,9 @@ function TodayAuction() {
             quality: 'Good',
             quantity: '',
             unit: 'kg',
-            commission: ''
+            commission: '',
+            commissionAmountForSellQuantity: 0,
+            priceAmountForSellQuantity: 0,
         });
     };
 
@@ -179,8 +186,9 @@ function TodayAuction() {
         const newVariant = {
             id: Date.now(),
             ...variantData,
-            commission: parseFloat(variantData.commission) || 0,
-            quantity: parseFloat(variantData.quantity)
+            commissionPercent: parseFloat(variantData.commission) || 0, // Using commissionPercent
+            quantity: parseFloat(variantData.quantity),
+            // sellQuantity, balance, etc removed
         };
 
         setNewProduct({
@@ -258,13 +266,33 @@ function TodayAuction() {
 
     const loadData = () => {
         const data = getAuctionData();
+        const today = new Date().toISOString().split('T')[0];
+
+        // Enrich products with calculated sold stats from transactions
+        const productsWithStats = data.products.map(p => {
+            const productTransactions = (data.transactions || []).filter(t => t.productId === p.id);
+
+            const variantsWithStats = (p.variants || []).map(v => {
+                const variantTransactions = productTransactions.filter(t => t.variantId === v.id);
+                const sold = variantTransactions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
+                return { ...v, sellQuantity: sold };
+            });
+
+            // Determine status dynamically
+            const isSoldOut = variantsWithStats.length > 0 && variantsWithStats.every(v => v.sellQuantity >= v.quantity);
+            const status = isSoldOut ? 'soldout' : p.status;
+
+            return { ...p, variants: variantsWithStats, status };
+        });
+
         // Load all available products. Sort by ID (desc) to show newest first.
-        const sortedProducts = data.products
-            .filter(p => p.status === 'available')
+        const sortedProducts = productsWithStats
+            .filter(p => (p.status === 'available' || p.status === 'soldout') && p.date === today)
             .sort((a, b) => b.id - a.id);
+
         setProducts(sortedProducts);
-        setSellers(data.sellers);
-        setBuyers(data.buyers);
+        setSellers(data.sellers.filter(s => s.status === 'active'));
+        setBuyers(data.buyers.filter(b => b.status === 'active'));
     };
 
     const handleAddProduct = (e) => {
@@ -315,70 +343,61 @@ function TodayAuction() {
         e.preventDefault();
         const data = getAuctionData();
 
-        // Update product status/quantity
+        // Find the variant to validate stock
         const productIndex = data.products.findIndex(p => p.id === selectedProduct.id);
         const product = data.products[productIndex];
-
-        // Find the variant
         const variantIndex = product.variants.findIndex(v => v.id == saleData.variantId);
-        if (variantIndex === -1) return; // Should not happen
+        if (variantIndex === -1) return;
 
         const variant = product.variants[variantIndex];
-        const sellQty = parseFloat(saleData.qtyToSell) || 0;
 
-        if (sellQty >= variant.quantity) {
-            // Sold out this variant
-            product.variants[variantIndex].quantity = 0;
-            // Check if all variants are sold out? 
-            // For now, if all quantities are 0, mark product properly if needed, but 'status' was on product level.
-            // Let's keep product 'available' unless all variants zero? 
-            // Or just rely on visual disabled state if quantity 0.
-        } else {
-            product.variants[variantIndex].quantity = variant.quantity - sellQty;
+        // Calculate current sold quantity from transactions
+        const existingTransactions = (data.transactions || []).filter(t => t.variantId === variant.id);
+        const currentSold = existingTransactions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
+
+        const sellQty = parseFloat(saleData.qtyToSell) || 0;
+        const available = variant.quantity - currentSold;
+
+        if (sellQty > available) {
+            toast.error(`Cannot sell more than available quantity (${available})`);
+            return;
         }
 
-        // Add transaction
-        const finalPrice = parseFloat(saleData.finalPrice);
-        const commission = (finalPrice * variant.commission) / 100;
+        // Calculate amounts
+        const finalPrice = parseFloat(saleData.finalPrice) || 0;
+        const totalAmount = finalPrice;
+        const totalCommission = (totalAmount * variant.commissionPercent) / 100; // Assuming commissionPercent is in variant
 
-        let amountPaid = 0;
-        if (saleData.paymentStatus === 'Paid') amountPaid = finalPrice;
-        else if (saleData.paymentStatus === 'Part Paid') amountPaid = parseFloat(saleData.amountPaid) || 0;
-        else amountPaid = 0;
-
+        // Create Transaction Record (Pure Sales)
         const transaction = {
-            transaction: 0,
+            id: Date.now(),
             date: new Date().toISOString().split('T')[0],
-            product: `${product.name} - ${variant.variety}`,
-            productId: product.id,
-            activeVariantId: variant.id,
-            quantity: parseFloat(saleData.qtyToSell),
-            unit: variant.unit || 'qty',
+
             sellerId: product.sellerId,
             buyerId: saleData.buyerId,
-            price: finalPrice,
-            commission: commission,
-            commissionPercent: variant.commission,
-            paymentStatus: saleData.paymentStatus,
-            amountPaid: amountPaid,
-            balance: finalPrice - amountPaid,
-            // Seller specific fields
-            netAmount: finalPrice - commission,
-            credit: 0,
-            sellerPaymentStatus: 'Pending',
-            sellerAmountPaid: 0
+
+            productId: product.id,
+            variantId: variant.id,
+
+            quantity: sellQty,
+            rate: finalPrice / sellQty, // Calculate rate per unit
+            finalAmount: totalAmount,
+
+            commissionPercent: variant.commissionPercent,
+            commissionAmount: totalCommission,
+            netAmount: totalAmount - totalCommission
         };
 
-        // Fix ID generation to avoid potential collisions if rapid clicks
-        transaction.id = Date.now();
-
+        if (!data.transactions) data.transactions = [];
         data.transactions.push(transaction);
+
         saveAuctionData(data);
 
         setSaleData({ buyerId: '', buyerName: '', variantId: '', finalPrice: '', qtyToSell: '', paymentStatus: 'Paid', amountPaid: '' });
         setShowSellModal(false);
         setSelectedProduct(null);
-        loadData();
+        loadData(); // This will recalculate sold stats and update UI
+        toast.success("Sale recorded successfully");
     };
 
     const openSellModal = (product) => {
@@ -396,9 +415,11 @@ function TodayAuction() {
     };
 
     const capitalizeFirst = (text) => {
-        if (!text) return '';
-        return text.charAt(0).toUpperCase() + text.slice(1);
+        if (text == null) return "";
+        const str = String(text);
+        return str.charAt(0).toUpperCase() + str.slice(1);
     };
+
 
 
     return (
@@ -418,17 +439,7 @@ function TodayAuction() {
                 <div className="header-top">
                     <h1>Today Auction</h1>
                     <div className="header-actions">
-                        <label className="toggle-switch">
-                            <input
-                                type="checkbox"
-                                checked={showHidden}
-                                onChange={(e) => setShowHidden(e.target.checked)}
-                            />
-                            <span className="slider"></span>
-                            <span className="toggle-label">
-                                {showHidden ? '🚫 Hide Disabled' : '👁️ Show Disabled'}
-                            </span>
-                        </label>
+
                         <button className="btn btn-primary" onClick={() => setShowAddProduct(true)}>
                             <span><Plus /></span>
                             Add Product
@@ -447,6 +458,22 @@ function TodayAuction() {
                     <h3 className="section-title">Available Products ({products.length})</h3>
                 </div>
 
+                {/* Search Bar */}
+                <div className="card fade-in search-card">
+                    <div className="form-group search-form-group">
+                        <div className="search-icon-container">
+                            <input
+                                type="text"
+                                placeholder="Search by product, seller, or variant..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="search-input"
+                            />
+                            <Search size={20} className="search-icon-absolute" />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="card-list fade-in">
                     {products.length === 0 ? (
                         <div className="empty-state">
@@ -456,7 +483,16 @@ function TodayAuction() {
                     ) : (
                         <div className="products-grid">
                             {products
-                                .filter(p => showHidden || p.isActive !== false)
+                                .filter(product => {
+                                    if (!searchQuery) return true;
+                                    const query = searchQuery.toLowerCase();
+                                    const seller = sellers.find(s => s.id === product.sellerId);
+                                    const sellerName = seller ? seller.name.toLowerCase() : '';
+                                    const productName = product.name.toLowerCase();
+                                    const hasMatchingVariant = product.variants && product.variants.some(v => v.variety.toLowerCase().includes(query));
+                                    
+                                    return sellerName.includes(query) || productName.includes(query) || hasMatchingVariant;
+                                })
                                 .map(product => (
                                     <div key={product.id} className={`data-card product-card ${product.isActive === false ? 'product-disabled' : ''}`}>
                                         <div className="data-card-header product-card-header">
@@ -470,17 +506,16 @@ function TodayAuction() {
 
                                             <div className="action-buttons">
                                                 <button className="icon-btn" onClick={() => toggleProductStatus(product.id)} title={product.isActive === false ? "Enable" : "Disable"}>
-                                                    {product.isActive === false ? <Eye /> : <EyeOff />}
+                                                    {product.isActive === false ? <Eye size={18} /> : <EyeOff size={18} />}
                                                 </button>
                                                 <button className="icon-btn edit" onClick={() => openEditModal(product)} title="Edit">
-                                                    <Edit2 />
+                                                    <Edit2 size={18} />
                                                 </button>
                                                 <button className="icon-btn delete" onClick={() => handleDeleteClick(product.id)} title="Delete">
-                                                    <Trash2 />
+                                                    <Trash2 size={18} />
                                                 </button>
                                             </div>
                                         </div>
-
 
                                         <div className="data-card-body product-card-body">
                                             <div className="product-image-container">
@@ -500,24 +535,28 @@ function TodayAuction() {
                                             </div>
 
                                             <div className="product-variants">
-                                                {product.variants && product.variants.map(v => (
-                                                    <div key={v.id} className="variant-box" style={{
-                                                        background: 'rgba(255,255,255,0.05)',
-                                                        padding: '8px',
-                                                        borderRadius: '4px',
-                                                        marginBottom: '4px',
-                                                        fontSize: '0.9em'
-                                                    }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
-                                                            <span>{capitalizeFirst(v.variety)}</span>
-                                                            <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`} style={{ fontSize: '0.7em', padding: '2px 6px' }}>{v.quality}</span>
+                                                {product.variants && product.variants.map(v => {
+                                                    const sold = v.sellQuantity || 0;
+                                                    const remaining = v.quantity - sold;
+                                                    return (
+                                                        <div key={v.id} className="variant-box" style={{
+                                                            background: 'rgba(255,255,255,0.05)',
+                                                            padding: '8px',
+                                                            borderRadius: '4px',
+                                                            marginBottom: '4px',
+                                                            fontSize: '0.9em'
+                                                        }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                                                                <span>{capitalizeFirst(v.variety)}</span>
+                                                                <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`} style={{ fontSize: '0.7em', padding: '2px 6px' }}>{v.quality}</span>
+                                                            </div>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                                                <span>{remaining} {v.unit}</span>
+                                                                <span className="text-amber">{v.commission}% Comm</span>
+                                                            </div>
                                                         </div>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                                                            <span>{v.quantity} {v.unit}</span>
-                                                            <span className="text-amber">{v.commission}% Comm</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    )
+                                                })}
                                             </div>
                                             {/* {product.credit > 0 && (
                                             <div className="data-row">
@@ -526,15 +565,22 @@ function TodayAuction() {
                                             </div>
                                         )} */}
                                         </div>
+
                                         <div className="data-card-footer product-card-footer">
                                             <button
                                                 className="btn btn-success sell-btn-full"
                                                 onClick={() => openSellModal(product)}
-                                                disabled={product.isActive === false}
+                                                disabled={product.isActive === false || product.status === 'soldout'}
                                             >
                                                 Sell
                                             </button>
                                         </div>
+
+                                        {product.status === 'soldout' && (
+                                            <div className="soldout-overlay">
+                                                SOLD OUT
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                         </div>
@@ -615,6 +661,7 @@ function TodayAuction() {
                                             type="number"
                                             placeholder="Qty"
                                             value={variantData.quantity}
+                                            min={1}
                                             onChange={(e) =>
                                                 setVariantData({ ...variantData, quantity: e.target.value })
                                             }
@@ -636,45 +683,46 @@ function TodayAuction() {
                                         <input
                                             type="number"
                                             placeholder="Comm %"
+                                            min={0}
                                             value={variantData.commission}
                                             onChange={(e) =>
                                                 setVariantData({ ...variantData, commission: e.target.value })
                                             }
                                         />
 
-                                        <button type="button" className="btn btn-primary" style={{ padding: '8px 12px' }} onClick={handleAddVariant}>
+                                        <button type="button" className="btn btn-primary add-variant-btn" onClick={handleAddVariant}>
                                             Add
                                         </button>
                                     </div>
                                 </div>
                                 {newProduct.variants && newProduct.variants.length > 0 && (
-                                    <div className="table-responsive" style={{ marginTop: '10px', maxHeight: '200px', overflowY: 'auto' }}>
-                                        <table className="variant-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9em' }}>
+                                    <div className="table-responsive table-responsive-variants">
+                                        <table className="variant-table">
                                             <thead>
-                                                <tr style={{ borderBottom: '1px solid #444', textAlign: 'left' }}>
-                                                    <th style={{ padding: '8px' }}>Variety</th>
-                                                    <th style={{ padding: '8px' }}>Quality</th>
-                                                    <th style={{ padding: '8px' }}>Qty</th>
-                                                    <th style={{ padding: '8px' }}>Unit</th>
-                                                    <th style={{ padding: '8px' }}>Comm %</th>
-                                                    <th style={{ padding: '8px' }}>Action</th>
+                                                <tr className="variant-table-th">
+                                                    <th className="variant-table-th">Variety</th>
+                                                    <th className="variant-table-th">Quality</th>
+                                                    <th className="variant-table-th">Qty</th>
+                                                    <th className="variant-table-th">Unit</th>
+                                                    <th className="variant-table-th">Comm %</th>
+                                                    <th className="variant-table-th">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {newProduct.variants.map(v => (
-                                                    <tr key={v.id} style={{ borderBottom: '1px solid #333' }}>
-                                                        <td style={{ padding: '8px' }}>{v.variety}</td>
-                                                        <td style={{ padding: '8px' }}>{v.quality}</td>
-                                                        <td style={{ padding: '8px' }}>{v.quantity}</td>
-                                                        <td style={{ padding: '8px' }}>{v.unit}</td>
-                                                        <td style={{ padding: '8px' }}>{v.commission}%</td>
-                                                        <td style={{ padding: '8px' }}>
+                                                    <tr key={v.id} className="variant-table-tr">
+                                                        <td className="variant-table-td">{v.variety}</td>
+                                                        <td className="variant-table-td">{v.quality}</td>
+                                                        <td className="variant-table-td">{v.quantity}</td>
+                                                        <td className="variant-table-td">{v.unit}</td>
+                                                        <td className="variant-table-td">{v.commission}%</td>
+                                                        <td className="variant-table-td">
                                                             <button
                                                                 type="button"
                                                                 className="icon-btn delete"
                                                                 onClick={() => handleDeleteVariant(v.id)}
                                                             >
-                                                                <Trash2 size={16} />
+                                                                <Trash2 size={18} />
                                                             </button>
                                                         </td>
                                                     </tr>
@@ -769,25 +817,25 @@ function TodayAuction() {
                                 {editingProduct.variants && editingProduct.variants.length > 0 && (
                                     <div className="form-group">
                                         <label className="form-label">Variants (Read-only)</label>
-                                        <div className="table-responsive" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                            <table className="variant-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9em' }}>
+                                        <div className="table-responsive-variants">
+                                            <table className="variant-table">
                                                 <thead>
-                                                    <tr style={{ borderBottom: '1px solid #444', textAlign: 'left' }}>
-                                                        <th style={{ padding: '8px' }}>Variety</th>
-                                                        <th style={{ padding: '8px' }}>Quality</th>
-                                                        <th style={{ padding: '8px' }}>Qty</th>
-                                                        <th style={{ padding: '8px' }}>Unit</th>
-                                                        <th style={{ padding: '8px' }}>Comm %</th>
+                                                    <tr className="variant-table-tr-header">
+                                                        <th className="variant-table-th">Variety</th>
+                                                        <th className="variant-table-th">Quality</th>
+                                                        <th className="variant-table-th">Qty</th>
+                                                        <th className="variant-table-th">Unit</th>
+                                                        <th className="variant-table-th">Comm %</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {editingProduct.variants.map(v => (
-                                                        <tr key={v.id} style={{ borderBottom: '1px solid #333' }}>
-                                                            <td style={{ padding: '8px' }}>{v.variety}</td>
-                                                            <td style={{ padding: '8px' }}>{v.quality}</td>
-                                                            <td style={{ padding: '8px' }}>{v.quantity}</td>
-                                                            <td style={{ padding: '8px' }}>{v.unit}</td>
-                                                            <td style={{ padding: '8px' }}>{v.commission}%</td>
+                                                        <tr key={v.id} className="variant-table-tr">
+                                                            <td className="variant-table-td">{v.variety}</td>
+                                                            <td className="variant-table-td">{v.quality}</td>
+                                                            <td className="variant-table-td">{v.quantity}</td>
+                                                            <td className="variant-table-td">{v.unit}</td>
+                                                            <td className="variant-table-td">{v.commission}%</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
@@ -865,17 +913,24 @@ function TodayAuction() {
                                         className="form-input"
                                     >
                                         <option value="">-- Select Variant --</option>
-                                        {selectedProduct.variants && selectedProduct.variants.map(v => (
-                                            <option key={v.id} value={v.id} disabled={v.quantity <= 0}>
-                                                {capitalizeFirst(v.variety)} - {v.quality} - {v.quantity} {v.unit} ({v.commission}%)
-                                            </option>
-                                        ))}
+                                        {selectedProduct.variants && selectedProduct.variants.map(v => {
+                                            const sold = v.sellQuantity || 0;
+                                            const remaining = v.quantity - sold;
+                                            return (
+                                                <option key={v.id} value={v.id} disabled={remaining <= 0}>
+                                                    {capitalizeFirst(v.variety)} - {v.quality} - {remaining} / {v.quantity} {v.unit} ({v.commission}%)
+                                                </option>
+                                            )
+                                        })}
                                     </select>
                                 </div>
 
                                 {saleData.variantId && (() => {
                                     const v = selectedProduct.variants.find(val => val.id == saleData.variantId);
                                     if (!v) return null;
+                                    const sold = v.sellQuantity || 0;
+                                    const available = v.quantity - sold;
+
                                     return (
                                         <>
                                             <div className="form-group">
@@ -883,15 +938,28 @@ function TodayAuction() {
                                                 <input
                                                     type="number"
                                                     value={saleData.qtyToSell}
-                                                    onChange={(e) => setSaleData({ ...saleData, qtyToSell: e.target.value })}
-                                                    max={v.quantity}
-                                                    min="0.1"
-                                                    step="0.1"
-                                                    placeholder={`Max: ${v.quantity}`}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        if (val === '') {
+                                                            setSaleData({ ...saleData, qtyToSell: '' });
+                                                        } else {
+                                                            const numVal = parseFloat(val);
+                                                            if (numVal > available) {
+                                                                toast.error(`Quantity cannot exceed ${available} ${v.unit}`);
+                                                                setSaleData({ ...saleData, qtyToSell: available });
+                                                            } else {
+                                                                setSaleData({ ...saleData, qtyToSell: val });
+                                                            }
+                                                        }
+                                                    }}
+                                                    max={available}
+                                                    min="1"
+                                                    step="1"
+                                                    placeholder={`Max: ${available}`}
                                                     required
                                                 />
                                                 <small className="form-hint">
-                                                    Remaining: {(v.quantity - (parseFloat(saleData.qtyToSell) || 0)).toFixed(2)} {v.unit}
+                                                    Remaining: {(available - (parseFloat(saleData.qtyToSell) || 0)).toFixed(2)} {v.unit}
                                                 </small>
                                             </div>
                                             <div className="form-group">

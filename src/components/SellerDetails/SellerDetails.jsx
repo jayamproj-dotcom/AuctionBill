@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './SellerDetails.css';
-import {Plus,Pencil,Trash2, X} from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Eye, Search } from 'lucide-react';
 
 function SellerDetails() {
     const [sellers, setSellers] = useState([]);
@@ -17,17 +17,14 @@ function SellerDetails() {
         email: '',
     });
     // Payment Modal State
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [currentTransaction, setCurrentTransaction] = useState(null);
-    const [paymentForm, setPaymentForm] = useState({
-        status: 'Pending',
-        amountPaid: 0,
-        balance: 0
-    });
+    // Payment Modal State
+    const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false);
+    const [paymentConfig, setPaymentConfig] = useState(null); // { type: 'product'|'global', targetId: string, targetName: string, maxAmount: number }
+    const [paymentAmount, setPaymentAmount] = useState('');
+    const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+    const [paymentNote, setPaymentNote] = useState('');
 
-    // Bulk Payment Modal State
-    const [showBulkPaymentModal, setShowBulkPaymentModal] = useState(false);
-    const [bulkPaymentAmount, setBulkPaymentAmount] = useState('');
+    const [activeTab, setActiveTab] = useState('products');
 
     useEffect(() => {
         loadSellers();
@@ -36,37 +33,57 @@ function SellerDetails() {
     const loadSellers = () => {
         const data = getAuctionData();
         if (data && data.sellers) {
-            // Sort transactions by date desc, then id desc (for same day)
-            const sortedTransactions = (data.transactions || []).sort((a, b) => {
-                const dateDiff = new Date(b.date) - new Date(a.date);
-                if (dateDiff !== 0) return dateDiff;
-                return b.id - a.id;
-            });
-            
-            setTransactions(sortedTransactions);
-            
+            const allProducts = data.products || [];
+            const allTransactions = data.transactions || [];
+            const allPayments = data.sellerPayments || [];
+            const allCredits = data.sellerCredits || [];
+
             // Calculate stats for each seller
             const sellersWithStats = data.sellers.map(seller => {
-                const sellerTransactions = sortedTransactions.filter(t => t.seller === seller.name);
-                
-                const totalSales = sellerTransactions.reduce((sum, t) => {
-                    const price = t.netAmount !== undefined ? t.netAmount : (t.price - t.commission);
-                    return sum + price;
-                }, 0);
+                const sellerProducts = allProducts.filter(p => p.sellerId === seller.id);
+                const sellerTransactions = allTransactions.filter(t => t.sellerId === seller.id);
+                const sellerPayments = allPayments.filter(p => p.sellerId === seller.id);
+                const sellerCredits = allCredits.filter(c => c.sellerId === seller.id);
 
-                const totalCredit = sellerTransactions.reduce((sum, t) => sum + (parseFloat(t.credit) || 0), 0);
-                
-                const totalItems = sellerTransactions.length;
-                return { ...seller, totalSales, totalCredit, totalItems };
+                // Calculate Totals
+                const totalGrossSales = sellerTransactions.reduce((sum, t) => sum + (t.finalAmount || 0), 0);
+                const totalCommission = sellerTransactions.reduce((sum, t) => sum + (t.commissionAmount || 0), 0);
+                const totalNetSales = sellerTransactions.reduce((sum, t) => sum + (t.netAmount || 0), 0);
+
+                const totalPaid = sellerPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+                // For now assuming credit is "money given to seller" (like advance), so it reduces the balance owed.
+                const totalCredit = sellerCredits.reduce((sum, c) => sum + (c.amount || 0), 0);
+
+                // Balance = Net Sales - Paid - Credit
+                const balance = totalNetSales - totalPaid - totalCredit;
+
+                return {
+                    ...seller,
+                    totalItems: sellerProducts.length,
+                    totalSales: totalNetSales, // Use Net Sales for consistency
+                    totalGrossSales,
+                    totalCommission,
+                    totalCredit,
+                    totalPaid,
+                    balance,
+                    products: sellerProducts,
+                    transactions: sellerTransactions,
+                    payments: sellerPayments,
+                    credits: sellerCredits
+                };
             });
             setSellers(sellersWithStats);
         }
     };
 
     const openDetailsModal = (seller) => {
-        const sellerTransactions = transactions.filter(t => t.seller === seller.name);
-        setSelectedSeller({ ...seller, transactions: sellerTransactions });
-        setShowDetailsModal(true);
+        // Find seller products from data if not already attached via simplified loadSellers
+        const data = getAuctionData();
+        const sellerProducts = (data.products || []).filter(p => p.sellerId === seller.id)
+            .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date desc
+
+        setSelectedSeller({ ...seller, products: sellerProducts });
+        // setShowDetailsModal(true); // No longer needed
     };
 
     const handleToggleStatus = (id) => {
@@ -82,8 +99,6 @@ function SellerDetails() {
             }
         }
     };
-
- 
 
     const handleAddSeller = (e) => {
         e.preventDefault();
@@ -124,226 +139,168 @@ function SellerDetails() {
         }
     };
 
-    const openPaymentModal = (transaction) => {
-        setCurrentTransaction(transaction);
-        // For sellers: netAmount is the payable. 
-        const netAmount = transaction.netAmount !== undefined ? transaction.netAmount : (transaction.price - transaction.commission);
-        const paid = transaction.sellerAmountPaid || 0;
-        const credit = transaction.credit || 0;
-        // Balance for seller = Net - Paid - Credit
-        const balance = netAmount - paid - credit;
-
-        setPaymentForm({
-            status: transaction.sellerPaymentStatus || 'Pending',
-            amountPaid: paid,
-            balance: balance
-        });
-        setShowPaymentModal(true);
-    };
-
-    const handleUpdatePayment = (e) => {
+    const handleRecordPayment = (e) => {
         e.preventDefault();
-        if (!currentTransaction) return;
+        const amount = parseFloat(paymentAmount);
 
-        // Validation: Cannot pay less than what was already paid
-        const previousPaid = currentTransaction.sellerAmountPaid || 0;
-        let newPaid = parseFloat(paymentForm.amountPaid) || 0;
-        
-        if (paymentForm.status === 'Part Paid' && newPaid < previousPaid) {
-            alert(`Amount cannot be less than previously paid amount (₹${previousPaid})`);
-            return;
-        }
-
-        const data = getAuctionData();
-        const index = data.transactions.findIndex(t => t.id === currentTransaction.id);
-
-        if (index !== -1) {
-            const transaction = data.transactions[index];
-            const netAmount = transaction.netAmount !== undefined ? transaction.netAmount : (transaction.price - transaction.commission);
-            
-            let paid = parseFloat(paymentForm.amountPaid) || 0;
-            let status = paymentForm.status;
-            let balance = parseFloat(paymentForm.balance) || 0;
-            const credit = transaction.credit || 0;
-
-            // Logic validations
-            if (status === 'Paid') {
-                paid = netAmount - credit;
-                balance = 0;
-            } else if (status === 'Pending') {
-                paid = 0;
-                balance = netAmount - credit;
-            } else if (status === 'Part Paid') {
-               // Ensure paid + balance + credit ~= netAmount
-               if (Math.abs(paid + balance + credit - netAmount) > 1) {
-                    balance = netAmount - paid - credit;
-               }
-            }
-
-            data.transactions[index] = {
-                ...data.transactions[index],
-                sellerPaymentStatus: status,
-                sellerAmountPaid: paid
-                // We don't explicitly store 'balance' usually for sellers as it is derived, 
-                // but if we want to caching it:
-                // sellerBalance: balance 
-            };
-
-            saveAuctionData(data);
-            loadSellers();
-
-            // Update currently selected seller view
-            if (selectedSeller) {
-                const updatedTransactions = data.transactions.filter(t => t.seller === selectedSeller.name);
-                setSelectedSeller(prev => ({ ...prev, transactions: updatedTransactions }));
-            }
-            setShowPaymentModal(false);
-        }
-    };
-
-    const handleAmountPaidChange = (e) => {
-        if (!currentTransaction) return;
-        const val = parseFloat(e.target.value);
-        const netAmount = currentTransaction.netAmount !== undefined ? currentTransaction.netAmount : (currentTransaction.price - currentTransaction.commission);
-        const credit = currentTransaction.credit || 0;
-        const maxPayable = netAmount - credit;
-        const minPayable = currentTransaction.sellerAmountPaid || 0;
-
-        const effectiveVal = isNaN(val) ? 0 : val;
-        
-        // Prevent setting less than already paid
-        // If user tries to type lower, we could either block it or let them type but show error on submit. 
-        // User request: "if already 1000 gived i cant edit less that 1000"
-        // We will enforce it in the state update if it's a valid number
-        
-        const newBalance = Math.max(0, maxPayable - effectiveVal);
-
-        setPaymentForm({
-            ...paymentForm,
-            amountPaid: e.target.value,
-            balance: newBalance
-        });
-    };
-
-    const handleBalanceChange = (e) => {
-        if (!currentTransaction) return;
-        const val = parseFloat(e.target.value);
-        const netAmount = currentTransaction.netAmount !== undefined ? currentTransaction.netAmount : (currentTransaction.price - currentTransaction.commission);
-        const credit = currentTransaction.credit || 0;
-        const maxPayable = netAmount - credit;
-
-        const effectiveVal = isNaN(val) ? 0 : val;
-        const newPaid = Math.max(0, maxPayable - effectiveVal);
-
-        setPaymentForm({
-            ...paymentForm,
-            balance: e.target.value,
-            amountPaid: newPaid
-        });
-    };
-
-    const handleBulkPayment = (e) => {
-        e.preventDefault();
-        const paymentAmount = parseFloat(bulkPaymentAmount);
-        
-        if (isNaN(paymentAmount) || paymentAmount <= 0) {
+        if (isNaN(amount) || amount <= 0) {
             alert("Please enter a valid amount.");
             return;
         }
 
-        const data = getAuctionData();
-        
-        // Get seller transactions from latest data
-        let sellerTransactions = data.transactions.filter(t => t.seller === selectedSeller.name);
-        
-        // Sort by date ASCENDING (oldest first) for payment distribution
-        sellerTransactions.sort((a, b) => new Date(a.date) - new Date(b.date) || a.id - b.id);
-        
-        let remainingPayment = paymentAmount;
-        let updatedCount = 0;
-
-        // Iterate through transactions and apply payment
-        sellerTransactions.forEach(t => {
-            if (remainingPayment <= 0) return;
-
-            const netAmount = t.netAmount !== undefined ? t.netAmount : (t.price - t.commission);
-            const paid = t.sellerAmountPaid || 0;
-            const credit = t.credit || 0;
-            const currentBalance = netAmount - paid - credit;
-
-            if (currentBalance > 0) {
-                // Determine how much we can pay for this transaction
-                const amountToPay = Math.min(currentBalance, remainingPayment);
-                
-                // Update transaction in main data array
-                const index = data.transactions.findIndex(trans => trans.id === t.id);
-                if (index !== -1) {
-                    const newPaidTotal = paid + amountToPay;
-                    const newBalance = netAmount - newPaidTotal - credit;
-                    
-                    let newStatus = 'Pending';
-                    if (newBalance <= 0) { // Using <= 0 to handle potential float precision issues, though logic safeguards it
-                        newStatus = 'Paid';
-                    } else {
-                        newStatus = 'Part Paid';
-                    }
-
-                    data.transactions[index] = {
-                        ...data.transactions[index],
-                        sellerAmountPaid: newPaidTotal,
-                        sellerPaymentStatus: newStatus
-                    };
-                    
-                    remainingPayment -= amountToPay;
-                    updatedCount++;
-                }
+        if (paymentConfig.maxAmount !== undefined && amount > paymentConfig.maxAmount) {
+            if (!confirm(`Amount (₹${amount}) exceeds the calculated balance (₹${paymentConfig.maxAmount}). Continue anyway?`)) {
+                return;
             }
-        });
-
-        if (updatedCount > 0) {
-            saveAuctionData(data);
-            loadSellers();
-            // Update selected seller view
-            if (selectedSeller) {
-                 // Re-fetch transactions for selected seller to update UI
-                const updatedTransactions = data.transactions.filter(t => t.seller === selectedSeller.name);
-                // Sort back to default view (Newest First)
-                updatedTransactions.sort((a, b) => {
-                    const dateDiff = new Date(b.date) - new Date(a.date);
-                    if (dateDiff !== 0) return dateDiff;
-                    return b.id - a.id;
-                });
-                
-                // Recalculate seller stats if needed, or just update transactions
-                // Ideally we should reload the full seller object, but updating transactions is critical
-                setSelectedSeller(prev => ({ 
-                    ...prev, 
-                    transactions: updatedTransactions,
-                    // Optionally update derived stats if displayed in modal
-                }));
-            }
-            setShowBulkPaymentModal(false);
-            setBulkPaymentAmount('');
-            alert(`Payment allocated successfully to ${updatedCount} transaction(s).`);
-        } else {
-            alert("No pending balances found to allocate this payment.");
         }
+
+        const data = getAuctionData();
+
+        // New Payment Record
+        const newPayment = {
+            id: Date.now(),
+            sellerId: selectedSeller.id,
+            productId: paymentConfig.type === 'product' ? paymentConfig.targetId : null, // Link to product if specific
+            date: paymentDate,
+            amount: amount,
+            method: "Cash", // Could be dropdown
+            note: paymentNote || (paymentConfig.type === 'product' ? `Payment for ${paymentConfig.targetName}` : 'Global Payment'),
+            reference: `PAY-${Date.now()}`
+        };
+
+        if (!data.sellerPayments) {
+            data.sellerPayments = [];
+        }
+        data.sellerPayments.push(newPayment);
+
+        saveAuctionData(data);
+        loadSellers();
+
+        // Update selected seller state locally
+        setSelectedSeller(prev => ({
+            ...prev,
+            payments: [...(prev.payments || []), newPayment],
+            totalPaid: (prev.totalPaid || 0) + amount,
+            balance: (prev.balance || 0) - amount
+        }));
+
+        setShowRecordPaymentModal(false);
+        setPaymentAmount('');
+        setPaymentNote('');
+        setPaymentConfig(null);
+        alert(`Payment of ₹${amount} recorded successfully.`);
     };
 
-    // Derived state for Modal
-    const getTotalPendingBalance = () => {
-        if (!selectedSeller || !selectedSeller.transactions) return 0;
-        return selectedSeller.transactions.reduce((sum, t) => {
-            const netAmount = t.netAmount !== undefined ? t.netAmount : (t.price - t.commission);
-            const paid = t.sellerAmountPaid || 0;
-            const credit = t.credit || 0;
-            return sum + Math.max(0, netAmount - paid - credit);
-        }, 0);
+    const openGlobalPaymentModal = () => {
+        setPaymentConfig({
+            type: 'global',
+            targetName: 'Global Account',
+            maxAmount: selectedSeller.balance // Global balance
+        });
+        setPaymentAmount('');
+        setPaymentDate(new Date().toISOString().split('T')[0]);
+        setPaymentNote('');
+        setShowRecordPaymentModal(true);
+    };
+
+    const openProductPaymentModal = (product) => {
+        const pTransactions = (selectedSeller.transactions || []).filter(t => t.productId === product.id);
+        const totalNet = pTransactions.reduce((sum, t) => sum + (Number(t.netAmount) || 0), 0);
+
+        const pPayments = (selectedSeller.payments || []).filter(p => p.productId === product.id);
+        const totalPaid = pPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+        const balance = totalNet - totalPaid;
+
+        if (balance <= 0) {
+            // Allow payment even if balance is 0? Maybe advance? 
+            // For now, let's warn but allow if they really want, or just set maxAmount 0
+        }
+
+        setPaymentConfig({
+            type: 'product',
+            targetId: product.id,
+            targetName: product.name,
+            maxAmount: Math.max(0, balance)
+        });
+        setPaymentAmount(''); // Don't prefill full amount, let user type
+        setPaymentDate(new Date().toISOString().split('T')[0]);
+        setPaymentNote(`Payment for ${product.name}`);
+        setShowRecordPaymentModal(true);
+    };
+
+    // Product View Modal State
+    const [viewingProduct, setViewingProduct] = useState(null);
+    const [showProductViewModal, setShowProductViewModal] = useState(false);
+
+    const handleViewProduct = (productId) => {
+        const product = selectedSeller.products.find(p => p.id === productId);
+        if (!product) return;
+
+        // Find related transactions for this product
+        const relatedTransactions = (selectedSeller.transactions || []).filter(t => t.productId === productId);
+
+        // Calculate Stats PER VARIANT
+        const variantsWithStats = (product.variants || []).map(variant => {
+            const variantTransactions = relatedTransactions.filter(t => t.variantId === variant.id);
+            const price = variantTransactions.reduce((sum, t) => sum + (t.finalAmount || 0), 0);
+            const commission = variantTransactions.reduce((sum, t) => sum + (t.commissionAmount || 0), 0);
+            const net = variantTransactions.reduce((sum, t) => sum + (t.netAmount || 0), 0);
+
+            // We don't track payments per variant in UI yet, but we could if we wanted.
+            // For now, sticky to Product-level tracking as requested.
+            return {
+                ...variant,
+                stats: { price, commission, net }
+            };
+        });
+
+        // Calculate Grand Totals for the product
+        const totalSales = relatedTransactions.reduce((sum, t) => sum + (t.finalAmount || 0), 0);
+        const totalCommission = relatedTransactions.reduce((sum, t) => sum + (t.commissionAmount || 0), 0);
+        const totalNet = relatedTransactions.reduce((sum, t) => sum + (t.netAmount || 0), 0);
+
+        // Calculate Paid from payments
+        const pPayments = (selectedSeller.payments || []).filter(p => p.productId === productId);
+        const totalPaid = pPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        const totalBalance = totalNet - totalPaid;
+
+        setViewingProduct({
+            ...product,
+            variants: variantsWithStats,
+            stats: {
+                price: totalSales,
+                commission: totalCommission,
+                net: totalNet,
+                paid: totalPaid,
+                balance: totalBalance
+            },
+            relatedTransactions
+        });
+        setShowProductViewModal(true);
+    };
+
+    const handlePayBalance = (productId) => {
+        // No obsolete logic here, now calling openProductPaymentModal
+        // But we need the product object, and here we only got productId in previous implementation loop? 
+        // Let's find the product again or pass it. The map loop below has 'p' which is product.
+        // It's cleaner to pass 'p' in the JSX.
+        // For backwards compatibility relative to where this function sat in logic...
+        const product = selectedSeller.products.find(p => p.id === productId);
+        if (product) openProductPaymentModal(product);
+    };
+
+    // Obsolete function removed. 
+
+    // Helper to close details view
+    const handleBackToSellers = () => {
+        setSelectedSeller(null);
     };
 
     return (
         <>
-            <ConfirmationModal 
+            {/* ... Modal Wrappers ... */}
+            <ConfirmationModal
                 isOpen={isDeleteConfirmOpen}
                 onClose={() => setIsDeleteConfirmOpen(false)}
                 onConfirm={confirmDeleteSeller}
@@ -354,132 +311,151 @@ function SellerDetails() {
                 cancelText="Cancel"
                 variant="danger"
             />
+
             <div className="content-header">
+                {/* ... Header Content ... */}
                 <div className="header-top">
-                    <h1>Sellers</h1>
+                    <h1>{selectedSeller ? 'Seller Details' : 'Sellers'}</h1>
                     <div className="header-actions">
-                        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
-                            <span><Plus/></span>
-                            Add Seller
-                        </button>
+                        {selectedSeller ? (
+                            <button className="btn btn-secondary" onClick={handleBackToSellers}>
+                                <span>←</span> Back to List
+                            </button>
+                        ) : (
+                            <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                                <span><Plus /></span>
+                                Add Seller
+                            </button>
+                        )}
                     </div>
                 </div>
                 <div className="breadcrumb">
                     <span>Home</span>
                     <span className="breadcrumb-separator">/</span>
-                    <span>Sellers</span>
-                </div>
-            </div>
-
-            <div className="content-body">
-                <div className="section-header">
-                    <h3 className="section-title">All Sellers ({sellers.length})</h3>
-                </div>
-
-                <div className="card-list fade-in">
-                    {sellers.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-state-icon">👤</div>
-                            <p>No sellers registered yet</p>
-                        </div>
-                    ) : (
-                        sellers.map(seller => (
-                            <div key={seller.id} className="data-card clickable-card" onClick={() => openDetailsModal(seller)}>
-                                <div className="data-card-header">
-                                    <div>
-                                        <div className="data-card-title">{seller.name}</div>
-                                        <div className="data-card-subtitle">{seller.contact}</div>
-                                    </div>
-                                    <button className="icon-btn delete" onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteClick(seller.id);
-                                    }} title="Delete Seller">
-                                       <Trash2/>
-                                    </button>
-                                </div>
-                                
-                                <div className="data-card-body">
-                                    <div className="data-row">
-                                        <span className="data-label">Address</span>
-                                        <span className="data-value">{seller.address}</span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Login Access</span>
-                                        <span className={`data-value badge ${seller.status === 'inactive' ? 'badge-error' : 'badge-success'}`}>
-                                            {seller.status === 'inactive' ? 'Disabled' : 'Enabled'}
-                                        </span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Items Sold</span>
-                                        <span className="data-value">{seller.totalItems || 0}</span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Net Payable</span>
-                                        <span className="data-value text-amber">₹{((seller.totalSales || 0) - (seller.totalCredit || 0)).toLocaleString()}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
+                    <span onClick={selectedSeller ? handleBackToSellers : undefined} style={{ cursor: selectedSeller ? 'pointer' : 'default', textDecoration: selectedSeller ? 'underline' : 'none' }}>
+                        Sellers
+                    </span>
+                    {selectedSeller && (
+                        <>
+                            <span className="breadcrumb-separator">/</span>
+                            <span>{selectedSeller.name}</span>
+                        </>
                     )}
                 </div>
             </div>
 
-            {/* Seller Detail Modal */}
-            {showDetailsModal && selectedSeller && (
-                <div className="modal-overlay" onClick={() => setShowDetailsModal(false)}>
-                    <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3 className="modal-title">Seller Profile: {selectedSeller.name}</h3>
-                            <button className="modal-close" onClick={() => setShowDetailsModal(false)}><X/></button>
+            <div className="content-body">
+                {!selectedSeller ? (
+                    <>
+                        <div className="section-header">
+                            <h3 className="section-title">All Sellers ({sellers.length})</h3>
                         </div>
-                        <div className="modal-body">
-                            <div className="card profile-container">
-                                <div className="profile-layout">
-                                    <div className="profile-info">
-                                        <div className="data-row">
-                                            <span className="data-label">Contact</span>
-                                            <span className="data-value">{selectedSeller.contact}</span>
+
+                        <div className="card-list fade-in">
+                            {sellers.length === 0 ? (
+                                <div className="empty-state">
+                                    <div className="empty-state-icon">👤</div>
+                                    <p>No sellers registered yet</p>
+                                </div>
+                            ) : (
+                                sellers
+                                    .map(seller => (
+                                        <div key={seller.id} className="data-card clickable-card" onClick={() => openDetailsModal(seller)}>
+                                            <div className="data-card-header">
+                                                <div>
+                                                    <div className="data-card-title">{seller.name}</div>
+                                                    <div className="data-card-subtitle">{seller.contact}</div>
+                                                </div>
+                                                <button className="icon-btn delete" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteClick(seller.id);
+                                                }} title="Delete Seller">
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+
+                                            <div className="data-card-body">
+                                                <div className="data-row">
+                                                    <span className="data-label">Address</span>
+                                                    <span className="data-value">{seller.address}</span>
+                                                </div>
+                                                <div className="data-row">
+                                                    <span className="data-label">Login Access</span>
+                                                    <span className={`data-value badge ${seller.loginAccess === 'inactive' ? 'badge-error' : 'badge-success'}`}>
+                                                        {seller.loginAccess === 'inactive' ? 'Disabled' : 'Enabled'}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Mail Id</span>
-                                            <span className="data-value">{selectedSeller.email || 'N/A'}</span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Address</span>
-                                            <span className="data-value">{selectedSeller.address}</span>
-                                        </div>
+                                    ))
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    /* Detail View Logic */
+                    <div className="fade-in">
+                        <div className="card profile-container" style={{ marginBottom: '2rem' }}>
+                            <div className="profile-layout">
+                                <div className="profile-info">
+                                    <div className="data-row">
+                                        <span className="data-label">Contact</span>
+                                        <span className="data-value">{selectedSeller.contact}</span>
                                     </div>
-                                    <div className="profile-actions">
-                                        <button 
-                                            className={`btn btn-sm ${selectedSeller.status === 'inactive' ? 'btn-success' : 'btn-error'} status-toggle-btn`}
-                                            onClick={() => handleToggleStatus(selectedSeller.id)}
-                                        >
-                                            {selectedSeller.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
-                                        </button>
-                                        <button
-                                            className="btn btn-sm btn-primary status-toggle-btn"
-                                            onClick={() => {
-                                                setBulkPaymentAmount('');
-                                                setShowBulkPaymentModal(true);
-                                            }}
-                                            disabled={getTotalPendingBalance() <= 0}
-                                        >
-                                            Pay Balance
-                                        </button>
+                                    <div className="data-row">
+                                        <span className="data-label">Mail Id</span>
+                                        <span className="data-value">{selectedSeller.email || 'N/A'}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">Address</span>
+                                        <span className="data-value">{selectedSeller.address}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">Login Access</span>
+                                        <span className={`data-value badge ${selectedSeller.status === 'inactive' ? 'badge-error' : 'badge-success'}`}>
+                                            {selectedSeller.status === 'inactive' ? 'Disabled' : 'Enabled'}
+                                        </span>
                                     </div>
                                 </div>
+                                <div className="profile-actions">
+                                    <button
+                                        className={`btn btn-sm ${selectedSeller.status === 'inactive' ? 'btn-success' : 'btn-error'} status-toggle-btn`}
+                                        onClick={() => handleToggleStatus(selectedSeller.id)}
+                                    >
+                                        {selectedSeller.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
+                                    </button>
+                                    <button
+                                        className="btn btn-sm btn-primary status-toggle-btn"
+                                        onClick={openGlobalPaymentModal}
+                                    >
+                                        Add Global Payment
+                                    </button>
+                                </div>
                             </div>
+                        </div>
 
-                            <h4 className="history-title">Selled Items History ({selectedSeller.transactions.length})</h4>
+                        <div className="history-tabs">
+                            <button
+                                className={`tab-button ${activeTab === 'products' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('products')}
+                            >
+                                Submitted Products ({selectedSeller.products?.length || 0})
+                            </button>
+                            <button
+                                className={`tab-button ${activeTab === 'payments' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('payments')}
+                            >
+                                Payment History
+                            </button>
+                        </div>
+
+                        {activeTab === 'products' ? (
                             <div className="table-wrapper history-table-wrapper">
                                 <table className="history-table">
                                     <thead>
                                         <tr>
                                             <th>Date</th>
                                             <th>Product</th>
-                                            <th>Buyer</th>
-                                            <th>Price</th>
-                                            <th>Credit</th>
+                                            <th>Sales (Net)</th>
                                             <th>Paid</th>
                                             <th>Balance</th>
                                             <th>Status</th>
@@ -487,236 +463,354 @@ function SellerDetails() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {selectedSeller.transactions.length === 0 ? (
+                                        {(!selectedSeller.products || selectedSeller.products.length === 0) ? (
                                             <tr>
-                                                <td colSpan="9" className="empty-td">No items sold yet</td>
+                                                <td colSpan="7" className="empty-td">No items submitted yet</td>
                                             </tr>
                                         ) : (
-                                            selectedSeller.transactions.map(t => {
-                                                const netAmount = t.netAmount !== undefined ? t.netAmount : (t.price - t.commission);
-                                                const paid = t.sellerAmountPaid || 0;
-                                                const credit = t.credit || 0;
-                                                const balance = netAmount - paid - credit;
-                                                const status = t.sellerPaymentStatus || 'Pending';
+                                            selectedSeller.products.map(p => {
+                                                // Calculate product stats from transactions
+                                                const pTransactions = (selectedSeller.transactions || []).filter(t => t.productId === p.id);
+
+                                                // Net Sales for this product
+                                                const totalNet = pTransactions.reduce((sum, t) => sum + (Number(t.netAmount) || 0), 0);
+
+                                                // Calculations using sellerPayments table for this product
+                                                const pPayments = (selectedSeller.payments || []).filter(pmt => pmt.productId === p.id);
+                                                const totalPaid = pPayments.reduce((sum, pmt) => sum + (Number(pmt.amount) || 0), 0);
+                                                const totalBalance = totalNet - totalPaid;
+
+                                                const isPaidOff = totalBalance <= 0 && totalNet > 0;
 
                                                 return (
-                                                <tr key={t.id}>
-                                                    <td>{t.date}</td>
-                                                    <td className="product-name-bold">{t.product}</td>
-                                                    <td>{t.buyer}</td>
-                                                    <td className="text-amber">₹{netAmount.toLocaleString()}</td>
-                                                    <td className="text-error">₹{credit.toLocaleString()}</td>
-                                                    <td className="text-success">₹{paid.toLocaleString()}</td>
-                                                    <td className="text-error">₹{balance.toLocaleString()}</td>
-                                                    <td>
-                                                        <span className={`badge ${status === 'Paid' ? 'badge-success' : status === 'Part Paid' ? 'badge-warning' : 'badge-error'}`}>
-                                                            {status}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <button 
-                                                            className="icon-btn edit"
-                                                            onClick={() => openPaymentModal(t)}
-                                                            title="Update Payment"
-                                                        >
-                                                            <Pencil/>
-                                                        </button>
-                                                    </td>
-                                                </tr>
+                                                    <tr key={p.id}>
+                                                        <td>{p.date}</td>
+                                                        <td className="product-name-bold">{p.name}</td>
+                                                        <td>₹{totalNet.toLocaleString()}</td>
+                                                        <td className="text-success">₹{totalPaid.toLocaleString()}</td>
+                                                        <td className={`text-error ${totalBalance > 0 ? 'font-bold' : ''}`}>
+                                                            ₹{Math.max(0, totalBalance).toLocaleString()}
+                                                        </td>
+                                                        <td>
+                                                            {isPaidOff ? (
+                                                                <span className="badge badge-success">Paid</span>
+                                                            ) : (
+                                                                <span className={`badge ${p.status === 'soldout' ? 'badge-warning' : 'badge-info'}`}>
+                                                                    {p.status}
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td>
+                                                            <div style={{ display: 'flex', gap: '5px' }}>
+                                                                <button className="btn btn-sm btn-info" onClick={() => handleViewProduct(p.id)} title="View Details">
+                                                                    <Eye size={16} />
+                                                                </button>
+                                                                {totalBalance > 0 && (
+                                                                    <button className="btn btn-sm btn-primary" onClick={() => openProductPaymentModal(p)} title="Pay Balance">
+                                                                        Pay
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
                                                 );
                                             })
                                         )}
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button className="btn btn-secondary" onClick={() => setShowDetailsModal(false)}>Close</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Payment Update Modal */}
-            {showPaymentModal && currentTransaction && (
-                <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3 className="modal-title">Update Payment Details</h3>
-                            <button className="modal-close" onClick={() => setShowPaymentModal(false)}>×</button>
-                        </div>
-                        <form onSubmit={handleUpdatePayment}>
-                            <div className="modal-body">
-                                <div className="data-row" style={{marginBottom: '1rem'}}>
-                                    <span className="data-label">Product</span>
-                                    <span className="data-value">{currentTransaction.product}</span>
-                                </div>
-                                <div className="data-row" style={{marginBottom: '1rem'}}>
-                                    <span className="data-label">Net Payable Amount</span>
-                                    <span className="data-value text-amber">
-                                        ₹{(currentTransaction.netAmount !== undefined ? currentTransaction.netAmount : (currentTransaction.price - currentTransaction.commission)).toLocaleString()}
-                                    </span>
-                                </div>
-
-                                <div className="form-group">
-                                    <label className="form-label">Payment Status</label>
-                                    <select
-                                        value={paymentForm.status}
-                                        onChange={(e) => setPaymentForm({...paymentForm, status: e.target.value})}
-                                        disabled={currentTransaction.sellerPaymentStatus === 'Paid'}
+                        ) : (
+                            <div className="payment-history-section">
+                                <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={openGlobalPaymentModal}
                                     >
-                                        <option value="Pending" disabled={currentTransaction.sellerPaymentStatus === 'Paid' || (currentTransaction.sellerAmountPaid > 0)}>Pending</option>
-                                        <option value="Part Paid">Part Paid</option>
-                                        <option value="Paid">Paid</option>
-                                    </select>
+                                        <Plus size={16} style={{ marginRight: '5px' }} /> Add Global Payment
+                                    </button>
                                 </div>
+                                <table className="history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Note</th>
+                                            <th>Ref</th>
+                                            <th>Product</th>
+                                            <th>Paid Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {(!selectedSeller.payments || selectedSeller.payments.length === 0) ? (
+                                            <tr>
+                                                <td colSpan="5" className="empty-td">No payments recorded yet</td>
+                                            </tr>
+                                        ) : (
+                                            // Sort by date desc (newest first)
+                                            [...selectedSeller.payments].sort((a, b) => new Date(b.date) - new Date(a.date) || b.id - a.id).map(payment => {
+                                                const paidProduct = selectedSeller.products.find(p => p.id === payment.productId);
+                                                return (
+                                                    <tr key={payment.id}>
+                                                        <td>{payment.date}</td>
+                                                        <td>{payment.note}</td>
+                                                        <td className="text-secondary" style={{ fontSize: '0.85em' }}>{payment.id}</td>
+                                                        <td>{paidProduct ? paidProduct.name : (payment.productId ? 'Unknown' : 'Global Credit')}</td>
+                                                        <td className="text-success" style={{ fontWeight: 'bold' }}>
+                                                            ₹{parseFloat(payment.amount).toLocaleString()}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
-                                {paymentForm.status === 'Part Paid' && (
-                                    <>
-                                        <div className="form-group">
-                                            <label className="form-label">Amount Paid (₹)</label>
-                                            <input
-                                                type="number"
-                                                value={paymentForm.amountPaid}
-                                                onChange={handleAmountPaidChange}
-                                                max={currentTransaction.netAmount !== undefined ? currentTransaction.netAmount : (currentTransaction.price - currentTransaction.commission)}
-                                                min={currentTransaction.sellerAmountPaid || 0}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Balance Amount (₹)</label>
-                                            <input
-                                                type="number"
-                                                value={paymentForm.balance}
-                                                onChange={handleBalanceChange}
-                                                max={currentTransaction.netAmount !== undefined ? currentTransaction.netAmount : (currentTransaction.price - currentTransaction.commission)}
-                                                min="0"
-                                                required
-                                            />
-                                        </div>
-                                    </>
-                                )}
+            {/* Product View Modal */}
+            {
+                showProductViewModal && viewingProduct && (
+                    <div className="modal-overlay" style={{ zIndex: 999 }} onClick={() => setShowProductViewModal(false)}>
+                        <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h3 className="modal-title">Product Details ({viewingProduct.name})</h3>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    {viewingProduct.stats.balance > 0 && (
+                                        <div className='badge badge-error'>Total Due: ₹{viewingProduct.stats.balance}</div>
+                                    )}
+                                    <button className="modal-close" onClick={() => setShowProductViewModal(false)}><X /></button>
+                                </div>
                             </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowPaymentModal(false)}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="btn btn-primary btn-sm">
-                                    Update Payment
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-            
-            {/* Bulk Payment Modal */}
-            {showBulkPaymentModal && selectedSeller && (
-                <div className="modal-overlay" onClick={() => setShowBulkPaymentModal(false)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3 className="modal-title">Bulk Payment</h3>
-                            <button className="modal-close" onClick={() => setShowBulkPaymentModal(false)}>×</button>
-                        </div>
-                        <form onSubmit={handleBulkPayment}>
                             <div className="modal-body">
-                                <div className="data-row" style={{marginBottom: '1rem'}}>
-                                    <span className="data-label">Total Pending Balance</span>
-                                    <span className="data-value text-error">₹{getTotalPendingBalance().toLocaleString()}</span>
-                                </div>
-                                <p className="text-sm text-gray" style={{marginBottom: '1rem'}}>
-                                    This payment will be automatically distributed to the oldest pending transactions first.
-                                </p>
-                                <div className="form-group">
-                                    <label className="form-label">Payment Amount (₹)</label>
-                                    <input
-                                        type="number"
-                                        value={bulkPaymentAmount}
-                                        onChange={(e) => setBulkPaymentAmount(e.target.value)}
-                                        max={getTotalPendingBalance()}
-                                        min="1"
-                                        placeholder="Enter amount"
-                                        required
-                                        autoFocus
-                                    />
+                                <div className="product-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                    <div style={{ display: 'flex', gap: '20px' }}>
+                                        <div className="product-image-preview" style={{ flex: '0 0 150px' }}>
+                                            {viewingProduct.image ? (
+                                                <img
+                                                    src={viewingProduct.image}
+                                                    alt={viewingProduct.name}
+                                                    style={{
+                                                        width: '100%',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #ddd'
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div
+                                                    className="product-image-placeholder"
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '120px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: '40px',
+                                                        border: '1px solid #ddd',
+                                                        borderRadius: '8px',
+                                                        background: '#f5f5f5'
+                                                    }}
+                                                >
+                                                    📦
+                                                </div>
+                                            )}
+                                            <div style={{ marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>
+                                                {viewingProduct.date}
+                                            </div>
+                                        </div>
+
+                                        <div className="product-info-details" style={{ flex: 1 }}>
+                                            {/* Summarized Stats */}
+                                            <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
+                                                <div>Total Sales: <b>₹{viewingProduct.stats.price.toLocaleString()}</b></div>
+                                                <div>Commission: <b>₹{viewingProduct.stats.commission.toLocaleString()}</b></div>
+                                                <div className="text-success">Total Paid: <b>₹{viewingProduct.stats.paid.toLocaleString()}</b></div>
+                                                <div className="text-error">Total Balance: <b>₹{viewingProduct.stats.balance.toLocaleString()}</b></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h4 style={{ margin: '0 0 10px 0' }}>Variant Details</h4>
+                                    <div className="table-wrapper">
+                                        <table className="history-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Variety</th>
+                                                    <th>Qty</th>
+                                                    <th>Sold Qty</th>
+                                                    <th>Sales</th>
+                                                    <th>Comm.</th>
+                                                    <th>Net Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {viewingProduct.variants.map((v, idx) => (
+                                                    <tr key={idx}>
+                                                        <td>{v.variety}</td>
+                                                        <td>{v.quantity} {v.unit}</td>
+                                                        <td>{v.sellQuantity || 0} {v.unit}</td>
+                                                        <td>₹{(v.stats?.price || 0).toLocaleString()}</td>
+                                                        <td>₹{(v.stats?.commission || 0).toLocaleString()}</td>
+                                                        <td className="text-success" style={{ fontWeight: 'bold' }}>
+                                                            ₹{(v.stats?.net || 0).toLocaleString()}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                {viewingProduct.variants.length === 0 && (
+                                                    <tr><td colSpan="6" className="text-center">No variants found</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowBulkPaymentModal(false)}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="btn btn-primary btn-sm">
-                                    Pay & Distribute
-                                </button>
+                                {viewingProduct.stats.balance > 0 && (
+                                    <button className="btn btn-primary" onClick={() => openProductPaymentModal(viewingProduct)}>
+                                        Pay Total Balance
+                                    </button>
+                                )}
+                                <button className="btn btn-secondary" onClick={() => setShowProductViewModal(false)}>Close</button>
                             </div>
-                        </form>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
+
+            {/* Record Payment Modal (Replaces Bulk Payment) */}
+            {
+                showRecordPaymentModal && selectedSeller && (
+                    <div className="modal-overlay" onClick={() => setShowRecordPaymentModal(false)}>
+                        <div className="modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h3 className="modal-title">Record Payment</h3>
+                                <button className="modal-close" onClick={() => setShowRecordPaymentModal(false)}>×</button>
+                            </div>
+                            <form onSubmit={handleRecordPayment}>
+                                <div className="modal-body">
+                                    {paymentConfig?.type === 'product' && (
+                                        <div className="data-row" style={{ marginBottom: '1rem' }}>
+                                            <span className="data-label">Product Name</span>
+                                            <span className="data-value">{paymentConfig.targetName}</span>
+                                        </div>
+                                    )}
+
+                                    <div className="data-row" style={{ marginBottom: '1rem' }}>
+                                        <span className="data-label">Pending Balance ({paymentConfig?.type === 'product' ? 'Product' : 'Global'})</span>
+                                        <span className="data-value text-error">₹{paymentConfig?.maxAmount?.toLocaleString() || 0}</span>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Payment Date</label>
+                                        <input
+                                            type="date"
+                                            value={paymentDate}
+                                            onChange={(e) => setPaymentDate(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Note</label>
+                                        <input
+                                            type="text"
+                                            value={paymentNote}
+                                            onChange={(e) => setPaymentNote(e.target.value)}
+                                            placeholder="e.g. Cash payment"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Payment Amount (₹)</label>
+                                        <input
+                                            type="number"
+                                            value={paymentAmount}
+                                            onChange={(e) => setPaymentAmount(e.target.value)}
+                                            max={paymentConfig?.maxAmount}
+                                            min="1"
+                                            placeholder="Enter amount"
+                                            required
+                                            autoFocus
+                                        />
+                                    </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowRecordPaymentModal(false)}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn btn-primary btn-sm">
+                                        Save Payment
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* Add Seller Modal */}
-            {showAddModal && (
-                <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3 className="modal-title">Add New Seller</h3>
-                            <button className="modal-close" onClick={() => setShowAddModal(false)}><X/></button>
+            {
+                showAddModal && (
+                    <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+                        <div className="modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h3 className="modal-title">Add New Seller</h3>
+                                <button className="modal-close" onClick={() => setShowAddModal(false)}><X /></button>
+                            </div>
+                            <form onSubmit={handleAddSeller}>
+                                <div className="modal-body">
+                                    <div className="form-group">
+                                        <label className="form-label">Name</label>
+                                        <input
+                                            type="text"
+                                            value={newSeller.name}
+                                            onChange={(e) => setNewSeller({ ...newSeller, name: e.target.value })}
+                                            placeholder="Full Name"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Contact Number</label>
+                                        <input
+                                            type="tel"
+                                            value={newSeller.contact}
+                                            onChange={(e) => setNewSeller({ ...newSeller, contact: e.target.value })}
+                                            placeholder="Mobile Number"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Mail Id (Email)</label>
+                                        <input
+                                            type="email"
+                                            value={newSeller.email}
+                                            onChange={(e) => setNewSeller({ ...newSeller, email: e.target.value })}
+                                            placeholder="example@mail.com"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Address</label>
+                                        <textarea
+                                            value={newSeller.address}
+                                            onChange={(e) => setNewSeller({ ...newSeller, address: e.target.value })}
+                                            rows="3"
+                                            placeholder="Full address (Village, District...)"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn btn-primary">
+                                        Add Seller
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                        <form onSubmit={handleAddSeller}>
-                            <div className="modal-body">
-                                <div className="form-group">
-                                    <label className="form-label">Name</label>
-                                    <input
-                                        type="text"
-                                        value={newSeller.name}
-                                        onChange={(e) => setNewSeller({ ...newSeller, name: e.target.value })}
-                                        placeholder="Full Name"
-                                        required
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Contact Number</label>
-                                    <input
-                                        type="tel"
-                                        value={newSeller.contact}
-                                        onChange={(e) => setNewSeller({ ...newSeller, contact: e.target.value })}
-                                        placeholder="Mobile Number"
-                                        required
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Mail Id (Email)</label>
-                                    <input
-                                        type="email"
-                                        value={newSeller.email}
-                                        onChange={(e) => setNewSeller({ ...newSeller, email: e.target.value })}
-                                        placeholder="example@mail.com"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Address</label>
-                                    <textarea
-                                        value={newSeller.address}
-                                        onChange={(e) => setNewSeller({ ...newSeller, address: e.target.value })}
-                                        rows="3"
-                                        placeholder="Full address (Village, District...)"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="btn btn-primary">
-                                    Add Seller
-                                </button>
-                            </div>
-                        </form>
                     </div>
-                </div>
-            )}
+                )
+            }
         </>
     );
 }

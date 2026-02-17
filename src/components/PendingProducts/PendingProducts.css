@@ -64,6 +64,28 @@
     align-items: center;
     gap: 5px;
 }
+/* Search Box Styles */
+.search-icon-container {
+    position: relative;
+}
+
+.search-input-wrapper {
+    position: relative;
+}
+
+.search-input-wrapper input {
+    padding-right: 40px;
+    width: 100%;
+}
+
+.search-icon-absolute {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
     .pending-actions {

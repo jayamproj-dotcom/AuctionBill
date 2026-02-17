@@ -91,3 +91,26 @@
         width: 100%;
     }
 }
+
+/* Extracted Inline Styles */
+.search-card {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+}
+
+.search-form-group {
+    margin-bottom: 0;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.payment-row {
+    margin-bottom: 1rem;
+}

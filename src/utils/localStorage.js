@@ -6,7 +6,6 @@ export const initialData = {
             contact: '9876543210',
             email: 'ramesh@example.com',
             address: 'Salem, Tamil Nadu',
-            totalSales: 45000,
             status: 'active',
             password: '123'
         },
@@ -16,7 +15,6 @@ export const initialData = {
             contact: '9876543211',
             email: 'murugan@example.com',
             address: 'Madurai, Tamil Nadu',
-            totalSales: 32000,
             status: 'active',
             password: '123'
         }
@@ -29,7 +27,6 @@ export const initialData = {
             contact: '9876543220',
             email: 'arun@example.com',
             address: 'Chennai, Tamil Nadu',
-            totalPurchases: 28000,
             buyerType: 'Wholesale',
             status: 'active',
             password: '123'
@@ -40,19 +37,19 @@ export const initialData = {
             contact: '9876543221',
             email: 'lakshmi@example.com',
             address: 'Coimbatore, Tamil Nadu',
-            totalPurchases: 19000,
             buyerType: 'Retailer',
             status: 'active',
             password: '123'
         }
     ],
 
-    // 🔥 Updated Product Structure
+    // 🔥 Updated Product Structure (Stock Info Only)
     products: [
         {
             id: 1,
             name: 'Salem Turmeric',
-            seller_id: 1,
+            sellerId: 1,
+            sellerName: 'Ramesh Kumar',
             status: 'available',
             isActive: true,
             date: '2026-02-14',
@@ -63,8 +60,7 @@ export const initialData = {
                     quality: 'Good',
                     quantity: 100,
                     unit: 'kg',
-                    commission: 5,
-                    pricePerUnit: 12000
+                    commissionPercent: 5
                 }
             ]
         },
@@ -72,7 +68,8 @@ export const initialData = {
         {
             id: 2,
             name: 'Madurai Jasmine Flowers',
-            seller_id: 2,
+            sellerId: 2,
+            sellerName: 'Murugan',
             status: 'available',
             isActive: true,
             date: '2026-02-14',
@@ -83,8 +80,7 @@ export const initialData = {
                     quality: 'Good',
                     quantity: 50,
                     unit: 'kg',
-                    commission: 8,
-                    pricePerUnit: 300
+                    commissionPercent: 8
                 }
             ]
         },
@@ -92,7 +88,8 @@ export const initialData = {
         {
             id: 3,
             name: 'Erode Turmeric Powder',
-            seller_id: 1,
+            sellerId: 1,
+            sellerName: 'Ramesh Kumar',
             status: 'available',
             isActive: true,
             date: '2026-02-14',
@@ -103,8 +100,7 @@ export const initialData = {
                     quality: 'Good',
                     quantity: 75,
                     unit: 'kg',
-                    commission: 6,
-                    pricePerUnit: 9000
+                    commissionPercent: 6
                 }
             ]
         },
@@ -112,7 +108,8 @@ export const initialData = {
         {
             id: 4,
             name: 'Coimbatore Coconut',
-            seller_id: 2,
+            sellerId: 2,
+            sellerName: 'Murugan',
             status: 'available',
             isActive: true,
             date: '2026-02-14',
@@ -123,67 +120,56 @@ export const initialData = {
                     quality: 'Good',
                     quantity: 500,
                     unit: 'qty',
-                    commission: 4,
-                    pricePerUnit: 25
+                    commissionPercent: 4
                 }
             ]
         }
     ],
 
-    // 🔥 Updated Transactions (Now Includes variant_id)
+    // 🔥 Updated Transactions (Pure Sales Record)
     transactions: [
         {
             id: 1,
-            date: '2026-02-06',
-            product_id: 1,
-            variant_id: 101,
+            date: "2026-02-06",
+            sellerId: 1,
+            buyerId: 1,
+            productId: 1,
+            variantId: 101,
             quantity: 50,
-            unit: 'kg',
-            seller_id: 1,
-            buyer_id: 1,
-            price: 600000,
-            commission: 30000,
+            rate: 12000,
+            finalAmount: 600000,
             commissionPercent: 5,
-            paymentStatus: 'Paid',
-            amountPaid: 600000,
-            balance: 0
-        },
-        {
-            id: 2,
-            date: '2026-02-05',
-            product_id: 2,
-            variant_id: 201,
-            quantity: 20,
-            unit: 'kg',
-            seller_id: 2,
-            buyer_id: 2,
-            price: 6000,
-            commission: 480,
-            commissionPercent: 8,
-            paymentStatus: 'Part Paid',
-            amountPaid: 3000,
-            balance: 3000
-        },
-        {
-            id: 3,
-            date: '2026-02-04',
-            product_id: 4,
-            variant_id: 401,
-            quantity: 200,
-            unit: 'qty',
-            seller_id: 2,
-            buyer_id: 1,
-            price: 5000,
-            commission: 200,
-            commissionPercent: 4,
-            paymentStatus: 'Paid',
-            amountPaid: 5000,
-            balance: 0
+            commissionAmount: 30000,
+            netAmount: 570000
         }
-    ]
+    ],
+
+    // 🔥 New Table: sellerPayments (Money Paid to Seller)
+    sellerPayments: [
+        {
+            id: 1,
+            sellerId: 1,
+            date: "2026-02-06",
+            amount: 570000, // Full payment example
+            method: "Cash",
+            reference: "PAY-001"
+        }
+    ],
+
+    // 🔥 New Table: sellerCredits (Advance Given)
+    sellerCredits: [
+        // {
+        //     id: 1,
+        //     sellerId: 1,
+        //     date: "2026-02-01",
+        //     amount: 50000,
+        //     reason: "Advance given before auction"
+        // }
+    ],
+
+    // 🔥 New Table: buyerPayments (Money Received from Buyer)
+    buyerPayments: []
 };
-
-
 
 export const getAuctionData = () => {
     try {

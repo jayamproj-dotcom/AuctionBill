@@ -4,6 +4,7 @@ import ConfirmationModal from '../../components/Common/ConfirmationModal';
 import { Plus, X } from 'lucide-react';
 
 const SubscriptionManagement = () => {
+  const role = localStorage.getItem('saas_role');
   const [plans, setPlans] = useState([
     { id: 1, name: 'Free', price: '₹0', duration: 'Forever', features: ['Up to 100 transactions/mo', 'Basic reports', '1 User'], status: 'Active' },
     { id: 2, name: 'Basic', price: '₹999', duration: '/month', features: ['Unlimited transactions', 'Advanced Analytics', '3 Users', 'Email Support'], status: 'Active' },
@@ -73,9 +74,11 @@ const SubscriptionManagement = () => {
   return (
     <div className="fade-in">
       <div className="saas-flex-end saas-mb-15">
-        <button className="saas-btn btn-primary" onClick={handleAddPlan}>
-          <span><Plus /></span> Add New Plan
-        </button>
+        {role !== 'subadmin' && (
+          <button className="saas-btn btn-primary" onClick={handleAddPlan}>
+            <span><Plus /></span> Add New Plan
+          </button>
+        )}
       </div>
 
       <div className="saas-grid-responsive">
@@ -102,19 +105,23 @@ const SubscriptionManagement = () => {
             </div>
           <div className="saas-card-footer-actions">
   
-  <button 
-    className="saas-btn btn-outline saas-flex-1" 
-    onClick={() => handleEdit(plan)}
-  >
-    Edit
-  </button>
+  {role !== 'subadmin' && (
+    <>
+      <button 
+        className="saas-btn btn-outline saas-flex-1" 
+        onClick={() => handleEdit(plan)}
+      >
+        Edit
+      </button>
 
-  <button 
-    className="saas-btn btn-danger saas-flex-1" 
-    onClick={() => handleDelete(plan.id)}
-  >
-    Delete
-  </button>
+      <button 
+        className="saas-btn btn-danger saas-flex-1" 
+        onClick={() => handleDelete(plan.id)}
+      >
+        Delete
+      </button>
+    </>
+  )}
 
 </div>
 

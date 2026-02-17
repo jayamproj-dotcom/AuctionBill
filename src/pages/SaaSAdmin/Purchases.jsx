@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Search } from 'lucide-react';
 import './SaaSAdmin.css';
 
 const Purchases = () => {
@@ -56,6 +57,8 @@ const Purchases = () => {
       },
   ]);
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Helper to check if date is nearing expiry (e.g., within 30 days)
   const isExpiringSoon = (dateString, status) => {
     if (status === 'Inactive' || status === 'Expiring Soon') return true;
@@ -76,17 +79,33 @@ const Purchases = () => {
       return 'badge-success';
   };
 
+  const filteredPurchases = purchases.filter(purchase => {
+    const query = searchQuery.toLowerCase();
+    return (
+      purchase.vendorName.toLowerCase().includes(query) ||
+      purchase.plan.toLowerCase().includes(query) ||
+      purchase.transactionId.toLowerCase().includes(query) ||
+      purchase.paymentStatus.toLowerCase().includes(query) ||
+      purchase.status.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="fade-in">
       <div className="saas-card">
         <div className="saas-card-header">
           <h3 className="saas-text-lg saas-font-semibold">Vendor Purchase History</h3>
           <div className="saas-flex saas-gap-05">
-            <input 
-              type="text" 
-              placeholder="Search purchases..." 
-              className="saas-input saas-search-input" 
-            />
+            <div className="saas-search-icon-container">
+                <input 
+                  type="text" 
+                  placeholder="Search purchases..." 
+                  className="saas-input saas-search-input-wrapper" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Search size={18} className="saas-search-icon-absolute" />
+            </div>
             <button className="saas-btn btn-outline">Export CSV</button>
           </div>
         </div>
@@ -105,42 +124,50 @@ const Purchases = () => {
               </tr>
             </thead>
             <tbody>
-              {purchases.map((purchase) => {
-                const expiring = isExpiringSoon(purchase.expiryDate, purchase.status);
-                
-                return (
-                  <tr key={purchase.id}>
-                    <td className="saas-font-medium">{purchase.vendorName}</td>
-                    <td>
-                        <span className="saas-font-semibold saas-text-primary">{purchase.plan}</span>
-                    </td>
-                    <td>{purchase.price}</td>
-                    <td>
-                        <span className={`saas-badge ${purchase.paymentStatus === 'Paid' ? 'badge-success' : 'badge-danger'}`}>
-                            {purchase.paymentStatus}
-                        </span>
-                    </td>
-                    <td>
-                        <span className={`saas-badge ${getStatusBadge(purchase.status, purchase.expiryDate)}`}>
-                            {expiring && purchase.status === 'Active' ? 'Expiring Soon' : purchase.status}
-                        </span>
-                    </td>
-                    <td>
-                        <div className="saas-flex-col">
-                            <span>{purchase.expiryDate}</span>
-                            {expiring && (
-                                <span className="saas-expiry-warning">
-                                    ⚠️ Renew Soon
-                                </span>
-                            )}
-                        </div>
-                    </td>
-                    <td className="saas-transaction-id">
-                        {purchase.transactionId}
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredPurchases.length > 0 ? (
+                filteredPurchases.map((purchase) => {
+                  const expiring = isExpiringSoon(purchase.expiryDate, purchase.status);
+                  
+                  return (
+                    <tr key={purchase.id}>
+                      <td className="saas-font-medium">{purchase.vendorName}</td>
+                      <td>
+                          <span className="saas-font-semibold saas-text-primary">{purchase.plan}</span>
+                      </td>
+                      <td>{purchase.price}</td>
+                      <td>
+                          <span className={`saas-badge ${purchase.paymentStatus === 'Paid' ? 'badge-success' : 'badge-danger'}`}>
+                              {purchase.paymentStatus}
+                          </span>
+                      </td>
+                      <td>
+                          <span className={`saas-badge ${getStatusBadge(purchase.status, purchase.expiryDate)}`}>
+                              {expiring && purchase.status === 'Active' ? 'Expiring Soon' : purchase.status}
+                          </span>
+                      </td>
+                      <td>
+                          <div className="saas-flex-col">
+                              <span>{purchase.expiryDate}</span>
+                              {expiring && (
+                                  <span className="saas-expiry-warning">
+                                      ⚠️ Renew Soon
+                                  </span>
+                              )}
+                          </div>
+                      </td>
+                      <td className="saas-transaction-id">
+                          {purchase.transactionId}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="7" className="saas-text-center saas-py-4">
+                    No purchases found matching "{searchQuery}"
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

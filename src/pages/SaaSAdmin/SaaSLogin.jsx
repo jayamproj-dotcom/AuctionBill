@@ -23,17 +23,27 @@ const SaaSLogin = () => {
         const newErrors = {};
         const ADMIN_USER = "admin";
         const ADMIN_PASS = "admin@123";
+        const SUBADMIN_USER = "subadmin";
+        const SUBADMIN_PASS = "subadmin@123";
 
         if (!credentials.username.trim()) {
             newErrors.username = "Username is required";
-        } else if (credentials.username.trim() !== ADMIN_USER) {
+        } else if (credentials.username.trim() !== ADMIN_USER && credentials.username.trim() !== SUBADMIN_USER) {
             newErrors.username = "Invalid username";
         }
 
         if (!credentials.password) {
             newErrors.password = "Password is required";
-        } else if (credentials.password.trim() !== ADMIN_PASS) {
-            newErrors.password = "Invalid password";
+        } else {
+             // Check password based on username entered (if valid so far) or just check generic validity
+             if (credentials.username.trim() === ADMIN_USER && credentials.password.trim() !== ADMIN_PASS) {
+                 newErrors.password = "Invalid password";
+             } else if (credentials.username.trim() === SUBADMIN_USER && credentials.password.trim() !== SUBADMIN_PASS) {
+                 newErrors.password = "Invalid password";
+             } else if (credentials.username.trim() !== ADMIN_USER && credentials.username.trim() !== SUBADMIN_USER) {
+                  // If username is invalid, password error might be redundant but good for UX to say invalid if check fails
+                  newErrors.password = "Invalid password"; 
+             }
         }
 
         setErrors(newErrors);
@@ -44,7 +54,9 @@ const SaaSLogin = () => {
         e.preventDefault();
 
         if (validate()) {
+            const role = credentials.username.trim() === 'subadmin' ? 'subadmin' : 'admin';
             localStorage.setItem('saas_admin_token', 'true');
+            localStorage.setItem('saas_role', role);
             navigate('/saas/dashboard');
         }
     };

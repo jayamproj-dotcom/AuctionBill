@@ -6,7 +6,6 @@ import { Users, Crown, Banknote, Hourglass, Settings, Trash2 } from 'lucide-reac
 const SaaSDashboard = () => {
   const [stats, setStats] = useState({
     totalVendors: 12,
-    activeSubscriptions: 8,
     monthlyRevenue: 45000,
     pendingApprovals: 3
   });
@@ -66,7 +65,7 @@ const SaaSDashboard = () => {
       <div className="saas-card">
         <div className="saas-card-header">
           <h3 className="saas-text-lg saas-font-semibold">Recent Vendor Registrations</h3>
-          <button className="saas-btn btn-sm btn-outline">View All</button>
+         <Link to="/saas/purchases"> <button className="saas-btn btn-sm btn-outline">View All</button></Link>
         </div>
         <div className="saas-table-container">
           <table className="saas-table">
@@ -77,7 +76,7 @@ const SaaSDashboard = () => {
                 <th>Plan</th>
                 <th>Status</th>
                 <th>Joined Date</th>
-                <th>Actions</th>
+                {/* <th>Actions</th> */}
               </tr>
             </thead>
             <tbody>
@@ -97,14 +96,14 @@ const SaaSDashboard = () => {
                   </td>
                   <td>{vendor.joined}</td>
                   <td>
-                    <div className="action-buttons">
+                    {/* <div className="action-buttons">
                         <button className="icon-btn edit" title="Manage Vendor">
                             <Settings size={18} />
                         </button>
                          <button className="icon-btn delete" title="Delete Vendor">
                             <Trash2 size={18} />
                         </button>
-                    </div>
+                    </div> */}
                   </td>
                 </tr>
               ))}

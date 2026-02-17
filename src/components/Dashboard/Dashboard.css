@@ -23,6 +23,84 @@
 .section-margin-top {
     margin-top: 1.5rem;
 }
+
+/* Header Actions & Filter */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dashboard-filter-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-dropdown-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    border: 1px solid #d1d5db; /* gray-300 */
+    border-radius: 8px; /* rounded-md */
+    padding: 0.35rem 0.75rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* shadow-sm */
+    transition: all 0.2s;
+}
+
+.filter-dropdown-wrapper:hover {
+    border-color: #9ca3af; /* gray-400 */
+}
+
+.filter-icon {
+    color: #6b7280; /* gray-500 */
+    margin-right: 0.5rem;
+}
+
+.dashboard-filter-select {
+    border: none;
+    background: transparent;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151; /* gray-700 */
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    padding-right: 1.25rem; /* space for custom arrow if needed, but native usually fine for simple use */
+    /* Custom Arrow */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem;
+    min-width: 100px;
+}
+
+.custom-date-wrapper {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.35rem 0.75rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.calendar-icon {
+    color: #6b7280;
+    margin-right: 0.5rem;
+}
+
+.dashboard-date-input {
+    border: none;
+    background: transparent;
+    font-size: 0.875rem;
+    color: #374151;
+    outline: none;
+    font-family: inherit;
+}
+
+/* Responsive */
 @media (max-width: 480px) {
     .dashboard-stats-grid {
         grid-template-columns: 1fr;
@@ -30,5 +108,20 @@
 
     .filter-grid-custom {
         grid-template-columns: 1fr;
+    }
+
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .dashboard-filter-container {
+        flex: 1;
     }
 }
