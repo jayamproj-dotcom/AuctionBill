@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
 import './History.css';
-import {ArrowRightLeft, Download,ShoppingCart,HandCoins,Package, Search} from 'lucide-react';
+import { ArrowRightLeft, Download, ShoppingCart, HandCoins, Package } from 'lucide-react';
 
 
 function History() {
@@ -21,7 +21,23 @@ function History() {
     const loadTransactions = () => {
         const data = getAuctionData();
         if (data && data.transactions) {
-            setTransactions(data.transactions.sort((a, b) => new Date(b.date) - new Date(a.date)));
+            const enriched = data.transactions.map(t => {
+                const product = data.products.find(p => p.id === t.productId);
+                const seller = data.sellers.find(s => s.id === t.sellerId);
+                const buyer = data.buyers.find(b => b.id === t.buyerId);
+                return {
+                    ...t,
+                    productName: product ? product.name : 'Unknown Product',
+                    sellerName: seller ? seller.name : 'Unknown Seller',
+                    buyerName: buyer ? buyer.name : 'Unknown Buyer',
+                    finalAmount: t.finalAmount || 0,
+                    commissionAmount: t.commissionAmount || 0,
+                    netAmount: t.netAmount || 0,
+                    // Unit might be in transaction or variant, assuming transaction has it from TodayAuction make
+                    unit: t.unit || 'qty'
+                };
+            });
+            setTransactions(enriched.sort((a, b) => new Date(b.date) - new Date(a.date)));
         }
     };
 
@@ -30,9 +46,9 @@ function History() {
 
         if (searchTerm) {
             filtered = filtered.filter(t =>
-                t.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                t.seller.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                t.buyer.toLowerCase().includes(searchTerm.toLowerCase())
+                t.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                t.sellerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                t.buyerName.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -44,8 +60,8 @@ function History() {
     };
 
     const getTotalStats = () => {
-        const total = filteredTransactions.reduce((sum, t) => sum + t.price, 0);
-        const commission = filteredTransactions.reduce((sum, t) => sum + t.commission, 0);
+        const total = filteredTransactions.reduce((sum, t) => sum + t.finalAmount, 0);
+        const commission = filteredTransactions.reduce((sum, t) => sum + t.commissionAmount, 0);
         const totalQty = filteredTransactions.reduce((sum, t) => sum + (parseFloat(t.quantity) || 0), 0);
         return { total, commission, totalQty };
     };
@@ -165,25 +181,22 @@ function History() {
                             <div key={transaction.id} className="data-card">
                                 <div className="data-card-header">
                                     <div>
-                                        <div className="data-card-title">{transaction.product}</div>
+                                        <div className="data-card-title">{transaction.productName}</div>
                                         <div className="data-card-subtitle">{transaction.date}</div>
                                     </div>
-                                    <div className={`badge ${
-                                        transaction.paymentStatus === 'Paid' ? 'badge-success' : 
-                                        transaction.paymentStatus === 'Part Paid' ? 'badge-warning' : 'badge-error'
-                                    }`}>
-                                        {transaction.paymentStatus || 'Completed'}
+                                    <div className="badge badge-success">
+                                        Completed
                                     </div>
                                 </div>
-                                
+
                                 <div className="data-card-body">
                                     <div className="data-row">
                                         <span className="data-label">Seller</span>
-                                        <span className="data-value">{transaction.seller}</span>
+                                        <span className="data-value">{transaction.sellerName}</span>
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Buyer</span>
-                                        <span className="data-value">{transaction.buyer}</span>
+                                        <span className="data-value">{transaction.buyerName}</span>
                                     </div>
                                     <div className="data-row data-row-divider">
                                         <span className="data-label">Qty / Unit</span>
@@ -191,25 +204,15 @@ function History() {
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Total Price</span>
-                                        <span className="data-value">₹{transaction.price.toLocaleString()}</span>
+                                        <span className="data-value">₹{transaction.finalAmount.toLocaleString()}</span>
                                     </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Amount Paid</span>
-                                        <span className="data-value text-success">₹{(transaction.amountPaid ?? transaction.price).toLocaleString()}</span>
-                                    </div>
-                                    {transaction.balance > 0 && (
-                                        <div className="data-row">
-                                            <span className="data-label">Balance Due</span>
-                                            <span className="data-value text-error font-bold">₹{transaction.balance.toLocaleString()}</span>
-                                        </div>
-                                    )}
                                     <div className="data-row data-row-divider">
                                         <span className="data-label">Commission ({transaction.commissionPercent}%)</span>
-                                        <span className="data-value text-amber">₹{transaction.commission.toLocaleString()}</span>
+                                        <span className="data-value text-amber">₹{transaction.commissionAmount.toLocaleString()}</span>
                                     </div>
                                     <div className="data-row">
-                                        <span className="data-label">Seller Share</span>
-                                        <span className="data-value">₹{(transaction.price - transaction.commission).toLocaleString()}</span>
+                                        <span className="data-label">Net Amount</span>
+                                        <span className="data-value">₹{transaction.netAmount.toLocaleString()}</span>
                                     </div>
                                 </div>
                             </div>

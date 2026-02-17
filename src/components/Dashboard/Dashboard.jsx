@@ -24,13 +24,13 @@ function Dashboard() {
     }, [dateFilter, customDate]);
     console.log(getAuctionData);
 
-    
+
 
     const getDateRange = (filter) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
-        switch(filter) {
+
+        switch (filter) {
             case 'today':
                 return {
                     start: today,
@@ -77,22 +77,37 @@ function Dashboard() {
 
     const calculateStats = () => {
         const data = getAuctionData();
-        console.log(data);
-        
-        
+
         // Get today's date for today's auctions
         const today = new Date().toISOString().split('T')[0];
         const todayTransactions = data.transactions.filter(t => t.date === today);
-        
+
         // Get filtered transactions based on selected date range
         const dateRange = getDateRange(dateFilter);
         const filtered = data.transactions.filter(t => {
             const transDate = new Date(t.date);
             return transDate >= dateRange.start && transDate < dateRange.end;
+        }).map(t => {
+            // resolving names
+            const product = data.products.find(p => p.id === t.productId);
+            const variant = product?.variants?.find(v => v.id === t.variantId);
+            const seller = data.sellers.find(s => s.id === t.sellerId);
+            const buyer = data.buyers.find(b => b.id === t.buyerId);
+
+            return {
+                ...t,
+                productName: product ? product.name : 'Unknown Product',
+                variantName: variant ? variant.variety : '',
+                sellerName: seller ? seller.name : 'Unknown Seller',
+                buyerName: buyer ? buyer.name : 'Unknown Buyer',
+                // Map old fields if needed or just use new ones in UI
+                finalAmount: t.finalAmount || 0,
+                commissionAmount: t.commissionAmount || 0
+            };
         });
 
-        const totalSales = filtered.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
-        const totalCommission = filtered.reduce((sum, t) => sum + (Number(t.commission) || 0), 0);
+        const totalSales = filtered.reduce((sum, t) => sum + (t.finalAmount || 0), 0);
+        const totalCommission = filtered.reduce((sum, t) => sum + (t.commissionAmount || 0), 0);
         const totalQty = filtered.reduce((sum, t) => sum + (parseFloat(t.quantity) || 0), 0);
 
         setStats({
@@ -108,7 +123,7 @@ function Dashboard() {
     };
 
     const getFilterLabel = () => {
-        switch(dateFilter) {
+        switch (dateFilter) {
             case 'today': return 'Today';
             case 'yesterday': return 'Yesterday';
             case 'week': return 'This Week';
@@ -278,8 +293,38 @@ function Dashboard() {
 
                 </div>
 
-                {/* Date Filter Selection Moved to Header */}
-                {/* <div className="card filter-card fade-in"> ... </div> (Removed) */}
+                {/* Date Filter Selection */}
+                <div className="card filter-card fade-in">
+                    <div className={`form-grid ${dateFilter === 'custom' ? 'filter-grid-custom' : 'filter-grid-single'}`}>
+                        <div className="form-group">
+                            <label className="form-label">Quick Filter</label>
+                            <select
+                                value={dateFilter}
+                                onChange={(e) => setDateFilter(e.target.value)}
+                                className="full-width-select"
+                            >
+                                <option value="today">Today</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="year">This Year</option>
+                                <option value="custom">📅 Custom Date</option>
+                            </select>
+                        </div>
+                        {dateFilter === 'custom' && (
+                            <div className="form-group fade-in">
+                                <label className="form-label">Pick a Date</label>
+                                <input
+                                    type="date"
+                                    value={customDate}
+                                    onChange={(e) => setCustomDate(e.target.value)}
+                                    max={new Date().toISOString().split('T')[0]}
+                                    className="full-width-input"
+                                />
+                            </div>
+                        )}
+                    </div>
+                </div>
 
                 {/* Recent Transactions - Mobile Card List */}
                 <div className="section-header section-margin-top">
@@ -297,20 +342,20 @@ function Dashboard() {
                             <div key={transaction.id} className="data-card">
                                 <div className="data-card-header">
                                     <div>
-                                        <div className="data-card-title">{transaction.product}</div>
+                                        <div className="data-card-title">{transaction.productName}</div>
                                         <div className="data-card-subtitle">{transaction.date}</div>
                                     </div>
                                     <div className="badge badge-success">Completed</div>
                                 </div>
-                                
+
                                 <div className="data-card-body">
                                     <div className="data-row">
                                         <span className="data-label">Seller</span>
-                                        <span className="data-value">{transaction.seller}</span>
+                                        <span className="data-value">{transaction.sellerName}</span>
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Buyer</span>
-                                        <span className="data-value">{transaction.buyer}</span>
+                                        <span className="data-value">{transaction.buyerName}</span>
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Qty / Unit</span>
@@ -318,11 +363,11 @@ function Dashboard() {
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Price</span>
-                                        <span className="data-value">₹{transaction.price && typeof transaction.price === 'number' ? transaction.price.toLocaleString() : '0'}</span>
+                                        <span className="data-value">₹{(transaction.finalAmount || 0).toLocaleString()}</span>
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Commission</span>
-                                        <span className="data-value text-amber">₹{transaction.commission && typeof transaction.commission === 'number' ? transaction.commission.toLocaleString() : '0'}</span>
+                                        <span className="data-value text-amber">₹{(transaction.commissionAmount || 0).toLocaleString()}</span>
                                     </div>
                                 </div>
 

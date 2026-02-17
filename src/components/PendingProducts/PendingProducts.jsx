@@ -25,17 +25,33 @@ function PendingProducts() {
                 if (p.status !== 'available') return false;
                 if (p.isActive === false) return false;
 
-                // Determine product date (fallback to id timestamp if no explicit date)
+                // Determine product date
                 const pDate = p.date || new Date(p.id).toISOString().split('T')[0];
 
-                // Show if date is less than today (yesterday or older)
+                // Show only if date is less than today
                 if (pDate >= currentDate) return false;
 
-                // Check if any variant has quantity > 0
-                if (p.variants && p.variants.some(v => v.quantity > 0)) {
-                    return true;
+                // Check if any variant is unsold
+                if (p.variants) {
+                    const productTransactions = (data.transactions || []).filter(t => t.productId === p.id);
+
+                    // We need to check if ANY variant has remaining stock
+                    return p.variants.some(v => {
+                        const variantTransactions = productTransactions.filter(t => t.variantId === v.id);
+                        const sold = variantTransactions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
+                        return (v.quantity - sold) > 0;
+                    });
                 }
                 return false;
+            }).map(p => {
+                // Enrich variants with sold stats for display
+                const productTransactions = (data.transactions || []).filter(t => t.productId === p.id);
+                const enrichedVariants = (p.variants || []).map(v => {
+                    const variantTransactions = productTransactions.filter(t => t.variantId === v.id);
+                    const sold = variantTransactions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
+                    return { ...v, soldQuantity: sold, remaining: v.quantity - sold };
+                });
+                return { ...p, variants: enrichedVariants };
             });
             setPendingProducts(filtered);
         }
@@ -201,8 +217,8 @@ function PendingProducts() {
                                                         <span>{v.variety}</span>
                                                         <span className={`badge variant-badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`}>{v.quality}</span>
                                                     </div>
-                                                    <div className="variant-box-footer">
-                                                        <span>{v.quantity} {v.unit}</span>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                                        <span>{v.remaining} {v.unit}</span>
                                                         <span className="text-amber">{v.commission}% Comm</span>
                                                     </div>
                                                 </div>

@@ -33,8 +33,15 @@ function BuyerDetails() {
     const loadBuyers = () => {
         const data = getAuctionData();
         if (data && data.buyers) {
-            // Sort transactions by date desc, then id desc
-            const sortedTransactions = (data.transactions || []).sort((a, b) => {
+            // Sort transactions by date desc, then id desc. Enrich with product details.
+            const sortedTransactions = (data.transactions || []).map(t => {
+                const product = data.products.find(p => p.id === t.productId);
+                return {
+                    ...t,
+                    productName: product ? product.name : 'Unknown Product',
+                    finalAmount: t.finalAmount || 0
+                };
+            }).sort((a, b) => {
                 const dateDiff = new Date(b.date) - new Date(a.date);
                 if (dateDiff !== 0) return dateDiff;
                 return b.id - a.id;
@@ -43,8 +50,8 @@ function BuyerDetails() {
 
             // Calculate total purchases for each buyer
             const buyersWithStats = data.buyers.map(buyer => {
-                const buyerTransactions = sortedTransactions.filter(t => t.buyer === buyer.name);
-                const totalPurchases = buyerTransactions.reduce((sum, t) => sum + t.price, 0);
+                const buyerTransactions = sortedTransactions.filter(t => t.buyerId === buyer.id);
+                const totalPurchases = buyerTransactions.reduce((sum, t) => sum + t.finalAmount, 0);
                 const totalItems = buyerTransactions.length;
                 return { ...buyer, totalPurchases, totalItems };
             });
@@ -52,7 +59,7 @@ function BuyerDetails() {
         }
     };
     const openDetailsModal = (buyer) => {
-        const buyerTransactions = transactions.filter(t => t.buyer === buyer.name);
+        const buyerTransactions = transactions.filter(t => t.buyerId === buyer.id);
         setSelectedBuyer({ ...buyer, transactions: buyerTransactions });
         setShowDetailsModal(true);
     };
@@ -118,60 +125,109 @@ function BuyerDetails() {
             setIsDeleteConfirmOpen(false);
             setBuyerToDelete(null);
         }
-    }; const openPaymentModal = (transaction) => {
-        setCurrentTransaction(transaction);
-        const price = transaction.price;
-        const paid = transaction.amountPaid || 0;
-        const balance = transaction.balance !== undefined ? transaction.balance : (price - paid);
-        
-        setPaymentForm({
-            status: transaction.paymentStatus || 'Pending',
-            amountPaid: paid,
-            balance: balance
-        });
-        setShowPaymentModal(true);
     };
-    const handleUpdatePayment = (e) => {
-        e.preventDefault();
-        if (!currentTransaction) return;       // Validation: Cannot pay less than what was already paid
-        const previousPaid = currentTransaction.amountPaid || 0;
-        let newPaidInput = parseFloat(paymentForm.amountPaid) || 0;
-        
-        if (paymentForm.status === 'Part Paid' && newPaidInput < previousPaid) {
-            alert(`Amount cannot be less than previously paid amount (₹${previousPaid})`);
-            return;
-        }
-        const data = getAuctionData();
-        const index = data.transactions.findIndex(t => t.id === currentTransaction.id);
-        if (index !== -1) {
-            const price = data.transactions[index].price;
-            let paid = parseFloat(paymentForm.amountPaid) || 0;
-            let status = paymentForm.status;
-            let balance = parseFloat(paymentForm.balance) || 0;         // Logic validations based on status change vs manual edits
-            if (status === 'Paid') {
-                paid = price;
-                balance = 0;
-            } else if (status === 'Pending') {
-                paid = 0;
-                balance = price;
-            } else if (status === 'Part Paid') {
-               // Final check to ensure no overflow
-                if (paid > price) paid = price;
-                if (balance < 0) balance = 0;
-                // Ensure they sum up (priority to paid if mismatch? or re-calc?)
-                if (Math.abs(paid + balance - price) > 1) { // Using a small epsilon for float comparison
-                     balance = price - paid;
-                }
-            }
 
-            data.transactions[index] = {
-                ...data.transactions[index],
-                paymentStatus: status,
-                amountPaid: paid,
-                balance: balance
-            };
-            saveAuctionData(data);
-            loadBuyers();
+    // const openPaymentModal = (transaction) => {
+    //     setCurrentTransaction(transaction);
+    //     const price = transaction.price;
+    //     const paid = transaction.amountPaid || 0;
+    //     const balance = transaction.balance !== undefined ? transaction.balance : (price - paid);
+
+    //     setPaymentForm({
+    //         status: transaction.paymentStatus || 'Pending',
+    //         amountPaid: paid,
+    //         balance: balance
+    //     });
+    //     setShowPaymentModal(true);
+    // };
+
+    // const handleUpdatePayment = (e) => {
+    //     e.preventDefault();
+    //     if (!currentTransaction) return;
+
+    //     // Validation: Cannot pay less than what was already paid
+    //     const previousPaid = currentTransaction.amountPaid || 0;
+    //     let newPaidInput = parseFloat(paymentForm.amountPaid) || 0;
+
+    //     if (paymentForm.status === 'Part Paid' && newPaidInput < previousPaid) {
+    //         alert(`Amount cannot be less than previously paid amount (₹${previousPaid})`);
+    //         return;
+    //     }
+
+    //     const data = getAuctionData();
+    //     const index = data.transactions.findIndex(t => t.id === currentTransaction.id);
+
+    //     if (index !== -1) {
+    //         const price = data.transactions[index].price;
+    //         let paid = parseFloat(paymentForm.amountPaid) || 0;
+    //         let status = paymentForm.status;
+    //         let balance = parseFloat(paymentForm.balance) || 0;
+
+    //         // Logic validations based on status change vs manual edits
+    //         if (status === 'Paid') {
+    //             paid = price;
+    //             balance = 0;
+    //         } else if (status === 'Pending') {
+    //             paid = 0;
+    //             balance = price;
+    //         } else if (status === 'Part Paid') {
+    //            // Final check to ensure no overflow
+    //             if (paid > price) paid = price;
+    //             if (balance < 0) balance = 0;
+    //             // Ensure they sum up (priority to paid if mismatch? or re-calc?)
+    //             if (Math.abs(paid + balance - price) > 1) { // Using a small epsilon for float comparison
+    //                  balance = price - paid;
+    //             }
+    //         }
+
+    //         data.transactions[index] = {
+    //             ...data.transactions[index],
+    //             paymentStatus: status,
+    //             amountPaid: paid,
+    //             balance: balance
+    //         };
+
+    //         saveAuctionData(data);
+    //         loadBuyers();
+
+    //         // Update currently selected buyer view
+    //         if (selectedBuyer) {
+    //             const updatedTransactions = data.transactions.filter(t => t.buyer === selectedBuyer.name);
+    //             setSelectedBuyer(prev => ({ ...prev, transactions: updatedTransactions }));
+    //         }
+    //         setShowPaymentModal(false);
+    //     }
+    // };
+
+    // const handleAmountPaidChange = (e) => {
+    //     const val = parseFloat(e.target.value);
+    //     const price = currentTransaction.price;
+
+    //     // If val is NaN (empty), treat as 0 for calculation but keep input clean
+    //     const effectiveVal = isNaN(val) ? 0 : val;
+    //     const newBalance = Math.max(0, price - effectiveVal);
+
+    //     setPaymentForm({
+    //         ...paymentForm,
+    //         amountPaid: e.target.value, // Keep raw input
+    //         balance: newBalance
+    //     });
+    // };
+
+    // const handleBalanceChange = (e) => {
+    //     const val = parseFloat(e.target.value);
+    //     const price = currentTransaction.price;
+
+    //     // If val is NaN (empty), treat as 0 for calculation but keep input clean
+    //     const effectiveVal = isNaN(val) ? 0 : val;
+    //     const newPaid = Math.max(0, price - effectiveVal);
+
+    //     setPaymentForm({
+    //         ...paymentForm,
+    //         balance: e.target.value, // Keep raw input
+    //         amountPaid: newPaid
+    //     });
+    // };
 
             // Update currently selected buyer view
             if (selectedBuyer) {
@@ -209,7 +265,7 @@ function BuyerDetails() {
     };
     return (
         <>
-            <ConfirmationModal 
+            <ConfirmationModal
                 isOpen={isDeleteConfirmOpen}
                 onClose={() => setIsDeleteConfirmOpen(false)}
                 onConfirm={confirmDeleteBuyer}
@@ -259,7 +315,7 @@ function BuyerDetails() {
          <div className="card-list fade-in">
                     {buyers.length === 0 ? (
                         <div className="empty-state">
-                            <div className="empty-state-icon"><ShoppingCart/></div>
+                            <div className="empty-state-icon"><ShoppingCart /></div>
                             <p>No buyers registered yet</p>
                         </div>
                     ) : (
@@ -282,7 +338,7 @@ function BuyerDetails() {
                                         {buyer.buyerType || 'Retailer'}
                                     </div>
                                 </div>
-                                
+
                                 <div className="data-card-body">
                                     <div className="data-row">
                                         <span className="data-label">Address</span>
@@ -314,7 +370,7 @@ function BuyerDetails() {
                     <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Buyer Profile: {selectedBuyer.name}</h3>
-                            <button className="modal-close" onClick={() => setShowDetailsModal(false)}><X/></button>
+                            <button className="modal-close" onClick={() => setShowDetailsModal(false)}><X /></button>
                         </div>
                         <div className="modal-body">
                             <div className="card profile-container">
@@ -338,7 +394,7 @@ function BuyerDetails() {
                                         </div>
                                     </div>
                                     <div className="profile-actions">
-                                        <button 
+                                        <button
                                             className={`btn btn-sm ${selectedBuyer.status === 'inactive' ? 'btn-success' : 'btn-error'} action-btn-fixed`}
                                             onClick={() => handleToggleStatus(selectedBuyer.id)}
                                         >
@@ -365,42 +421,20 @@ function BuyerDetails() {
                                         <tr>
                                             <th>Date</th>
                                             <th>Product</th>
-                                            <th>Seller</th>
                                             <th>Price</th>
-                                            <th>Paid</th>
-                                            <th>Balance</th>
-                                            <th>Status</th>
-                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {selectedBuyer.transactions.length === 0 ? (
                                             <tr>
-                                                <td colSpan="8" className="empty-td">No purchases yet</td>
+                                                <td colSpan="3" className="empty-td">No purchases yet</td>
                                             </tr>
                                         ) : (
                                             selectedBuyer.transactions.map(t => (
                                                 <tr key={t.id}>
                                                     <td>{t.date}</td>
-                                                    <td className="bold-product">{t.product}</td>
-                                                    <td>{t.seller}</td>
-                                                    <td className="text-amber">₹{t.price.toLocaleString()}</td>
-                                                    <td className="text-success">₹{(t.amountPaid || 0).toLocaleString()}</td>
-                                                    <td className="text-error">₹{(t.balance !== undefined ? t.balance : t.price).toLocaleString()}</td>
-                                                    <td>
-                                                        <span className={`badge ${t.paymentStatus === 'Paid' ? 'badge-success' : t.paymentStatus === 'Part Paid' ? 'badge-warning' : 'badge-error'}`}>
-                                                            {t.paymentStatus || 'Pending'}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <button 
-                                                            className="icon-btn edit"
-                                                            onClick={() => openPaymentModal(t)}
-                                                            title="Update Payment"
-                                                        >
-                                                            <Pencil size={18} />
-                                                        </button>
-                                                    </td>
+                                                    <td className="bold-product">{t.productName}</td>
+                                                    <td className="text-amber">₹{t.finalAmount.toLocaleString()}</td>
                                                 </tr>
                                             ))
                                         )}
@@ -415,7 +449,7 @@ function BuyerDetails() {
                 </div>
             )}
             {/* Payment Update Modal */}
-            {showPaymentModal && currentTransaction && (
+            {/* {showPaymentModal && currentTransaction && (
                 <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
@@ -484,16 +518,16 @@ function BuyerDetails() {
                         </form>
                     </div>
                 </div>
-            )}
+            )} */}
 
-            
+
             {/* Add Buyer Modal */}
             {showAddModal && (
                 <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Add New Buyer</h3>
-                            <button className="modal-close" onClick={() => setShowAddModal(false)}><X/></button>
+                            <button className="modal-close" onClick={() => setShowAddModal(false)}><X /></button>
                         </div>
                         <form onSubmit={handleAddBuyer}>
                             <div className="modal-body">
