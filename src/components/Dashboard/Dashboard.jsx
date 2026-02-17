@@ -312,7 +312,7 @@ function Dashboard() {
                 </div>
 
                 {/* Date Filter Selection */}
-                <div className="card filter-card fade-in">
+                {/* <div className="card filter-card fade-in">
                     <div className={`form-grid ${dateFilter === 'custom' ? 'filter-grid-custom' : 'filter-grid-single'}`}>
                         <div className="form-group">
                             <label className="form-label">Quick Filter</label>
@@ -342,7 +342,7 @@ function Dashboard() {
                             </div>
                         )}
                     </div>
-                </div>
+                </div> */}
 
                 {/* Recent Transactions - Mobile Card List */}
                 <div className="section-header section-margin-top">
