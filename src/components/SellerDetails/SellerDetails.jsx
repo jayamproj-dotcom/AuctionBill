@@ -3,6 +3,7 @@ import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './SellerDetails.css';
 import { Plus, Pencil, Trash2, X, Eye, Search } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 function SellerDetails() {
     const [sellers, setSellers] = useState([]);
@@ -22,6 +23,7 @@ function SellerDetails() {
     const [paymentConfig, setPaymentConfig] = useState(null); // { type: 'product'|'global', targetId: string, targetName: string, maxAmount: number }
     const [paymentAmount, setPaymentAmount] = useState('');
     const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+    const [paymentMethod, setPaymentMethod] = useState('Cash');
     const [paymentNote, setPaymentNote] = useState('');
 
     const [activeTab, setActiveTab] = useState('products');
@@ -144,14 +146,13 @@ function SellerDetails() {
         const amount = parseFloat(paymentAmount);
 
         if (isNaN(amount) || amount <= 0) {
-            alert("Please enter a valid amount.");
+            toast.error("Please enter a valid amount.");
             return;
         }
 
-        if (paymentConfig.maxAmount !== undefined && amount > paymentConfig.maxAmount) {
-            if (!confirm(`Amount (₹${amount}) exceeds the calculated balance (₹${paymentConfig.maxAmount}). Continue anyway?`)) {
-                return;
-            }
+        if (paymentConfig.type === 'product' && paymentConfig.maxAmount !== undefined && amount > paymentConfig.maxAmount) {
+            toast.error(`Payment amount cannot exceed the pending balance of ₹${paymentConfig.maxAmount.toLocaleString()}`);
+            return;
         }
 
         const data = getAuctionData();
@@ -160,10 +161,11 @@ function SellerDetails() {
         const newPayment = {
             id: Date.now(),
             sellerId: selectedSeller.id,
-            productId: paymentConfig.type === 'product' ? paymentConfig.targetId : null, // Link to product if specific
+            productId: paymentConfig.type === 'product' ? paymentConfig.targetId : null,
             date: paymentDate,
             amount: amount,
-            method: "Cash", // Could be dropdown
+            method: paymentMethod,
+            type: paymentConfig.type === 'product' ? 'Sale' : 'Payment',
             note: paymentNote || (paymentConfig.type === 'product' ? `Payment for ${paymentConfig.targetName}` : 'Global Payment'),
             reference: `PAY-${Date.now()}`
         };
@@ -188,7 +190,7 @@ function SellerDetails() {
         setPaymentAmount('');
         setPaymentNote('');
         setPaymentConfig(null);
-        alert(`Payment of ₹${amount} recorded successfully.`);
+        toast.success(`Payment of ₹${amount.toLocaleString()} recorded successfully.`);
     };
 
     const openGlobalPaymentModal = () => {
@@ -199,6 +201,7 @@ function SellerDetails() {
         });
         setPaymentAmount('');
         setPaymentDate(new Date().toISOString().split('T')[0]);
+        setPaymentMethod('Cash');
         setPaymentNote('');
         setShowRecordPaymentModal(true);
     };
@@ -225,6 +228,7 @@ function SellerDetails() {
         });
         setPaymentAmount(''); // Don't prefill full amount, let user type
         setPaymentDate(new Date().toISOString().split('T')[0]);
+        setPaymentMethod('Cash');
         setPaymentNote(`Payment for ${product.name}`);
         setShowRecordPaymentModal(true);
     };
@@ -246,11 +250,13 @@ function SellerDetails() {
             const price = variantTransactions.reduce((sum, t) => sum + (t.finalAmount || 0), 0);
             const commission = variantTransactions.reduce((sum, t) => sum + (t.commissionAmount || 0), 0);
             const net = variantTransactions.reduce((sum, t) => sum + (t.netAmount || 0), 0);
+            const soldQty = variantTransactions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
 
             // We don't track payments per variant in UI yet, but we could if we wanted.
             // For now, sticky to Product-level tracking as requested.
             return {
                 ...variant,
+                sellQuantity: soldQty,
                 stats: { price, commission, net }
             };
         });
@@ -296,6 +302,9 @@ function SellerDetails() {
     const handleBackToSellers = () => {
         setSelectedSeller(null);
     };
+
+
+
 
     return (
         <>
@@ -416,7 +425,7 @@ function SellerDetails() {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="profile-actions">
+                                {/* <div className="profile-actions">
                                     <button
                                         className={`btn btn-sm ${selectedSeller.status === 'inactive' ? 'btn-success' : 'btn-error'} status-toggle-btn`}
                                         onClick={() => handleToggleStatus(selectedSeller.id)}
@@ -429,8 +438,22 @@ function SellerDetails() {
                                     >
                                         Add Global Payment
                                     </button>
-                                </div>
+                                </div> */}
                             </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+                                Target Balance: <span className={selectedSeller.balance < 0 ? 'text-success' : 'text-error'}>
+                                    ₹{selectedSeller.balance.toLocaleString()}
+                                </span>
+                            </div>
+                            <button
+                                className="btn btn-primary"
+                                onClick={openGlobalPaymentModal}
+                            >
+                                <Plus size={16} style={{ marginRight: '5px' }} /> Add Only Payment
+                            </button>
                         </div>
 
                         <div className="history-tabs">
@@ -521,48 +544,42 @@ function SellerDetails() {
                             </div>
                         ) : (
                             <div className="payment-history-section">
-                                <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
-                                    <button
-                                        className="btn btn-primary"
-                                        onClick={openGlobalPaymentModal}
-                                    >
-                                        <Plus size={16} style={{ marginRight: '5px' }} /> Add Global Payment
-                                    </button>
-                                </div>
-                                <table className="history-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Note</th>
-                                            <th>Ref</th>
-                                            <th>Product</th>
-                                            <th>Paid Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {(!selectedSeller.payments || selectedSeller.payments.length === 0) ? (
+                                <div className="table-wrapper history-table-wrapper">
+                                    <table className="history-table">
+                                        <thead>
                                             <tr>
-                                                <td colSpan="5" className="empty-td">No payments recorded yet</td>
+                                                <th>Date</th>
+                                                <th>Payment Type</th>
+                                                <th>Method</th>
+                                                <th>Amount</th>
                                             </tr>
-                                        ) : (
-                                            // Sort by date desc (newest first)
-                                            [...selectedSeller.payments].sort((a, b) => new Date(b.date) - new Date(a.date) || b.id - a.id).map(payment => {
-                                                const paidProduct = selectedSeller.products.find(p => p.id === payment.productId);
-                                                return (
-                                                    <tr key={payment.id}>
-                                                        <td>{payment.date}</td>
-                                                        <td>{payment.note}</td>
-                                                        <td className="text-secondary" style={{ fontSize: '0.85em' }}>{payment.id}</td>
-                                                        <td>{paidProduct ? paidProduct.name : (payment.productId ? 'Unknown' : 'Global Credit')}</td>
-                                                        <td className="text-success" style={{ fontWeight: 'bold' }}>
-                                                            ₹{parseFloat(payment.amount).toLocaleString()}
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
-                                        )}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {(!selectedSeller.payments || selectedSeller.payments.length === 0) ? (
+                                                <tr>
+                                                    <td colSpan="4" className="empty-td">No payment history</td>
+                                                </tr>
+                                            ) : (
+                                                selectedSeller.payments
+                                                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                                    .map((bg, index) => (
+                                                        <tr key={index}>
+                                                            <td>{bg.date}</td>
+                                                            <td>
+                                                                <span className={`badge ${bg.type === 'Sale' ? 'badge-info' : 'badge-success'}`}>
+                                                                    {bg.type || 'Payment'}
+                                                                </span>
+                                                            </td>
+                                                            <td>{bg.method}</td>
+                                                            <td className="text-success" style={{ fontWeight: 'bold' }}>
+                                                                ₹{Number(bg.amount).toLocaleString()}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -697,10 +714,13 @@ function SellerDetails() {
                                         </div>
                                     )}
 
-                                    <div className="data-row" style={{ marginBottom: '1rem' }}>
-                                        <span className="data-label">Pending Balance ({paymentConfig?.type === 'product' ? 'Product' : 'Global'})</span>
-                                        <span className="data-value text-error">₹{paymentConfig?.maxAmount?.toLocaleString() || 0}</span>
-                                    </div>
+                                    {paymentConfig?.type === 'product' && (
+                                        <div className="data-row" style={{ marginBottom: '1rem' }}>
+                                            <span className="data-label">Pending Balance</span>
+                                            <span className="data-value text-error">₹{paymentConfig?.maxAmount?.toLocaleString() || 0}</span>
+                                        </div>
+                                    )}
+
                                     <div className="form-group">
                                         <label className="form-label">Payment Date</label>
                                         <input
@@ -711,21 +731,34 @@ function SellerDetails() {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label className="form-label">Note</label>
+                                        <label className="form-label">Payment Method</label>
+                                        <select
+                                            className="form-control"
+                                            value={paymentMethod}
+                                            onChange={(e) => setPaymentMethod(e.target.value)}
+                                        >
+                                            <option value="Cash">Cash</option>
+                                            <option value="Gpay">Gpay</option>
+                                            <option value="UPI">UPI</option>
+                                            <option value="Check">Check</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Description</label>
                                         <input
                                             type="text"
                                             value={paymentNote}
                                             onChange={(e) => setPaymentNote(e.target.value)}
-                                            placeholder="e.g. Cash payment"
+                                            placeholder="e.g. Note"
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label className="form-label">Payment Amount (₹)</label>
+                                        <label className="form-label">Amount (₹)</label>
                                         <input
                                             type="number"
                                             value={paymentAmount}
                                             onChange={(e) => setPaymentAmount(e.target.value)}
-                                            max={paymentConfig?.maxAmount}
+                                            max={paymentConfig?.type === 'product' ? paymentConfig.maxAmount : undefined}
                                             min="1"
                                             placeholder="Enter amount"
                                             required

@@ -149,22 +149,14 @@ export const initialData = {
         {
             id: 1,
             sellerId: 1,
+            productId: 1,
+            description: "Payment for product 1",
             date: "2026-02-06",
-            amount: 570000, // Full payment example
+            amount: 570000,
             method: "Cash",
+            type: "Sale", // 'Sale' (Product Payment) or 'Payment' (Global Payment)
             reference: "PAY-001"
         }
-    ],
-
-    // 🔥 New Table: sellerCredits (Advance Given)
-    sellerCredits: [
-        // {
-        //     id: 1,
-        //     sellerId: 1,
-        //     date: "2026-02-01",
-        //     amount: 50000,
-        //     reason: "Advance given before auction"
-        // }
     ],
 
     // 🔥 New Table: buyerPayments (Money Received from Buyer)
