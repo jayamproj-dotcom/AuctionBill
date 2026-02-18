@@ -357,13 +357,13 @@ function BuyerDetails() {
                                     </div>
                                     <div className="profile-actions">
                                         <button
-                                            className={`btn btn-sm ${selectedBuyer.status === 'inactive' ? 'btn-success' : 'btn-error'} action-btn-fixed`}
+                                            className={`btn ${selectedBuyer.status === 'inactive' ? 'btn-success' : 'btn-error'} action-btn-fixed`}
                                             onClick={() => handleToggleStatus(selectedBuyer.id)}
                                         >
                                             {selectedBuyer.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
                                         </button>
                                         <button
-                                            className="btn btn-primary btn-sm action-btn-fixed"
+                                            className="btn btn-primary action-btn-fixed"
                                             onClick={openPaymentModal}
                                             disabled={selectedBuyer.balance <= 0}
                                         >

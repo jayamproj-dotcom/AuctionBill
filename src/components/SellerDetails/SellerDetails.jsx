@@ -25,6 +25,7 @@ function SellerDetails() {
     const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
     const [paymentMethod, setPaymentMethod] = useState('Cash');
     const [paymentNote, setPaymentNote] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
     const [activeTab, setActiveTab] = useState('products');
 
@@ -360,6 +361,22 @@ function SellerDetails() {
                             <h3 className="section-title">All Sellers ({sellers.length})</h3>
                         </div>
 
+                        <div className="card fade-in search-card">
+                            <div className="form-group search-form-group">
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Search seller by name..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="search-input"
+                                        style={{ paddingRight: '40px', width: '100%' }}
+                                    />
+                                    <Search size={20} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="card-list fade-in">
                             {sellers.length === 0 ? (
                                 <div className="empty-state">
@@ -368,6 +385,7 @@ function SellerDetails() {
                                 </div>
                             ) : (
                                 sellers
+                                    .filter(seller => seller.name.toLowerCase().includes(searchQuery.toLowerCase()))
                                     .map(seller => (
                                         <div key={seller.id} className="data-card clickable-card" onClick={() => openDetailsModal(seller)}>
                                             <div className="data-card-header">
@@ -427,13 +445,13 @@ function SellerDetails() {
                                 </div>
                                 {/* <div className="profile-actions">
                                     <button
-                                        className={`btn btn-sm ${selectedSeller.status === 'inactive' ? 'btn-success' : 'btn-error'} status-toggle-btn`}
+                                        className={`btn ${selectedSeller.status === 'inactive' ? 'btn-success' : 'btn-error'} status-toggle-btn`}
                                         onClick={() => handleToggleStatus(selectedSeller.id)}
                                     >
                                         {selectedSeller.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
                                     </button>
                                     <button
-                                        className="btn btn-sm btn-primary status-toggle-btn"
+                                        className="btn btn-primary status-toggle-btn"
                                         onClick={openGlobalPaymentModal}
                                     >
                                         Add Global Payment
@@ -767,10 +785,10 @@ function SellerDetails() {
                                     </div>
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowRecordPaymentModal(false)}>
+                                    <button type="button" className="btn btn-secondary" onClick={() => setShowRecordPaymentModal(false)}>
                                         Cancel
                                     </button>
-                                    <button type="submit" className="btn btn-primary btn-sm">
+                                    <button type="submit" className="btn btn-primary">
                                         Save Payment
                                     </button>
                                 </div>

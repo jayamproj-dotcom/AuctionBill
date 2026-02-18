@@ -159,6 +159,8 @@ export const initialData = {
         }
     ],
 
+    
+
     // 🔥 New Table: buyerPayments (Money Received from Buyer)
     buyerPayments: []
 };
