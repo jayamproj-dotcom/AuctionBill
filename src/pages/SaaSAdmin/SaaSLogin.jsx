@@ -22,9 +22,12 @@ const SaaSLogin = () => {
     const validate = () => {
         const newErrors = {};
         const ADMIN_USER = "admin";
-        const ADMIN_PASS = "admin@123";
+        const DEFAULT_ADMIN_PASS = "admin@123";
         const SUBADMIN_USER = "subadmin";
-        const SUBADMIN_PASS = "subadmin@123";
+        const DEFAULT_SUBADMIN_PASS = "subadmin@123";
+
+        const storedAdminPass = localStorage.getItem('saas_admin_password') || DEFAULT_ADMIN_PASS;
+        const storedSubadminPass = localStorage.getItem('saas_subadmin_password') || DEFAULT_SUBADMIN_PASS;
 
         if (!credentials.username.trim()) {
             newErrors.username = "Username is required";
@@ -35,14 +38,10 @@ const SaaSLogin = () => {
         if (!credentials.password) {
             newErrors.password = "Password is required";
         } else {
-             // Check password based on username entered (if valid so far) or just check generic validity
-             if (credentials.username.trim() === ADMIN_USER && credentials.password.trim() !== ADMIN_PASS) {
+             if (credentials.username.trim() === ADMIN_USER && credentials.password.trim() !== storedAdminPass) {
                  newErrors.password = "Invalid password";
-             } else if (credentials.username.trim() === SUBADMIN_USER && credentials.password.trim() !== SUBADMIN_PASS) {
+             } else if (credentials.username.trim() === SUBADMIN_USER && credentials.password.trim() !== storedSubadminPass) {
                  newErrors.password = "Invalid password";
-             } else if (credentials.username.trim() !== ADMIN_USER && credentials.username.trim() !== SUBADMIN_USER) {
-                  // If username is invalid, password error might be redundant but good for UX to say invalid if check fails
-                  newErrors.password = "Invalid password"; 
              }
         }
 
