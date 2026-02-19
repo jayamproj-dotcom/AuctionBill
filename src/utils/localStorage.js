@@ -7,7 +7,8 @@ export const initialData = {
             email: 'ramesh@example.com',
             address: 'Salem, Tamil Nadu',
             status: 'active',
-            password: '123'
+            password: '123',
+            advance: 0
         },
         {
             id: 2,
@@ -16,7 +17,8 @@ export const initialData = {
             email: 'murugan@example.com',
             address: 'Madurai, Tamil Nadu',
             status: 'active',
-            password: '123'
+            password: '123',
+            advance: 0
         }
     ],
 
@@ -29,7 +31,8 @@ export const initialData = {
             address: 'Chennai, Tamil Nadu',
             buyerType: 'Wholesale',
             status: 'active',
-            password: '123'
+            password: '123',
+            advance: 0
         },
         {
             id: 2,
@@ -39,7 +42,8 @@ export const initialData = {
             address: 'Coimbatore, Tamil Nadu',
             buyerType: 'Retailer',
             status: 'active',
-            password: '123'
+            password: '123',
+            advance: 0
         }
     ],
 
@@ -159,7 +163,7 @@ export const initialData = {
         }
     ],
 
-    
+
 
     // 🔥 New Table: buyerPayments (Money Received from Buyer)
     buyerPayments: []
@@ -182,4 +186,118 @@ export const saveAuctionData = (data) => {
         console.error("Failed to save auctionData to localStorage:", error);
         alert("Warning: Storage is full or corrupted. Your changes might not be saved.");
     }
+};
+
+export const getSellerLedger = (sellerId) => {
+    const data = getAuctionData();
+    const sellerTransactions = (data.transactions || []).filter(t => t.sellerId === sellerId);
+    const sellerPayments = (data.sellerPayments || []).filter(p => p.sellerId === sellerId);
+    const products = data.products || [];
+
+    const getProductName = (pid) => {
+        const p = products.find(prod => prod.id === pid);
+        return p ? p.name : `Product ${pid}`;
+    };
+
+    let ledger = [];
+
+    // 1️⃣ Add Sales (Credit)
+    sellerTransactions.forEach(t => {
+        ledger.push({
+            date: t.date,
+            description: `Sale - ${getProductName(t.productId)}`,
+            credit: t.netAmount,
+            debit: 0,
+            original: t,
+            type: 'sale'
+        });
+    });
+
+    // 2️⃣ Add Payments (Debit)
+    sellerPayments.forEach(p => {
+        ledger.push({
+            date: p.date,
+            description: p.note || p.description || "Payment",
+            credit: 0,
+            debit: p.amount,
+            original: p,
+            type: 'payment'
+        });
+    });
+
+    // 3️⃣ Sort by date
+    ledger.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // 4️⃣ Calculate running balance
+    let runningBalance = 0;
+
+    const finalLedger = ledger.map(entry => {
+        runningBalance += (entry.credit || 0);
+        runningBalance -= (entry.debit || 0);
+
+        return {
+            ...entry,
+            balance: runningBalance
+        };
+    });
+
+    return finalLedger;
+};
+
+export const getBuyerLedger = (buyerId) => {
+    const data = getAuctionData();
+    const buyerTransactions = (data.transactions || []).filter(t => t.buyerId === buyerId);
+    const buyerPayments = (data.buyerPayments || []).filter(p => p.buyerId === buyerId);
+    const products = data.products || [];
+
+    const getProductName = (pid) => {
+        const p = products.find(prod => prod.id === pid);
+        return p ? p.name : `Product ${pid}`;
+    };
+
+    let ledger = [];
+
+    // 1️⃣ Add Purchases (Debit - They owe us)
+    buyerTransactions.forEach(t => {
+        ledger.push({
+            date: t.date,
+            description: `Purchase - ${getProductName(t.productId)}`,
+            credit: 0,
+            debit: t.finalAmount,
+            original: t,
+            type: 'sale'
+        });
+    });
+
+    // 2️⃣ Add Payments (Credit - They paid us)
+    buyerPayments.forEach(p => {
+        ledger.push({
+            date: p.date,
+            description: p.note || p.description || "Payment",
+            credit: p.amount,
+            debit: 0,
+            original: p,
+            type: 'payment'
+        });
+    });
+
+    // 3️⃣ Sort by date
+    ledger.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // 4️⃣ Calculate running balance
+    let runningBalance = 0;
+
+    const finalLedger = ledger.map(entry => {
+        // For Buyers: Debit increases balance (owed), Credit decreases it.
+        runningBalance += (entry.debit || 0);
+        runningBalance -= (entry.credit || 0);
+
+        return {
+            ...entry,
+            balance: runningBalance,
+            advance: runningBalance < 0 ? Math.abs(runningBalance) : 0
+        };
+    });
+
+    return finalLedger;
 };

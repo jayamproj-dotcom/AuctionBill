@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChartNoAxesCombined, Users, UsersRound, HandCoins, BadgeIndianRupee, Bell, ArrowDownLeft, ArrowUpRight, Filter, Calendar } from "lucide-react";
 import { getAuctionData } from '../../utils/localStorage';
+import { formatDate } from '../../utils/dateUtils';
 import Notification from '../Common/Notification';
 import './Dashboard.css';
 
@@ -144,7 +145,7 @@ function Dashboard() {
             case 'week': return 'This Week';
             case 'month': return 'This Month';
             case 'year': return 'This Year';
-            case 'custom': return customDate;
+            case 'custom': return formatDate(customDate);
             default: return 'Today';
         }
     };
@@ -358,7 +359,7 @@ function Dashboard() {
                                 <div className="data-card-header">
                                     <div>
                                         <div className="data-card-title">{transaction.productName}</div>
-                                        <div className="data-card-subtitle">{transaction.date}</div>
+                                        <div className="data-card-subtitle">{formatDate(transaction.date)}</div>
                                     </div>
                                     <div className="badge badge-success">Completed</div>
                                 </div>

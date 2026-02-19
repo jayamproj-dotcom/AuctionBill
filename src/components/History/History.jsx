@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
+import { formatDate } from '../../utils/dateUtils';
 import './History.css';
-import { ArrowRightLeft, Download, ShoppingCart, HandCoins, Package,Search  } from 'lucide-react';
+import { ArrowRightLeft, Download, ShoppingCart, HandCoins, Package, Search } from 'lucide-react';
 
 
 function History() {
@@ -13,7 +14,7 @@ function History() {
     useEffect(() => {
         loadTransactions();
     }, []);
-   
+
     useEffect(() => {
         filterTransactions();
     }, [searchTerm, dateFilter, transactions]);
@@ -182,7 +183,7 @@ function History() {
                                 <div className="data-card-header">
                                     <div>
                                         <div className="data-card-title">{transaction.productName}</div>
-                                        <div className="data-card-subtitle">{transaction.date}</div>
+                                        <div className="data-card-subtitle">{formatDate(transaction.date)}</div>
                                     </div>
                                     <div className="badge badge-success">
                                         Completed

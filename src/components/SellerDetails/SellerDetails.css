@@ -133,3 +133,7 @@
     background-color: var(--bg-secondary);
     color: var(--text-primary);
 }
+
+.cursor-pointer {
+    cursor: pointer;
+}
