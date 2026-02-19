@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
+import { getAuctionData, saveAuctionData, getBuyerLedger } from '../../utils/localStorage';
+import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './BuyerDetails.css';
 import { Plus, Pencil, Trash2, X, ShoppingCart, Search } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 function BuyerDetails() {
     const [buyers, setBuyers] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [selectedBuyer, setSelectedBuyer] = useState(null);
-    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [ledger, setLedger] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [newBuyer, setNewBuyer] = useState({
         name: '',
@@ -24,6 +26,7 @@ function BuyerDetails() {
     const [paymentConfig, setPaymentConfig] = useState(null);
     const [paymentAmount, setPaymentAmount] = useState('');
     const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+    const [paymentMethod, setPaymentMethod] = useState('Cash');
     const [paymentNote, setPaymentNote] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -72,17 +75,25 @@ function BuyerDetails() {
                 };
             });
             setBuyers(buyersWithStats);
+            return buyersWithStats;
+        }
+        return [];
+    };
+
+    const handleViewBuyer = (buyer) => {
+        // Re-fetch fresh data to ensure we have latest payments/transactions
+        const freshBuyers = loadBuyers();
+        const freshBuyer = freshBuyers.find(b => b.id === buyer.id);
+
+        if (freshBuyer) {
+            freshBuyer.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            setSelectedBuyer(freshBuyer);
+            setLedger(getBuyerLedger(freshBuyer.id));
         }
     };
 
-    const openDetailsModal = (buyer) => {
-        // Re-fetch fresh data to ensure we have latest payments/transactions
-        const data = getAuctionData();
-        const freshBuyer = buyers.find(b => b.id === buyer.id);
-        if (freshBuyer) {
-            setSelectedBuyer(freshBuyer);
-            setShowDetailsModal(true);
-        }
+    const handleBackToBuyers = () => {
+        setSelectedBuyer(null);
     };
 
     const handleToggleStatus = (id) => {
@@ -167,7 +178,7 @@ function BuyerDetails() {
             buyerId: selectedBuyer.id,
             date: paymentDate,
             amount: amount,
-            method: "Cash",
+            method: paymentMethod,
             note: paymentNote || 'Global Payment',
             reference: `PAY-${Date.now()}`
         };
@@ -179,33 +190,20 @@ function BuyerDetails() {
 
         saveAuctionData(data);
 
-        // Refresh data
-        loadBuyers();
+        // Refresh data using loadBuyers and update selectedBuyer
+        const updatedBuyers = loadBuyers();
+        const updatedBuyer = updatedBuyers.find(b => b.id === selectedBuyer.id);
 
-        // Update local selected buyer
-        // (loadBuyers updates 'buyers' state, we need to find the updated buyer and set it)
-        // Helper to do this cleanly:
-        const updatedBuyer = data.buyers.find(b => b.id === selectedBuyer.id);
-        // We need to re-calculate stats for this buyer similar to loadBuyers or just rely on loadBuyers + useEffect/callback
-        // Simplest is to manually update specific fields for immediate UI feedback or just close modal and let React handle it via effect if dependencies were right (but they aren't).
-        // Let's rely on the fact we called loadBuyers(), we need to fetch that new object from the new 'buyers' state... 
-        // actually accessing state immediately after set is bad.
-        // So we manually construct the update for selectedBuyer to keep modal open and fresh.
-
-        const currentTotalPaid = (selectedBuyer.totalPaid || 0) + amount;
-        const currentBalance = (selectedBuyer.balance || 0) - amount;
-
-        setSelectedBuyer(prev => ({
-            ...prev,
-            payments: [...(prev.payments || []), newPayment],
-            totalPaid: currentTotalPaid,
-            balance: currentBalance
-        }));
+        if (updatedBuyer) {
+            updatedBuyer.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            setSelectedBuyer(updatedBuyer);
+            setLedger(getBuyerLedger(updatedBuyer.id));
+        }
 
         setShowRecordPaymentModal(false);
         setPaymentAmount('');
         setPaymentNote('');
-        alert(`Payment of ₹${amount} recorded successfully.`);
+        toast.success(`Payment of ₹${amount.toLocaleString()} recorded successfully.`);
     };
 
     const openPaymentModal = () => {
@@ -215,6 +213,7 @@ function BuyerDetails() {
         });
         setPaymentAmount('');
         setPaymentDate(new Date().toISOString().split('T')[0]);
+        setPaymentMethod('Cash');
         setPaymentNote('');
         setShowRecordPaymentModal(true);
     };
@@ -234,247 +233,298 @@ function BuyerDetails() {
             />
             <div className="content-header">
                 <div className="header-top">
-                    <h1>Buyers</h1>
+                    <h1>{selectedBuyer ? 'Buyer Details' : 'Buyers'}</h1>
                     <div className="header-actions">
-                        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
-                            <span><Plus /></span>
-                            Add Buyer
-                        </button>
+                        {selectedBuyer ? (
+                            <button className="btn btn-secondary" onClick={handleBackToBuyers}>
+                                <span>←</span> Back to List
+                            </button>
+                        ) : (
+                            <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                                <span><Plus /></span>
+                                Add Buyer
+                            </button>
+                        )}
                     </div>
                 </div>
                 <div className="breadcrumb">
                     <span>Home</span>
                     <span className="breadcrumb-separator">/</span>
-                    <span>Buyers</span>
-                </div>
-            </div>
-            <div className="content-body">
-                <div className="section-header">
-                    <h3 className="section-title">All Buyers ({buyers.length})</h3>
-                </div>
-
-                <div className="card fade-in search-card">
-                    <div className="form-group search-form-group">
-                        <div style={{ position: 'relative' }}>
-                            <input
-                                type="text"
-                                placeholder="Search buyer by name..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="search-input"
-                                style={{ paddingRight: '40px', width: '100%' }}
-                            />
-                            <Search size={20} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                        </div>
-                    </div>
-                </div>
-                <div className="card-list fade-in">
-                    {buyers.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-state-icon"><ShoppingCart /></div>
-                            <p>No buyers registered yet</p>
-                        </div>
-                    ) : (
-                        buyers
-                            .filter(buyer => buyer.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                            .map(buyer => (
-                                <div key={buyer.id} className="data-card clickable-card" onClick={() => openDetailsModal(buyer)}>
-                                    <div className="data-card-header">
-                                        <div>
-                                            <div className="data-card-title">{buyer.name}</div>
-                                            <div className="data-card-subtitle">{buyer.contact}</div>
-                                        </div>
-                                        <button className="icon-btn delete" onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteClick(buyer.id);
-                                        }} title="Delete Buyer">
-                                            <Trash2 size={18} />
-                                        </button>
-                                        <div className="badge badge-warning type-badge-abs">
-                                            {buyer.buyerType || 'Retailer'}
-                                        </div>
-                                    </div>
-
-                                    <div className="data-card-body">
-                                        <div className="data-row">
-                                            <span className="data-label">Address</span>
-                                            <span className="data-value">{buyer.address}</span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Login Access</span>
-                                            <span className={`data-value badge ${buyer.status === 'inactive' ? 'badge-error' : 'badge-success'}`}>
-                                                {buyer.status === 'inactive' ? 'Disabled' : 'Enabled'}
-                                            </span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Items Purchased</span>
-                                            <span className="data-value">{buyer.totalItems || 0}</span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Total Purchases</span>
-                                            <span className="data-value text-amber">₹{(buyer.totalPurchases || 0).toLocaleString()}</span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Balance</span>
-                                            <span className={`data-value ${buyer.balance > 0 ? 'text-error' : 'text-success'}`}>
-                                                ₹{(buyer.balance || 0).toLocaleString()}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
+                    <span onClick={selectedBuyer ? handleBackToBuyers : undefined} style={{ cursor: selectedBuyer ? 'pointer' : 'default', textDecoration: selectedBuyer ? 'underline' : 'none' }}>
+                        Buyers
+                    </span>
+                    {selectedBuyer && (
+                        <>
+                            <span className="breadcrumb-separator">/</span>
+                            <span>{selectedBuyer.name}</span>
+                        </>
                     )}
                 </div>
             </div>
-            {/* Buyer Detail Modal */}
-            {showDetailsModal && selectedBuyer && (
-                <div className="modal-overlay" onClick={() => setShowDetailsModal(false)}>
-                    <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3 className="modal-title">Buyer Profile: {selectedBuyer.name}</h3>
-                            <button className="modal-close" onClick={() => setShowDetailsModal(false)}><X /></button>
+            <div className="content-body">
+                {!selectedBuyer ? (
+                    <>
+                        <div className="section-header">
+                            <h3 className="section-title">All Buyers ({buyers.length})</h3>
                         </div>
-                        <div className="modal-body">
-                            <div className="card profile-container">
-                                <div className="profile-layout">
-                                    <div className="profile-info">
-                                        <div className="data-row">
-                                            <span className="data-label">Contact</span>
-                                            <span className="data-value">{selectedBuyer.contact}</span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Email</span>
-                                            <span className="data-value">{selectedBuyer.email || 'N/A'}</span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Address</span>
-                                            <span className="data-value">{selectedBuyer.address}</span>
-                                        </div>
-                                        <div className="data-row">
-                                            <span className="data-label">Type</span>
-                                            <span className="data-value badge badge-warning">{selectedBuyer.buyerType || 'Retailer'}</span>
-                                        </div>
-                                    </div>
-                                    <div className="profile-actions">
-                                        <button
-                                            className={`btn ${selectedBuyer.status === 'inactive' ? 'btn-success' : 'btn-error'} action-btn-fixed`}
-                                            onClick={() => handleToggleStatus(selectedBuyer.id)}
-                                        >
-                                            {selectedBuyer.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
-                                        </button>
-                                        <button
-                                            className="btn btn-primary action-btn-fixed"
-                                            onClick={openPaymentModal}
-                                            disabled={selectedBuyer.balance <= 0}
-                                        >
-                                            Add Payment
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="data-row volume-row">
-                                    <span className="data-label">Total Purchase Volume</span>
-                                    <span className="data-value text-amber volume-value">₹{selectedBuyer.totalPurchases.toLocaleString()}</span>
-                                </div>
-                                <div className="data-row volume-row">
-                                    <span className="data-label">Total Paid</span>
-                                    <span className="data-value text-success volume-value">₹{selectedBuyer.totalPaid.toLocaleString()}</span>
-                                </div>
-                                <div className="data-row volume-row">
-                                    <span className="data-label">Outstanding Balance</span>
-                                    <span className="data-value text-error volume-value">₹{selectedBuyer.balance.toLocaleString()}</span>
+
+                        <div className="card fade-in search-card">
+                            <div className="form-group search-form-group">
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Search buyer by name..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="search-input"
+                                        style={{ paddingRight: '40px', width: '100%' }}
+                                    />
+                                    <Search size={20} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
                                 </div>
                             </div>
-
-                            <div className="history-tabs">
-                                <button
-                                    className={`tab-button ${activeTab === 'purchases' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('purchases')}
-                                >
-                                    Purchase History ({selectedBuyer.transactions.length})
-                                </button>
-                                <button
-                                    className={`tab-button ${activeTab === 'payments' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('payments')}
-                                >
-                                    Payment History ({selectedBuyer.payments ? selectedBuyer.payments.length : 0})
-                                </button>
-                            </div>
-
-                            {activeTab === 'purchases' ? (
-                                <div className="table-wrapper history-table-wrapper">
-                                    <table className="history-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Product</th>
-                                                <th>Price</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {selectedBuyer.transactions.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan="3" className="empty-td">No purchases yet</td>
-                                                </tr>
-                                            ) : (
-                                                selectedBuyer.transactions.map(t => (
-                                                    <tr key={t.id}>
-                                                        <td>{t.date}</td>
-                                                        <td className="bold-product">{t.productName}</td>
-                                                        <td className="text-amber">₹{t.finalAmount.toLocaleString()}</td>
-                                                    </tr>
-                                                ))
-                                            )}
-                                        </tbody>
-                                        <tfoot>
-                                            <tr>
-                                                <td colSpan="2" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total:</td>
-                                                <td className="text-amber" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.totalPurchases.toLocaleString()}</td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
+                        </div>
+                        <div className="card-list fade-in">
+                            {buyers.length === 0 ? (
+                                <div className="empty-state">
+                                    <div className="empty-state-icon"><ShoppingCart /></div>
+                                    <p>No buyers registered yet</p>
                                 </div>
                             ) : (
-                                <div className="table-wrapper history-table-wrapper">
-                                    <table className="history-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Note</th>
-                                                <th>Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {(!selectedBuyer.payments || selectedBuyer.payments.length === 0) ? (
-                                                <tr>
-                                                    <td colSpan="3" className="empty-td">No payments recorded</td>
-                                                </tr>
-                                            ) : (
-                                                selectedBuyer.payments.sort((a, b) => new Date(b.date) - new Date(a.date)).map(p => (
-                                                    <tr key={p.id}>
-                                                        <td>{p.date}</td>
-                                                        <td>{p.note}</td>
-                                                        <td className="text-success">₹{parseFloat(p.amount).toLocaleString()}</td>
-                                                    </tr>
-                                                ))
-                                            )}
-                                        </tbody>
-                                        <tfoot>
-                                            <tr>
-                                                <td colSpan="2" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Paid:</td>
-                                                <td className="text-success" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.totalPaid.toLocaleString()}</td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                </div>
-                            )}
+                                buyers
+                                    .filter(buyer => buyer.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                                    .map(buyer => (
+                                        <div key={buyer.id} className="data-card clickable-card" onClick={() => handleViewBuyer(buyer)}>
+                                            <div className="data-card-header">
+                                                <div>
+                                                    <div className="data-card-title">{buyer.name}</div>
+                                                    <div className="data-card-subtitle">{buyer.contact}</div>
+                                                </div>
+                                                <button className="icon-btn delete" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteClick(buyer.id);
+                                                }} title="Delete Buyer">
+                                                    <Trash2 size={18} />
+                                                </button>
+                                                <div className="badge badge-warning type-badge-abs">
+                                                    {buyer.buyerType || 'Retailer'}
+                                                </div>
+                                            </div>
 
+                                            <div className="data-card-body">
+                                                <div className="data-row">
+                                                    <span className="data-label">Address</span>
+                                                    <span className="data-value">{buyer.address}</span>
+                                                </div>
+                                                <div className="data-row">
+                                                    <span className="data-label">Login Access</span>
+                                                    <span className={`data-value badge ${buyer.status === 'inactive' ? 'badge-error' : 'badge-success'}`}>
+                                                        {buyer.status === 'inactive' ? 'Disabled' : 'Enabled'}
+                                                    </span>
+                                                </div>
+                                                {/* <div className="data-row">
+                                                    <span className="data-label">Items Purchased</span>
+                                                    <span className="data-value">{buyer.totalItems || 0}</span>
+                                                </div>
+                                                <div className="data-row">
+                                                    <span className="data-label">Total Purchases</span>
+                                                    <span className="data-value text-amber">₹{(buyer.totalPurchases || 0).toLocaleString()}</span>
+                                                </div>
+                                                <div className="data-row">
+                                                    <span className="data-label">Balance</span>
+                                                    <span className={`data-value ${buyer.balance > 0 ? 'text-error' : 'text-success'}`}>
+                                                        ₹{(buyer.balance || 0).toLocaleString()}
+                                                    </span>
+                                                </div> */}
+                                            </div>
+                                        </div>
+                                    ))
+                            )}
                         </div>
-                        <div className="modal-footer">
-                            <button className="btn btn-secondary" onClick={() => setShowDetailsModal(false)}>Close</button>
+                    </>
+                ) : (
+                    /* Detailed View */
+                    <div className="fade-in">
+                        <div className="card profile-container" style={{ marginBottom: '2rem' }}>
+                            <div className="profile-layout">
+                                <div className="profile-info">
+                                    <div className="data-row">
+                                        <span className="data-label">Contact</span>
+                                        <span className="data-value">{selectedBuyer.contact}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">Email</span>
+                                        <span className="data-value">{selectedBuyer.email || 'N/A'}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">Address</span>
+                                        <span className="data-value">{selectedBuyer.address}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">Type</span>
+                                        <span className="data-value badge badge-warning">{selectedBuyer.buyerType || 'Retailer'}</span>
+                                    </div>
+                                </div>
+                                {/* <div className="profile-actions">
+                                    <button
+                                        className={`btn ${selectedBuyer.status === 'inactive' ? 'btn-success' : 'btn-error'} status-toggle-btn`}
+                                        onClick={() => handleToggleStatus(selectedBuyer.id)}
+                                    >
+                                        {selectedBuyer.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
+                                    </button>
+                                </div> */}
+                            </div>
                         </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+                            <button
+                                className="btn btn-primary"
+                                onClick={openPaymentModal}
+                                disabled={selectedBuyer.balance <= 0}
+                            >
+                                <Plus size={16} style={{ marginRight: '5px' }} /> Record Payment
+                            </button>
+                        </div>
+
+                        {/* Stats Row */}
+                        {/* <div className="stats-row" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+                            <div className="card stat-card" style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+                                <span className="data-label" style={{ marginBottom: '0.5rem' }}>Total Purchase Volume</span>
+                                <span className="data-value text-amber" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>₹{selectedBuyer.totalPurchases.toLocaleString()}</span>
+                            </div>
+                            <div className="card stat-card" style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+                                <span className="data-label" style={{ marginBottom: '0.5rem' }}>Total Paid</span>
+                                <span className="data-value text-success" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>₹{selectedBuyer.totalPaid.toLocaleString()}</span>
+                            </div>
+                            <div className="card stat-card" style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+                                <span className="data-label" style={{ marginBottom: '0.5rem' }}>Outstanding Balance</span>
+                                <span className="data-value text-error" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>₹{selectedBuyer.balance.toLocaleString()}</span>
+                            </div>
+                        </div> */}
+
+                        <div className="history-tabs">
+                            <button
+                                className={`tab-button ${activeTab === 'purchases' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('purchases')}
+                            >
+                                {/* Purchase History ({selectedBuyer.transactions.length}) */}
+                                Buying Products
+                            </button>
+                            <button
+                                className={`tab-button ${activeTab === 'payments' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('payments')}
+                            >
+                                Payment History
+                                {/* Payment History ({selectedBuyer.payments ? selectedBuyer.payments.length : 0}) */}
+                            </button>
+                        </div>
+
+                        {activeTab === 'purchases' ? (
+                            <div className="table-wrapper history-table-wrapper">
+                                <table className="history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Product</th>
+                                            <th>Bill Amount</th>
+                                            <th>Paid</th>
+                                            <th>Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {selectedBuyer.transactions.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="empty-td">No purchases yet</td>
+                                            </tr>
+                                        ) : (
+                                            (() => {
+                                                // FIFO Logic for Buyers
+                                                // 1. Get total payment pool
+                                                let paymentPool = selectedBuyer.totalPaid || 0;
+
+                                                // 2. Clone and Sort transactions Oldest => Newest for calculation
+                                                const sortedForCalc = [...selectedBuyer.transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                                                // 3. Calculate paid/balance per transaction
+                                                const calculatedTransactions = sortedForCalc.map(t => {
+                                                    const billAmount = t.finalAmount;
+                                                    const paidForThis = Math.min(billAmount, paymentPool);
+                                                    const balance = billAmount - paidForThis;
+                                                    paymentPool -= paidForThis;
+
+                                                    return {
+                                                        ...t,
+                                                        calculatedPaid: paidForThis,
+                                                        calculatedBalance: balance
+                                                    };
+                                                });
+
+                                                // 4. Sort Newest => Oldest for Display
+                                                calculatedTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                                                return calculatedTransactions.map(t => (
+                                                    <tr key={t.id}>
+                                                        <td>{formatDate(t.date)}</td>
+                                                        <td className="bold-product">{t.productName}</td>
+                                                        <td>₹{t.finalAmount.toLocaleString()}</td>
+                                                        <td className="text-success">₹{t.calculatedPaid.toLocaleString()}</td>
+                                                        <td className={`text-error ${t.calculatedBalance > 0 ? 'font-bold' : ''}`}>
+                                                            ₹{t.calculatedBalance.toLocaleString()}
+                                                        </td>
+                                                    </tr>
+                                                ));
+                                            })()
+                                        )}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colSpan="2" style={{ textAlign: 'right', fontWeight: 'bold' }}>Totals:</td>
+                                            <td className="text-amber" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.totalPurchases.toLocaleString()}</td>
+                                            <td className="text-success" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.totalPaid.toLocaleString()}</td>
+                                            <td className="text-error" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.balance.toLocaleString()}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="table-wrapper history-table-wrapper">
+                                <table className="history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Debit (Buy)</th>
+                                            <th>Credit (Pay)</th>
+                                            <th>Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {ledger.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="empty-td">No transactions found</td>
+                                            </tr>
+                                        ) : (
+                                            ledger.map((entry, index) => (
+                                                <tr key={index}>
+                                                    <td>{formatDate(entry.date)}</td>
+                                                    <td>{entry.description}</td>
+                                                    <td className="text-amber">{entry.debit > 0 ? `₹${entry.debit.toLocaleString()}` : '-'}</td>
+                                                    <td className="text-success">{entry.credit > 0 ? `₹${entry.credit.toLocaleString()}` : '-'}</td>
+                                                    <td style={{ fontWeight: 'bold' }} className={entry.balance > 0 ? 'text-error' : 'text-success'}>
+                                                        {entry.balance < 0
+                                                            ? `Adv: ₹${Math.abs(entry.balance).toLocaleString()}`
+                                                            : `₹${entry.balance.toLocaleString()}`
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
             {/* Record Payment Modal */}
             {showRecordPaymentModal && selectedBuyer && (
@@ -517,12 +567,25 @@ function BuyerDetails() {
                                     />
                                 </div>
                                 <div className="form-group">
+                                    <label className="form-label">Payment Method</label>
+                                    <select
+                                        className="form-control"
+                                        value={paymentMethod}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    >
+                                        <option value="Cash">Cash</option>
+                                        <option value="Gpay">Gpay</option>
+                                        <option value="UPI">UPI</option>
+                                        <option value="Check">Check</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
                                     <label className="form-label">Note</label>
                                     <input
                                         type="text"
                                         value={paymentNote}
                                         onChange={(e) => setPaymentNote(e.target.value)}
-                                        placeholder="e.g. Cash / UPI"
+                                        placeholder="e.g. Received via..."
                                     />
                                 </div>
                             </div>

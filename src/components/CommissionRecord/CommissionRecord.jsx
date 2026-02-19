@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
+import { formatDate } from '../../utils/dateUtils';
 import './CommissionRecord.css';
 import { Download, BadgeIndianRupee, ArrowRightLeft, ChartNoAxesColumn, Search } from 'lucide-react';
 
@@ -197,7 +198,7 @@ function CommissionRecord() {
                                 <div className="data-card-header">
                                     <div>
                                         <div className="data-card-title">{commission.productName}</div>
-                                        <div className="data-card-subtitle">{commission.date}</div>
+                                        <div className="data-card-subtitle">{formatDate(commission.date)}</div>
                                     </div>
                                     <div className="badge badge-success">{commission.commissionPercent}%</div>
                                 </div>

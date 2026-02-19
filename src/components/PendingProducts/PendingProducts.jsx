@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
+import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './PendingProducts.css';
 import '../TodayAuction/TodayAuction.css'; // Reusing base card styles
@@ -177,71 +178,71 @@ function PendingProducts() {
                                     const sellerName = seller ? seller.name.toLowerCase() : '';
                                     const productName = product.name.toLowerCase();
                                     const hasMatchingVariant = product.variants && product.variants.some(v => v.variety.toLowerCase().includes(query));
-                                    
+
                                     return sellerName.includes(query) || productName.includes(query) || hasMatchingVariant;
                                 })
                                 .map(product => (
-                                <div key={product.id} className="data-card product-card pending-product-card">
-                                    <div className="data-card-header product-card-header">
-                                        <div className="data-card-title product-card-title">
-                                            {product.name}
-                                        </div>
-                                        <span className="pending-badge">Pending</span>
-                                    </div>
-
-                                    <div className="data-card-body product-card-body">
-                                        <div className="product-image-container">
-                                            {product.image ? (
-                                                <img
-                                                    src={product.image}
-                                                    alt={product.name}
-                                                    className="product-image"
-                                                />
-                                            ) : (
-                                                <span className="product-image-placeholder">📦</span>
-                                            )}
+                                    <div key={product.id} className="data-card product-card pending-product-card">
+                                        <div className="data-card-header product-card-header">
+                                            <div className="data-card-title product-card-title">
+                                                {product.name}
+                                            </div>
+                                            <span className="pending-badge">Pending</span>
                                         </div>
 
-                                        <div className="data-card-subtitle product-card-subtitle">
-                                            Seller: <strong>{sellers.find(s => s.id === product.sellerId)?.name || 'Unknown'}</strong>
-                                        </div>
+                                        <div className="data-card-body product-card-body">
+                                            <div className="product-image-container">
+                                                {product.image ? (
+                                                    <img
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        className="product-image"
+                                                    />
+                                                ) : (
+                                                    <span className="product-image-placeholder">📦</span>
+                                                )}
+                                            </div>
 
-                                        <div className="date-info">
-                                            <span>📅 Created: {product.date || new Date(product.id).toLocaleDateString()}</span>
-                                        </div>
+                                            <div className="data-card-subtitle product-card-subtitle">
+                                                Seller: <strong>{sellers.find(s => s.id === product.sellerId)?.name || 'Unknown'}</strong>
+                                            </div>
 
-                                        <div className="product-variants">
-                                            {product.variants && product.variants.map(v => (
-                                                <div key={v.id} className="variant-box">
-                                                    <div className="variant-box-header">
-                                                        <span>{v.variety}</span>
-                                                        <span className={`badge variant-badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`}>{v.quality}</span>
+                                            <div className="date-info">
+                                                <span>📅 Created: {formatDate(product.date || product.id)}</span>
+                                            </div>
+
+                                            <div className="product-variants">
+                                                {product.variants && product.variants.map(v => (
+                                                    <div key={v.id} className="variant-box">
+                                                        <div className="variant-box-header">
+                                                            <span>{v.variety}</span>
+                                                            <span className={`badge variant-badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`}>{v.quality}</span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                                                            <span>{v.remaining} {v.unit}</span>
+                                                            <span className="text-amber">{v.commission}% Comm</span>
+                                                        </div>
                                                     </div>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                                                        <span>{v.remaining} {v.unit}</span>
-                                                        <span className="text-amber">{v.commission}% Comm</span>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="data-card-footer product-card-footer pending-actions">
+                                            <button
+                                                className="btn btn-error btn-pending-action return-btn"
+                                                onClick={() => handleReturnClick(product)}
+                                            >
+                                                <Undo2 /> Return
+                                            </button>
+                                            <button
+                                                className="btn btn-success btn-pending-action back-today-btn"
+                                                onClick={() => handleBackToToday(product)}
+                                            >
+                                                <ListFilterPlus /> To Today
+                                            </button>
                                         </div>
                                     </div>
-
-                                    <div className="data-card-footer product-card-footer pending-actions">
-                                        <button
-                                            className="btn btn-error btn-pending-action return-btn"
-                                            onClick={() => handleReturnClick(product)}
-                                        >
-                                            <Undo2 /> Return
-                                        </button>
-                                        <button
-                                            className="btn btn-success btn-pending-action back-today-btn"
-                                            onClick={() => handleBackToToday(product)}
-                                        >
-                                            <ListFilterPlus /> To Today
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     )}
                 </div>

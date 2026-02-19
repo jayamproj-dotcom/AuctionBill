@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
+import { getAuctionData, saveAuctionData, getSellerLedger } from '../../utils/localStorage';
+import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './SellerDetails.css';
 import { Plus, Pencil, Trash2, X, Eye, Search } from 'lucide-react';
@@ -9,6 +10,7 @@ function SellerDetails() {
     const [sellers, setSellers] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [selectedSeller, setSelectedSeller] = useState(null);
+    const [ledger, setLedger] = useState([]);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [newSeller, setNewSeller] = useState({
@@ -60,6 +62,7 @@ function SellerDetails() {
                 // Balance = Net Sales - Paid - Credit
                 const balance = totalNetSales - totalPaid - totalCredit;
 
+
                 return {
                     ...seller,
                     totalItems: sellerProducts.length,
@@ -76,7 +79,9 @@ function SellerDetails() {
                 };
             });
             setSellers(sellersWithStats);
+            return sellersWithStats;
         }
+        return [];
     };
 
     const openDetailsModal = (seller) => {
@@ -86,6 +91,7 @@ function SellerDetails() {
             .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date desc
 
         setSelectedSeller({ ...seller, products: sellerProducts });
+        setLedger(getSellerLedger(seller.id));
         // setShowDetailsModal(true); // No longer needed
     };
 
@@ -177,15 +183,18 @@ function SellerDetails() {
         data.sellerPayments.push(newPayment);
 
         saveAuctionData(data);
-        loadSellers();
 
-        // Update selected seller state locally
-        setSelectedSeller(prev => ({
-            ...prev,
-            payments: [...(prev.payments || []), newPayment],
-            totalPaid: (prev.totalPaid || 0) + amount,
-            balance: (prev.balance || 0) - amount
-        }));
+        // Recalculate and reload from source
+        const updatedSellers = loadSellers();
+        const updatedSeller = updatedSellers.find(s => s.id === selectedSeller.id);
+
+        if (updatedSeller) {
+            // Ensure products are sorted just like in openDetailsModal
+            updatedSeller.products.sort((a, b) => new Date(b.date) - new Date(a.date));
+            setSelectedSeller(updatedSeller);
+        }
+
+        setLedger(getSellerLedger(selectedSeller.id));
 
         setShowRecordPaymentModal(false);
         setPaymentAmount('');
@@ -438,8 +447,8 @@ function SellerDetails() {
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Login Access</span>
-                                        <span className={`data-value badge ${selectedSeller.status === 'inactive' ? 'badge-error' : 'badge-success'}`}>
-                                            {selectedSeller.status === 'inactive' ? 'Disabled' : 'Enabled'}
+                                        <span onClick={() => handleToggleStatus(selectedSeller.id)} className={`cursor-pointer badge btn ${selectedSeller.status === 'inactive' ? 'btn-success' : 'btn-error'} status-toggle-btn`}>
+                                            {selectedSeller.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
                                         </span>
                                     </div>
                                 </div>
@@ -461,11 +470,6 @@ function SellerDetails() {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                            <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
-                                Target Balance: <span className={selectedSeller.balance < 0 ? 'text-success' : 'text-error'}>
-                                    ₹{selectedSeller.balance.toLocaleString()}
-                                </span>
-                            </div>
                             <button
                                 className="btn btn-primary"
                                 onClick={openGlobalPaymentModal}
@@ -479,13 +483,14 @@ function SellerDetails() {
                                 className={`tab-button ${activeTab === 'products' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('products')}
                             >
-                                Submitted Products ({selectedSeller.products?.length || 0})
+                                {/* Selling Products ({selectedSeller.products?.length || 0}) */}
+                                Selling Products
                             </button>
                             <button
                                 className={`tab-button ${activeTab === 'payments' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('payments')}
                             >
-                                Payment History
+                                Payments History
                             </button>
                         </div>
 
@@ -499,7 +504,7 @@ function SellerDetails() {
                                             <th>Sales (Net)</th>
                                             <th>Paid</th>
                                             <th>Balance</th>
-                                            <th>Status</th>
+                                            {/* <th>Status</th> */}
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -509,30 +514,62 @@ function SellerDetails() {
                                                 <td colSpan="7" className="empty-td">No items submitted yet</td>
                                             </tr>
                                         ) : (
-                                            selectedSeller.products.map(p => {
-                                                // Calculate product stats from transactions
-                                                const pTransactions = (selectedSeller.transactions || []).filter(t => t.productId === p.id);
+                                            (() => {
+                                                // 🔥 Calculate Seller Advance First
+                                                const sellerTotalNet = (selectedSeller.transactions || [])
+                                                    .reduce((sum, t) => sum + (Number(t.netAmount) || 0), 0);
 
-                                                // Net Sales for this product
-                                                const totalNet = pTransactions.reduce((sum, t) => sum + (Number(t.netAmount) || 0), 0);
+                                                const sellerTotalPaid = (selectedSeller.payments || [])
+                                                    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-                                                // Calculations using sellerPayments table for this product
-                                                const pPayments = (selectedSeller.payments || []).filter(pmt => pmt.productId === p.id);
-                                                const totalPaid = pPayments.reduce((sum, pmt) => sum + (Number(pmt.amount) || 0), 0);
-                                                const totalBalance = totalNet - totalPaid;
+                                                const sellerCredits = (selectedSeller.credits || [])
+                                                    .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
 
-                                                const isPaidOff = totalBalance <= 0 && totalNet > 0;
+                                                const sellerBalance = sellerTotalNet - sellerTotalPaid - sellerCredits;
 
-                                                return (
-                                                    <tr key={p.id}>
-                                                        <td>{p.date}</td>
-                                                        <td className="product-name-bold">{p.name}</td>
-                                                        <td>₹{totalNet.toLocaleString()}</td>
-                                                        <td className="text-success">₹{totalPaid.toLocaleString()}</td>
-                                                        <td className={`text-error ${totalBalance > 0 ? 'font-bold' : ''}`}>
-                                                            ₹{Math.max(0, totalBalance).toLocaleString()}
-                                                        </td>
-                                                        <td>
+                                                let remainingAdvance = sellerBalance < 0
+                                                    ? Math.abs(sellerBalance)
+                                                    : 0;
+
+                                                return selectedSeller.products.map(p => {
+                                                    // Calculate product stats from transactions
+                                                    const pTransactions = (selectedSeller.transactions || []).filter(t => t.productId === p.id);
+
+                                                    // Net Sales for this product
+                                                    const totalNet = pTransactions.reduce((sum, t) => sum + (Number(t.netAmount) || 0), 0);
+
+                                                    // Calculations using sellerPayments table for this product
+                                                    const pPayments = (selectedSeller.payments || []).filter(pmt => pmt.productId === p.id);
+                                                    let totalPaid = pPayments.reduce((sum, pmt) => sum + (Number(pmt.amount) || 0), 0);
+
+                                                    let totalBalance = totalNet - totalPaid;
+
+                                                    // 🔥 Apply Advance Adjustment
+                                                    let advanceUsed = 0;
+
+                                                    if (remainingAdvance > 0 && totalBalance > 0) {
+                                                        advanceUsed = Math.min(remainingAdvance, totalBalance);
+
+                                                        totalPaid += advanceUsed;       // ✅ Add to Paid column
+                                                        totalBalance -= advanceUsed;    // ✅ Reduce Balance
+                                                        remainingAdvance -= advanceUsed;
+                                                    }
+
+                                                    console.log(advanceUsed, totalPaid, totalBalance, remainingAdvance);
+
+
+                                                    const isPaidOff = totalBalance <= 0 && totalNet > 0;
+
+                                                    return (
+                                                        <tr key={p.id}>
+                                                            <td>{formatDate(p.date)}</td>
+                                                            <td className="product-name-bold">{p.name}</td>
+                                                            <td>₹{totalNet.toLocaleString()}</td>
+                                                            <td className="text-success">₹{totalPaid.toLocaleString()}</td>
+                                                            <td className={`text-error ${totalBalance > 0 ? 'font-bold' : ''}`}>
+                                                                ₹{Math.max(0, totalBalance).toLocaleString()}
+                                                            </td>
+                                                            {/* <td>
                                                             {isPaidOff ? (
                                                                 <span className="badge badge-success">Paid</span>
                                                             ) : (
@@ -540,22 +577,23 @@ function SellerDetails() {
                                                                     {p.status}
                                                                 </span>
                                                             )}
-                                                        </td>
-                                                        <td>
-                                                            <div style={{ display: 'flex', gap: '5px' }}>
-                                                                <button className="btn btn-sm btn-info" onClick={() => handleViewProduct(p.id)} title="View Details">
-                                                                    <Eye size={16} />
-                                                                </button>
-                                                                {totalBalance > 0 && (
-                                                                    <button className="btn btn-sm btn-primary" onClick={() => openProductPaymentModal(p)} title="Pay Balance">
-                                                                        Pay
+                                                        </td> */}
+                                                            <td>
+                                                                <div style={{ display: 'flex', gap: '5px' }}>
+                                                                    <button className="btn btn-sm btn-info" onClick={() => handleViewProduct(p.id)} title="View Details">
+                                                                        <Eye size={16} />
                                                                     </button>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
+                                                                    {totalBalance > 0 && (
+                                                                        <button className="btn btn-sm btn-primary" onClick={() => openProductPaymentModal(p)} title="Pay Balance">
+                                                                            Pay
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            })()
                                         )}
                                     </tbody>
                                 </table>
@@ -567,33 +605,32 @@ function SellerDetails() {
                                         <thead>
                                             <tr>
                                                 <th>Date</th>
-                                                <th>Payment Type</th>
-                                                <th>Method</th>
-                                                <th>Amount</th>
+                                                <th>Description</th>
+                                                <th>Credit (Sale)</th>
+                                                <th>Debit (Pay)</th>
+                                                <th>Balance</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {(!selectedSeller.payments || selectedSeller.payments.length === 0) ? (
+                                            {ledger.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan="4" className="empty-td">No payment history</td>
+                                                    <td colSpan="5" className="empty-td">No transactions found</td>
                                                 </tr>
                                             ) : (
-                                                selectedSeller.payments
-                                                    .sort((a, b) => new Date(b.date) - new Date(a.date))
-                                                    .map((bg, index) => (
-                                                        <tr key={index}>
-                                                            <td>{bg.date}</td>
-                                                            <td>
-                                                                <span className={`badge ${bg.type === 'Sale' ? 'badge-info' : 'badge-success'}`}>
-                                                                    {bg.type || 'Payment'}
-                                                                </span>
-                                                            </td>
-                                                            <td>{bg.method}</td>
-                                                            <td className="text-success" style={{ fontWeight: 'bold' }}>
-                                                                ₹{Number(bg.amount).toLocaleString()}
-                                                            </td>
-                                                        </tr>
-                                                    ))
+                                                ledger.map((entry, index) => (
+                                                    <tr key={index}>
+                                                        <td>{formatDate(entry.date)}</td>
+                                                        <td>{entry.description}</td>
+                                                        <td className="text-success">{entry.credit > 0 ? `₹${entry.credit.toLocaleString()}` : '-'}</td>
+                                                        <td className="text-error">{entry.debit > 0 ? `₹${entry.debit.toLocaleString()}` : '-'}</td>
+                                                        <td style={{ fontWeight: 'bold' }} className={entry.balance < 0 ? 'text-success' : ''}>
+                                                            {entry.balance < 0
+                                                                ? `Advance ₹${Math.abs(entry.balance).toLocaleString()}`
+                                                                : `₹${entry.balance.toLocaleString()}`
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                ))
                                             )}
                                         </tbody>
                                     </table>
@@ -602,7 +639,7 @@ function SellerDetails() {
                         )}
                     </div>
                 )}
-            </div>
+            </div >
 
             {/* Product View Modal */}
             {
@@ -652,7 +689,7 @@ function SellerDetails() {
                                                 </div>
                                             )}
                                             <div style={{ marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>
-                                                {viewingProduct.date}
+                                                {formatDate(viewingProduct.date)}
                                             </div>
                                         </div>
 

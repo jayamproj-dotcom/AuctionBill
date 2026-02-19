@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatDate } from '../../utils/dateUtils';
 import { jsPDF } from 'jspdf';
 import './Subscription.css';
 import { CreditCard, CheckCircle2, TrendingUp, Check, Plus, FileText, Download } from 'lucide-react';
@@ -44,11 +45,11 @@ const Subscription = () => {
     ];
 
     // Current subscription state - Change plan here to test different scenarios
-    const [currentPlanId, setCurrentPlanId] = useState('basic'); 
-    
+    const [currentPlanId, setCurrentPlanId] = useState('basic');
+
     // Mock Subscription Data based on currentPlanId
     const currentPlanDetails = plans.find(p => p.id === currentPlanId);
-    
+
     const [subscription, setSubscription] = useState({
         plan: currentPlanDetails.name,
         planId: currentPlanId,
@@ -136,11 +137,11 @@ const Subscription = () => {
                             <div className="plan-details">
                                 <div className="detail-item">
                                     <span className="detail-label">Start Date</span>
-                                    <span className="detail-value">{subscription.startDate}</span>
+                                    <span className="detail-value">{formatDate(subscription.startDate)}</span>
                                 </div>
                                 <div className="detail-item">
                                     <span className="detail-label">Expiry Date</span>
-                                    <span className="detail-value">{subscription.expiryDate}</span>
+                                    <span className="detail-value">{formatDate(subscription.expiryDate)}</span>
                                 </div>
                                 <div className="days-remaining">
                                     <span className="days-count">{calculateDaysRemaining()}</span>
@@ -201,10 +202,10 @@ const Subscription = () => {
                                 {invoices.map((invoice, index) => (
                                     <div key={index} className="invoice-row">
                                         <span className="inv-id">{invoice.id}</span>
-                                        <span className="inv-date">{invoice.date}</span>
+                                        <span className="inv-date">{formatDate(invoice.date)}</span>
                                         <span className="inv-amount">₹{invoice.amount.toLocaleString()}</span>
                                         <span className="inv-status"><span className="badge-paid">{invoice.status}</span></span>
-                                        <button 
+                                        <button
                                             className="btn-download icon-btn"
                                             onClick={() => handleDownloadInvoice(invoice)}
                                             title="Download Invoice"
