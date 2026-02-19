@@ -119,7 +119,7 @@ function History() {
                         </div>
                     </div>
 
-                    <div className="stat-card">
+                    {/* <div className="stat-card">
                         <div className="stat-header">
                             <div className="stat-icon"><Package /></div>
                             <div>
@@ -127,7 +127,7 @@ function History() {
                                 <div className="stat-label">Total Qty</div>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Filters */}

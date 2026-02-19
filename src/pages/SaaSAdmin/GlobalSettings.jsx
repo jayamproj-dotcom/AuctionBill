@@ -128,7 +128,7 @@ const GlobalSettings = () => {
             </div>
           </div>
 
-          <div className="saas-form-group">
+          {/* <div className="saas-form-group">
             <label className="saas-label">Global Maintenance Mode</label>
             <label className="saas-checkbox-label">
               <input 
@@ -138,7 +138,7 @@ const GlobalSettings = () => {
                 onChange={handleChange}
               /> Offline for all vendors
             </label>
-          </div>
+          </div> */}
 
           {role === 'admin' && (
             <>

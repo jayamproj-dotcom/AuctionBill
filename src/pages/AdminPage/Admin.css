@@ -594,9 +594,7 @@ a .stat-card:hover {
         margin-top: 0;
     }
 
-    .header-actions button {
-        flex: 1;
-    }
+   
 }
 
 .header-logo {

@@ -255,16 +255,15 @@ function BuyerDetails() {
 
                 <div className="card fade-in search-card">
                     <div className="form-group search-form-group">
-                        <div style={{ position: 'relative' }}>
+                        <div className="input-group-relative">
                             <input
                                 type="text"
                                 placeholder="Search buyer by name..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="search-input"
-                                style={{ paddingRight: '40px', width: '100%' }}
+                                className="search-input input-with-icon"
                             />
-                            <Search size={20} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                            <Search size={20} className="search-icon-absolute" />
                         </div>
                     </div>
                 </div>
@@ -427,8 +426,8 @@ function BuyerDetails() {
                                         </tbody>
                                         <tfoot>
                                             <tr>
-                                                <td colSpan="2" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total:</td>
-                                                <td className="text-amber" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.totalPurchases.toLocaleString()}</td>
+                                                <td colSpan="2" className="table-total-label">Total:</td>
+                                                <td className="text-amber table-total-value">₹{selectedBuyer.totalPurchases.toLocaleString()}</td>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -460,8 +459,8 @@ function BuyerDetails() {
                                         </tbody>
                                         <tfoot>
                                             <tr>
-                                                <td colSpan="2" style={{ textAlign: 'right', fontWeight: 'bold' }}>Total Paid:</td>
-                                                <td className="text-success" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.totalPaid.toLocaleString()}</td>
+                                                <td colSpan="2" className="table-total-label">Total Paid:</td>
+                                                <td className="text-success table-total-value">₹{selectedBuyer.totalPaid.toLocaleString()}</td>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -486,11 +485,11 @@ function BuyerDetails() {
                         </div>
                         <form onSubmit={handleRecordPayment}>
                             <div className="modal-body">
-                                <div className="data-row" style={{ marginBottom: '1rem' }}>
+                                <div className="data-row payment-modal-row">
                                     <span className="data-label">Buyer Name</span>
                                     <span className="data-value">{selectedBuyer.name}</span>
                                 </div>
-                                <div className="data-row" style={{ marginBottom: '1rem' }}>
+                                <div className="data-row payment-modal-row">
                                     <span className="data-label">Outstanding Balance</span>
                                     <span className="data-value text-error">₹{selectedBuyer.balance.toLocaleString()}</span>
                                 </div>

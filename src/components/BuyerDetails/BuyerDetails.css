@@ -144,3 +144,34 @@
     border-bottom-color: var(--primary);
     font-weight: 600;
 }
+
+/* Utilities replacing inline styles */
+.input-group-relative {
+    position: relative;
+}
+
+.input-with-icon {
+    padding-right: 40px;
+    width: 100%;
+}
+
+.search-icon-absolute {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}
+
+.table-total-label {
+    text-align: right;
+    font-weight: bold;
+}
+
+.table-total-value {
+    font-weight: bold;
+}
+
+.payment-modal-row {
+    margin-bottom: 1rem;
+}

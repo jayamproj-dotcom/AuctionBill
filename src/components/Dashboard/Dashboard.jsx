@@ -250,7 +250,7 @@ function Dashboard() {
                         <div className="stat-header">
                             <div className="stat-icon"><ArrowDownLeft className="text-success" /></div>
                             <div>
-                                <div className="stat-value">₹{((stats.totalPayIn || 0) / 1000).toFixed(1)}K</div>
+                                <div className="stat-value">₹124.5K</div>
                                 <div className="stat-label">Pay In</div>
                             </div>
                         </div>
@@ -264,7 +264,7 @@ function Dashboard() {
                         <div className="stat-header">
                             <div className="stat-icon"><ArrowUpRight className="text-danger" /></div>
                             <div>
-                                <div className="stat-value">₹{((stats.totalPayOut || 0) / 1000).toFixed(1)}K</div>
+                                <div className="stat-value">₹86.2K</div>
                                 <div className="stat-label">Pay Out</div>
                             </div>
                         </div>

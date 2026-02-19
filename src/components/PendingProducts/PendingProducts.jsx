@@ -227,12 +227,12 @@ function PendingProducts() {
                                     </div>
 
                                     <div className="data-card-footer product-card-footer pending-actions">
-                                        <button
+                                        {/* <button
                                             className="btn btn-error btn-pending-action return-btn"
                                             onClick={() => handleReturnClick(product)}
                                         >
                                             <Undo2 /> Return
-                                        </button>
+                                        </button> */}
                                         <button
                                             className="btn btn-success btn-pending-action back-today-btn"
                                             onClick={() => handleBackToToday(product)}

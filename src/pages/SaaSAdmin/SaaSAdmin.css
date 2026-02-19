@@ -1076,7 +1076,7 @@ body.saas-admin-active {
 .saas-search-icon-absolute {
   position: absolute;
   right: 12px;
-  top: 36%;
+  top: 50%;
   transform: translateY(-50%);
   color: #9ca3af;
 }
