@@ -1,34 +1,34 @@
 /* BuyerDetails.css */
 
-.clickable-card {
+.buyer-clickable-card {
     cursor: pointer;
 }
 
-.type-badge-abs {
+.buyer-type-badge-abs {
     position: absolute;
     top: 1rem;
     right: 3.5rem;
     font-size: 0.65rem;
 }
 
-.profile-container {
+.buyer-profile-container {
     padding: 1rem;
     margin-bottom: 1.5rem;
     background-color: var(--bg-tertiary);
 }
 
-.profile-layout {
+.buyer-profile-layout {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 1rem;
 }
 
-.profile-info {
+.buyer-profile-info {
     flex: 1;
 }
 
-.profile-actions {
+.buyer-profile-actions {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -38,6 +38,14 @@
 
 .action-btn-fixed {
     min-width: 120px;
+}
+
+.buyer-status-toggle-btn {
+    min-width: 120px;
+}
+
+.buyer-cursor-pointer {
+    cursor: pointer;
 }
 
 .volume-row {
@@ -54,12 +62,12 @@
     margin-bottom: 1rem;
 }
 
-.history-table-wrapper {
+.buyer-history-table-wrapper {
     max-height: 300px;
     overflow-y: auto;
 }
 
-.history-table {
+.buyer-history-table {
     width: 100%;
     font-size: 0.85rem;
 }
@@ -72,18 +80,13 @@
 .bold-product {
     font-weight: 600;
 }
-.history-table-wrapper {
+.buyer-history-table-wrapper {
     overflow-x: auto;
 }
 
 @media (max-width: 580px) {
-    .profile-layout {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-    
-    .profile-actions {
+   
+    .buyer-profile-actions {
         width: 100%;
         align-items: stretch;
     }
@@ -94,16 +97,16 @@
 }
 
 /* Extracted Inline Styles */
-.search-card {
+.buyer-search-card {
     margin-bottom: 1.5rem;
     padding: 1rem;
 }
 
-.search-form-group {
+.buyer-search-form-group {
     margin-bottom: 0;
 }
 
-.search-input {
+.buyer-search-input {
     width: 100%;
     padding: 10px 15px;
     border-radius: 8px;
@@ -117,14 +120,14 @@
 }
 
 /* Tabs */
-.history-tabs {
+.buyer-history-tabs {
     display: flex;
     gap: 1rem;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 1.5rem;
 }
 
-.tab-button {
+.buyer-tab-button {
     background: none;
     border: none;
     padding: 0.75rem 1.5rem;
@@ -135,11 +138,11 @@
     transition: all 0.2s;
 }
 
-.tab-button:hover {
+.buyer-tab-button:hover {
     color: var(--text-primary);
 }
 
-.tab-button.active {
+.buyer-tab-button.active {
     color: var(--primary);
     border-bottom-color: var(--primary);
     font-weight: 600;
@@ -174,4 +177,51 @@
 
 .payment-modal-row {
     margin-bottom: 1rem;
+}
+
+/* Product View Modal Styles */
+.product-view-container {
+    padding: 1rem 0;
+}
+
+.product-image-preview img {
+    object-fit: contain;
+    background-color: #f8f8f8;
+}
+
+.product-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f5f5;
+    color: #9ca3af;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.stats-grid {
+    background-color: var(--bg-tertiary);
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 0.9rem;
+}
+
+
+
+@media (max-width: 600px) {
+    .product-view-container > div {
+        flex-direction: column !important;
+    }
+    
+    .product-image-preview {
+        width: 100% !important;
+        flex: none !important;
+        margin-bottom: 1rem;
+    }
+    
+    .product-image-preview img, 
+    .product-image-placeholder {
+        height: 150px !important;
+        width: 100%;
+    }
 }

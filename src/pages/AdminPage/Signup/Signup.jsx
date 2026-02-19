@@ -191,7 +191,7 @@ const Signup = () => {
                     <button type="submit" className="btn btn-primary signup-btn">Sign Up</button>
 
                     <div className="signup-footer">
-                        <p>Already have an account? <Link to="/" className="link">Login here</Link></p>
+                        <p>Already have an account? <Link to="/auctionbilling/" className="link">Login here</Link></p>
                     </div>
                 </form>
             </div>

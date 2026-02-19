@@ -391,6 +391,29 @@ function TodayAuction() {
         if (!data.transactions) data.transactions = [];
         data.transactions.push(transaction);
 
+        // Record Payment if applicable
+        let paymentAmount = 0;
+        if (saleData.paymentStatus === 'Paid') {
+            paymentAmount = totalAmount;
+        } else if (saleData.paymentStatus === 'Part Paid') {
+            paymentAmount = parseFloat(saleData.amountPaid) || 0;
+        }
+
+        if (paymentAmount > 0) {
+            const payment = {
+                id: Date.now() + 1, // Ensure unique ID (offset from transaction)
+                buyerId: saleData.buyerId,
+                date: new Date().toISOString().split('T')[0],
+                amount: paymentAmount,
+                method: 'Cash', // Default to Cash for now
+                note: `Payment for ${product.name} (${variant.variety})`,
+                reference: `SALE-${transaction.id}`
+            };
+
+            if (!data.buyerPayments) data.buyerPayments = [];
+            data.buyerPayments.push(payment);
+        }
+
         saveAuctionData(data);
 
         setSaleData({ buyerId: '', buyerName: '', variantId: '', finalPrice: '', qtyToSell: '', paymentStatus: 'Paid', amountPaid: '' });

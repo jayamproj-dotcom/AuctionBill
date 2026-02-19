@@ -112,7 +112,7 @@ const SaaSLogin = () => {
                     </button>
 
                     <div className="saas-login-footer">
-                        <a href="/" className="saas-link">Back to Main App</a>
+                        <a href="/auctionbilling/" className="saas-link">Back to Main App</a>
                     </div>
                 </form>
             </div>

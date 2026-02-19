@@ -16,7 +16,7 @@ const AdminLayout = () => {
 
   useEffect(() => {
     if (!isLoggedIn) {
-      navigate("/");
+      window.location.href = "/auctionbilling";
     }
   }, [isLoggedIn, navigate]);
 
@@ -45,7 +45,7 @@ const AdminLayout = () => {
     localStorage.removeItem("adminUserPhoto");
     
     setProfileOpen(false);
-    navigate("/");
+    window.location.href = "/auctionbilling";
   };
 
   // Close dropdown when clicking outside

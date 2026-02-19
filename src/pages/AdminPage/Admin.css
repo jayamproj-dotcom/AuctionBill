@@ -80,6 +80,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative;
 }
 
 .sidebar-logo {
@@ -124,12 +125,24 @@
 }
 
 .close-sidebar {
+    position: absolute;
+    top: 0.1rem;
+    right: 0.1rem;
     background: none;
     border: none;
     color: var(--text-muted);
-    font-size: 1.5rem;
     cursor: pointer;
-    padding: 0.25rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-base);
+}
+
+.close-sidebar:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
 }
 
 .sidebar-nav {

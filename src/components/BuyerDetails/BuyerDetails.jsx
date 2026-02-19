@@ -3,7 +3,7 @@ import { getAuctionData, saveAuctionData, getBuyerLedger } from '../../utils/loc
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './BuyerDetails.css';
-import { Plus, Pencil, Trash2, X, ShoppingCart, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, ShoppingCart, Search, Eye } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 function BuyerDetails() {
@@ -27,8 +27,48 @@ function BuyerDetails() {
     const [paymentAmount, setPaymentAmount] = useState('');
     const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
     const [paymentMethod, setPaymentMethod] = useState('Cash');
-    const [paymentNote, setPaymentNote] = useState('');
+const [paymentNote, setPaymentNote] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Transaction View Modal State
+    const [viewingTransaction, setViewingTransaction] = useState(null);
+    const [showTransactionModal, setShowTransactionModal] = useState(false);
+
+    const handleViewTransaction = (transaction) => {
+        // Hydrate transaction with full product details
+        const data = getAuctionData();
+        const product = data.products.find(p => p.id === transaction.productId);
+
+        if (product) {
+             // We need to show WHICH variants were bought in this transaction.
+             // The transaction object (from 'transactions' array in localStorage) typically stores:
+             // - productId
+             // - variantId
+             // - quantity
+             // - price
+             // - weight
+             // etc.
+
+             // However, 'transactions' in our loadBuyers() scope are flattened.
+             // Let's see how they are stored.
+             // A transaction is usually 1 record per variant sold? Or 1 record per "cart checkout"?
+             // Looking at typical structure: transactions = [{ id, buyerId, sellerId, productId, variantId, quantity, finalAmount, ... }]
+
+             // If the transaction represents a single line item (one variant), we show that.
+             // If we want to show "Product Details" broadly, we can fallback to the product info.
+
+             const variant = (product.variants || []).find(v => v.id === transaction.variantId);
+
+             setViewingTransaction({
+                 ...transaction,
+                 productImage: product.image,
+                 productName: product.name,
+                 productDate: product.date,
+                 variantDetails: variant
+             });
+             setShowTransactionModal(true);
+        }
+    };
 
     useEffect(() => {
         loadBuyers();
@@ -180,7 +220,9 @@ function BuyerDetails() {
             amount: amount,
             method: paymentMethod,
             note: paymentNote || 'Global Payment',
-            reference: `PAY-${Date.now()}`
+            reference: paymentConfig?.type === 'specific' 
+                ? `SALE-${paymentConfig.transactionId}` 
+                : `PAY-${Date.now()}`
         };
 
         if (!data.buyerPayments) {
@@ -209,12 +251,27 @@ function BuyerDetails() {
     const openPaymentModal = () => {
         setPaymentConfig({
             targetName: selectedBuyer.name,
-            maxAmount: selectedBuyer.balance
+            maxAmount: selectedBuyer.balance,
+            type: 'general'
         });
         setPaymentAmount('');
         setPaymentDate(new Date().toISOString().split('T')[0]);
         setPaymentMethod('Cash');
         setPaymentNote('');
+        setShowRecordPaymentModal(true);
+    };
+
+    const handlePayTransaction = (transaction) => {
+        setPaymentConfig({
+            targetName: `${transaction.productName} (${formatDate(transaction.date)})`,
+            maxAmount: transaction.calculatedBalance,
+            transactionId: transaction.id,
+            type: 'specific'
+        });
+        setPaymentAmount(transaction.calculatedBalance);
+        setPaymentDate(new Date().toISOString().split('T')[0]);
+        setPaymentMethod('Cash');
+        setPaymentNote(`Payment for ${transaction.productName}`);
         setShowRecordPaymentModal(true);
     };
 
@@ -268,15 +325,15 @@ function BuyerDetails() {
                             <h3 className="section-title">All Buyers ({buyers.length})</h3>
                         </div>
 
-                        <div className="card fade-in search-card">
-                            <div className="form-group search-form-group">
+                        <div className="card fade-in buyer-search-card">
+                            <div className="form-group buyer-search-form-group">
                                 <div style={{ position: 'relative' }}>
                                     <input
                                         type="text"
                                         placeholder="Search buyer by name..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="search-input"
+                                        className="buyer-search-input"
                                         style={{ paddingRight: '40px', width: '100%' }}
                                     />
                                     <Search size={20} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
@@ -293,7 +350,7 @@ function BuyerDetails() {
                                 buyers
                                     .filter(buyer => buyer.name.toLowerCase().includes(searchQuery.toLowerCase()))
                                     .map(buyer => (
-                                        <div key={buyer.id} className="data-card clickable-card" onClick={() => handleViewBuyer(buyer)}>
+                                        <div key={buyer.id} className="data-card buyer-clickable-card" onClick={() => handleViewBuyer(buyer)}>
                                             <div className="data-card-header">
                                                 <div>
                                                     <div className="data-card-title">{buyer.name}</div>
@@ -305,7 +362,7 @@ function BuyerDetails() {
                                                 }} title="Delete Buyer">
                                                     <Trash2 size={18} />
                                                 </button>
-                                                <div className="badge badge-warning type-badge-abs">
+                                                <div className="badge badge-warning buyer-type-badge-abs">
                                                     {buyer.buyerType || 'Retailer'}
                                                 </div>
                                             </div>
@@ -344,9 +401,9 @@ function BuyerDetails() {
                 ) : (
                     /* Detailed View */
                     <div className="fade-in">
-                        <div className="card profile-container" style={{ marginBottom: '2rem' }}>
-                            <div className="profile-layout">
-                                <div className="profile-info">
+                        <div className="card buyer-profile-container" style={{ marginBottom: '2rem' }}>
+                            <div className="buyer-profile-layout">
+                                <div className="buyer-profile-info">
                                     <div className="data-row">
                                         <span className="data-label">Contact</span>
                                         <span className="data-value">{selectedBuyer.contact}</span>
@@ -363,8 +420,17 @@ function BuyerDetails() {
                                         <span className="data-label">Type</span>
                                         <span className="data-value badge badge-warning">{selectedBuyer.buyerType || 'Retailer'}</span>
                                     </div>
+                                    <div className="data-row">
+                                        <span className="data-label">Login Access</span>
+                                        <span
+                                            onClick={() => handleToggleStatus(selectedBuyer.id)}
+                                            className={`cursor-pointer badge btn ${selectedBuyer.status === 'inactive' ? 'btn-success' : 'btn-error'} buyer-status-toggle-btn`}
+                                        >
+                                            {selectedBuyer.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
+                                        </span>
+                                    </div>
                                 </div>
-                                {/* <div className="profile-actions">
+                                {/* <div className="buyer-profile-actions">
                                     <button
                                         className={`btn ${selectedBuyer.status === 'inactive' ? 'btn-success' : 'btn-error'} status-toggle-btn`}
                                         onClick={() => handleToggleStatus(selectedBuyer.id)}
@@ -401,16 +467,16 @@ function BuyerDetails() {
                             </div>
                         </div> */}
 
-                        <div className="history-tabs">
+                        <div className="buyer-history-tabs">
                             <button
-                                className={`tab-button ${activeTab === 'purchases' ? 'active' : ''}`}
+                                className={`buyer-tab-button ${activeTab === 'purchases' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('purchases')}
                             >
                                 {/* Purchase History ({selectedBuyer.transactions.length}) */}
                                 Buying Products
                             </button>
                             <button
-                                className={`tab-button ${activeTab === 'payments' ? 'active' : ''}`}
+                                className={`buyer-tab-button ${activeTab === 'payments' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('payments')}
                             >
                                 Payment History
@@ -419,8 +485,8 @@ function BuyerDetails() {
                         </div>
 
                         {activeTab === 'purchases' ? (
-                            <div className="table-wrapper history-table-wrapper">
-                                <table className="history-table">
+                            <div className="table-wrapper buyer-history-table-wrapper">
+                                <table className="buyer-history-table">
                                     <thead>
                                         <tr>
                                             <th>Date</th>
@@ -428,6 +494,7 @@ function BuyerDetails() {
                                             <th>Bill Amount</th>
                                             <th>Paid</th>
                                             <th>Balance</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -437,23 +504,53 @@ function BuyerDetails() {
                                             </tr>
                                         ) : (
                                             (() => {
-                                                // FIFO Logic for Buyers
-                                                // 1. Get total payment pool
-                                                let paymentPool = selectedBuyer.totalPaid || 0;
+                                                // Payment Calculation Logic: Specific > FIFO
+                                                
+                                                // 1. Separate Specific vs General Payments
+                                                const specificPayments = {}; // { transactionId: totalAmount }
+                                                let generalPaymentPool = 0;
 
-                                                // 2. Clone and Sort transactions Oldest => Newest for calculation
+                                                (selectedBuyer.payments || []).forEach(p => {
+                                                    // Check if payment mimics "SALE-<timestamp>" pattern created in TodayAuction
+                                                    // format: SALE-<transactionId>
+                                                    if (p.reference && p.reference.startsWith('SALE-')) {
+                                                        const transId = p.reference.split('SALE-')[1]; // This is a string
+                                                        // We need to match this with transaction.id which is likely a number
+                                                        // Let's store it as string key
+                                                        if (transId) {
+                                                            specificPayments[transId] = (specificPayments[transId] || 0) + parseFloat(p.amount);
+                                                        } else {
+                                                             generalPaymentPool += parseFloat(p.amount);
+                                                        }
+                                                    } else {
+                                                        generalPaymentPool += parseFloat(p.amount);
+                                                    }
+                                                });
+
+
+                                                // 2. Clone and Sort transactions Oldest => Newest for FIFO calculation of remaining pool
                                                 const sortedForCalc = [...selectedBuyer.transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
 
                                                 // 3. Calculate paid/balance per transaction
                                                 const calculatedTransactions = sortedForCalc.map(t => {
                                                     const billAmount = t.finalAmount;
-                                                    const paidForThis = Math.min(billAmount, paymentPool);
-                                                    const balance = billAmount - paidForThis;
-                                                    paymentPool -= paidForThis;
+                                                    
+                                                    // A. Apply Specific Payments first
+                                                    const specificPaid = specificPayments[String(t.id)] || 0;
+                                                    
+                                                    // B. Apply General Pool to remainder
+                                                    const remainingBill = Math.max(0, billAmount - specificPaid);
+                                                    const fifoPaid = Math.min(remainingBill, generalPaymentPool);
+                                                    
+                                                    // C. Update Pool
+                                                    generalPaymentPool = Math.max(0, generalPaymentPool - fifoPaid);
+
+                                                    const totalPaidForThis = specificPaid + fifoPaid;
+                                                    const balance = billAmount - totalPaidForThis;
 
                                                     return {
                                                         ...t,
-                                                        calculatedPaid: paidForThis,
+                                                        calculatedPaid: totalPaidForThis,
                                                         calculatedBalance: balance
                                                     };
                                                 });
@@ -470,24 +567,44 @@ function BuyerDetails() {
                                                         <td className={`text-error ${t.calculatedBalance > 0 ? 'font-bold' : ''}`}>
                                                             ₹{t.calculatedBalance.toLocaleString()}
                                                         </td>
+                                                        <td>
+                                                            <div style={{ display: 'flex', gap: '5px' }}>
+                                                                <button
+                                                                    className="btn btn-sm btn-info"
+                                                                    onClick={() => handleViewTransaction(t)}
+                                                                    title="View Details"
+                                                                >
+                                                                    <Eye size={16} />
+                                                                </button>
+                                                                {t.calculatedBalance > 0 && (
+                                                                    <button
+                                                                        className="btn btn-sm btn-primary"
+                                                                        onClick={() => handlePayTransaction(t)}
+                                                                        title="Pay Balance"
+                                                                    >
+                                                                        Pay
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </td>
                                                     </tr>
                                                 ));
                                             })()
                                         )}
                                     </tbody>
-                                    <tfoot>
+                                    {/* <tfoot>
                                         <tr>
                                             <td colSpan="2" style={{ textAlign: 'right', fontWeight: 'bold' }}>Totals:</td>
                                             <td className="text-amber" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.totalPurchases.toLocaleString()}</td>
                                             <td className="text-success" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.totalPaid.toLocaleString()}</td>
                                             <td className="text-error" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.balance.toLocaleString()}</td>
                                         </tr>
-                                    </tfoot>
+                                    </tfoot> */}
                                 </table>
                             </div>
                         ) : (
-                            <div className="table-wrapper history-table-wrapper">
-                                <table className="history-table">
+                            <div className="table-wrapper buyer-history-table-wrapper">
+                                <table className="buyer-history-table">
                                     <thead>
                                         <tr>
                                             <th>Date</th>
@@ -598,6 +715,112 @@ function BuyerDetails() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+
+
+            
+
+            {/* Transaction View Modal (Similar to SellerDetails Product View) */}
+            {showTransactionModal && viewingTransaction && (
+                <div className="modal-overlay" style={{ zIndex: 999 }} onClick={() => setShowTransactionModal(false)}>
+                    <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Purchase Details</h3>
+                            <button className="modal-close" onClick={() => setShowTransactionModal(false)}><X /></button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="product-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ display: 'flex', gap: '20px' }}>
+                                    <div className="product-image-preview" style={{ flex: '0 0 150px' }}>
+                                        {viewingTransaction.productImage ? (
+                                            <img
+                                                src={viewingTransaction.productImage}
+                                                alt={viewingTransaction.productName}
+                                                style={{
+                                                    width: '100%',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd'
+                                                }}
+                                            />
+                                        ) : (
+                                            <div
+                                                className="product-image-placeholder"
+                                                style={{
+                                                    width: '100%',
+                                                    height: '120px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '40px',
+                                                    border: '1px solid #ddd',
+                                                    borderRadius: '8px',
+                                                    background: '#f5f5f5'
+                                                }}
+                                            >
+                                                📦
+                                            </div>
+                                        )}
+                                        {viewingTransaction.productDate && (
+                                            <div style={{ marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>
+                                                {formatDate(viewingTransaction.productDate)}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="product-info-details" style={{ flex: 1 }}>
+                                        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
+                                            <div>Product: <b>{viewingTransaction.productName}</b></div>
+                                            <div>Date: <b>{formatDate(viewingTransaction.date)}</b></div>
+                                            <div>Total Bill: <b>₹{viewingTransaction.finalAmount?.toLocaleString()}</b></div>
+                                            {/* Note: calculatedPaid/Balance are contextual to the FIFO loop, so they might not be directly available on the 'viewingTransaction' unless we passed the calculated object. The handler passed 't' which IS the calculated object from the render map! */}
+                                            <div className="text-success">Paid: <b>₹{viewingTransaction.calculatedPaid?.toLocaleString()}</b></div>
+                                            <div className="text-error">Balance: <b>₹{viewingTransaction.calculatedBalance?.toLocaleString()}</b></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h4 style={{ margin: '0 0 10px 0' }}>Item Details</h4>
+                                <div className="table-wrapper">
+                                    <table className="buyer-history-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Variety</th>
+                                                <th>Quantity</th>
+                                                <th>Price</th>
+                                                <th>Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {viewingTransaction.variantDetails ? (
+                                                <tr>
+                                                    <td>{viewingTransaction.variantDetails.variety}</td>
+                                                    <td>{viewingTransaction.quantity} {viewingTransaction.variantDetails.unit}</td>
+                                                    <td>₹{viewingTransaction.price}/{viewingTransaction.variantDetails.unit}</td>
+                                                    <td>₹{viewingTransaction.finalAmount?.toLocaleString()}</td>
+                                                </tr>
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan="4">
+                                                        {viewingTransaction.details ? (
+                                                            // Fallback if data structure is different
+                                                            <span>{viewingTransaction.details}</span>
+                                                        ) : (
+                                                            <span>Variant details not found (Legacy Record)</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={() => setShowTransactionModal(false)}>Close</button>
+                        </div>
                     </div>
                 </div>
             )}

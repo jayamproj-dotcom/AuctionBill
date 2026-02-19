@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { House, ChartSpline,UserCog, PackageSearch, History, User, ShoppingCart, Settings, Handshake, Gem, LogOut } from "lucide-react";
+import { House, ChartSpline,UserCog, PackageSearch, History, User, ShoppingCart, Settings, Handshake, Gem, LogOut, X } from "lucide-react";
 import logo from "../../assets/images/logo-sidebar.png"
 
 const AdminSidebar = ({ isOpen, onClose }) => {
@@ -27,7 +27,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           </div>
         </div>
         <button className="close-sidebar" onClick={onClose}>
-          ✕
+          <X size={24} />
         </button>
       </div>
 
