@@ -418,7 +418,15 @@ const [paymentNote, setPaymentNote] = useState('');
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Type</span>
-                                        <span className="data-value badge badge-warning">{selectedBuyer.buyerType || 'Retailer'}</span>
+                                        <span
+                                            onClick={() => handleToggleBuyerType(selectedBuyer.id)}
+                                            className="data-value badge badge-warning"
+                                            title="Click to toggle buyer type"
+                                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                                        >
+                                            {selectedBuyer.buyerType || 'Retailer'}
+                                            <Pencil size={12} />
+                                        </span>
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Login Access</span>
