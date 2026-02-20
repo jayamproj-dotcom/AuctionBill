@@ -33,7 +33,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
 
       <nav className="sidebar-nav">
         <NavLink
-          to="/admin/dashboard"
+          to="/ventor/dashboard"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -42,7 +42,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/admin/today-auction"
+          to="/ventor/today-auction"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -51,7 +51,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/admin/pending-products"
+          to="/ventor/pending-products"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -60,7 +60,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/admin/history"
+          to="/ventor/history"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -69,7 +69,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/admin/seller-details"
+          to="/ventor/seller-details"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -78,7 +78,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/admin/buyer-details"
+          to="/ventor/buyer-details"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -87,7 +87,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/admin/commission"
+          to="/ventor/commission"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -96,7 +96,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/admin/manage"
+          to="/ventor/manage"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -104,7 +104,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
           <span>Profile</span>
         </NavLink>
         <NavLink
-          to="/admin/subscription"
+          to="/ventor/subscription"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >

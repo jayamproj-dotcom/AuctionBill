@@ -417,8 +417,8 @@ function SellerDetails() {
                                                 </div>
                                                 <div className="data-row">
                                                     <span className="data-label">Login Access</span>
-                                                    <span className={`data-value badge ${seller.loginAccess === 'inactive' ? 'badge-error' : 'badge-success'}`}>
-                                                        {seller.loginAccess === 'inactive' ? 'Disabled' : 'Enabled'}
+                                                    <span className={`data-value badge ${seller.status === 'inactive' ? 'badge-error' : 'badge-success'}`}>
+                                                        {seller.status === 'inactive' ? 'Disabled' : 'Enabled'}
                                                     </span>
                                                 </div>
                                             </div>

@@ -55,7 +55,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
 
           {/* Admin area with nested routes */}
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/ventor" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="today-auction" element={<TodayAuction />} />

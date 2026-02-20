@@ -15,6 +15,8 @@ function Dashboard() {
         totalCommission: 0,
         todayAuctions: 0,
         totalQty: 0,
+        totalPayIn: 0,
+        totalPayOut: 0,
     });
     const [dateFilter, setDateFilter] = useState('today');
     const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
@@ -215,7 +217,7 @@ function Dashboard() {
                         </div>
                     </div> */}
 
-                    <Link to="/admin/seller-details">
+                    <Link to="/ventor/seller-details">
                         <div className="stat-card">
                             <div className="stat-header">
                                 <div className="stat-icon"><Users /></div>
@@ -231,7 +233,7 @@ function Dashboard() {
                         </div>
                     </Link>
 
-                    <Link to="/admin/buyer-details">
+                    <Link to="/ventor/buyer-details">
                         <div className="stat-card">
                             <div className="stat-header">
                                 <div className="stat-icon"><UsersRound /></div>
@@ -251,7 +253,7 @@ function Dashboard() {
                         <div className="stat-header">
                             <div className="stat-icon"><ArrowDownLeft className="text-success" /></div>
                             <div>
-                                <div className="stat-value">₹124.5K</div>
+                                <div className="stat-value">₹{stats.totalPayIn.toLocaleString()}</div>
                                 <div className="stat-label">Pay In</div>
                             </div>
                         </div>
@@ -265,7 +267,7 @@ function Dashboard() {
                         <div className="stat-header">
                             <div className="stat-icon"><ArrowUpRight className="text-danger" /></div>
                             <div>
-                                <div className="stat-value">₹86.2K</div>
+                                <div className="stat-value">₹{stats.totalPayOut.toLocaleString()}</div>
                                 <div className="stat-label">Pay Out</div>
                             </div>
                         </div>
@@ -275,7 +277,7 @@ function Dashboard() {
                         </div>
                     </div>
 
-                    <Link to="/admin/history">
+                    <Link to="/ventor/history">
                         <div className="stat-card">
                             <div className="stat-header">
                                 <div className="stat-icon"><BadgeIndianRupee /></div>
@@ -291,7 +293,7 @@ function Dashboard() {
                         </div>
                     </Link>
 
-                    <Link to="/admin/commission">
+                    <Link to="/ventor/commission">
                         <div className="stat-card">
                             <div className="stat-header">
                                 <div className="stat-icon"><HandCoins /></div>

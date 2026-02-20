@@ -13,7 +13,7 @@ const Login = () => {
 
   useEffect(() => {
     if (localStorage.getItem("adminLoggedIn") === "true") {
-      navigate("/admin");
+      navigate("ventor");
     }
   }, [navigate]);
 
@@ -42,7 +42,7 @@ const Login = () => {
           localStorage.setItem("adminUserEmail", user.email);
           localStorage.setItem("adminUserName", user.username);
           localStorage.setItem("adminUserPhoto", ""); // No photo for manual login
-          navigate("/admin");
+          navigate("/ventor");
       } else {
           setError("Invalid credentials. Please check your username/phone and password.");
       }
@@ -72,7 +72,7 @@ const Login = () => {
         );
       }
 
-      navigate("/admin");
+      navigate("/ventor");
     } catch (err) {
       console.error(err);
       setError("Failed to process login token.");

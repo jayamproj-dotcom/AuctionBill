@@ -150,6 +150,21 @@ const [paymentNote, setPaymentNote] = useState('');
         }
     };
 
+    const handleToggleBuyerType = (id) => {
+        const data = getAuctionData();
+        const index = data.buyers.findIndex(b => b.id === id);
+        if (index !== -1) {
+            const currentType = data.buyers[index].buyerType || 'Retailer';
+            data.buyers[index].buyerType = currentType === 'Retailer' ? 'Wholesale' : 'Retailer';
+            saveAuctionData(data);
+            loadBuyers();
+            // Update selected buyer if modal is open
+            if (selectedBuyer && selectedBuyer.id === id) {
+                setSelectedBuyer({ ...selectedBuyer, buyerType: data.buyers[index].buyerType });
+            }
+        }
+    };
+
     const handleResetPassword = (id) => {
         const newPassword = prompt('Enter new password:');
         if (newPassword) {
