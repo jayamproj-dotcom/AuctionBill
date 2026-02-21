@@ -1271,3 +1271,29 @@ body.saas-admin-active {
 .text-center { text-align: center; }
 .align-top { vertical-align: top; }
 
+
+/* Change Password & Admin Profile */
+.saas-container-centered { max-width: 600px; margin: 0 auto; padding: 40px; }
+.saas-text-dark { color: #1f2937; margin-bottom: 10px; }
+.saas-text-center { text-align: center; }
+.saas-mb-40 { margin-bottom: 40px; }
+.saas-mb-30 { margin-bottom: 30px; }
+.saas-mb-25 { margin-bottom: 25px; }
+.saas-mb-15 { margin-bottom: 15px; }
+.saas-label-form { font-weight: 600; color: #374151; font-size: 14px; margin-bottom: 8px; display: block; }
+.saas-icon-input { position: absolute; left: 15px; top: 12px; color: #9ca3af; }
+.saas-input-padded { padding-left: 45px; padding-right: 45px; height: 44px; border-radius: 8px; }
+.saas-pwd-toggle-btn { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #9ca3af; padding: 0; }
+.saas-pwd-hint { font-size: 12px; color: #9ca3af; margin-top: 8px; }
+.saas-btn-wide { width: 100%; height: 48px; border-radius: 8px; background-color: #3b82f6; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; }
+.saas-profile-container { max-width: 600px; margin: 0 auto; }
+.saas-profile-header-wrap { display: flex; justify-content: space-between; align-items: center; }
+.saas-profile-header-title { display: flex; align-items: center; gap: 10px; }
+.saas-profile-photo-wrap { text-align: center; margin-bottom: 30px; }
+.saas-profile-photo-hide { display: none; }
+.saas-profile-name { font-size: 1.2rem; font-weight: 600; }
+.saas-profile-email { color: gray; }
+.saas-profile-readonly { padding: 0.625rem 0.875rem; background-color: #f8fafc; border-radius: 0.5rem; border: 1px solid #e2e8f0; color: #1e293b; }
+.saas-profile-action-btn { flex: 1; display: flex; justify-content: center; align-items: center; gap: 5px; }
+.saas-profile-actions { display: flex; gap: 10px; margin-top: 15px; }
+

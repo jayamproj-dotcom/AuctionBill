@@ -3,7 +3,7 @@ import api from './api';
 // Admin login API
 export const adminLogin = async (data) => {
     try {
-        const response = await api.post('/api/admin/login', data);
+        const response = await api.post('/admin/login', data);
         return response.data;
     } catch (error) {
         if (error.response && error.response.data) {
@@ -13,10 +13,49 @@ export const adminLogin = async (data) => {
     }
 };
 
-// Admin update profile API
+// Verify admin password API
+export const verifyAdminPassword = async (data) => {
+    try {
+        const response = await api.post('admin/verify-password', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+// Update admin password API
+export const updateAdminPassword = async (data) => {
+    try {
+        const response = await api.put('admin/update-password', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+// Get admin profile API
+export const getAdminProfile = async () => {
+    try {
+        const response = await api.get('admin/profile');
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+// Update admin profile API
 export const updateAdminProfile = async (data) => {
     try {
-        const response = await api.put('/api/admin/update-profile', data);
+        const response = await api.put('admin/update-profile', data);
         return response.data;
     } catch (error) {
         if (error.response && error.response.data) {
@@ -30,7 +69,7 @@ export const updateAdminProfile = async (data) => {
 //Subscriptions API
 export const getSubscriptions = async () => {
     try {
-        const response = await api.get('/api/subscription');
+        const response = await api.get('subscription');
         return response.data;
     } catch (error) {
         if (error.response && error.response.data) {
@@ -42,7 +81,7 @@ export const getSubscriptions = async () => {
 
 export const createSubscription = async (data) => {
     try {
-        const response = await api.post('/api/subscription', data);
+        const response = await api.post('subscription', data);
         return response.data;
     } catch (error) {
         if (error.response && error.response.data) {
@@ -55,7 +94,7 @@ export const createSubscription = async (data) => {
 
 export const updateSubscription = async (id, data) => {
     try {
-        const response = await api.put(`/api/subscription/${id}`, data);
+        const response = await api.put(`subscription/${id}`, data);
         return response.data;
     } catch (error) {
         if (error.response && error.response.data) {
@@ -67,7 +106,7 @@ export const updateSubscription = async (id, data) => {
 
 export const deleteSubscription = async (id) => {
     try {
-        const response = await api.delete(`/api/subscription/${id}`);
+        const response = await api.delete(`subscription/${id}`);
         return response.data;
     } catch (error) {
         if (error.response && error.response.data) {

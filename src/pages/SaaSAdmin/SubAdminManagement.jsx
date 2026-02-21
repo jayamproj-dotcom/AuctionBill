@@ -149,7 +149,7 @@ const SubAdminManagement = () => {
             <thead className="subAdminTableHeader">
               <tr>
                 <th>S.NO</th>
-                <th>ID</th>
+                {/* <th>ID</th> */}
                 <th>Name</th>
                 <th>Email</th>
                 <th>Status</th>
@@ -164,7 +164,7 @@ const SubAdminManagement = () => {
                 filteredSubAdmins.map((subAdmin, index) => (
                   <tr key={subAdmin.id} className="subAdminTableRow">
                     <td>{index + 1}</td>
-                    <td className="saas-text-muted">{subAdmin.id}</td>
+                    {/* <td className="saas-text-muted">{subAdmin.id}</td> */}
                     <td className="saas-font-medium saas-text-main">{subAdmin.name}</td>
                     <td className="saas-text-muted">{subAdmin.email}</td>
                     <td>

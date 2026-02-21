@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Lock, Eye, EyeOff, Check } from 'lucide-react';
+import { Lock, Eye, EyeOff, Check, ArrowRight } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { adminLogin, updateAdminPassword, verifyAdminPassword } from '../../api/adminApi';
 import './SaaSAdmin.css';
 
 const SaaSChangePassword = () => {
@@ -8,6 +10,9 @@ const SaaSChangePassword = () => {
     newPassword: "",
     confirmPassword: ""
   });
+
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   const [showPasswords, setShowPasswords] = useState({
     currentPassword: false,
@@ -27,124 +32,168 @@ const SaaSChangePassword = () => {
     }));
   };
 
-  const handleSave = (e) => {
+  const handleVerifyCurrentPassword = async (e) => {
     e.preventDefault();
-    const storedAdminPass = localStorage.getItem('saas_admin_password') || "admin@123";
-
-    if (passwords.currentPassword !== storedAdminPass) {
-        alert("Error: Incorrect Current Password.");
-        return;
+    if (!passwords.currentPassword) {
+      toast.error("Please enter your current password.");
+      return;
     }
 
+    setLoading(true);
+    try {
+      // Get the current logged-in username
+      const username = localStorage.getItem('saas_admin_name') || 'admin';
+
+      const response = await verifyAdminPassword({
+        username,
+        password: passwords.currentPassword
+      });
+
+      if (response && response.status) {
+        toast.success("Password verified successfully.");
+        setStep(2); // Move to set new password
+      } else {
+        toast.error(response?.message || "Incorrect current password");
+      }
+    } catch (error) {
+      console.error("Verification error:", error);
+      toast.error(error.message || "Invalid password or server error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+
     if (passwords.newPassword.length < 6) {
-        alert("Error: Password must be at least 6 characters.");
-        return;
+      toast.error("Error: Password must be at least 6 characters.");
+      return;
     }
 
     if (passwords.newPassword !== passwords.confirmPassword) {
-        alert("Error: New Password and Confirm Password do not match.");
-        return;
+      toast.error("Error: New Password and Confirm Password do not match.");
+      return;
     }
 
-    localStorage.setItem('saas_admin_password', passwords.newPassword);
-    alert("Password changed successfully!");
-    
-    setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    setLoading(true);
+    try {
+      const response = await updateAdminPassword({
+        password: passwords.newPassword
+      });
+
+      toast.success(response?.message || "Password changed successfully!");
+      // reset
+      setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setStep(1);
+      setShowPasswords({ currentPassword: false, newPassword: false, confirmPassword: false });
+    } catch (error) {
+      console.error("Change password error:", error);
+      toast.error(error.message || "Failed to update password");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="fade-in">
-      <div className="saas-card saas-container-narrow" style={{ maxWidth: "600px", margin: "0 auto", padding: "40px" }}>
-        
-        <div style={{ textAlign: "center", marginBottom: "40px" }}>
-          <h2 className="saas-text-2xl saas-font-bold" style={{ color: '#1f2937', marginBottom: '10px' }}>Change Password</h2>
-          <p className="saas-text-muted">Update your account password</p>
+      <div className="saas-card saas-container-centered">
+
+        <div className="saas-text-center saas-mb-40">
+          <h2 className="saas-text-2xl saas-font-bold saas-text-dark">Change Password</h2>
+          <p className="saas-text-muted">
+            {step === 1 ? 'Verify your current password' : 'Create a new secure password'}
+          </p>
         </div>
 
-        <form onSubmit={handleSave}>
-          <div className="saas-form-group" style={{ marginBottom: "25px" }}>
-              <label className="saas-label" style={{ fontWeight: 600, color: '#374151', fontSize: '14px', marginBottom: '8px', display: 'block' }}>Current Password</label>
-              <div className="saas-input-container" style={{ position: 'relative' }}>
-                  <Lock size={18} style={{ position: 'absolute', left: '15px', top: '12px', color: '#9ca3af' }} />
-                  <input 
-                    type={showPasswords.currentPassword ? "text" : "password"} 
-                    name="currentPassword"
-                    className="saas-input saas-input-with-toggle" 
-                    placeholder="Enter current password" 
-                    value={passwords.currentPassword}
-                    onChange={handleChange}
-                    required
-                    style={{ paddingLeft: '45px', paddingRight: '45px', height: '44px', borderRadius: '8px' }}
-                  />
-                  <button 
-                    type="button"
-                    className="saas-password-toggle"
-                    onClick={() => togglePasswordVisibility('currentPassword')}
-                    tabIndex="-1"
-                    style={{ position: 'absolute', right: '15px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}
-                  >
-                     {showPasswords.currentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+        {step === 1 && (
+          <form onSubmit={handleVerifyCurrentPassword}>
+            <div className="saas-form-group saas-mb-25">
+              <label className="saas-label saas-label-form">Current Password</label>
+              <div className="saas-input-container">
+                <Lock size={18} className="saas-icon-input" />
+                <input
+                  type={showPasswords.currentPassword ? "text" : "password"}
+                  name="currentPassword"
+                  className="saas-input saas-input-with-toggle saas-input-padded"
+                  placeholder="Enter current password"
+                  value={passwords.currentPassword}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="saas-password-toggle saas-pwd-toggle-btn"
+                  onClick={() => togglePasswordVisibility('currentPassword')}
+                  tabIndex="-1"
+                >
+                  {showPasswords.currentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
-          </div>
+            </div>
 
-          <div className="saas-form-group" style={{ marginBottom: "15px" }}>
-              <label className="saas-label" style={{ fontWeight: 600, color: '#374151', fontSize: '14px', marginBottom: '8px', display: 'block' }}>New Password</label>
-              <div className="saas-input-container" style={{ position: 'relative' }}>
-                  <Lock size={18} style={{ position: 'absolute', left: '15px', top: '12px', color: '#9ca3af' }} />
-                  <input 
-                    type={showPasswords.newPassword ? "text" : "password"} 
-                    name="newPassword"
-                    className="saas-input saas-input-with-toggle" 
-                    placeholder="Enter new password" 
-                    value={passwords.newPassword}
-                    onChange={handleChange}
-                    required
-                    style={{ paddingLeft: '45px', paddingRight: '45px', height: '44px', borderRadius: '8px' }}
-                  />
-                  <button 
-                    type="button"
-                    className="saas-password-toggle"
-                    onClick={() => togglePasswordVisibility('newPassword')}
-                    tabIndex="-1"
-                    style={{ position: 'absolute', right: '15px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}
-                  >
-                     {showPasswords.newPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+            <button type="submit" disabled={loading} className="saas-btn btn-primary saas-btn-wide">
+              {loading ? 'Verifying...' : <><Check size={20} /> Verify Password</>}
+            </button>
+          </form>
+        )}
+
+        {step === 2 && (
+          <form onSubmit={handleSave}>
+            <div className="saas-form-group saas-mb-15">
+              <label className="saas-label saas-label-form">New Password</label>
+              <div className="saas-input-container">
+                <Lock size={18} className="saas-icon-input" />
+                <input
+                  type={showPasswords.newPassword ? "text" : "password"}
+                  name="newPassword"
+                  className="saas-input saas-input-with-toggle saas-input-padded"
+                  placeholder="Enter new password"
+                  value={passwords.newPassword}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="saas-password-toggle saas-pwd-toggle-btn"
+                  onClick={() => togglePasswordVisibility('newPassword')}
+                  tabIndex="-1"
+                >
+                  {showPasswords.newPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
-              <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '8px' }}>Password must be at least 6 characters</p>
-          </div>
-            
-          <div className="saas-form-group" style={{ marginBottom: "30px" }}>
-              <label className="saas-label" style={{ fontWeight: 600, color: '#374151', fontSize: '14px', marginBottom: '8px', display: 'block' }}>Confirm New Password</label>
-              <div className="saas-input-container" style={{ position: 'relative' }}>
-                  <Lock size={18} style={{ position: 'absolute', left: '15px', top: '12px', color: '#9ca3af' }} />
-                  <input 
-                    type={showPasswords.confirmPassword ? "text" : "password"} 
-                    name="confirmPassword"
-                    className="saas-input saas-input-with-toggle" 
-                    placeholder="Confirm new password" 
-                    value={passwords.confirmPassword}
-                    onChange={handleChange}
-                    required
-                    style={{ paddingLeft: '45px', paddingRight: '45px', height: '44px', borderRadius: '8px' }}
-                  />
-                  <button 
-                    type="button"
-                    className="saas-password-toggle"
-                    onClick={() => togglePasswordVisibility('confirmPassword')}
-                    tabIndex="-1"
-                    style={{ position: 'absolute', right: '15px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}
-                  >
-                     {showPasswords.confirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+              <p className="saas-pwd-hint">Password must be at least 6 characters</p>
+            </div>
+
+            <div className="saas-form-group saas-mb-30">
+              <label className="saas-label saas-label-form">Confirm New Password</label>
+              <div className="saas-input-container">
+                <Lock size={18} className="saas-icon-input" />
+                <input
+                  type={showPasswords.confirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  className="saas-input saas-input-with-toggle saas-input-padded"
+                  placeholder="Confirm new password"
+                  value={passwords.confirmPassword}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="saas-password-toggle saas-pwd-toggle-btn"
+                  onClick={() => togglePasswordVisibility('confirmPassword')}
+                  tabIndex="-1"
+                >
+                  {showPasswords.confirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
-          </div>
-          
-          <button type="submit" className="saas-btn btn-primary" style={{ width: "100%", height: "48px", borderRadius: "8px", backgroundColor: "#3b82f6", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", fontSize: "16px", fontWeight: "600" }}>
-             <Check size={20} /> Change Password
-          </button>
-        </form>
+            </div>
+
+            <button type="submit" disabled={loading} className="saas-btn btn-primary saas-btn-wide">
+              {loading ? 'Changing Password...' : <><Check size={20} /> Update Password</>}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
