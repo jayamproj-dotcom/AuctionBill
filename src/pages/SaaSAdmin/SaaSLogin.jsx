@@ -49,6 +49,9 @@ const SaaSLogin = () => {
                     password: credentials.password
                 });
 
+                console.log(response);
+
+
                 if (response.status) {
                     toast.success(response.message || "Login successful");
                     localStorage.setItem('admin_token', response.token);

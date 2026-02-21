@@ -478,7 +478,7 @@
 .saas-select,
 .saas-textarea {
   width: 100%;
-  padding: 0.625rem 1.875rem;
+  padding: 0.625rem 0.875rem;
   border-radius: 0.5rem;
   border: 1px solid var(--saas-border);
   font-size: 0.875rem;
@@ -1080,4 +1080,194 @@ body.saas-admin-active {
   transform: translateY(-50%);
   color: #9ca3af;
 }
+
+/* Layout Profile & Notification classes */
+.saas-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.saas-header-right-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-direction: row;
+}
+
+.saas-header-profile-container {
+  position: relative;
+}
+
+.saas-header-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.saas-header-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.saas-header-avatar-fallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--saas-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.saas-profile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  width: 200px;
+  z-index: 1000;
+  margin-top: 10px;
+}
+
+.saas-dropdown-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--saas-border);
+  text-align: center;
+}
+
+.saas-dropdown-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 10px auto;
+  display: block;
+}
+
+.saas-dropdown-avatar-fallback {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--saas-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 auto 10px auto;
+}
+
+.saas-dropdown-name {
+  font-weight: 600;
+}
+
+.saas-dropdown-item {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: var(--saas-text-main);
+}
+
+.saas-dropdown-item:hover {
+  background-color: #f3f4f6;
+}
+
+.saas-dropdown-item-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.saas-dropdown-divider {
+  height: 1px;
+  background-color: var(--saas-border);
+}
+
+.saas-dropdown-item.text-danger {
+  color: var(--saas-danger);
+}
+
+.saas-dropdown-item.text-danger:hover {
+  background-color: #fef2f2;
+}
+
+/* Global Settings Profile Photo classes */
+.saas-settings-profile-photo {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: var(--saas-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 auto 15px auto;
+  position: relative;
+  cursor: pointer;
+  background-size: cover;
+  background-position: center;
+  border: 3px solid #e0e7ff;
+}
+
+.saas-settings-camera-icon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: var(--saas-primary-dark);
+  border-radius: 50%;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  color: white;
+}
+
+
+/* Dashboard Top Level Tweaks */
+.subAdminCard { padding: 1.5rem; display: flex; flex-direction: column; }
+.subAdminCardTitle { color: #065f46; margin-bottom: 8px; }
+.subAdminTopControls { gap: 15px; flex-wrap: wrap; margin-top: 10px; }
+.saasSearchWrapperWide { flex: 1; min-width: 300px; position: relative; }
+.saasSearchIconPosition { position: absolute; left: 12px; top: 12px; color: #9ca3af; }
+.saasSearchInputWide { width: 100%; padding-left: 40px; }
+.btnSubAdminAdd { color: #059669; border-color: #059669; display: flex; align-items: center; gap: 5px; }
+.btnSubAdminDownload { background-color: #064e3b; display: flex; align-items: center; gap: 5px; }
+.subAdminTableCard { padding: 0; overflow: hidden; }
+.subAdminTable { width: 100%; border-collapse: collapse; text-align: left; }
+.subAdminTableHeader { background-color: #d1fae5; color: #065f46; }
+.saasStatusToggleContainer { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.saasStatusToggleTrack { width: 44px; height: 24px; border-radius: 12px; position: relative; transition: all 0.3s; }
+.saasStatusToggleTrack.active { background-color: #059669; }
+.saasStatusToggleTrack.inactive { background-color: #f87171; }
+.saasStatusToggleThumb { width: 20px; height: 20px; background-color: white; border-radius: 50%; position: absolute; top: 2px; transition: all 0.3s; display: flex; justify-content: center; align-items: center; }
+.saasStatusToggleThumb.active { left: 22px; }
+.saasStatusToggleThumb.inactive { left: 2px; }
+.saasStatusLabel { font-size: 13px; font-weight: 600; color: #374151; }
+.subAdminPermissionsContainer { display: flex; flex-direction: column; gap: 12px; }
+.permissionToggleWrapper { display: flex; justify-content: space-between; align-items: center; width: 100%; min-width: 200px; font-size: 14px; font-weight: 600; color: #1f2937; }
+.saasPermissionsToggleTrack { width: 44px; height: 24px; border-radius: 12px; position: relative; transition: all 0.3s; cursor: pointer; }
+.btnSubAdminDelete { margin-top: 15px; }
+.subAdminModalHeader { border-bottom: 1px solid #e5e7eb; }
+.subAdminModalTitle { color: #065f46; }
+.btnSubAdminModalSave { background-color: #064e3b; }
+
+
+.subAdminTableRow { border-bottom: 1px solid #e5e7eb; }
+.saas-text-main { color: #374151; }
+.text-center { text-align: center; }
+.align-top { vertical-align: top; }
 
