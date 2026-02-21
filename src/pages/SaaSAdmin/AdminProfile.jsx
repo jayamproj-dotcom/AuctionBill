@@ -7,21 +7,8 @@ const AdminProfile = () => {
   const [settings, setSettings] = useState({
     adminName: localStorage.getItem('saas_admin_name') || "Super Admin",
     adminEmail: localStorage.getItem('saas_admin_email') || "admin@auctionbill.com",
-    adminPhoto: localStorage.getItem('saas_admin_photo') || null,
-    adminPassword: "",
-    subadminPassword: "",
-    currentVerifyPassword: ""
+    adminPhoto: localStorage.getItem('saas_admin_photo') || null
   });
-
-  const [showPasswords, setShowPasswords] = useState({
-    currentVerifyPassword: false,
-    adminPassword: false,
-    subadminPassword: false
-  });
-
-  const togglePasswordVisibility = (field) => {
-    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
-  };
 
   const role = localStorage.getItem('saas_role');
 
@@ -49,23 +36,6 @@ const AdminProfile = () => {
   };
 
   const handleSave = () => {
-    // Handle Password Updates
-    if (settings.adminPassword || settings.subadminPassword) {
-        const storedAdminPass = localStorage.getItem('saas_admin_password') || "admin@123";
-        
-        if (settings.currentVerifyPassword !== storedAdminPass) {
-            alert("Error: Incorrect Current Admin Password. Password changes were not saved.");
-            return;
-        }
-
-        // Save passwords if verified
-        if (settings.adminPassword) {
-            localStorage.setItem('saas_admin_password', settings.adminPassword);
-        }
-        if (settings.subadminPassword) {
-            localStorage.setItem('saas_subadmin_password', settings.subadminPassword);
-        }
-    }
 
     if (settings.adminPhoto) {
         localStorage.setItem('saas_admin_photo', settings.adminPhoto);
@@ -78,14 +48,6 @@ const AdminProfile = () => {
     window.dispatchEvent(new Event('saas_profile_updated'));
 
     alert("Profile configurations saved successfully!");
-    
-    // Clear password fields after save
-    setSettings(prev => ({ 
-        ...prev, 
-        adminPassword: "", 
-        subadminPassword: "",
-        currentVerifyPassword: "" 
-    }));
   };
 
   return (
@@ -98,7 +60,7 @@ const AdminProfile = () => {
         <div className="saas-modal-content">
           
           <div style={{ textAlign: "center", marginBottom: "30px" }}>
-             <div 
+             {/* <div 
                className="saas-settings-profile-photo"
                style={{ backgroundImage: settings.adminPhoto ? `url(${settings.adminPhoto})` : 'none' }}
                onClick={triggerFileInput}
@@ -108,7 +70,7 @@ const AdminProfile = () => {
                 <div className="saas-settings-camera-icon">
                   <Camera size={14} />
                 </div>
-             </div>
+             </div> */}
              
              <input 
                type="file" 
@@ -144,85 +106,6 @@ const AdminProfile = () => {
             />
           </div>
 
-          {role === 'admin' && (
-            <>
-              <hr className="saas-separator" style={{ margin: "30px 0" }} />
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
-                <ShieldCheck size={20} className="saas-text-primary" />
-                <h4 className="saas-font-semibold">Change Passwords</h4>
-              </div>
-              
-              <div className="saas-form-group">
-                  <label className="saas-label">Current Admin Password (Required for changes)</label>
-                  <div className="saas-input-container">
-                      <input 
-                        type={showPasswords.currentVerifyPassword ? "text" : "password"} 
-                        name="currentVerifyPassword"
-                        className="saas-input saas-input-with-toggle" 
-                        placeholder="Enter Current Super Admin Password" 
-                        value={settings.currentVerifyPassword}
-                        onChange={handleChange}
-                      />
-                      <button 
-                        type="button"
-                        className="saas-password-toggle"
-                        onClick={() => togglePasswordVisibility('currentVerifyPassword')}
-                        tabIndex="-1"
-                      >
-                         {showPasswords.currentVerifyPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                  </div>
-              </div>
-
-              <div className="saas-form-group">
-                  <label className="saas-label">New Super Admin Password</label>
-                  <div className="saas-input-container">
-                      <input 
-                        type={showPasswords.adminPassword ? "text" : "password"} 
-                        name="adminPassword"
-                        title="Leave blank to keep current password" 
-                        className="saas-input saas-input-with-toggle" 
-                        placeholder="New Super Admin Password" 
-                        value={settings.adminPassword}
-                        onChange={handleChange}
-                      />
-                      <button 
-                        type="button"
-                        className="saas-password-toggle"
-                        onClick={() => togglePasswordVisibility('adminPassword')}
-                        tabIndex="-1"
-                      >
-                         {showPasswords.adminPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                  </div>
-              </div>
-                
-              <div className="saas-form-group">
-                  <label className="saas-label">New Sub Admin Password</label>
-                  <div className="saas-input-container">
-                      <input 
-                        type={showPasswords.subadminPassword ? "text" : "password"} 
-                        name="subadminPassword"
-                        title="Leave blank to keep current password" 
-                        className="saas-input saas-input-with-toggle" 
-                        placeholder="New Sub Admin Password" 
-                        value={settings.subadminPassword}
-                        onChange={handleChange}
-                      />
-                      <button 
-                        type="button"
-                        className="saas-password-toggle"
-                        onClick={() => togglePasswordVisibility('subadminPassword')}
-                        tabIndex="-1"
-                      >
-                         {showPasswords.subadminPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                  </div>
-              </div>
-            </>
-          )}
-          
           <button className="saas-btn btn-primary" style={{ width: "100%", marginTop: "15px" }} onClick={handleSave}>
              Update Profile
           </button>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { House, ShoppingCart, Users, Gem, Settings, LogOut, Menu, X, Bell, User } from 'lucide-react';
+import { House, ShoppingCart, Users, Gem, Settings, LogOut, Menu, X, Bell, User, Lock } from 'lucide-react';
 import './SaaSAdmin.css';
 
 const SaaSLayout = () => {
@@ -59,7 +59,9 @@ const SaaSLayout = () => {
     { path: '/saas/purchases', label: 'Purchases', icon: <ShoppingCart size={20} /> },
     { path: '/saas/vendors', label: 'Vendors', icon: <Users size={20} /> },
     { path: '/saas/subscriptions', label: 'Subscriptions', icon: <Gem size={20} /> },
+    { path: '/saas/subadmins', label: 'Sub-Admins', icon: <Users size={20} /> },
     { path: '/saas/settings', label: 'Profile', icon: <User size={20} /> },
+    { path: '/saas/change-password', label: 'Change Password', icon: <Lock size={20} /> },
   ];
 
   return (
