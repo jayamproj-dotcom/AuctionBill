@@ -1,35 +1,58 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Plus, X } from 'lucide-react';
+import { toast } from 'react-toastify';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
-import { Plus, X } from 'lucide-react';
+import { getSubscriptions, createSubscription, updateSubscription, deleteSubscription } from '../../api/adminApi';
 
 const SubscriptionManagement = () => {
   const role = localStorage.getItem('saas_role');
-  const [plans, setPlans] = useState([
-    { id: 1, name: 'Free', price: '₹0', duration: 'Forever', features: ['Up to 100 transactions/mo', 'Basic reports', '1 User'], status: 'Active' },
-    { id: 2, name: 'Basic', price: '₹999', duration: '/month', features: ['Unlimited transactions', 'Advanced Analytics', '3 Users', 'Email Support'], status: 'Active' },
-    { id: 3, name: 'Premium', price: '₹2,499', duration: '/month', features: ['All Basic features', 'Custom Branding', 'Unlimited Users', 'Priority 24/7 Support', 'Data Export'], status: 'Active' },
-  ]);
+  const [plans, setPlans] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
   const [planToDelete, setPlanToDelete] = useState(null);
 
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  const fetchPlans = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getSubscriptions();
+      setPlans(data.subscriptions || []);
+    } catch (error) {
+      toast.error(error.message || "Failed to fetch subscriptions.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleEdit = (plan) => {
-    setEditingPlan({ ...plan, featuresString: plan.features.join('\n') });
+    setEditingPlan({
+      ...plan,
+      price: plan.price?.toString() || '',
+      durationValue: plan.durationValue || 1,
+      durationType: plan.durationType || 'month',
+      status: plan.status || 'Active',
+      featuresString: plan.features?.join('\n') || ''
+    });
     setIsModalOpen(true);
   };
 
   const handleAddPlan = () => {
     setEditingPlan({
-      id: null, // Indicates new plan
+      _id: null,
       name: '',
       price: '',
-      duration: '/month',
+      durationValue: 1,
+      durationType: 'month',
+      status: 'Active',
       features: [],
       featuresString: '',
-      status: 'Active'
     });
     setIsModalOpen(true);
   };
@@ -39,95 +62,127 @@ const SubscriptionManagement = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (planToDelete) {
-      const updatedPlans = plans.filter(plan => plan.id !== planToDelete);
-      setPlans(updatedPlans);
-      setIsDeleteModalOpen(false);
-      setPlanToDelete(null);
+      try {
+        await deleteSubscription(planToDelete);
+        toast.success("Plan deleted successfully");
+        fetchPlans();
+      } catch (error) {
+        toast.error(error.message || "Failed to delete plan");
+      } finally {
+        setIsDeleteModalOpen(false);
+        setPlanToDelete(null);
+      }
     }
   };
 
 
-  const handleSave = () => {
-    const updatedFeatures = editingPlan.featuresString.split('\n').filter(f => f.trim() !== '');
-    
-    if (editingPlan.id) {
-      // Update existing plan
-      const updatedPlans = plans.map(p => 
-        p.id === editingPlan.id ? { ...editingPlan, features: updatedFeatures } : p
-      );
-      setPlans(updatedPlans);
-    } else {
-      // Add new plan
-      const newId = plans.length > 0 ? Math.max(...plans.map(p => p.id)) + 1 : 1;
-      const newPlan = {
-        ...editingPlan,
-        id: newId,
-        features: updatedFeatures
-      };
-      setPlans([...plans, newPlan]);
+  const handleSave = async () => {
+    if (!editingPlan.name || !editingPlan.price || !editingPlan.durationValue) {
+      return toast.error("Name, price, and duration are required");
     }
-    setIsModalOpen(false);
+
+    const updatedFeatures = editingPlan.featuresString.split('\n').filter(f => f.trim() !== '');
+    const numericPrice = Number(editingPlan.price.toString().replace(/[^0-9]/g, ''));
+    const numericDuration = Number(editingPlan.durationValue);
+
+    const payload = {
+      name: editingPlan.name,
+      price: numericPrice,
+      durationValue: numericDuration,
+      durationType: editingPlan.durationType || 'month',
+      status: editingPlan.status || 'Active',
+      features: updatedFeatures,
+      slug: editingPlan.name.toLowerCase().replace(/\s+/g, '-')
+    };
+
+    try {
+      if (editingPlan._id) {
+        await updateSubscription(editingPlan._id, payload);
+        toast.success("Plan updated successfully");
+      } else {
+        await createSubscription(payload);
+        toast.success("Plan created successfully");
+      }
+      setIsModalOpen(false);
+      fetchPlans();
+    } catch (error) {
+      toast.error(error.message || "Failed to save plan");
+    }
+  };
+
+  // Helper function to format duration display
+  const formatDurationDisplay = (val, type) => {
+    if (!val || !type) return '/month';
+    return `/${val} ${type}${val > 1 ? 's' : ''}`;
   };
 
   return (
     <div className="fade-in">
       <div className="saas-flex-end saas-mb-15">
         {role !== 'subadmin' && (
-          <button className="saas-btn btn-primary" onClick={handleAddPlan}>
+          <button className="saas-btn btn-primary" onClick={handleAddPlan} disabled={isLoading}>
             <span><Plus /></span> Add New Plan
           </button>
         )}
       </div>
 
-      <div className="saas-grid-responsive">
-        {plans.map((plan) => (
-          <div key={plan.id} className="saas-card saas-flex-col">
-            <div className="saas-card-header saas-flex-col saas-align-start saas-gap-05">
-              <div className="saas-flex-between saas-w-full">
-                <h3 className="saas-text-xl saas-font-bold">{plan.name} Plan</h3>
-                <span className={`saas-badge ${plan.status === 'Active' ? 'badge-success' : 'badge-danger'}`}>{plan.status}</span>
+      {isLoading ? (
+        <div className="saas-loading">Loading plans...</div>
+      ) : (
+        <div className="saas-grid-responsive">
+          {plans.map((plan) => (
+            <div key={plan._id || plan.planId} className="saas-card saas-flex-col">
+              <div className="saas-card-header saas-flex-col saas-align-start saas-gap-05">
+                <div className="saas-flex-between saas-w-full">
+                  <h3 className="saas-text-xl saas-font-bold">{plan.name} Plan</h3>
+                  <span className={`saas-badge ${(!plan.status || plan.status === 'Active') ? 'badge-success' : 'badge-danger'}`}>
+                    {plan.status || 'Active'}
+                  </span>
+                </div>
+                <div className="saas-align-baseline saas-gap-025">
+                  <span className="saas-plan-price">₹{plan.price?.toLocaleString()}</span>
+                  <span className="saas-text-muted saas-text-sm">
+                    {formatDurationDisplay(plan.durationValue, plan.durationType)}
+                  </span>
+                </div>
               </div>
-              <div className="saas-align-baseline saas-gap-025">
-                <span className="saas-plan-price">{plan.price}</span>
-                <span className="saas-text-muted saas-text-sm">{plan.duration}</span>
+              <div className="saas-content saas-flex-1">
+                <ul className="saas-feature-list">
+                  {(plan.features || []).map((feature, index) => (
+                    <li key={index} className="saas-feature-item">
+                      <span className="saas-text-success">✓</span> {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="saas-card-footer-actions">
+                {role !== 'subadmin' && (
+                  <>
+                    <button
+                      className="saas-btn btn-outline saas-flex-1"
+                      onClick={() => handleEdit(plan)}
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      className="saas-btn btn-danger saas-flex-1"
+                      onClick={() => handleDelete(plan._id)}
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
               </div>
             </div>
-            <div className="saas-content saas-flex-1">
-              <ul className="saas-feature-list">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="saas-feature-item">
-                    <span className="saas-text-success">✓</span> {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          <div className="saas-card-footer-actions">
-  
-  {role !== 'subadmin' && (
-    <>
-      <button 
-        className="saas-btn btn-outline saas-flex-1" 
-        onClick={() => handleEdit(plan)}
-      >
-        Edit
-      </button>
-
-      <button 
-        className="saas-btn btn-danger saas-flex-1" 
-        onClick={() => handleDelete(plan.id)}
-      >
-        Delete
-      </button>
-    </>
-  )}
-
-</div>
-
-          </div>
-        ))}
-      </div>
+          ))}
+          {plans.length === 0 && !isLoading && (
+            <div className="saas-text-muted">No plans available. Add a new plan!</div>
+          )}
+        </div>
+      )}
 
       {/* Edit/Add Plan Modal */}
       {isModalOpen && (
@@ -135,9 +190,9 @@ const SubscriptionManagement = () => {
           <div className="saas-modal">
             <div className="saas-modal-header">
               <h3 className="saas-text-xl saas-font-semibold">
-                {editingPlan?.id ? `Edit Plan: ${editingPlan.name}` : 'Add New Plan'}
+                {editingPlan?._id ? `Edit Plan: ${editingPlan.name}` : 'Add New Plan'}
               </h3>
-              <button 
+              <button
                 onClick={() => setIsModalOpen(false)}
                 className="saas-modal-close-btn"
               >
@@ -148,20 +203,21 @@ const SubscriptionManagement = () => {
               <div className="inner-grid-2">
                 <div className="saas-form-group">
                   <label className="saas-label">Plan Name</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="saas-input"
                     value={editingPlan?.name}
-                    onChange={(e) => setEditingPlan({...editingPlan, name: e.target.value})}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
                     placeholder="e.g. Enterprise"
                   />
                 </div>
+
                 <div className="saas-form-group">
                   <label className="saas-label">Status</label>
-                  <select 
+                  <select
                     className="saas-select"
                     value={editingPlan?.status}
-                    onChange={(e) => setEditingPlan({...editingPlan, status: e.target.value})}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, status: e.target.value })}
                   >
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
@@ -171,34 +227,48 @@ const SubscriptionManagement = () => {
 
               <div className="inner-grid-2">
                 <div className="saas-form-group">
-                  <label className="saas-label">Price (with symbol)</label>
-                  <input 
-                    type="text" 
+                  <label className="saas-label">Price</label>
+                  <input
+                    type="number"
                     className="saas-input"
-                    value={ editingPlan?.price}
-                    onChange={(e) => setEditingPlan({...editingPlan, price: e.target.value})}
-                    placeholder="e.g. ₹4,999"
-                  /> 
+                    value={editingPlan?.price}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, price: e.target.value })}
+                    placeholder="e.g. 4999"
+                  />
                 </div>
+
                 <div className="saas-form-group">
                   <label className="saas-label">Duration</label>
-                  <input 
-                    type="text" 
-                    className="saas-input"
-                    value={editingPlan?.duration}
-                    onChange={(e) => setEditingPlan({...editingPlan, duration: e.target.value})}
-                    placeholder="e.g. /month"
-                  />
+                  <div className="saas-flex saas-gap-05" style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="number"
+                      min="1"
+                      className="saas-input"
+                      style={{ flex: 1 }}
+                      value={editingPlan?.durationValue}
+                      onChange={(e) => setEditingPlan({ ...editingPlan, durationValue: e.target.value })}
+                      placeholder="e.g. 1"
+                    />
+                    <select
+                      className="saas-select"
+                      style={{ flex: 1 }}
+                      value={editingPlan?.durationType}
+                      onChange={(e) => setEditingPlan({ ...editingPlan, durationType: e.target.value })}
+                    >
+                      <option value="month">Month(s)</option>
+                      <option value="year">Year(s)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               <div className="saas-form-group">
                 <label className="saas-label">Features (one per line)</label>
-                <textarea 
+                <textarea
                   className="saas-textarea"
                   rows="5"
                   value={editingPlan?.featuresString}
-                  onChange={(e) => setEditingPlan({...editingPlan, featuresString: e.target.value})}
+                  onChange={(e) => setEditingPlan({ ...editingPlan, featuresString: e.target.value })}
                   placeholder="Enter features..."
                 ></textarea>
               </div>
@@ -210,6 +280,7 @@ const SubscriptionManagement = () => {
           </div>
         </div>
       )}
+
       {/* Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
@@ -222,10 +293,11 @@ const SubscriptionManagement = () => {
         cancelText="Cancel"
         variant="danger"
       />
-      <div className="saas-card">
+
+      <div className="saas-card saas-mt-15">
         <div className="saas-card-header">
-           <h3 className="saas-text-lg saas-font-semibold">Recent Subscription Payments</h3>
-           <button className="saas-btn btn-sm btn-outline">Export Report</button>
+          <h3 className="saas-text-lg saas-font-semibold">Recent Subscription Payments</h3>
+          <button className="saas-btn btn-sm btn-outline">Export Report</button>
         </div>
         <div className="saas-table-container">
           <table className="saas-table">
