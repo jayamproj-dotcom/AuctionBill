@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { User, ShieldCheck, Camera, Eye, EyeOff, Edit, X } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { getAdminProfile, updateAdminProfile } from '../../api/adminApi';
 import './SaaSAdmin.css';
 
 const AdminProfile = () => {
@@ -11,6 +13,31 @@ const AdminProfile = () => {
   });
   
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await getAdminProfile();
+        if (response && response.status && response.data) {
+          setSettings(prev => ({
+            ...prev,
+            adminName: response.data.username,
+            adminEmail: response.data.email
+          }));
+          localStorage.setItem('saas_admin_name', response.data.username);
+          localStorage.setItem('saas_admin_email', response.data.email);
+          window.dispatchEvent(new Event('saas_profile_updated'));
+        }
+      } catch (error) {
+        console.error("Failed to fetch admin profile:", error);
+      } finally {
+        setFetching(false);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const role = localStorage.getItem('saas_role');
 
@@ -37,20 +64,36 @@ const AdminProfile = () => {
     fileInputRef.current?.click();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      if (settings.adminPhoto) {
+          localStorage.setItem('saas_admin_photo', settings.adminPhoto);
+      }
 
-    if (settings.adminPhoto) {
-        localStorage.setItem('saas_admin_photo', settings.adminPhoto);
+      const response = await updateAdminProfile({
+        username: settings.adminName,
+        email: settings.adminEmail
+      });
+
+      if (response && response.status) {
+        localStorage.setItem('saas_admin_name', settings.adminName);
+        localStorage.setItem('saas_admin_email', settings.adminEmail);
+        
+        // Dispatch event to update Layout
+        window.dispatchEvent(new Event('saas_profile_updated'));
+
+        setIsEditing(false);
+        toast.success("Profile configurations saved successfully!");
+      } else {
+        toast.error(response?.message || "Failed to save profile");
+      }
+    } catch(err) {
+      console.error("Save profile error:", err);
+      toast.error(err.message || "An error occurred while saving profile");
+    } finally {
+      setLoading(false);
     }
-    
-    localStorage.setItem('saas_admin_name', settings.adminName);
-    localStorage.setItem('saas_admin_email', settings.adminEmail);
-    
-    // Dispatch event to update Layout
-    window.dispatchEvent(new Event('saas_profile_updated'));
-
-    setIsEditing(false);
-    alert("Profile configurations saved successfully!");
   };
 
   const handleEditClick = () => {
@@ -69,21 +112,21 @@ const AdminProfile = () => {
 
   return (
     <div className="fade-in">
-      <div className="saas-card saas-container-narrow" style={{ maxWidth: "600px", margin: "0 auto" }}>
-        <div className="saas-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div className="saas-card saas-profile-container">
+        <div className="saas-card-header saas-profile-header-wrap">
+          <div className="saas-profile-header-title">
             <User size={24} className="saas-text-primary" />
             <h3 className="saas-text-lg saas-font-semibold">Admin Profile</h3>
           </div>
           {!isEditing && (
-            <button className="saas-btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '5px' }} onClick={handleEditClick}>
+            <button className="saas-btn btn-outline saas-profile-action-btn" onClick={handleEditClick}>
               <Edit size={16} /> Edit Profile
             </button>
           )}
         </div>
         <div className="saas-modal-content">
           
-          <div style={{ textAlign: "center", marginBottom: "30px" }}>
+          <div className="saas-profile-photo-wrap">
              {/* <div 
                className="saas-settings-profile-photo"
                style={{ backgroundImage: settings.adminPhoto ? `url(${settings.adminPhoto})` : 'none' }}
@@ -100,12 +143,12 @@ const AdminProfile = () => {
                type="file" 
                accept="image/*" 
                ref={fileInputRef} 
-               style={{ display: 'none' }} 
+               className="saas-profile-photo-hide"
                onChange={handlePhotoChange} 
              />
 
-             <h4 style={{ fontSize: "1.2rem", fontWeight: "600" }}>{settings.adminName}</h4>
-             <p style={{ color: "gray" }}>{settings.adminEmail}</p>
+             <h4 className="saas-profile-name">{settings.adminName}</h4>
+             <p className="saas-profile-email">{settings.adminEmail}</p>
           </div>
 
           <div className="saas-form-group">
@@ -119,7 +162,7 @@ const AdminProfile = () => {
                 onChange={handleChange}
               />
             ) : (
-              <div style={{ padding: '0.625rem 0.875rem', backgroundColor: '#f8fafc', borderRadius: '0.5rem', border: '1px solid #e2e8f0', color: '#1e293b' }}>
+              <div className="saas-profile-readonly">
                 {settings.adminName}
               </div>
             )}
@@ -136,19 +179,19 @@ const AdminProfile = () => {
                 onChange={handleChange}
               />
             ) : (
-              <div style={{ padding: '0.625rem 0.875rem', backgroundColor: '#f8fafc', borderRadius: '0.5rem', border: '1px solid #e2e8f0', color: '#1e293b' }}>
+              <div className="saas-profile-readonly">
                 {settings.adminEmail}
               </div>
             )}
           </div>
 
           {isEditing && (
-            <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-              <button className="saas-btn btn-outline" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }} onClick={handleCancelClick}>
+            <div className="saas-profile-actions">
+              <button className="saas-btn btn-outline saas-profile-action-btn" onClick={handleCancelClick} disabled={loading}>
                 <X size={16} /> Cancel
               </button>
-              <button className="saas-btn btn-primary" style={{ flex: 1 }} onClick={handleSave}>
-                 Save Changes
+              <button className="saas-btn btn-primary" style={{ flex: 1 }} onClick={handleSave} disabled={loading}>
+                 {loading ? "Saving..." : "Save Changes"}
               </button>
             </div>
           )}

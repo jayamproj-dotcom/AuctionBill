@@ -39,8 +39,8 @@ const SaaSLayout = () => {
     document.body.classList.add('saas-admin-active');
     
     // Check for auth token
-    const token = localStorage.getItem('saas_admin_token');
-    if (!token) {
+    const is_admin_login = localStorage.getItem('is_admin');
+    if (!is_admin_login) {
         navigate('/saas-admin');
     }
 
@@ -50,7 +50,7 @@ const SaaSLayout = () => {
   }, [navigate]);
 
   const handleLogout = () => {
-      localStorage.removeItem('saas_admin_token');
+      localStorage.removeItem('is_admin');
       navigate('/saas-admin');
   };
 

@@ -54,8 +54,8 @@ const SaaSLogin = () => {
 
                 if (response.status) {
                     toast.success(response.message || "Login successful");
-                    localStorage.setItem('token', response.token);
-                    localStorage.setItem('saas_admin_token', 'true');
+                    localStorage.setItem('admin_token', response.token);
+                    localStorage.setItem('is_admin', 'true');
 
                     try {
                         const decoded = jwtDecode(response.token);
