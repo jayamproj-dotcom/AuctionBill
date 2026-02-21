@@ -478,7 +478,7 @@
 .saas-select,
 .saas-textarea {
   width: 100%;
-  padding: 0.625rem 1.875rem;
+  padding: 0.625rem 0.875rem;
   border-radius: 0.5rem;
   border: 1px solid var(--saas-border);
   font-size: 0.875rem;
