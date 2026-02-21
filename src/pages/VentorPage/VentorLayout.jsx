@@ -1,18 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import AdminSidebar from "./AdminSidebar.jsx";
-import "./Admin.css";
+import VentorSidebar from "./VentorSidebar.jsx";
+import "./Ventor.css";
 import logo from "../../assets/images/logo.png";
 import user from "../../assets/images/user.png";
 import { LogOut, User, KeyRound } from "lucide-react";
 import { googleLogout } from '@react-oauth/google';
 
-const AdminLayout = () => {
+const VentorLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
   const navigate = useNavigate();
-  const isLoggedIn = localStorage.getItem("adminLoggedIn") === "true";
+  const isLoggedIn = localStorage.getItem("ventorLoggedIn") === "true";
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -38,11 +38,11 @@ const AdminLayout = () => {
 
   const handleLogout = () => {
     googleLogout(); // Sign out from Google
-    localStorage.removeItem("adminLoggedIn");
-    localStorage.removeItem("adminCredentials"); 
-    localStorage.removeItem("adminUserEmail");
-    localStorage.removeItem("adminUserName");
-    localStorage.removeItem("adminUserPhoto");
+    localStorage.removeItem("ventorLoggedIn");
+    localStorage.removeItem("ventorCredentials"); 
+    localStorage.removeItem("ventorUserEmail");
+    localStorage.removeItem("ventorUserName");
+    localStorage.removeItem("ventorUserPhoto");
     
     setProfileOpen(false);
     window.location.href = "/auctionbilling";
@@ -64,8 +64,8 @@ const AdminLayout = () => {
 
 
   // Retrieve user info
-  const userName = localStorage.getItem("adminUserName") || "Admin";
-  const userPhoto = localStorage.getItem("adminUserPhoto") || user;
+  const userName = localStorage.getItem("ventorUserName") || "Ventor";
+  const userPhoto = localStorage.getItem("ventorUserPhoto") || user;
 
   return (
     <div className="app-container">
@@ -103,11 +103,11 @@ const AdminLayout = () => {
                       onError={(e) => {e.target.src = user}}
                   />
                   <div className="profile-dropdown-name">{userName}</div>
-                  <div className="profile-dropdown-email">{localStorage.getItem('adminUserEmail')}</div>
+                  <div className="profile-dropdown-email">{localStorage.getItem('ventorUserEmail')}</div>
               </div>
 
               <div className="dropdown-item" onClick={() => {
-                  navigate('/admin/manage');
+                  navigate('/ventor/manage');
                   setProfileOpen(false);
               }}>
                 <User size={16} /> {/* Changed icon to User */}
@@ -131,7 +131,7 @@ const AdminLayout = () => {
       ></div>
 
       {/* Sidebar */}
-      <AdminSidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+      <VentorSidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
       {/* Main Content */}
       <main className="main-content">
@@ -141,4 +141,4 @@ const AdminLayout = () => {
   );
 };
 
-export default AdminLayout;
+export default VentorLayout;

@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
-import AdminLogin from "./pages/AdminPage/Login/Login.jsx";
-import AdminLayout from "./pages/AdminPage/AdminLayout.jsx";
-import Signup from "./pages/AdminPage/Signup/Signup.jsx";
+import VentorLogin from "./pages/VentorPage/Login/Login.jsx";
+import VentorLayout from "./pages/VentorPage/VentorLayout.jsx";
+import Signup from "./pages/VentorPage/Signup/Signup.jsx";
 import Dashboard from "./components/Dashboard/Dashboard.jsx";
 import TodayAuction from "./components/TodayAuction/TodayAuction.jsx";
 import History from "./components/History/History.jsx";
@@ -50,12 +50,12 @@ function App() {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <BrowserRouter basename="/auctionbilling">
         <Routes>
-          {/* Admin Login */}
-          <Route path="/" element={<AdminLogin />} />
+          {/* Ventor Login */}
+          <Route path="/" element={<VentorLogin />} />
           <Route path="/signup" element={<Signup />} />
 
-          {/* Admin area with nested routes */}
-          <Route path="/ventor" element={<AdminLayout />}>
+          {/* Ventor area with nested routes */}
+          <Route path="/ventor" element={<VentorLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="today-auction" element={<TodayAuction />} />

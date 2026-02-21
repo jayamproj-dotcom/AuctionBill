@@ -53,7 +53,7 @@ const Signup = () => {
             return;
         }
 
-        const existingUsers = JSON.parse(localStorage.getItem('admin_users')) || [];
+        const existingUsers = JSON.parse(localStorage.getItem('ventor_users')) || [];
 
         // Check for duplicate email
         if (existingUsers.some(u => u.email.toLowerCase() === formData.email.toLowerCase())) {
@@ -83,16 +83,16 @@ const Signup = () => {
         };
 
         const updatedUsers = [...existingUsers, newUser];
-        localStorage.setItem('admin_users', JSON.stringify(updatedUsers));
+        localStorage.setItem('ventor_users', JSON.stringify(updatedUsers));
 
         // Auto Login after successful signup
-        localStorage.setItem("adminLoggedIn", "true");
-        localStorage.setItem("adminUserEmail", newUser.email);
-        localStorage.setItem("adminUserName", newUser.username);
-        localStorage.setItem("adminUserPhoto", ""); 
+        localStorage.setItem("ventorLoggedIn", "true");
+        localStorage.setItem("ventorUserEmail", newUser.email);
+        localStorage.setItem("ventorUserName", newUser.username);
+        localStorage.setItem("ventorUserPhoto", ""); 
 
         alert("Account created successfully! Logging you in...");
-        navigate('/admin');
+        navigate('/ventor');
     };
 
     return (
