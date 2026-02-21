@@ -12,7 +12,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem("adminLoggedIn") === "true") {
+    if (localStorage.getItem("ventorLoggedIn") === "true") {
       navigate("ventor");
     }
   }, [navigate]);
@@ -31,17 +31,17 @@ const Login = () => {
           return;
       }
 
-      const users = JSON.parse(localStorage.getItem('admin_users')) || [];
+      const users = JSON.parse(localStorage.getItem('ventor_users')) || [];
       const user = users.find(u => 
           (u.username === identifier || u.phone === identifier || u.email === identifier.toLowerCase()) && 
           u.password === password
       );
 
       if (user) {
-          localStorage.setItem("adminLoggedIn", "true");
-          localStorage.setItem("adminUserEmail", user.email);
-          localStorage.setItem("adminUserName", user.username);
-          localStorage.setItem("adminUserPhoto", ""); // No photo for manual login
+          localStorage.setItem("ventorLoggedIn", "true");
+          localStorage.setItem("ventorUserEmail", user.email);
+          localStorage.setItem("ventorUserName", user.username);
+          localStorage.setItem("ventorUserPhoto", ""); // No photo for manual login
           navigate("/ventor");
       } else {
           setError("Invalid credentials. Please check your username/phone and password.");
@@ -54,20 +54,20 @@ const Login = () => {
     try {
       const decoded = jwtDecode(credentialResponse.credential);
       const email = decoded.email.toLowerCase();
-      const name = decoded.name || "Admin";
+      const name = decoded.name || "Ventor";
       const picture = decoded.picture || "";
 
-      localStorage.setItem("adminLoggedIn", "true");
-      localStorage.setItem("adminUserEmail", email);
-      localStorage.setItem("adminUserName", name);
-      localStorage.setItem("adminUserPhoto", picture);
+      localStorage.setItem("ventorLoggedIn", "true");
+      localStorage.setItem("ventorUserEmail", email);
+      localStorage.setItem("ventorUserName", name);
+      localStorage.setItem("ventorUserPhoto", picture);
 
       const allowedEmails =
-        JSON.parse(localStorage.getItem("admin_allowed_emails")) || [];
+        JSON.parse(localStorage.getItem("ventor_allowed_emails")) || [];
 
       if (!allowedEmails.includes(email)) {
         localStorage.setItem(
-          "admin_allowed_emails",
+          "ventor_allowed_emails",
           JSON.stringify([...allowedEmails, email])
         );
       }
@@ -86,7 +86,7 @@ const Login = () => {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h2>Admin Login</h2>
+        <h2>Ventor Login</h2>
         <p className="login-subtitle">
           Sign in to continue to the dashboard
         </p>
@@ -151,8 +151,8 @@ const Login = () => {
                 Don't have an account? <Link to="/signup" className="link">Sign Up</Link>
             </p>
             <p className="saas-link-wrapper">
-                System Administrator?{" "}
-                <Link to="/saas-admin" className="saas-link">
+                System Ventoristrator?{" "}
+                <Link to="/saas-ventor" className="saas-link">
                 Go to SaaS Panel
                 </Link>
             </p>

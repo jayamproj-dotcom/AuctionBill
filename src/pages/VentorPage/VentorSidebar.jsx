@@ -3,13 +3,13 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { House, ChartSpline,UserCog, PackageSearch, History, User, ShoppingCart, Settings, Handshake, Gem, LogOut, X } from "lucide-react";
 import logo from "../../assets/images/logo-sidebar.png"
 
-const AdminSidebar = ({ isOpen, onClose }) => {
+const VentorSidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const handleLogout = (e) => {
     e.preventDefault();
-    localStorage.removeItem("adminLoggedIn");
-    localStorage.removeItem("adminCredentials");
+    localStorage.removeItem("ventorLoggedIn");
+    localStorage.removeItem("ventorCredentials");
     onClose();
     navigate("/");
   };
@@ -125,4 +125,4 @@ const AdminSidebar = ({ isOpen, onClose }) => {
   );
 };
 
-export default AdminSidebar;
+export default VentorSidebar;
