@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Eye, EyeOff } from "lucide-react";
+import { toast } from 'react-toastify';
+import { jwtDecode } from 'jwt-decode';
+import { adminLogin } from '../../api/adminApi';
 import './SaaSAdmin.css';
 
 const SaaSLogin = () => {
     const [credentials, setCredentials] = useState({ username: '', password: '' });
     const [errors, setErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -21,42 +25,52 @@ const SaaSLogin = () => {
 
     const validate = () => {
         const newErrors = {};
-        const ADMIN_USER = "admin";
-        const DEFAULT_ADMIN_PASS = "admin@123";
-        const SUBADMIN_USER = "subadmin";
-        const DEFAULT_SUBADMIN_PASS = "subadmin@123";
-
-        const storedAdminPass = localStorage.getItem('saas_admin_password') || DEFAULT_ADMIN_PASS;
-        const storedSubadminPass = localStorage.getItem('saas_subadmin_password') || DEFAULT_SUBADMIN_PASS;
 
         if (!credentials.username.trim()) {
             newErrors.username = "Username is required";
-        } else if (credentials.username.trim() !== ADMIN_USER && credentials.username.trim() !== SUBADMIN_USER) {
-            newErrors.username = "Invalid username";
         }
 
         if (!credentials.password) {
             newErrors.password = "Password is required";
-        } else {
-             if (credentials.username.trim() === ADMIN_USER && credentials.password.trim() !== storedAdminPass) {
-                 newErrors.password = "Invalid password";
-             } else if (credentials.username.trim() === SUBADMIN_USER && credentials.password.trim() !== storedSubadminPass) {
-                 newErrors.password = "Invalid password";
-             }
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
 
         if (validate()) {
-            const role = credentials.username.trim() === 'subadmin' ? 'subadmin' : 'admin';
-            localStorage.setItem('saas_admin_token', 'true');
-            localStorage.setItem('saas_role', role);
-            navigate('/saas/dashboard');
+            setLoading(true);
+            try {
+                const response = await adminLogin({
+                    username: credentials.username.trim(),
+                    password: credentials.password
+                });
+
+                if (response.status) {
+                    toast.success(response.message || "Login successful");
+                    localStorage.setItem('token', response.token);
+                    localStorage.setItem('saas_admin_token', 'true');
+
+                    try {
+                        const decoded = jwtDecode(response.token);
+                        localStorage.setItem('saas_role', decoded.role || 'admin');
+                    } catch (decodeError) {
+                        console.error("Token decoding failed", decodeError);
+                        localStorage.setItem('saas_role', 'admin');
+                    }
+
+                    navigate('/saas/dashboard');
+                } else {
+                    toast.error(response.message || "Login failed");
+                }
+            } catch (error) {
+                toast.error(error.message || "Invalid credentials or server error");
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -79,6 +93,7 @@ const SaaSLogin = () => {
                                 value={credentials.username}
                                 onChange={handleChange}
                                 placeholder="Enter admin username"
+                                disabled={loading}
                             />
                         </div>
                         {errors.username && <span className="error-msg">{errors.username}</span>}
@@ -94,12 +109,14 @@ const SaaSLogin = () => {
                                 value={credentials.password}
                                 onChange={handleChange}
                                 placeholder="Enter admin password"
+                                disabled={loading}
                             />
                             <button
                                 type="button"
                                 className="saas-password-toggle"
                                 onClick={() => setShowPassword(!showPassword)}
                                 tabIndex="-1"
+                                disabled={loading}
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
@@ -107,8 +124,8 @@ const SaaSLogin = () => {
                         {errors.password && <span className="error-msg">{errors.password}</span>}
                     </div>
 
-                    <button type="submit" className="saas-btn btn-primary saas-login-btn">
-                        Login to Dashboard
+                    <button type="submit" className="saas-btn btn-primary saas-login-btn" disabled={loading}>
+                        {loading ? 'Logging in...' : 'Login to Dashboard'}
                     </button>
 
                     <div className="saas-login-footer">
