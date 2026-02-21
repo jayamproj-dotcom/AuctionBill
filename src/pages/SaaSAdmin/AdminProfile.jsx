@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, ShieldCheck, Camera, Eye, EyeOff } from 'lucide-react';
+import { User, ShieldCheck, Camera, Eye, EyeOff, Edit, X } from 'lucide-react';
 import './SaaSAdmin.css';
 
 const AdminProfile = () => {
@@ -9,6 +9,8 @@ const AdminProfile = () => {
     adminEmail: localStorage.getItem('saas_admin_email') || "admin@auctionbill.com",
     adminPhoto: localStorage.getItem('saas_admin_photo') || null
   });
+  
+  const [isEditing, setIsEditing] = useState(false);
 
   const role = localStorage.getItem('saas_role');
 
@@ -47,15 +49,37 @@ const AdminProfile = () => {
     // Dispatch event to update Layout
     window.dispatchEvent(new Event('saas_profile_updated'));
 
+    setIsEditing(false);
     alert("Profile configurations saved successfully!");
+  };
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelClick = () => {
+    setIsEditing(false);
+    // Reset to local storage on cancel
+    setSettings({
+      adminName: localStorage.getItem('saas_admin_name') || "Super Admin",
+      adminEmail: localStorage.getItem('saas_admin_email') || "admin@auctionbill.com",
+      adminPhoto: localStorage.getItem('saas_admin_photo') || null
+    });
   };
 
   return (
     <div className="fade-in">
       <div className="saas-card saas-container-narrow" style={{ maxWidth: "600px", margin: "0 auto" }}>
-        <div className="saas-card-header" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <User size={24} className="saas-text-primary" />
-          <h3 className="saas-text-lg saas-font-semibold">Admin Profile</h3>
+        <div className="saas-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <User size={24} className="saas-text-primary" />
+            <h3 className="saas-text-lg saas-font-semibold">Admin Profile</h3>
+          </div>
+          {!isEditing && (
+            <button className="saas-btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '5px' }} onClick={handleEditClick}>
+              <Edit size={16} /> Edit Profile
+            </button>
+          )}
         </div>
         <div className="saas-modal-content">
           
@@ -86,29 +110,48 @@ const AdminProfile = () => {
 
           <div className="saas-form-group">
             <label className="saas-label">Admin Name</label>
-            <input 
-              type="text" 
-              name="adminName"
-              className="saas-input" 
-              value={settings.adminName}
-              onChange={handleChange}
-            />
+            {isEditing ? (
+              <input 
+                type="text" 
+                name="adminName"
+                className="saas-input" 
+                value={settings.adminName}
+                onChange={handleChange}
+              />
+            ) : (
+              <div style={{ padding: '0.625rem 0.875rem', backgroundColor: '#f8fafc', borderRadius: '0.5rem', border: '1px solid #e2e8f0', color: '#1e293b' }}>
+                {settings.adminName}
+              </div>
+            )}
           </div>
           
           <div className="saas-form-group">
             <label className="saas-label">Admin Email</label>
-            <input 
-              type="email" 
-              name="adminEmail"
-              className="saas-input" 
-              value={settings.adminEmail}
-              onChange={handleChange}
-            />
+            {isEditing ? (
+              <input 
+                type="email" 
+                name="adminEmail"
+                className="saas-input" 
+                value={settings.adminEmail}
+                onChange={handleChange}
+              />
+            ) : (
+              <div style={{ padding: '0.625rem 0.875rem', backgroundColor: '#f8fafc', borderRadius: '0.5rem', border: '1px solid #e2e8f0', color: '#1e293b' }}>
+                {settings.adminEmail}
+              </div>
+            )}
           </div>
 
-          <button className="saas-btn btn-primary" style={{ width: "100%", marginTop: "15px" }} onClick={handleSave}>
-             Update Profile
-          </button>
+          {isEditing && (
+            <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+              <button className="saas-btn btn-outline" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }} onClick={handleCancelClick}>
+                <X size={16} /> Cancel
+              </button>
+              <button className="saas-btn btn-primary" style={{ flex: 1 }} onClick={handleSave}>
+                 Save Changes
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
