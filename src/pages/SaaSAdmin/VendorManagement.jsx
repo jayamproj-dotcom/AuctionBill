@@ -213,7 +213,7 @@ const VendorManagement = () => {
                   </td>
                   <td>
                     <span className={`saas-badge ${vendor.status === 'Active' ? 'badge-success' :
-                        vendor.status === 'Pending' ? 'badge-warning' : 'badge-danger'
+                      vendor.status === 'Pending' ? 'badge-warning' : 'badge-danger'
                       }`}>
                       {vendor.status}
                     </span>
@@ -484,7 +484,7 @@ const VendorManagement = () => {
                   <div>
                     <label className="saas-label saas-text-muted">Account Status</label>
                     <span className={`saas-badge ${selectedVendor.status === 'Active' ? 'badge-success' :
-                        selectedVendor.status === 'Pending' ? 'badge-warning' : 'badge-danger'
+                      selectedVendor.status === 'Pending' ? 'badge-warning' : 'badge-danger'
                       }`}>
                       {selectedVendor.status}
                     </span>
