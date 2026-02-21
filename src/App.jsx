@@ -17,7 +17,7 @@ import SaaSDashboard from "./pages/SaaSAdmin/SaaSDashboard.jsx";
 import VendorManagement from "./pages/SaaSAdmin/VendorManagement.jsx";
 import Purchases from "./pages/SaaSAdmin/Purchases.jsx";
 import SubscriptionManagement from "./pages/SaaSAdmin/SubscriptionManagement.jsx";
-import GlobalSettings from "./pages/SaaSAdmin/GlobalSettings.jsx";
+import AdminProfile from "./pages/SaaSAdmin/AdminProfile.jsx";
 import SaaSLogin from "./pages/SaaSAdmin/SaaSLogin.jsx";
 import { getAuctionData } from "./utils/localStorage";
 import { ToastContainer } from 'react-toastify';
@@ -78,7 +78,7 @@ function App() {
             <Route path="purchases" element={<Purchases />} />
             <Route path="vendors" element={<VendorManagement />} />
             <Route path="subscriptions" element={<SubscriptionManagement />} />
-            <Route path="settings" element={<GlobalSettings />} />
+            <Route path="settings" element={<AdminProfile />} />
           </Route>
         </Routes>
         

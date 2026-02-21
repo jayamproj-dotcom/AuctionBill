@@ -1,12 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { House, ShoppingCart, Users, Gem, Settings, LogOut, Menu, X, Bell } from 'lucide-react';
+import { House, ShoppingCart, Users, Gem, Settings, LogOut, Menu, X, Bell, User } from 'lucide-react';
 import './SaaSAdmin.css';
 
 const SaaSLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [adminPhoto, setAdminPhoto] = useState(localStorage.getItem('saas_admin_photo') || null);
+  const [adminName, setAdminName] = useState(localStorage.getItem('saas_admin_name') || 'Super Admin');
+  const profileRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Close dropdown when clicking outside and handle profile photo updates
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setProfileOpen(false);
+      }
+    };
+    
+    const handleProfileUpdate = () => {
+      setAdminPhoto(localStorage.getItem('saas_admin_photo') || null);
+      setAdminName(localStorage.getItem('saas_admin_name') || 'Super Admin');
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("saas_profile_updated", handleProfileUpdate);
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("saas_profile_updated", handleProfileUpdate);
+    };
+  }, []);
 
   // Add a class to body when in SaaS Admin to allow full-width override
   useEffect(() => {
@@ -33,7 +59,7 @@ const SaaSLayout = () => {
     { path: '/saas/purchases', label: 'Purchases', icon: <ShoppingCart size={20} /> },
     { path: '/saas/vendors', label: 'Vendors', icon: <Users size={20} /> },
     { path: '/saas/subscriptions', label: 'Subscriptions', icon: <Gem size={20} /> },
-    { path: '/saas/settings', label: 'Global Settings', icon: <Settings size={20} /> },
+    { path: '/saas/settings', label: 'Profile', icon: <User size={20} /> },
   ];
 
   return (
@@ -97,12 +123,49 @@ const SaaSLayout = () => {
               <button className="saas-btn btn-sm btn-outline icon-only">
                   <Bell size={20} />
               </button>
-              {/* <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#6366f1', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700' }}>
-                   SA
+              
+              <div className="saas-header-profile-container" ref={profileRef}>
+                <div 
+                  className="saas-header-profile" 
+                  onClick={() => setProfileOpen(!profileOpen)}
+                >
+                  {adminPhoto ? (
+                      <img src={adminPhoto} alt="SA" className="saas-header-avatar" />
+                  ) : (
+                    <div className="saas-header-avatar-fallback">
+                       {adminName.substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
                 </div>
-                <span className="saas-admin-name" style={{ fontSize: '0.875rem', fontWeight: '500' }}>Super Admin</span>
-              </div> */}
+
+                {profileOpen && (
+                  <div className="saas-profile-dropdown">
+                    <div className="saas-dropdown-header">
+                        {adminPhoto ? (
+                            <img src={adminPhoto} alt="SA" className="saas-dropdown-avatar" />
+                        ) : (
+                          <div className="saas-dropdown-avatar-fallback">
+                             {adminName.substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="saas-dropdown-name">{adminName}</div>
+                    </div>
+                    
+                    <div className="saas-dropdown-item" onClick={() => {
+                        navigate('/saas/settings');
+                        setProfileOpen(false);
+                    }}>
+                      <User size={16} /> 
+                      <span className="saas-dropdown-item-text">Profile</span>
+                    </div>
+                    <div className="saas-dropdown-divider"></div>
+                    <div className="saas-dropdown-item text-danger" onClick={handleLogout}>
+                      <LogOut size={16} />
+                      <span className="saas-dropdown-item-text">Logout</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>
