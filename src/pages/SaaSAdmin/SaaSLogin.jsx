@@ -44,18 +44,22 @@ const SaaSLogin = () => {
         if (validate()) {
             setLoading(true);
             try {
+
                 const response = await adminLogin({
                     username: credentials.username.trim(),
                     password: credentials.password
                 });
-
-                console.log(response);
 
 
                 if (response.status) {
                     toast.success(response.message || "Login successful");
                     localStorage.setItem('admin_token', response.token);
                     localStorage.setItem('is_admin', 'true');
+                    localStorage.setItem('admin_data', JSON.stringify(response.data));
+
+                    if (response.data && response.data.username) {
+                        localStorage.setItem('saas_admin_name', response.data.username);
+                    }
 
                     try {
                         const decoded = jwtDecode(response.token);

@@ -13,6 +13,19 @@ export const adminLogin = async (data) => {
     }
 };
 
+// Admin update profile API
+export const updateAdminProfile = async (data) => {
+    try {
+        const response = await api.put('/api/admin/update-profile', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
 
 //Subscriptions API
 export const getSubscriptions = async () => {

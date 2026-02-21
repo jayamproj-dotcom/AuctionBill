@@ -1,16 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
 import { User, ShieldCheck, Camera, Eye, EyeOff, Edit, X } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { updateAdminProfile } from '../../api/adminApi';
 import './SaaSAdmin.css';
 
 const AdminProfile = () => {
   const fileInputRef = useRef(null);
+  const adminDataString = localStorage.getItem('admin_data');
+  const adminDataObj = adminDataString ? JSON.parse(adminDataString) : {};
+
   const [settings, setSettings] = useState({
-    adminName: localStorage.getItem('saas_admin_name') || "Super Admin",
-    adminEmail: localStorage.getItem('saas_admin_email') || "admin@auctionbill.com",
+    adminName: localStorage.getItem('saas_admin_name') || adminDataObj.username || "Super Admin",
+    adminEmail: adminDataObj.email || "admin@auctionbill.com",
     adminPhoto: localStorage.getItem('saas_admin_photo') || null
   });
-  
+
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const role = localStorage.getItem('saas_role');
 
@@ -37,20 +43,61 @@ const AdminProfile = () => {
     fileInputRef.current?.click();
   };
 
-  const handleSave = () => {
-
-    if (settings.adminPhoto) {
-        localStorage.setItem('saas_admin_photo', settings.adminPhoto);
+  const handleSave = async () => {
+    if (!settings.adminName || !settings.adminEmail) {
+      return toast.error("Name and email are required");
     }
-    
-    localStorage.setItem('saas_admin_name', settings.adminName);
-    localStorage.setItem('saas_admin_email', settings.adminEmail);
-    
-    // Dispatch event to update Layout
-    window.dispatchEvent(new Event('saas_profile_updated'));
 
-    setIsEditing(false);
-    alert("Profile configurations saved successfully!");
+    setIsLoading(true);
+    try {
+      // Update via backend API
+      const payload = {
+        username: settings.adminName,
+        email: settings.adminEmail
+      };
+
+      const response = await updateAdminProfile(payload);
+
+      if (response.status && response.admin) {
+        if (settings.adminPhoto) {
+          localStorage.setItem('saas_admin_photo', settings.adminPhoto);
+        }
+
+        localStorage.setItem('saas_admin_name', response.admin.username);
+        localStorage.setItem('saas_admin_email', response.admin.email);
+
+        const currentAdminDataStr = localStorage.getItem('admin_data');
+        if (currentAdminDataStr) {
+          try {
+            const currentAdminData = JSON.parse(currentAdminDataStr);
+            currentAdminData.username = response.admin.username;
+            currentAdminData.email = response.admin.email;
+            localStorage.setItem('admin_data', JSON.stringify(currentAdminData));
+          } catch (e) {
+            console.error("Error updating admin_data in localStorage", e);
+          }
+        }
+
+        // Update local state to match API response
+        setSettings(prev => ({
+          ...prev,
+          adminName: response.admin.username,
+          adminEmail: response.admin.email
+        }));
+
+        // Dispatch event to update Layout
+        window.dispatchEvent(new Event('saas_profile_updated'));
+
+        setIsEditing(false);
+        toast.success(response.message || "Profile configurations saved successfully!");
+      } else {
+        toast.error(response.message || "Failed to update profile");
+      }
+    } catch (error) {
+      toast.error(error.message || "An error occurred while updating the profile");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEditClick = () => {
@@ -59,10 +106,12 @@ const AdminProfile = () => {
 
   const handleCancelClick = () => {
     setIsEditing(false);
-    // Reset to local storage on cancel
+    const adminDataStr = localStorage.getItem('admin_data');
+    const adminData = adminDataStr ? JSON.parse(adminDataStr) : {};
+
     setSettings({
-      adminName: localStorage.getItem('saas_admin_name') || "Super Admin",
-      adminEmail: localStorage.getItem('saas_admin_email') || "admin@auctionbill.com",
+      adminName: localStorage.getItem('saas_admin_name') || adminData.username || "Super Admin",
+      adminEmail: adminData.email || "admin@auctionbill.com",
       adminPhoto: localStorage.getItem('saas_admin_photo') || null
     });
   };
@@ -82,9 +131,9 @@ const AdminProfile = () => {
           )}
         </div>
         <div className="saas-modal-content">
-          
+
           <div style={{ textAlign: "center", marginBottom: "30px" }}>
-             {/* <div 
+            {/* <div 
                className="saas-settings-profile-photo"
                style={{ backgroundImage: settings.adminPhoto ? `url(${settings.adminPhoto})` : 'none' }}
                onClick={triggerFileInput}
@@ -95,26 +144,26 @@ const AdminProfile = () => {
                   <Camera size={14} />
                 </div>
              </div> */}
-             
-             <input 
-               type="file" 
-               accept="image/*" 
-               ref={fileInputRef} 
-               style={{ display: 'none' }} 
-               onChange={handlePhotoChange} 
-             />
 
-             <h4 style={{ fontSize: "1.2rem", fontWeight: "600" }}>{settings.adminName}</h4>
-             <p style={{ color: "gray" }}>{settings.adminEmail}</p>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              onChange={handlePhotoChange}
+            />
+
+            <h4 style={{ fontSize: "1.2rem", fontWeight: "600" }}>{settings.adminName}</h4>
+            <p style={{ color: "gray" }}>{settings.adminEmail}</p>
           </div>
 
           <div className="saas-form-group">
             <label className="saas-label">Admin Name</label>
             {isEditing ? (
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="adminName"
-                className="saas-input" 
+                className="saas-input"
                 value={settings.adminName}
                 onChange={handleChange}
               />
@@ -124,14 +173,14 @@ const AdminProfile = () => {
               </div>
             )}
           </div>
-          
+
           <div className="saas-form-group">
             <label className="saas-label">Admin Email</label>
             {isEditing ? (
-              <input 
-                type="email" 
+              <input
+                type="email"
                 name="adminEmail"
-                className="saas-input" 
+                className="saas-input"
                 value={settings.adminEmail}
                 onChange={handleChange}
               />
@@ -148,7 +197,7 @@ const AdminProfile = () => {
                 <X size={16} /> Cancel
               </button>
               <button className="saas-btn btn-primary" style={{ flex: 1 }} onClick={handleSave}>
-                 Save Changes
+                Save Changes
               </button>
             </div>
           )}
