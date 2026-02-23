@@ -2,26 +2,55 @@ import { useState, useEffect } from 'react';
 import './SaaSAdmin.css';
 import { Link } from 'react-router-dom';
 import { Users, Crown, Banknote, Hourglass, Settings, Trash2 } from 'lucide-react';
+import { getVendors } from '../../api/ventorApi';
+import { formatDate } from '../../utils/dateUtils';
 
 const SaaSDashboard = () => {
   const [stats, setStats] = useState({
-    totalVendors: 12,
-    monthlyRevenue: 45000,
-    pendingApprovals: 3
+    totalVendors: 0,
+    activeSubscriptions: 0,
+    monthlyRevenue: 0,
+    pendingApprovals: 0
   });
 
-  const recentVendors = [
-    { id: 101, name: 'Royal Auctions', admin: 'Amit Shah', plan: 'Premium', status: 'Active', joined: '2026-02-01' },
-    { id: 102, name: 'Heritage Bids', admin: 'Priya Rai', plan: 'Basic', status: 'Active', joined: '2026-02-05' },
-    { id: 103, name: 'City Auction House', admin: 'Vikram Singh', plan: 'Free', status: 'Pending', joined: '2026-02-09' },
-  ];
+  const [recentVendors, setRecentVendors] = useState([]);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await getVendors();
+        if (response.status && response.vendors) {
+          const vendors = response.vendors;
+
+          setStats(prev => ({
+            ...prev,
+            totalVendors: vendors.length,
+            pendingApprovals: vendors.filter(v => v.status === 'Pending').length,
+            activeSubscriptions: vendors.filter(v => v.status === 'Active').length
+          }));
+
+          const sortedVendors = [...vendors].sort((a, b) => {
+            const dateA = new Date(a.joinedDate || a.createdAt);
+            const dateB = new Date(b.joinedDate || b.createdAt);
+            return dateB - dateA;
+          });
+
+          setRecentVendors(sortedVendors.slice(0, 5));
+        }
+      } catch (error) {
+        console.error("Error fetching Dashboard data:", error);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   return (
     <div className="fade-in">
       <div className="saas-stats-grid">
-            <Link 
-          to="/saas/vendors" 
-          className="saas-stat-card saas-no-decoration" 
+        <Link
+          to="/saas/vendors"
+          className="saas-stat-card saas-no-decoration"
         >
           <div className="saas-stat-header">
             <div className="saas-stat-icon icon-blue"><Users size={32} /></div>
@@ -62,17 +91,17 @@ const SaaSDashboard = () => {
         </div>
       </div>
 
-      {/* <div className="saas-card">
+       <div className="saas-card">
         <div className="saas-card-header">
           <h3 className="saas-text-lg saas-font-semibold">Recent Vendor Registrations</h3>
-         <Link to="/saas/purchases"> <button className="saas-btn btn-sm btn-outline">View All</button></Link>
+          <Link to="/saas/purchases"> <button className="saas-btn btn-sm btn-outline">View All</button></Link>
         </div>
         <div className="saas-table-container">
           <table className="saas-table">
             <thead>
               <tr>
                 <th>Vendor Name</th>
-                <th>Admin</th>
+                <th>Email</th>
                 <th>Plan</th>
                 <th>Status</th>
                 <th>Joined Date</th>
@@ -81,29 +110,36 @@ const SaaSDashboard = () => {
             </thead>
             <tbody>
               {recentVendors.map((vendor) => (
-                <tr key={vendor.id}>
+                <tr key={vendor._id || vendor.id}>
                   <td className="saas-font-medium">{vendor.name}</td>
-                  <td>{vendor.admin}</td>
+                  <td>{vendor.email}</td>
                   <td>
-                     <span className={`saas-badge ${vendor.plan === 'Premium' ? 'badge-info' : 'badge-warning'}`}>
-                        {vendor.plan}
-                     </span>
+                    <span className={`saas-badge ${(vendor.plan?.name || vendor.plan || '') === 'Premium' ? 'badge-info' : 'badge-warning'}`}>
+                      {vendor.plan?.name || vendor.plan || 'N/A'}
+                    </span>
                   </td>
                   <td>
                     <span className={`saas-badge ${vendor.status === 'Active' ? 'badge-success' : 'badge-warning'}`}>
                       {vendor.status}
                     </span>
                   </td>
-                  <td>{vendor.joined}</td>
-                  <td>
-              
-                  </td>
+                  <td>{formatDate(vendor.joinedDate || vendor.createdAt)}</td>
+                   {/* <td>
+                    <div className="action-buttons">
+                        <button className="icon-btn edit" title="Manage Vendor">
+                            <Settings size={18} />
+                        </button>
+                         <button className="icon-btn delete" title="Delete Vendor">
+                            <Trash2 size={18} />
+                        </button>
+                    </div>
+                  </td>  */}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div> */}
+      </div> 
     </div>
   );
 };
