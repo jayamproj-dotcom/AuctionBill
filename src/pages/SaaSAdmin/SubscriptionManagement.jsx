@@ -296,7 +296,7 @@ const SubscriptionManagement = () => {
         variant="danger"
       />
 
-      <div className="saas-card saas-mt-15">
+      {/* <div className="saas-card saas-mt-15">
         <div className="saas-card-header">
           <h3 className="saas-text-lg saas-font-semibold">Recent Subscription Payments</h3>
           <button className="saas-btn btn-sm btn-outline">Export Report</button>
@@ -330,7 +330,7 @@ const SubscriptionManagement = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

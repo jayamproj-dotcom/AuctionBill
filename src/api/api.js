@@ -6,8 +6,7 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
-});
-
+})
 // Add a request interceptor to add the token
 api.interceptors.request.use(
     (config) => {

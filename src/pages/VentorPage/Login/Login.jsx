@@ -134,7 +134,7 @@ const Login = () => {
             <span>OR</span>
         </div>
 
-        <div className="google-btn-wrapper">
+        {/* <div className="google-btn-wrapper">
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleFailure}
@@ -144,18 +144,18 @@ const Login = () => {
             shape="rectangular"
             width="100%"
           />
-        </div>
+        </div> */}
 
         <div className="login-footer">
             <p className="signup-link-text">
                 Don't have an account? <Link to="/signup" className="link">Sign Up</Link>
             </p>
-            <p className="saas-link-wrapper">
+            {/* <p className="saas-link-wrapper">
                 System Ventoristrator?{" "}
                 <Link to="/saas-ventor" className="saas-link">
                 Go to SaaS Panel
                 </Link>
-            </p>
+            </p> */}
         </div>
       </div>
     </div>
