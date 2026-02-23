@@ -1297,3 +1297,17 @@ body.saas-admin-active {
 .saas-profile-action-btn {  display: flex; justify-content: center; align-items: center; gap: 5px; }
 .saas-profile-actions { display: flex; gap: 10px; margin-top: 15px; }
 
+
+/* Spinner Animation */
+.saas-spinner {
+  animation: spinner 1.2s linear infinite;
+}
+
+@keyframes spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

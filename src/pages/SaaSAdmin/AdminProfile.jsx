@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setSaasAuthData } from '../../redux/slices/saasAuthSlice';
-import { User, Camera, Edit, X } from 'lucide-react';
+import { User, Camera, Edit, X, Loader } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { updateAdminProfile } from '../../api/adminApi';
 import './SaaSAdmin.css';
@@ -195,8 +195,8 @@ const AdminProfile = () => {
               <button className="saas-btn btn-outline saas-profile-action-btn" onClick={handleCancelClick} disabled={isLoading}>
                 <X size={16} /> Cancel
               </button>
-              <button className="saas-btn btn-primary" style={{ flex: 1 }} onClick={handleSave}>
-                Save Changes
+              <button className="saas-btn btn-primary" style={{ flex: 1 }} onClick={handleSave} disabled={isLoading}>
+                {isLoading ? <><Loader className="saas-spinner" size={16} /> Saving...</> : 'Save Changes'}
               </button>
             </div>
           )}

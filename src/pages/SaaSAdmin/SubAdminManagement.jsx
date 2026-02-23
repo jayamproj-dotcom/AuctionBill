@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
-import { Plus, X, Download, Trash2, Search, Check, Edit, Eye, EyeOff } from 'lucide-react';
+import { Plus, X, Download, Trash2, Search, Check, Edit, Eye, EyeOff, Loader } from 'lucide-react';
 import { getSubAdmins, createSubAdmin, updateSubAdmin, deleteSubAdmin } from '../../api/adminApi';
 import { toast } from 'react-toastify';
 
@@ -15,6 +15,7 @@ const SubAdminManagement = () => {
   const [adminToDelete, setAdminToDelete] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchSubAdmins();
@@ -86,6 +87,7 @@ const SubAdminManagement = () => {
       return toast.error('Password is required for new sub-admins');
     }
 
+    setIsSaving(true);
     try {
       if (editingSubAdmin._id) {
         // Handle update
@@ -102,6 +104,8 @@ const SubAdminManagement = () => {
       fetchSubAdmins();
     } catch (error) {
       toast.error(error.message || 'Failed to save sub-admin');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -403,8 +407,10 @@ const SubAdminManagement = () => {
 
               </div>
               <div className="saas-modal-footer">
-                <button type="button" className="saas-btn btn-outline" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button type="submit" className="saas-btn btn-primary btnSubAdminModalSave">Save Sub-Admin</button>
+                <button type="button" className="saas-btn btn-outline" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Cancel</button>
+                <button type="submit" className="saas-btn btn-primary btnSubAdminModalSave" disabled={isSaving}>
+                  {isSaving ? <><Loader className="saas-spinner" size={16} /> Saving...</> : 'Save Sub-Admin'}
+                </button>
               </div>
             </form>
           </div>

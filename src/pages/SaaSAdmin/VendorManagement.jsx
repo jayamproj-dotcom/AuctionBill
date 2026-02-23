@@ -3,7 +3,7 @@ import { formatDate } from '../../utils/dateUtils';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal.jsx';
 import { useSelector } from 'react-redux';
-import { Trash2, X, Search, Plus, Edit } from 'lucide-react';
+import { Trash2, X, Search, Plus, Edit, Loader } from 'lucide-react';
 import { getVendors, createVendor, updateVendor, deleteVendor } from '../../api/ventorApi';
 import { getSubscriptions } from '../../api/adminApi';
 
@@ -25,6 +25,7 @@ const VendorManagement = () => {
   const [editingVendor, setEditingVendor] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [vendorToDelete, setVendorToDelete] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [newVendor, setNewVendor] = useState({
     name: '',
@@ -66,6 +67,7 @@ const VendorManagement = () => {
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       await createVendor(newVendor);
       setIsAddModalOpen(false);
@@ -81,6 +83,8 @@ const VendorManagement = () => {
     } catch (error) {
       console.error(error);
       alert("Error adding vendor: " + (error.message || "Unknown error"));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -99,6 +103,7 @@ const VendorManagement = () => {
 
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       await updateVendor(editingVendor._id || editingVendor.id, editingVendor);
       setIsEditModalOpen(false);
@@ -107,6 +112,8 @@ const VendorManagement = () => {
     } catch (error) {
       console.error(error);
       alert("Error updating vendor");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -316,8 +323,10 @@ const VendorManagement = () => {
                 </div>
               </div>
               <div className="saas-modal-footer">
-                <button type="button" className="saas-btn btn-secondary" onClick={() => setIsAddModalOpen(false)}>Cancel</button>
-                <button type="submit" className="saas-btn btn-primary">Add Vendor</button>
+                <button type="button" className="saas-btn btn-secondary" onClick={() => setIsAddModalOpen(false)} disabled={isSaving}>Cancel</button>
+                <button type="submit" className="saas-btn btn-primary" disabled={isSaving}>
+                  {isSaving ? <><Loader className="saas-spinner" size={16} /> Saving...</> : 'Add Vendor'}
+                </button>
               </div>
             </form>
           </div>
@@ -412,8 +421,10 @@ const VendorManagement = () => {
                 </div>
               </div>
               <div className="saas-modal-footer">
-                <button type="button" className="saas-btn btn-secondary" onClick={() => setIsEditModalOpen(false)}>Cancel</button>
-                <button type="submit" className="saas-btn btn-primary">Save Changes</button>
+                <button type="button" className="saas-btn btn-secondary" onClick={() => setIsEditModalOpen(false)} disabled={isSaving}>Cancel</button>
+                <button type="submit" className="saas-btn btn-primary" disabled={isSaving}>
+                  {isSaving ? <><Loader className="saas-spinner" size={16} /> Saving...</> : 'Save Changes'}
+                </button>
               </div>
             </form>
           </div>

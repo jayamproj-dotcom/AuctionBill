@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Loader } from 'lucide-react';
 import { toast } from 'react-toastify';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
@@ -21,6 +21,7 @@ const SubscriptionManagement = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
   const [planToDelete, setPlanToDelete] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchPlans();
@@ -104,6 +105,7 @@ const SubscriptionManagement = () => {
       slug: editingPlan.name.toLowerCase().replace(/\s+/g, '-')
     };
 
+    setIsSaving(true);
     try {
       if (editingPlan._id) {
         await updateSubscription(editingPlan._id, payload);
@@ -116,6 +118,8 @@ const SubscriptionManagement = () => {
       fetchPlans();
     } catch (error) {
       toast.error(error.message || "Failed to save plan");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -279,8 +283,10 @@ const SubscriptionManagement = () => {
               </div>
             </div>
             <div className="saas-modal-footer">
-              <button className="saas-btn btn-outline" onClick={() => setIsModalOpen(false)}>Cancel</button>
-              <button className="saas-btn btn-primary" onClick={handleSave}>Save Changes</button>
+              <button className="saas-btn btn-outline" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Cancel</button>
+              <button className="saas-btn btn-primary" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? <><Loader className="saas-spinner" size={16} /> Saving...</> : 'Save Changes'}
+              </button>
             </div>
           </div>
         </div>
