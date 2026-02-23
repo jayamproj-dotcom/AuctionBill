@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { formatDate } from '../../utils/dateUtils';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal.jsx';
+import { useSelector } from 'react-redux';
 import { Trash2, X, Search, Plus, Edit } from 'lucide-react';
 import { getVendors, createVendor, updateVendor, deleteVendor } from '../../api/ventorApi';
 import { getSubscriptions } from '../../api/adminApi';
@@ -10,6 +11,12 @@ const VendorManagement = () => {
   const role = localStorage.getItem('saas_role');
   const [vendors, setVendors] = useState([]);
   const [plans, setPlans] = useState([]);
+  const { saasRole, saasPermissions } = useSelector((state) => state.saasAuth);
+
+  const isSubAdmin = saasRole === 'sub-admin' || saasRole === 'subadmin';
+  const canManageVendors = !isSubAdmin || saasPermissions?.vendorAdd === true || String(saasPermissions?.vendorAdd).toLowerCase() === 'true';
+
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -155,7 +162,7 @@ const VendorManagement = () => {
               />
               <Search size={18} className="saas-search-icon-absolute" />
             </div>
-            {role !== 'subadmin' && (
+            {canManageVendors && (
               <button className="saas-btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
                 <Plus size={18} /> Add Vendor
               </button>
@@ -170,7 +177,7 @@ const VendorManagement = () => {
                 <th>Email</th>
                 <th>Current Plan</th>
                 <th>Status</th>
-                <th>Action</th>
+                {canManageVendors && <th>Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -198,9 +205,9 @@ const VendorManagement = () => {
                       {vendor.status}
                     </span>
                   </td>
-                  <td onClick={(e) => e.stopPropagation()}>
-                    <div className="saas-flex saas-gap-075">
-                      {role !== 'subadmin' && (
+                  {canManageVendors && (
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <div className="saas-flex saas-gap-075">
                         <>
                           <button
                             className="icon-btn edit"
@@ -223,9 +230,10 @@ const VendorManagement = () => {
                             <Trash2 size={16} />
                           </button>
                         </>
-                      )}
-                    </div>
-                  </td>
+                      </div>
+                    </td>
+                  )}
+
                 </tr>
               ))}
             </tbody>

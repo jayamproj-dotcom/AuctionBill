@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { User, Eye, EyeOff } from "lucide-react";
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
+import { useDispatch } from 'react-redux';
 import { adminLogin } from '../../api/adminApi';
+import { setSaasAuthData } from '../../redux/slices/saasAuthSlice';
 import './SaaSAdmin.css';
 
 const SaaSLogin = () => {
@@ -12,6 +14,7 @@ const SaaSLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -53,21 +56,50 @@ const SaaSLogin = () => {
 
                 if (response.status) {
                     toast.success(response.message || "Login successful");
-                    localStorage.setItem('admin_token', response.token);
-                    localStorage.setItem('is_admin', 'true');
-                    localStorage.setItem('admin_data', JSON.stringify(response.data));
+                    
+                    const authData = {
+                        adminToken: response.token,
+                        isAdmin: true,
+                        adminData: response.data,
+                    };
+
+                    sessionStorage.setItem('admin_token', response.token);
+                    sessionStorage.setItem('is_admin', 'true');
+                    sessionStorage.setItem('admin_data', JSON.stringify(response.data));
 
                     if (response.data && response.data.username) {
-                        localStorage.setItem('saas_admin_name', response.data.username);
+                        sessionStorage.setItem('saas_admin_name', response.data.username);
+                        authData.saasAdminName = response.data.username;
                     }
 
                     try {
                         const decoded = jwtDecode(response.token);
-                        localStorage.setItem('saas_role', decoded.role || 'admin');
+                        const role = response.data?.role || decoded.role || 'admin';
+                        sessionStorage.setItem('saas_role', role);
+                        authData.saasRole = role;
                     } catch (decodeError) {
                         console.error("Token decoding failed", decodeError);
-                        localStorage.setItem('saas_role', 'admin');
+                        const role = response.data?.role || 'admin';
+                        sessionStorage.setItem('saas_role', role);
+                        authData.saasRole = role;
                     }
+
+                    if (response.data && response.data.permissions) {
+                        sessionStorage.setItem('saas_permissions', JSON.stringify(response.data.permissions));
+                        authData.saasPermissions = response.data.permissions;
+                    }
+
+                    // Remove existing local storage variables to avoid conflict
+                    localStorage.removeItem('admin_token');
+                    localStorage.removeItem('is_admin');
+                    localStorage.removeItem('admin_data');
+                    localStorage.removeItem('saas_admin_name');
+                    localStorage.removeItem('saas_admin_photo');
+                    localStorage.removeItem('saas_role');
+                    localStorage.removeItem('saas_permissions');
+
+                    dispatch(setSaasAuthData(authData));
+
 
                     navigate('/saas/dashboard');
                 } else {

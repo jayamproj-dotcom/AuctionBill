@@ -45,7 +45,6 @@ const SubAdminManagement = () => {
       }
     });
     setIsModalOpen(true);
-    setShowPassword(false);
   };
 
   const handleEdit = (subAdmin) => {
@@ -242,11 +241,11 @@ const SubAdminManagement = () => {
                               isActive={subAdmin.permissions?.subscriptionAccess}
                               onToggle={() => handlePermissionChange('subscriptionAccess', !subAdmin.permissions?.subscriptionAccess, id)}
                             />
-                            <PermissionToggle
+                            {/* <PermissionToggle
                               label="Password Change Option"
                               isActive={subAdmin.permissions?.passwordChange}
                               onToggle={() => handlePermissionChange('passwordChange', !subAdmin.permissions?.passwordChange, id)}
-                            />
+                            /> */}
                           </div>
                         </td>
                         <td className="text-center">

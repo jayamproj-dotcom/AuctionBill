@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Lock, Eye, EyeOff, Check, ArrowRight } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useSelector } from 'react-redux';
 import { adminLogin, updateAdminPassword, verifyAdminPassword } from '../../api/adminApi';
 import './SaaSAdmin.css';
 
 const SaaSChangePassword = () => {
+  const { saasAdminName } = useSelector((state) => state.saasAuth);
   const [passwords, setPasswords] = useState({
     currentPassword: "",
     newPassword: "",
@@ -42,7 +44,7 @@ const SaaSChangePassword = () => {
     setLoading(true);
     try {
       // Get the current logged-in username
-      const username = localStorage.getItem('saas_admin_name') || 'admin';
+      const username = saasAdminName || 'admin';
 
       const response = await verifyAdminPassword({
         username,

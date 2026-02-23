@@ -4,9 +4,16 @@ import { toast } from 'react-toastify';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
 import { getSubscriptions, createSubscription, updateSubscription, deleteSubscription } from '../../api/adminApi';
+import { useSelector } from 'react-redux';
 
 const SubscriptionManagement = () => {
-  const role = localStorage.getItem('saas_role');
+  const { saasRole, saasPermissions } = useSelector((state) => state.saasAuth);
+
+  console.log(saasRole, saasPermissions);
+  
+  
+  const isSubAdmin = saasRole === 'sub-admin' || saasRole === 'subadmin';
+  const canManageSubscriptions = !isSubAdmin || saasPermissions?.subscriptionAccess === true || String(saasPermissions?.subscriptionAccess).toLowerCase() === 'true';
   const [plans, setPlans] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -121,7 +128,7 @@ const SubscriptionManagement = () => {
   return (
     <div className="fade-in">
       <div className="saas-flex-end saas-mb-15">
-        {role !== 'subadmin' && (
+        {canManageSubscriptions && (
           <button className="saas-btn btn-primary" onClick={handleAddPlan} disabled={isLoading}>
             <span><Plus /></span> Add New Plan
           </button>
@@ -157,25 +164,23 @@ const SubscriptionManagement = () => {
                   ))}
                 </ul>
               </div>
-              <div className="saas-card-footer-actions">
-                {role !== 'subadmin' && (
-                  <>
-                    <button
-                      className="saas-btn btn-outline saas-flex-1"
-                      onClick={() => handleEdit(plan)}
-                    >
-                      Edit
-                    </button>
+              {canManageSubscriptions && (
+                <div className="saas-card-footer-actions">
+                  <button
+                    className="saas-btn btn-outline saas-flex-1"
+                    onClick={() => handleEdit(plan)}
+                  >
+                    Edit
+                  </button>
 
-                    <button
-                      className="saas-btn btn-danger saas-flex-1"
-                      onClick={() => handleDelete(plan._id)}
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
-              </div>
+                  <button
+                    className="saas-btn btn-danger saas-flex-1"
+                    onClick={() => handleDelete(plan._id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
           ))}
           {plans.length === 0 && !isLoading && (
