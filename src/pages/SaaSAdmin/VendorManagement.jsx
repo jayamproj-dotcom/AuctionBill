@@ -482,8 +482,8 @@ const VendorManagement = () => {
                     <div className="saas-font-medium">{formatDate(selectedVendor.joinedDate)}</div>
                   </div>
                   <div>
-                    <label className="saas-label saas-text-muted">Last Login</label>
-                    <div className="saas-font-medium">{formatDate(selectedVendor.lastLogin)}</div>
+                    <label className="saas-label saas-text-muted">Plan End Date</label>
+                    <div className="saas-font-medium">{formatDate(selectedVendor.planEndDate)}</div>
                   </div>
                 </div>
               </div>
