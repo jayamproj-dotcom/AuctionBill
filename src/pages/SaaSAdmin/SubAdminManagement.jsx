@@ -249,21 +249,23 @@ const SubAdminManagement = () => {
                             />
                           </div>
                         </td>
-                        <td className="text-center align-top" style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
-                          <button
-                            className="icon-btn"
-                            title="Edit Sub-Admin"
-                            onClick={() => handleEdit(subAdmin)}
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            className="icon-btn delete btnSubAdminDelete"
-                            title="Delete Sub-Admin"
-                            onClick={() => handleDelete(id)}
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                        <td className="text-center">
+                          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                            <button
+                              className="icon-btn"
+                              title="Edit Sub-Admin"
+                              onClick={() => handleEdit(subAdmin)}
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              className="icon-btn delete"
+                              title="Delete Sub-Admin"
+                              onClick={() => handleDelete(id)}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
