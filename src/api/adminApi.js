@@ -115,3 +115,52 @@ export const deleteSubscription = async (id) => {
         throw error;
     }
 };
+
+// Sub-Admin APIs
+export const createSubAdmin = async (data) => {
+    try {
+        const response = await api.post('admin/create-sub-admin', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const getSubAdmins = async () => {
+    try {
+        const response = await api.get('admin/sub-admins');
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const updateSubAdmin = async (id, data) => {
+    try {
+        const response = await api.put(`admin/update-sub-admin/${id}`, data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const deleteSubAdmin = async (id) => {
+    try {
+        const response = await api.delete(`admin/delete-sub-admin/${id}`);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
