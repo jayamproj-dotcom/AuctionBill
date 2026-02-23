@@ -91,7 +91,7 @@ const SaaSDashboard = () => {
         </div>
       </div>
 
-      <div className="saas-card">
+       <div className="saas-card">
         <div className="saas-card-header">
           <h3 className="saas-text-lg saas-font-semibold">Recent Vendor Registrations</h3>
           <Link to="/saas/purchases"> <button className="saas-btn btn-sm btn-outline">View All</button></Link>
@@ -105,7 +105,7 @@ const SaaSDashboard = () => {
                 <th>Plan</th>
                 <th>Status</th>
                 <th>Joined Date</th>
-                {/* <th>Actions</th> */}
+            
               </tr>
             </thead>
             <tbody>
@@ -124,7 +124,7 @@ const SaaSDashboard = () => {
                     </span>
                   </td>
                   <td>{formatDate(vendor.joinedDate || vendor.createdAt)}</td>
-                  {/* <td>
+                   {/* <td>
                     <div className="action-buttons">
                         <button className="icon-btn edit" title="Manage Vendor">
                             <Settings size={18} />
@@ -133,13 +133,13 @@ const SaaSDashboard = () => {
                             <Trash2 size={18} />
                         </button>
                     </div>
-                  </td> */}
+                  </td>  */}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+      </div> 
     </div>
   );
 };

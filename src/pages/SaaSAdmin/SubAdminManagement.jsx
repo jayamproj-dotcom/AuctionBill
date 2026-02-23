@@ -14,6 +14,7 @@ const SubAdminManagement = () => {
   const [editingSubAdmin, setEditingSubAdmin] = useState(null);
   const [adminToDelete, setAdminToDelete] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     fetchSubAdmins();
@@ -44,6 +45,7 @@ const SubAdminManagement = () => {
         passwordChange: false
       }
     });
+    setIsChangingPassword(true);
     setIsModalOpen(true);
   };
 
@@ -52,6 +54,7 @@ const SubAdminManagement = () => {
       ...subAdmin,
       password: '' // empty so they don't see hashed
     });
+    setIsChangingPassword(false);
     setIsModalOpen(true);
   };
 
@@ -331,37 +334,71 @@ const SubAdminManagement = () => {
                 </div>
 
                 <div className="saas-form-group">
-                    <label className="saas-label">Password *</label>
-                    <div style={{ position: 'relative' }}>
-                      <input 
-                        type={showPassword ? "text" : "password"} 
-                        className="saas-input"
-                        value={editingSubAdmin?.password || ''}
-                        onChange={(e) => setEditingSubAdmin({...editingSubAdmin, password: e.target.value})}
-                        placeholder="Enter password"
-                        required
-                        style={{ paddingRight: '40px' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        style={{
-                          position: 'absolute',
-                          right: '10px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: '#6b7280',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </button>
-                    </div>
+                    <label className="saas-label">Password {editingSubAdmin?._id ? '' : '*'}</label>
+                    
+                    {!isChangingPassword && editingSubAdmin?._id ? (
+                      <div style={{ marginTop: '8px' }}>
+                        <a 
+                          href="#!" 
+                          onClick={(e) => { e.preventDefault(); setIsChangingPassword(true); }}
+                          style={{
+                            color: '#3b82f6',
+                            textDecoration: 'none',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Change Password
+                        </a>
+                      </div>
+                    ) : (
+                      <div style={{ position: 'relative' }}>
+                        <input 
+                          type={showPassword ? "text" : "password"} 
+                          className="saas-input"
+                          value={editingSubAdmin?.password || ''}
+                          onChange={(e) => setEditingSubAdmin({...editingSubAdmin, password: e.target.value})}
+                          placeholder={editingSubAdmin?._id ? "Enter new password" : "Enter password"}
+                          required={!editingSubAdmin?._id}
+                          style={{ paddingRight: '40px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          style={{
+                            position: 'absolute',
+                            right: '10px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#6b7280',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                        {editingSubAdmin?._id && (
+                          <div style={{ marginTop: '8px', textAlign: 'right' }}>
+                             <a 
+                              href="#!" 
+                              onClick={(e) => { 
+                                e.preventDefault(); 
+                                setIsChangingPassword(false); 
+                                setEditingSubAdmin({...editingSubAdmin, password: ''}); 
+                              }}
+                              style={{ color: '#ef4444', fontSize: '13px', textDecoration: 'none' }}
+                             >
+                               Cancel Change
+                             </a>
+                          </div>
+                        )}
+                      </div>
+                    )}
                 </div>
 
               </div>
