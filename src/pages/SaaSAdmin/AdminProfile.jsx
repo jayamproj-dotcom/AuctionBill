@@ -1,24 +1,24 @@
-import { useState, useRef, useEffect } from 'react';
-import { User, ShieldCheck, Camera, Eye, EyeOff, Edit, X } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { setSaasAuthData } from '../../redux/slices/saasAuthSlice';
+import { User, Camera, Edit, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { updateAdminProfile } from '../../api/adminApi';
 import './SaaSAdmin.css';
 
 const AdminProfile = () => {
+  const dispatch = useDispatch();
   const fileInputRef = useRef(null);
-  const adminDataString = localStorage.getItem('admin_data');
-  const adminDataObj = adminDataString ? JSON.parse(adminDataString) : {};
+  const { saasAdminName, adminData, saasAdminPhoto } = useSelector((state) => state.saasAuth);
 
   const [settings, setSettings] = useState({
-    adminName: localStorage.getItem('saas_admin_name') || adminDataObj.username || "Super Admin",
-    adminEmail: adminDataObj.email || "admin@auctionbill.com",
-    adminPhoto: localStorage.getItem('saas_admin_photo') || null
+    adminName: saasAdminName || adminData?.username || "Super Admin",
+    adminEmail: adminData?.email || "admin@auctionbill.com",
+    adminPhoto: saasAdminPhoto || null
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const role = localStorage.getItem('saas_role');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -59,24 +59,25 @@ const AdminProfile = () => {
       const response = await updateAdminProfile(payload);
 
       if (response.status && response.admin) {
-        if (settings.adminPhoto) {
-          localStorage.setItem('saas_admin_photo', settings.adminPhoto);
-        }
-
-        localStorage.setItem('saas_admin_name', response.admin.username);
-        localStorage.setItem('saas_admin_email', response.admin.email);
-
-        const currentAdminDataStr = localStorage.getItem('admin_data');
-        if (currentAdminDataStr) {
-          try {
-            const currentAdminData = JSON.parse(currentAdminDataStr);
-            currentAdminData.username = response.admin.username;
-            currentAdminData.email = response.admin.email;
-            localStorage.setItem('admin_data', JSON.stringify(currentAdminData));
-          } catch (e) {
-            console.error("Error updating admin_data in localStorage", e);
+        const updatePayload = {
+          saasAdminName: response.admin.username,
+          adminData: {
+            ...adminData,
+            username: response.admin.username,
+            email: response.admin.email
           }
+        };
+
+        if (settings.adminPhoto) {
+          sessionStorage.setItem('saas_admin_photo', settings.adminPhoto);
+          updatePayload.saasAdminPhoto = settings.adminPhoto;
         }
+
+        sessionStorage.setItem('saas_admin_name', response.admin.username);
+        sessionStorage.setItem('saas_admin_email', response.admin.email);
+        sessionStorage.setItem('admin_data', JSON.stringify(updatePayload.adminData));
+        
+        dispatch(setSaasAuthData(updatePayload));
 
         // Update local state to match API response
         setSettings(prev => ({
@@ -106,13 +107,11 @@ const AdminProfile = () => {
 
   const handleCancelClick = () => {
     setIsEditing(false);
-    const adminDataStr = localStorage.getItem('admin_data');
-    const adminData = adminDataStr ? JSON.parse(adminDataStr) : {};
-
+    
     setSettings({
-      adminName: localStorage.getItem('saas_admin_name') || adminData.username || "Super Admin",
-      adminEmail: adminData.email || "admin@auctionbill.com",
-      adminPhoto: localStorage.getItem('saas_admin_photo') || null
+      adminName: saasAdminName || adminData?.username || "Super Admin",
+      adminEmail: adminData?.email || "admin@auctionbill.com",
+      adminPhoto: saasAdminPhoto || null
     });
   };
 

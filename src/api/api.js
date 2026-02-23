@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { store } from '../redux/store';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
@@ -11,7 +12,8 @@ const api = axios.create({
 api.interceptors.request.use(
     (config) => {
         // Also check for 'admin_token' since auth sets 'admin_token'
-        const token = localStorage.getItem('admin_token') || localStorage.getItem('token') || sessionStorage.getItem('token');
+        const state = store.getState();
+        const token = state.saasAuth?.adminToken || sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token') || localStorage.getItem('token') || sessionStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }

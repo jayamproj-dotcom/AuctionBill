@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { formatDate } from '../../utils/dateUtils';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal.jsx';
+import { useSelector } from 'react-redux';
 import { Trash2, X, Search, Plus, Edit } from 'lucide-react';
 
 const VendorManagement = () => {
-  const role = localStorage.getItem('saas_role');
-  const saasPermissionsStr = localStorage.getItem('saas_permissions');
-  const saasPermissions = saasPermissionsStr && saasPermissionsStr !== "undefined" ? JSON.parse(saasPermissionsStr) : {};
-  const canManageVendors = role !== 'sub-admin' || saasPermissions?.vendorAdd === true;
+  const { saasRole, saasPermissions } = useSelector((state) => state.saasAuth);
+  
+  const isSubAdmin = saasRole === 'sub-admin' || saasRole === 'subadmin';
+  const canManageVendors = !isSubAdmin || saasPermissions?.vendorAdd === true || String(saasPermissions?.vendorAdd).toLowerCase() === 'true';
   const [vendors, setVendors] = useState([
     {
       id: 1,

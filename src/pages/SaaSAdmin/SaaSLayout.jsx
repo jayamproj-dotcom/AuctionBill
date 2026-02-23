@@ -1,16 +1,28 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { clearSaasAuthData } from '../../redux/slices/saasAuthSlice';
 import { House, ShoppingCart, Users, Gem, Settings, LogOut, Menu, X, Bell, User, Lock } from 'lucide-react';
 import './SaaSAdmin.css';
 
 const SaaSLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [adminPhoto, setAdminPhoto] = useState(localStorage.getItem('saas_admin_photo') || null);
-  const [adminName, setAdminName] = useState(localStorage.getItem('saas_admin_name') || 'Super Admin');
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const profileRef = useRef(null);
   const location = useLocation();
-  const navigate = useNavigate();
+  
+  const { 
+    saasAdminPhoto, 
+    saasAdminName, 
+    isAdmin, 
+    saasRole, 
+    saasPermissions 
+  } = useSelector((state) => state.saasAuth);
+
+  const [adminPhoto, setAdminPhoto] = useState(saasAdminPhoto || null);
+  const [adminName, setAdminName] = useState(saasAdminName || 'Super Admin');
 
   // Close dropdown when clicking outside and handle profile photo updates
   useEffect(() => {
@@ -38,9 +50,8 @@ const SaaSLayout = () => {
   useEffect(() => {
     document.body.classList.add('saas-admin-active');
     
-    // Check for auth token
-    const is_admin_login = localStorage.getItem('is_admin');
-    if (!is_admin_login) {
+    // Check for auth token using Redux mapped local storage originally
+    if (!isAdmin) {
         navigate('/saas-admin');
     }
 
@@ -50,13 +61,11 @@ const SaaSLayout = () => {
   }, [navigate]);
 
   const handleLogout = () => {
-      localStorage.removeItem('is_admin');
+      dispatch(clearSaasAuthData());
       navigate('/saas-admin');
   };
 
-  const saasRole = localStorage.getItem('saas_role') || 'admin';
-  const saasPermissionsStr = localStorage.getItem('saas_permissions');
-  const saasPermissions = saasPermissionsStr && saasPermissionsStr !== "undefined" ? JSON.parse(saasPermissionsStr) : {};
+  const isSubAdmin = saasRole === 'sub-admin' || saasRole === 'subadmin';
 
   let navItems = [
     { path: '/saas', label: 'Dashboard', icon: <House size={20} /> },
@@ -68,12 +77,13 @@ const SaaSLayout = () => {
     { path: '/saas/change-password', label: 'Change Password', icon: <Lock size={20} /> },
   ];
 
-  if (saasRole === 'sub-admin') {
+  if (isSubAdmin) {
       navItems = navItems.filter(item => {
           if (item.path === '/saas/settings') return false; 
           if (item.path === '/saas/subadmins') return false; 
-          if (item.path === '/saas/change-password') return saasPermissions.passwordChange === true;
-          if (item.path === '/saas/subscriptions') return saasPermissions.subscriptionAccess === true;
+          if (item.path === '/saas/change-password') {
+              return saasPermissions?.passwordChange === true || String(saasPermissions?.passwordChange).toLowerCase() === 'true';
+          }
           return true;
       });
   }
@@ -167,7 +177,7 @@ const SaaSLayout = () => {
                         <div className="saas-dropdown-name">{adminName}</div>
                     </div>
                     
-                    {saasRole !== 'sub-admin' && (
+                    {!isSubAdmin && (
                         <div className="saas-dropdown-item" onClick={() => {
                             navigate('/saas/settings');
                             setProfileOpen(false);
@@ -176,7 +186,7 @@ const SaaSLayout = () => {
                           <span className="saas-dropdown-item-text">Profile</span>
                         </div>
                     )}
-                    {saasRole !== 'sub-admin' && <div className="saas-dropdown-divider"></div>}
+                    {!isSubAdmin && <div className="saas-dropdown-divider"></div>}
                     <div className="saas-dropdown-item text-danger" onClick={handleLogout}>
                       <LogOut size={16} />
                       <span className="saas-dropdown-item-text">Logout</span>
