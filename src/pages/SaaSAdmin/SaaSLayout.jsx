@@ -54,7 +54,11 @@ const SaaSLayout = () => {
       navigate('/saas-admin');
   };
 
-  const navItems = [
+  const saasRole = localStorage.getItem('saas_role') || 'admin';
+  const saasPermissionsStr = localStorage.getItem('saas_permissions');
+  const saasPermissions = saasPermissionsStr && saasPermissionsStr !== "undefined" ? JSON.parse(saasPermissionsStr) : {};
+
+  let navItems = [
     { path: '/saas', label: 'Dashboard', icon: <House size={20} /> },
     { path: '/saas/purchases', label: 'Purchases', icon: <ShoppingCart size={20} /> },
     { path: '/saas/vendors', label: 'Vendors', icon: <Users size={20} /> },
@@ -63,6 +67,16 @@ const SaaSLayout = () => {
     { path: '/saas/settings', label: 'Profile', icon: <User size={20} /> },
     { path: '/saas/change-password', label: 'Change Password', icon: <Lock size={20} /> },
   ];
+
+  if (saasRole === 'sub-admin') {
+      navItems = navItems.filter(item => {
+          if (item.path === '/saas/settings') return false; 
+          if (item.path === '/saas/subadmins') return false; 
+          if (item.path === '/saas/change-password') return saasPermissions.passwordChange === true;
+          if (item.path === '/saas/subscriptions') return saasPermissions.subscriptionAccess === true;
+          return true;
+      });
+  }
 
   return (
     <div className="saas-layout">
@@ -153,14 +167,16 @@ const SaaSLayout = () => {
                         <div className="saas-dropdown-name">{adminName}</div>
                     </div>
                     
-                    <div className="saas-dropdown-item" onClick={() => {
-                        navigate('/saas/settings');
-                        setProfileOpen(false);
-                    }}>
-                      <User size={16} /> 
-                      <span className="saas-dropdown-item-text">Profile</span>
-                    </div>
-                    <div className="saas-dropdown-divider"></div>
+                    {saasRole !== 'sub-admin' && (
+                        <div className="saas-dropdown-item" onClick={() => {
+                            navigate('/saas/settings');
+                            setProfileOpen(false);
+                        }}>
+                          <User size={16} /> 
+                          <span className="saas-dropdown-item-text">Profile</span>
+                        </div>
+                    )}
+                    {saasRole !== 'sub-admin' && <div className="saas-dropdown-divider"></div>}
                     <div className="saas-dropdown-item text-danger" onClick={handleLogout}>
                       <LogOut size={16} />
                       <span className="saas-dropdown-item-text">Logout</span>

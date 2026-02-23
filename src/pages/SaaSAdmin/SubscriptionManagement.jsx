@@ -7,6 +7,9 @@ import { getSubscriptions, createSubscription, updateSubscription, deleteSubscri
 
 const SubscriptionManagement = () => {
   const role = localStorage.getItem('saas_role');
+  const saasPermissionsStr = localStorage.getItem('saas_permissions');
+  const saasPermissions = saasPermissionsStr && saasPermissionsStr !== "undefined" ? JSON.parse(saasPermissionsStr) : {};
+  const canManageSubscriptions = role !== 'sub-admin' || saasPermissions?.subscriptionAccess === true;
   const [plans, setPlans] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -121,7 +124,7 @@ const SubscriptionManagement = () => {
   return (
     <div className="fade-in">
       <div className="saas-flex-end saas-mb-15">
-        {role !== 'subadmin' && (
+        {canManageSubscriptions && (
           <button className="saas-btn btn-primary" onClick={handleAddPlan} disabled={isLoading}>
             <span><Plus /></span> Add New Plan
           </button>
@@ -158,7 +161,7 @@ const SubscriptionManagement = () => {
                 </ul>
               </div>
               <div className="saas-card-footer-actions">
-                {role !== 'subadmin' && (
+                {canManageSubscriptions && (
                   <>
                     <button
                       className="saas-btn btn-outline saas-flex-1"

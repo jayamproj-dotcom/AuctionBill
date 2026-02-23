@@ -63,11 +63,16 @@ const SaaSLogin = () => {
 
                     try {
                         const decoded = jwtDecode(response.token);
-                        localStorage.setItem('saas_role', decoded.role || 'admin');
+                        localStorage.setItem('saas_role', response.data?.role || decoded.role || 'admin');
                     } catch (decodeError) {
                         console.error("Token decoding failed", decodeError);
-                        localStorage.setItem('saas_role', 'admin');
+                        localStorage.setItem('saas_role', response.data?.role || 'admin');
                     }
+
+                    if (response.data && response.data.permissions) {
+                        localStorage.setItem('saas_permissions', JSON.stringify(response.data.permissions));
+                    }
+
 
                     navigate('/saas/dashboard');
                 } else {

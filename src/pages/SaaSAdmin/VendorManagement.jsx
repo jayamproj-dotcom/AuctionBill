@@ -6,6 +6,9 @@ import { Trash2, X, Search, Plus, Edit } from 'lucide-react';
 
 const VendorManagement = () => {
   const role = localStorage.getItem('saas_role');
+  const saasPermissionsStr = localStorage.getItem('saas_permissions');
+  const saasPermissions = saasPermissionsStr && saasPermissionsStr !== "undefined" ? JSON.parse(saasPermissionsStr) : {};
+  const canManageVendors = role !== 'sub-admin' || saasPermissions?.vendorAdd === true;
   const [vendors, setVendors] = useState([
     {
       id: 1,
@@ -175,7 +178,7 @@ const VendorManagement = () => {
               />
               <Search size={18} className="saas-search-icon-absolute" />
             </div>
-            {role !== 'subadmin' && (
+            {canManageVendors && (
               <button className="saas-btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
                 <Plus size={18} /> Add Vendor
               </button>
@@ -220,7 +223,7 @@ const VendorManagement = () => {
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <div className="saas-flex saas-gap-075">
-                      {role !== 'subadmin' && (
+                      {canManageVendors && (
                         <>
                           <button
                             className="icon-btn edit"
