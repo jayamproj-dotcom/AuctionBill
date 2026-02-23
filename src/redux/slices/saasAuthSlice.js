@@ -31,6 +31,9 @@ const saasAuthSlice = createSlice({
     reducers: {
         setSaasAuthData: (state, action) => {
             const data = action.payload;
+
+            console.log("data", data);
+
             if (data.adminToken !== undefined) state.adminToken = data.adminToken;
             if (data.isAdmin !== undefined) state.isAdmin = data.isAdmin;
             if (data.adminData !== undefined) state.adminData = data.adminData;

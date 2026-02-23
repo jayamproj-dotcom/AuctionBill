@@ -1,69 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { formatDate } from '../../utils/dateUtils';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal.jsx';
 import { useSelector } from 'react-redux';
 import { Trash2, X, Search, Plus, Edit } from 'lucide-react';
+import { getVendors, createVendor, updateVendor, deleteVendor } from '../../api/ventorApi';
+import { getSubscriptions } from '../../api/adminApi';
 
 const VendorManagement = () => {
+  const role = localStorage.getItem('saas_role');
+  const [vendors, setVendors] = useState([]);
+  const [plans, setPlans] = useState([]);
   const { saasRole, saasPermissions } = useSelector((state) => state.saasAuth);
-  
+
   const isSubAdmin = saasRole === 'sub-admin' || saasRole === 'subadmin';
   const canManageVendors = !isSubAdmin || saasPermissions?.vendorAdd === true || String(saasPermissions?.vendorAdd).toLowerCase() === 'true';
-  const [vendors, setVendors] = useState([
-    {
-      id: 1,
-      name: 'Royal Auctions',
-      email: 'royal@example.com',
-      plan: 'Premium',
-      status: 'Active',
-      phone: '+91 98765 43210',
-      joinedDate: '2024-01-15',
-      lastLogin: '2024-03-10 10:30 AM',
-      address: '123, Royal Street, Mumbai, Maharashtra',
-      totalAuctions: 154,
-      revenue: '₹12,50,000'
-    },
-    {
-      id: 2,
-      name: 'Heritage Bids',
-      email: 'heritage@example.com',
-      plan: 'Basic',
-      status: 'Active',
-      phone: '+91 87654 32109',
-      joinedDate: '2024-02-01',
-      lastLogin: '2024-03-09 02:15 PM',
-      address: '45, Heritage Lane, Delhi',
-      totalAuctions: 45,
-      revenue: '₹3,20,000'
-    },
-    {
-      id: 3,
-      name: 'City Auction House',
-      email: 'city@example.com',
-      plan: 'Free',
-      status: 'Pending',
-      phone: '+91 76543 21098',
-      joinedDate: '2024-03-05',
-      lastLogin: 'Never',
-      address: '78, City Plaza, Bangalore, Karnataka',
-      totalAuctions: 0,
-      revenue: '₹0'
-    },
-    {
-      id: 4,
-      name: 'South Gate Bidding',
-      email: 'southgate@example.com',
-      plan: 'Premium',
-      status: 'Inactive',
-      phone: '+91 65432 10987',
-      joinedDate: '2023-11-20',
-      lastLogin: '2024-01-15 09:00 AM',
-      address: '12, South Avenue, Chennai, Tamil Nadu',
-      totalAuctions: 312,
-      revenue: '₹25,00,000'
-    },
-  ]);
+
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,9 +31,30 @@ const VendorManagement = () => {
     email: '',
     phone: '',
     address: '',
-    plan: 'Basic',
+    plan: '',
     status: 'Active'
   });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [plansRes, vendorsRes] = await Promise.all([getSubscriptions(), getVendors()]);
+      if (plansRes.status && plansRes.subscriptions) {
+        setPlans(plansRes.subscriptions);
+        if (plansRes.subscriptions.length > 0) {
+          setNewVendor(prev => ({ ...prev, plan: plansRes.subscriptions[0]._id }));
+        }
+      }
+      if (vendorsRes.status && vendorsRes.vendors) {
+        setVendors(vendorsRes.vendors);
+      }
+    } catch (error) {
+      console.error("Error loading data", error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -91,30 +64,28 @@ const VendorManagement = () => {
     }));
   };
 
-  const handleAddSubmit = (e) => {
+  const handleAddSubmit = async (e) => {
     e.preventDefault();
-    const vendorToAdd = {
-      ...newVendor,
-      id: vendors.length + 1,
-      joinedDate: new Date().toISOString().split('T')[0],
-      lastLogin: 'Never',
-      totalAuctions: 0,
-      revenue: '₹0'
-    };
-    setVendors([...vendors, vendorToAdd]);
-    setIsAddModalOpen(false);
-    setNewVendor({
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
-      plan: 'Basic',
-      status: 'Active'
-    });
+    try {
+      await createVendor(newVendor);
+      setIsAddModalOpen(false);
+      setNewVendor({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        plan: plans.length > 0 ? plans[0]._id : '',
+        status: 'Active'
+      });
+      loadData();
+    } catch (error) {
+      console.error(error);
+      alert("Error adding vendor: " + (error.message || "Unknown error"));
+    }
   };
 
   const handleEditClick = (vendor) => {
-    setEditingVendor({ ...vendor });
+    setEditingVendor({ ...vendor, plan: vendor.plan?._id || vendor.plan });
     setIsEditModalOpen(true);
   };
 
@@ -126,11 +97,17 @@ const VendorManagement = () => {
     }));
   };
 
-  const handleUpdateSubmit = (e) => {
+  const handleUpdateSubmit = async (e) => {
     e.preventDefault();
-    setVendors(vendors.map(v => v.id === editingVendor.id ? editingVendor : v));
-    setIsEditModalOpen(false);
-    setEditingVendor(null);
+    try {
+      await updateVendor(editingVendor._id || editingVendor.id, editingVendor);
+      setIsEditModalOpen(false);
+      setEditingVendor(null);
+      loadData();
+    } catch (error) {
+      console.error(error);
+      alert("Error updating vendor");
+    }
   };
 
   const handleRowClick = (vendor) => {
@@ -143,11 +120,17 @@ const VendorManagement = () => {
     setIsConfirmOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (vendorToDelete) {
-      setVendors(vendors.filter(v => v.id !== vendorToDelete.id));
-      setVendorToDelete(null);
-      setIsConfirmOpen(false);
+      try {
+        await deleteVendor(vendorToDelete._id || vendorToDelete.id);
+        setVendorToDelete(null);
+        setIsConfirmOpen(false);
+        loadData();
+      } catch (error) {
+        console.error(error);
+        alert("Error deleting vendor");
+      }
     }
   };
 
@@ -194,7 +177,7 @@ const VendorManagement = () => {
                 <th>Email</th>
                 <th>Current Plan</th>
                 <th>Status</th>
-                <th>Action</th>
+                {canManageVendors && <th>Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -204,15 +187,15 @@ const VendorManagement = () => {
                 vendor.phone.includes(searchQuery)
               ).map((vendor) => (
                 <tr
-                  key={vendor.id}
+                  key={vendor._id || vendor.id}
                   onClick={() => handleRowClick(vendor)}
                   className="vendor-row"
                 >
                   <td className="saas-font-medium">{vendor.name}</td>
                   <td>{vendor.email}</td>
                   <td>
-                    <span className={`saas-badge ${vendor.plan === 'Premium' ? 'badge-info' : 'badge-warning'}`}>
-                      {vendor.plan}
+                    <span className={`saas-badge ${(vendor.plan?.name || vendor.plan) === 'Premium' ? 'badge-info' : 'badge-warning'}`}>
+                      {vendor.plan?.name || vendor.plan}
                     </span>
                   </td>
                   <td>
@@ -222,9 +205,9 @@ const VendorManagement = () => {
                       {vendor.status}
                     </span>
                   </td>
-                  <td onClick={(e) => e.stopPropagation()}>
-                    <div className="saas-flex saas-gap-075">
-                      {canManageVendors && (
+                  {canManageVendors && (
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <div className="saas-flex saas-gap-075">
                         <>
                           <button
                             className="icon-btn edit"
@@ -247,9 +230,10 @@ const VendorManagement = () => {
                             <Trash2 size={16} />
                           </button>
                         </>
-                      )}
-                    </div>
-                  </td>
+                      </div>
+                    </td>
+                  )}
+
                 </tr>
               ))}
             </tbody>
@@ -314,9 +298,9 @@ const VendorManagement = () => {
                       onChange={handleInputChange}
                       className="saas-select"
                     >
-                      <option value="Basic">Basic</option>
-                      <option value="Premium">Premium</option>
-                      <option value="Enterprise">Enterprise</option>
+                      {plans.map(p => (
+                        <option key={p._id} value={p._id}>{p.name}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="form-group full-width">
@@ -397,9 +381,9 @@ const VendorManagement = () => {
                       onChange={handleEditChange}
                       className="saas-select"
                     >
-                      <option value="Basic">Basic</option>
-                      <option value="Premium">Premium</option>
-                      <option value="Enterprise">Enterprise</option>
+                      {plans.map(p => (
+                        <option key={p._id} value={p._id}>{p.name}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="form-group">
@@ -481,8 +465,8 @@ const VendorManagement = () => {
                 <div className="inner-grid-2">
                   <div>
                     <label className="saas-label saas-text-muted">Current Plan</label>
-                    <span className={`saas-badge ${selectedVendor.plan === 'Premium' ? 'badge-info' : 'badge-warning'}`}>
-                      {selectedVendor.plan}
+                    <span className={`saas-badge ${(selectedVendor.plan?.name || selectedVendor.plan) === 'Premium' ? 'badge-info' : 'badge-warning'}`}>
+                      {selectedVendor.plan?.name || selectedVendor.plan}
                     </span>
                   </div>
                   <div>
