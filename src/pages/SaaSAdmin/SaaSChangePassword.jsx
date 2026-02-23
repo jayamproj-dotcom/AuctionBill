@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lock, Eye, EyeOff, Check, ArrowRight } from 'lucide-react';
+import { Lock, Eye, EyeOff, Check, ArrowRight, Loader } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
 import { adminLogin, updateAdminPassword, verifyAdminPassword } from '../../api/adminApi';
@@ -135,7 +135,7 @@ const SaaSChangePassword = () => {
             </div>
 
             <button type="submit" disabled={loading} className="saas-btn btn-primary saas-btn-wide">
-              {loading ? 'Verifying...' : <><Check size={20} /> Verify Password</>}
+              {loading ? <><Loader className="saas-spinner" size={20} /> Verifying...</> : <><Check size={20} /> Verify Password</>}
             </button>
           </form>
         )}
@@ -192,7 +192,7 @@ const SaaSChangePassword = () => {
             </div>
 
             <button type="submit" disabled={loading} className="saas-btn btn-primary saas-btn-wide">
-              {loading ? 'Changing Password...' : <><Check size={20} /> Update Password</>}
+              {loading ? <><Loader className="saas-spinner" size={20} /> Changing Password...</> : <><Check size={20} /> Update Password</>}
             </button>
           </form>
         )}

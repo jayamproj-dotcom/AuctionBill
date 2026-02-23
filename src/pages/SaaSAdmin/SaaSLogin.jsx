@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Eye, EyeOff } from "lucide-react";
+import { User, Eye, EyeOff, Loader } from "lucide-react";
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
 import { useDispatch } from 'react-redux';
@@ -164,7 +164,7 @@ const SaaSLogin = () => {
                     </div>
 
                     <button type="submit" className="saas-btn btn-primary saas-login-btn" disabled={loading}>
-                        {loading ? 'Logging in...' : 'Login to Dashboard'}
+                        {loading ? <><Loader className="saas-spinner" size={18} /> Logging in...</> : 'Login to Dashboard'}
                     </button>
 
                     <div className="saas-login-footer">

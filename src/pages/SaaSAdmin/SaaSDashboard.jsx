@@ -94,7 +94,7 @@ const SaaSDashboard = () => {
        <div className="saas-card">
         <div className="saas-card-header">
           <h3 className="saas-text-lg saas-font-semibold">Recent Vendor Registrations</h3>
-          <Link to="/saas/purchases"> <button className="saas-btn btn-sm btn-outline">View All</button></Link>
+          <Link to="/saas/vendors"> <button className="saas-btn btn-sm btn-outline">View All</button></Link>
         </div>
         <div className="saas-table-container">
           <table className="saas-table">
