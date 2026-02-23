@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
-import { Plus, X, Download, Trash2, Search, Check, Edit } from 'lucide-react';
+import { Plus, X, Download, Trash2, Search, Check, Edit, Eye, EyeOff } from 'lucide-react';
 import { getSubAdmins, createSubAdmin, updateSubAdmin, deleteSubAdmin } from '../../api/adminApi';
 import { toast } from 'react-toastify';
 
@@ -13,6 +13,7 @@ const SubAdminManagement = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingSubAdmin, setEditingSubAdmin] = useState(null);
   const [adminToDelete, setAdminToDelete] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     fetchSubAdmins();
@@ -44,6 +45,7 @@ const SubAdminManagement = () => {
       }
     });
     setIsModalOpen(true);
+    setShowPassword(false);
   };
 
   const handleEdit = (subAdmin) => {
@@ -178,12 +180,12 @@ const SubAdminManagement = () => {
             />
           </div>
           <div className="saas-flex" style={{ gap: '10px' }}>
-            <button className="saas-btn btn-outline btnSubAdminAdd" onClick={handleAddSubAdmin}>
-              <Plus size={16} /> Add Sub-Admin
-            </button>
-            <button className="saas-btn btn-primary btnSubAdminDownload">
-              <Download size={16} /> Download Sub-Admins List
-            </button>
+             <button className="saas-btn btn-outline btnSubAdminAdd" onClick={handleAddSubAdmin}>
+                <Plus size={16} /> Add Sub-Admin
+             </button>
+             {/* <button className="saas-btn btn-primary btnSubAdminDownload">
+                <Download size={16} /> Download Sub-Admins List
+             </button> */}
           </div>
         </div>
       </div>
@@ -328,15 +330,37 @@ const SubAdminManagement = () => {
                 </div>
 
                 <div className="saas-form-group">
-                  <label className="saas-label">Password {!editingSubAdmin?._id && '*'}</label>
-                  <input
-                    type="password"
-                    className="saas-input"
-                    value={editingSubAdmin?.password || ''}
-                    onChange={(e) => setEditingSubAdmin({ ...editingSubAdmin, password: e.target.value })}
-                    placeholder={editingSubAdmin?._id ? "Leave blank to keep same" : "Enter password"}
-                    required={!editingSubAdmin?._id}
-                  />
+                    <label className="saas-label">Password *</label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type={showPassword ? "text" : "password"} 
+                        className="saas-input"
+                        value={editingSubAdmin?.password || ''}
+                        onChange={(e) => setEditingSubAdmin({...editingSubAdmin, password: e.target.value})}
+                        placeholder="Enter password"
+                        required
+                        style={{ paddingRight: '40px' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#6b7280',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                 </div>
 
               </div>

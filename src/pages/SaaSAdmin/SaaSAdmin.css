@@ -1294,6 +1294,6 @@ body.saas-admin-active {
 .saas-profile-name { font-size: 1.2rem; font-weight: 600; }
 .saas-profile-email { color: gray; }
 .saas-profile-readonly { padding: 0.625rem 0.875rem; background-color: #f8fafc; border-radius: 0.5rem; border: 1px solid #e2e8f0; color: #1e293b; }
-.saas-profile-action-btn { flex: 1; display: flex; justify-content: center; align-items: center; gap: 5px; }
+.saas-profile-action-btn {  display: flex; justify-content: center; align-items: center; gap: 5px; }
 .saas-profile-actions { display: flex; gap: 10px; margin-top: 15px; }
 
