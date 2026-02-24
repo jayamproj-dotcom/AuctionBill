@@ -1,76 +1,96 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { formatDate } from '../../utils/dateUtils';
 import { jsPDF } from 'jspdf';
 import './Subscription.css';
 import { CreditCard, CheckCircle2, TrendingUp, Check, Plus, FileText, Download } from 'lucide-react';
+import { getSubscriptions, getVendors, updateVendor } from '../../api/adminApi';
 
 const Subscription = () => {
-    // Define available plans
-    const plans = [
-        {
-            id: 'basic',
-            name: "Basic",
-            price: 4999,
-            features: [
-                "Up to 50 Auctions",
-                "Basic Analytics",
-                "Email Support",
-                "Single User Access"
-            ]
-        },
-        {
-            id: 'premium',
-            name: "Premium",
-            price: 9999,
-            features: [
-                "Unlimited Auctions",
-                "Advanced Analytics",
-                "Priority Support",
-                "Multi-User Access",
-                "Export to PDF/Excel"
-            ]
-        },
-        {
-            id: 'enterprise',
-            name: "Enterprise",
-            price: 19999,
-            features: [
-                "Everything in Premium",
-                "Dedicated Account Manager",
-                "Custom API Access",
-                "White Labeling",
-                "24/7 Phone Support"
-            ]
-        }
-    ];
+    const { vendorId } = useSelector((state) => state.vendorAuth);
+    console.log("vendorId", vendorId);
 
-    // Current subscription state - Change plan here to test different scenarios
-    const [currentPlanId, setCurrentPlanId] = useState('basic');
+    const fallbackVendorId = sessionStorage.getItem('vendorId');
+    const currentVendorId = vendorId || fallbackVendorId;
 
-    // Mock Subscription Data based on currentPlanId
-    const currentPlanDetails = plans.find(p => p.id === currentPlanId);
-
-    const [subscription, setSubscription] = useState({
-        plan: currentPlanDetails.name,
-        planId: currentPlanId,
-        status: "Active",
-        startDate: "2025-01-01",
-        expiryDate: "2026-01-01",
-        price: currentPlanDetails.price,
-        features: currentPlanDetails.features
-    });
-
+    const [plans, setPlans] = useState([]);
+    const [subscription, setSubscription] = useState(null);
     const [invoices, setInvoices] = useState([
         { id: "INV-2025-001", date: "2025-01-01", amount: 4999, status: "Paid", description: "Basic Plan - Yearly" },
         { id: "INV-2024-001", date: "2024-01-01", amount: 4999, status: "Paid", description: "Basic Plan - Yearly" }
     ]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Fetch all plans
+                const plansRes = await getSubscriptions();
+                const fetchedPlans = plansRes.subscriptions || [];
+                setPlans(fetchedPlans);
+
+                // Fetch current vendor
+                const vendorsRes = await getVendors();
+                const vendors = vendorsRes.vendors || [];
+                const currentVendor = vendors.find(v => v._id === currentVendorId);
+
+                if (currentVendor) {
+                    const vendorPlanId = typeof currentVendor.plan === 'object' ? currentVendor.plan?._id : currentVendor.plan;
+                    const currentPlanDetails = fetchedPlans.find(p => p._id === vendorPlanId);
+
+                    if (currentPlanDetails) {
+                        setSubscription({
+                            id: currentVendor._id,
+                            plan: currentPlanDetails.name,
+                            planId: currentPlanDetails._id,
+                            status: currentVendor.status || 'Active',
+                            startDate: currentVendor.createdAt || new Date().toISOString(),
+                            expiryDate: currentVendor.planEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+                            price: currentPlanDetails.price || 0,
+                            features: currentPlanDetails.features || []
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching subscription data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (currentVendorId) {
+            fetchData();
+        } else {
+            setLoading(false);
+        }
+    }, [currentVendorId]);
 
     const calculateDaysRemaining = () => {
+        if (!subscription) return 0;
         const today = new Date();
         const expiry = new Date(subscription.expiryDate);
-        const diffTime = Math.abs(expiry - today);
+        const diffTime = expiry - today;
+        if (diffTime < 0) return 0;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         return diffDays;
+    };
+
+    const handleUpgrade = async (planToUpgradeTo) => {
+        if (!window.confirm(`Are you sure you want to upgrade to ${planToUpgradeTo.name}?`)) return;
+
+        try {
+            const dataToUpdate = { plan: planToUpgradeTo._id };
+            const res = await updateVendor(currentVendorId, dataToUpdate);
+            if (res.status) {
+                alert(`Successfully upgraded to ${planToUpgradeTo.name}`);
+                window.location.reload();
+            } else {
+                alert(res.message || "Failed to upgrade plan.");
+            }
+        } catch (error) {
+            console.error("Upgrade error:", error);
+            alert("Error upgrading subscription. Please try again.");
+        }
     };
 
     const handleDownloadInvoice = (invoice) => {
@@ -102,8 +122,36 @@ const Subscription = () => {
         doc.save(`Invoice_${invoice.id}.pdf`);
     };
 
-    // Filter plans that are higher price than current plan for upgrade options
-    const upgradeOptions = plans.filter(p => p.price > subscription.price);
+    // Filter out the current plan to show other available plans for upgrade/change
+    const upgradeOptions = subscription
+        ? plans.filter(p => p._id !== subscription.planId && p.status === 'Active')
+        : [];
+
+    if (loading) {
+        return (
+            <div className="subscription-container fade-in">
+                <div className="content-header">
+                    <div className="header-top">
+                        <h1><CreditCard className="header-icon" /> Subscription & Billing</h1>
+                    </div>
+                </div>
+                <div style={{ padding: '2rem', textAlign: 'center' }}>Loading subscription details...</div>
+            </div>
+        );
+    }
+
+    if (!subscription) {
+        return (
+            <div className="subscription-container fade-in">
+                <div className="content-header">
+                    <div className="header-top">
+                        <h1><CreditCard className="header-icon" /> Subscription & Billing</h1>
+                    </div>
+                </div>
+                <div style={{ padding: '2rem', textAlign: 'center' }}>No active subscription found. Please contact support.</div>
+            </div>
+        );
+    }
 
     return (
         <div className="subscription-container fade-in">
@@ -148,16 +196,19 @@ const Subscription = () => {
                                     <span>Days Remaining</span>
                                 </div>
                                 <div className="progress-bar-container">
-                                    <div className="progress-bar" style={{ width: `${(calculateDaysRemaining() / 365) * 100}%` }}></div>
+                                    <div className="progress-bar" style={{ width: `${Math.min((calculateDaysRemaining() / 365) * 100, 100)}%` }}></div>
                                 </div>
                             </div>
 
                             <div className="plan-features">
                                 <h4>Included Features:</h4>
                                 <ul>
-                                    {subscription.features.map((feature, index) => (
+                                    {subscription.features && subscription.features.map((feature, index) => (
                                         <li key={index}><CheckCircle2 size={16} className="text-success" /> {feature}</li>
                                     ))}
+                                    {(!subscription.features || subscription.features.length === 0) && (
+                                        <li><CheckCircle2 size={16} className="text-success" /> Standard Features Included</li>
+                                    )}
                                 </ul>
                             </div>
                         </div>
@@ -171,15 +222,20 @@ const Subscription = () => {
                                         <div key={index} className="subs-card upgrade-card">
                                             <div className="upgrade-header">
                                                 <h4>{plan.name}</h4>
-                                                <div className="upgrade-price">₹{plan.price.toLocaleString()}<span>/yr</span></div>
+                                                <div className="upgrade-price">₹{plan.price.toLocaleString()}<span>/{plan.durationType === 'year' ? 'yr' : 'mo'}</span></div>
                                             </div>
                                             <ul className="upgrade-features">
-                                                {plan.features.slice(0, 3).map((f, i) => (
+                                                {plan.features?.slice(0, 3).map((f, i) => (
                                                     <li key={i}><Check size={14} /> {f}</li>
                                                 ))}
-                                                {plan.features.length > 3 && <li><Plus size={14} /> {plan.features.length - 3} more...</li>}
+                                                {plan.features?.length > 3 && <li><Plus size={14} /> {plan.features.length - 3} more...</li>}
                                             </ul>
-                                            <button className="btn btn-primary upgrade-btn">Upgrade to {plan.name}</button>
+                                            <button
+                                                className="btn btn-primary upgrade-btn"
+                                                onClick={() => handleUpgrade(plan)}
+                                            >
+                                                Upgrade to {plan.name}
+                                            </button>
                                         </div>
                                     ))}
                                 </div>
@@ -224,3 +280,4 @@ const Subscription = () => {
 };
 
 export default Subscription;
+

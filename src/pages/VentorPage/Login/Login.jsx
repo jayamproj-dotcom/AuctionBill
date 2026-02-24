@@ -1,51 +1,60 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setVendorAuthData } from "../../../redux/slices/vendorAuthSlice";
+import { vendorLogin } from "../../../api/vendorApi";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader } from "lucide-react";
 import "./Login.css";
 
-const Login = () => {
+const VendorLogin = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [error, setError] = useState("");
   const [credentials, setCredentials] = useState({ identifier: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem("ventorLoggedIn") === "true") {
-      navigate("ventor");
+    if (sessionStorage.getItem("vendorLoggedIn") === "true" || localStorage.getItem("vendorLoggedIn") === "true") {
+      navigate("/vendor");
     }
   }, [navigate]);
 
   const handleChange = (e) => {
-      setCredentials({ ...credentials, [e.target.name]: e.target.value });
-      setError("");
+    setCredentials({ ...credentials, [e.target.name]: e.target.value });
+    setError("");
   };
 
-  const handleManualLogin = (e) => {
-      e.preventDefault();
-      const { identifier, password } = credentials;
+  const handleManualLogin = async (e) => {
+    e.preventDefault();
+    const { identifier, password } = credentials;
 
-      if (!identifier || !password) {
-          setError("Please enter both username/phone and password");
-          return;
-      }
+    if (!identifier || !password) {
+      setError("Please enter both email and password");
+      return;
+    }
 
-      const users = JSON.parse(localStorage.getItem('ventor_users')) || [];
-      const user = users.find(u => 
-          (u.username === identifier || u.phone === identifier || u.email === identifier.toLowerCase()) && 
-          u.password === password
-      );
+    setIsLoading(true);
+    setError("");
 
-      if (user) {
-          localStorage.setItem("ventorLoggedIn", "true");
-          localStorage.setItem("ventorUserEmail", user.email);
-          localStorage.setItem("ventorUserName", user.username);
-          localStorage.setItem("ventorUserPhoto", ""); // No photo for manual login
-          navigate("/ventor");
+    try {
+      const res = await vendorLogin({ email: identifier, password });
+
+      console.log("res", res);
+
+      if (res.status && res.token) {
+        dispatch(setVendorAuthData(res));
+        navigate("/vendor");
       } else {
-          setError("Invalid credentials. Please check your username/phone and password.");
+        setError(res.message || "Invalid credentials. Please try again.");
       }
+    } catch (err) {
+      setError(err.message || "Login failed. Please check your credentials.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // ... (rest of Google login logic remains same)
@@ -54,25 +63,30 @@ const Login = () => {
     try {
       const decoded = jwtDecode(credentialResponse.credential);
       const email = decoded.email.toLowerCase();
-      const name = decoded.name || "Ventor";
+      const name = decoded.name || "Vendor";
       const picture = decoded.picture || "";
 
-      localStorage.setItem("ventorLoggedIn", "true");
-      localStorage.setItem("ventorUserEmail", email);
-      localStorage.setItem("ventorUserName", name);
-      localStorage.setItem("ventorUserPhoto", picture);
+      dispatch(setVendorAuthData({
+        user: {
+          email: email,
+          name: name,
+          profilePic: picture,
+          _id: "google-auth-placeholder"
+        },
+        token: "google-auth-placeholder",
+      }));
 
       const allowedEmails =
-        JSON.parse(localStorage.getItem("ventor_allowed_emails")) || [];
+        JSON.parse(localStorage.getItem("vendor_allowed_emails")) || [];
 
       if (!allowedEmails.includes(email)) {
         localStorage.setItem(
-          "ventor_allowed_emails",
+          "vendor_allowed_emails",
           JSON.stringify([...allowedEmails, email])
         );
       }
 
-      navigate("/ventor");
+      navigate("/vendor");
     } catch (err) {
       console.error(err);
       setError("Failed to process login token.");
@@ -86,53 +100,55 @@ const Login = () => {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h2>Ventor Login</h2>
+        <h2>Vendor Login</h2>
         <p className="login-subtitle">
           Sign in to continue to the dashboard
         </p>
 
         {/* Manual Login Form */}
         <form onSubmit={handleManualLogin} className="login-form">
-            <div className="form-group">
-                <label>Username or Phone</label>
-                <input 
-                    type="text" 
-                    name="identifier" 
-                    value={credentials.identifier} 
-                    onChange={handleChange} 
-                    placeholder="Enter username or mobile number"
-                />
-            </div>
-            
-            <div className="form-group">
-                <label>Password</label>
-                <div className="password-input-wrapper">
-                    <input 
-                        type={showPassword ? "text" : "password"} 
-                        name="password" 
-                        value={credentials.password} 
-                        onChange={handleChange} 
-                        placeholder="Enter password"
-                    />
-                    <button 
-                        type="button" 
-                        className="password-toggle-btn"
-                        onClick={() => setShowPassword(!showPassword)}
-                    >
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                </div>
-            </div>
+          <div className="form-group">
+            <label>Email Address</label>
+            <input
+              type="text"
+              name="identifier"
+              value={credentials.identifier}
+              onChange={handleChange}
+              placeholder="Enter email address"
+            />
+          </div>
 
-            {error && <div className="error-msg">{error}</div>}
+          <div className="form-group">
+            <label>Password</label>
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={credentials.password}
+                onChange={handleChange}
+                placeholder="Enter password"
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+          </div>
 
-            <button type="submit" className="btn btn-primary login-btn">Login</button>
+          {error && <div className="error-msg">{error}</div>}
+
+          <button type="submit" className="btn btn-primary login-btn" disabled={isLoading}>
+            {isLoading ? <><Loader className="saas-spinner" size={18} style={{ marginRight: '8px', animation: 'spin 1s linear infinite' }} /> Signing In...</> : "Login"}
+          </button>
         </form>
 
 
-        <div className="divider">
+        {/* <div className="divider">
             <span>OR</span>
-        </div>
+        </div> */}
 
         {/* <div className="google-btn-wrapper">
           <GoogleLogin
@@ -146,20 +162,20 @@ const Login = () => {
           />
         </div> */}
 
-        <div className="login-footer">
+        {/* <div className="login-footer">
             <p className="signup-link-text">
                 Don't have an account? <Link to="/signup" className="link">Sign Up</Link>
             </p>
-            {/* <p className="saas-link-wrapper">
-                System Ventoristrator?{" "}
-                <Link to="/saas-ventor" className="saas-link">
+            <p className="saas-link-wrapper">
+                System Administrator?{" "}
+                <Link to="/saas" className="saas-link">
                 Go to SaaS Panel
                 </Link>
-            </p> */}
-        </div>
+            </p>
+        </div> */}
       </div>
     </div>
   );
 };
 
-export default Login;
+export default VendorLogin;

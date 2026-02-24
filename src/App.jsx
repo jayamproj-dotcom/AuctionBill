@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
-import VentorLogin from "./pages/VentorPage/Login/Login.jsx";
-import VentorLayout from "./pages/VentorPage/VentorLayout.jsx";
+import VendorLogin from "./pages/VentorPage/Login/Login.jsx";
+import VendorLayout from "./pages/VentorPage/VentorLayout.jsx";
 import Signup from "./pages/VentorPage/Signup/Signup.jsx";
 import Dashboard from "./components/Dashboard/Dashboard.jsx";
 import TodayAuction from "./components/TodayAuction/TodayAuction.jsx";
@@ -32,7 +32,7 @@ function App() {
   useEffect(() => {
     getAuctionData(); // This will trigger the healing/fallback logic in the utility
 
-   
+
     const handleWheel = () => {
       if (document.activeElement.type === "number") {
         document.activeElement.blur();
@@ -52,12 +52,12 @@ function App() {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <BrowserRouter basename="/auctionbilling">
         <Routes>
-          {/* Ventor Login */}
-          <Route path="/" element={<VentorLogin />} />
+          {/* Vendor Login */}
+          <Route path="/" element={<VendorLogin />} />
           <Route path="/signup" element={<Signup />} />
 
-          {/* Ventor area with nested routes */}
-          <Route path="/ventor" element={<VentorLayout />}>
+          {/* Vendor area with nested routes */}
+          <Route path="/vendor" element={<VendorLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="today-auction" element={<TodayAuction />} />
@@ -85,7 +85,7 @@ function App() {
             <Route path="change-password" element={<SaaSChangePassword />} />
           </Route>
         </Routes>
-        
+
         <ToastContainer
           position="top-right"
           autoClose={3000}

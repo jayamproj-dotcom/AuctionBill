@@ -172,9 +172,9 @@
 }
 
 .input-icon-map {
-  position: absolute;
-    left: 0px;
-    top: 13px;
+    position: absolute;
+    left: 9px;
+    top: 11px;
     color: #9ca3af;
 }
 
@@ -185,7 +185,7 @@
 
 .manage-input-disabled {
     background-color: #f9fafb;
-    cursor: default;
+    cursor: not-allowed;
 }
 
 .manage-input-enabled {

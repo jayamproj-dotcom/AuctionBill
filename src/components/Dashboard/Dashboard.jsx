@@ -217,7 +217,7 @@ function Dashboard() {
                         </div>
                     </div> */}
 
-                    <Link to="/ventor/seller-details">
+                    <Link to="/vendor/seller-details">
                         <div className="stat-card">
                             <div className="stat-header">
                                 <div className="stat-icon"><Users /></div>
@@ -233,7 +233,7 @@ function Dashboard() {
                         </div>
                     </Link>
 
-                    <Link to="/ventor/buyer-details">
+                    <Link to="/vendor/buyer-details">
                         <div className="stat-card">
                             <div className="stat-header">
                                 <div className="stat-icon"><UsersRound /></div>
@@ -277,7 +277,7 @@ function Dashboard() {
                         </div>
                     </div>
 
-                    <Link to="/ventor/history">
+                    <Link to="/vendor/history">
                         <div className="stat-card">
                             <div className="stat-header">
                                 <div className="stat-icon"><BadgeIndianRupee /></div>
@@ -293,7 +293,7 @@ function Dashboard() {
                         </div>
                     </Link>
 
-                    <Link to="/ventor/commission">
+                    <Link to="/vendor/commission">
                         <div className="stat-card">
                             <div className="stat-header">
                                 <div className="stat-icon"><HandCoins /></div>
