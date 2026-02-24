@@ -26,7 +26,7 @@ const Signup = () => {
         if (!formData.username || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword || !formData.address) {
             return "All fields are required";
         }
-        
+
         // Basic Email validation
         if (!/\S+@\S+\.\S+/.test(formData.email)) {
             return "Invalid email address";
@@ -46,14 +46,14 @@ const Signup = () => {
 
     const handleSignup = (e) => {
         e.preventDefault();
-        
+
         const validationError = validate();
         if (validationError) {
             setError(validationError);
             return;
         }
 
-        const existingUsers = JSON.parse(localStorage.getItem('ventor_users')) || [];
+        const existingUsers = JSON.parse(localStorage.getItem('vendor_users')) || [];
 
         // Check for duplicate email
         if (existingUsers.some(u => u.email.toLowerCase() === formData.email.toLowerCase())) {
@@ -83,16 +83,16 @@ const Signup = () => {
         };
 
         const updatedUsers = [...existingUsers, newUser];
-        localStorage.setItem('ventor_users', JSON.stringify(updatedUsers));
+        localStorage.setItem('vendor_users', JSON.stringify(updatedUsers));
 
         // Auto Login after successful signup
-        localStorage.setItem("ventorLoggedIn", "true");
-        localStorage.setItem("ventorUserEmail", newUser.email);
-        localStorage.setItem("ventorUserName", newUser.username);
-        localStorage.setItem("ventorUserPhoto", ""); 
+        localStorage.setItem("vendorLoggedIn", "true");
+        localStorage.setItem("vendorUserEmail", newUser.email);
+        localStorage.setItem("vendorUserName", newUser.username);
+        localStorage.setItem("vendorUserPhoto", "");
 
         alert("Account created successfully! Logging you in...");
-        navigate('/ventor');
+        navigate('/vendor');
     };
 
     return (
@@ -104,33 +104,33 @@ const Signup = () => {
                 <form onSubmit={handleSignup} className="signup-form">
                     <div className="form-group">
                         <label>Username</label>
-                        <input 
-                            type="text" 
-                            name="username" 
-                            value={formData.username} 
-                            onChange={handleChange} 
+                        <input
+                            type="text"
+                            name="username"
+                            value={formData.username}
+                            onChange={handleChange}
                             placeholder="Choose a username"
                         />
                     </div>
 
                     <div className="form-group">
                         <label>Email Address</label>
-                        <input 
-                            type="email" 
-                            name="email" 
-                            value={formData.email} 
-                            onChange={handleChange} 
+                        <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
                             placeholder="Enter your email"
                         />
                     </div>
 
                     <div className="form-group">
                         <label>Phone Number</label>
-                        <input 
-                            type="tel" 
-                            name="phone" 
-                            value={formData.phone} 
-                            onChange={handleChange} 
+                        <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleChange}
                             placeholder="10-digit mobile number"
                         />
                     </div>
@@ -138,15 +138,15 @@ const Signup = () => {
                     <div className="form-group">
                         <label>Password</label>
                         <div className="password-input-wrapper">
-                            <input 
-                                type={showPassword ? "text" : "password"} 
-                                name="password" 
-                                value={formData.password} 
-                                onChange={handleChange} 
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
                                 placeholder="Create a password"
                             />
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className="password-toggle-btn"
                                 onClick={() => setShowPassword(!showPassword)}
                             >
@@ -158,15 +158,15 @@ const Signup = () => {
                     <div className="form-group">
                         <label>Confirm Password</label>
                         <div className="password-input-wrapper">
-                            <input 
-                                type={showConfirmPassword ? "text" : "password"} 
-                                name="confirmPassword" 
-                                value={formData.confirmPassword} 
-                                onChange={handleChange} 
+                            <input
+                                type={showConfirmPassword ? "text" : "password"}
+                                name="confirmPassword"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
                                 placeholder="Confirm your password"
                             />
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className="password-toggle-btn"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                             >
@@ -177,10 +177,10 @@ const Signup = () => {
 
                     <div className="form-group">
                         <label>Address</label>
-                        <textarea 
-                            name="address" 
-                            value={formData.address} 
-                            onChange={handleChange} 
+                        <textarea
+                            name="address"
+                            value={formData.address}
+                            onChange={handleChange}
                             placeholder="Your full address"
                             rows="3"
                         ></textarea>
@@ -191,7 +191,7 @@ const Signup = () => {
                     <button type="submit" className="btn btn-primary signup-btn">Sign Up</button>
 
                     <div className="signup-footer">
-                        <p>Already have an account? <Link to="/auctionbilling/" className="link">Login here</Link></p>
+                        <p>Already have an account? <Link to="/" className="link">Login here</Link></p>
                     </div>
                 </form>
             </div>

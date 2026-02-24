@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { User, Eye, EyeOff, Loader } from "lucide-react";
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
@@ -56,7 +56,7 @@ const SaaSLogin = () => {
 
                 if (response.status) {
                     toast.success(response.message || "Login successful");
-                    
+
                     const authData = {
                         adminToken: response.token,
                         isAdmin: true,
@@ -168,7 +168,7 @@ const SaaSLogin = () => {
                     </button>
 
                     <div className="saas-login-footer">
-                        <a href="/auctionbilling/" className="saas-link">Back to Main App</a>
+                        <Link to="/" className="saas-link">Back to Main App</Link>
                     </div>
                 </form>
             </div>

@@ -1311,3 +1311,52 @@ body.saas-admin-active {
     transform: rotate(360deg);
   }
 }
+
+/* Small Profile Image (Table) */
+.vendor-avatar-img-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+
+/* Small Avatar (Table) */
+.vendor-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #6c63ff;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Large Profile Image (Details Modal) */
+.vendor-avatar-img-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ddd;
+}
+
+/* Large Avatar (Details Modal) */
+.vendor-avatar-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #6c63ff;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: 2px solid #ddd;
+}

@@ -1,22 +1,32 @@
 import { useState, useRef, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import VentorSidebar from "./VentorSidebar.jsx";
+import VendorSidebar from "./VentorSidebar.jsx";
 import "./Ventor.css";
 import logo from "../../assets/images/logo.png";
 import user from "../../assets/images/user.png";
 import { LogOut, User, KeyRound } from "lucide-react";
 import { googleLogout } from '@react-oauth/google';
+import { useSelector, useDispatch } from "react-redux";
+import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice";
+import { resolveImageUrl } from "../../utils/imageUtils";
 
-const VentorLayout = () => {
+const VendorLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
   const navigate = useNavigate();
-  const isLoggedIn = localStorage.getItem("ventorLoggedIn") === "true";
+  const dispatch = useDispatch();
+
+  const { vendorLoggedIn, vendorUserName, vendorUserEmail, vendorUserPhoto } = useSelector(state => state.vendorAuth);
+
+  // Also provide a session fallback check in case Redux unmounts right before router handles
+  const isSessionActive = sessionStorage.getItem("vendorLoggedIn") === "true" || localStorage.getItem("vendorLoggedIn") === "true";
+
+  const isLoggedIn = vendorLoggedIn || isSessionActive;
 
   useEffect(() => {
     if (!isLoggedIn) {
-      window.location.href = "/auctionbilling";
+      navigate("/");
     }
   }, [isLoggedIn, navigate]);
 
@@ -38,14 +48,10 @@ const VentorLayout = () => {
 
   const handleLogout = () => {
     googleLogout(); // Sign out from Google
-    localStorage.removeItem("ventorLoggedIn");
-    localStorage.removeItem("ventorCredentials"); 
-    localStorage.removeItem("ventorUserEmail");
-    localStorage.removeItem("ventorUserName");
-    localStorage.removeItem("ventorUserPhoto");
-    
+    dispatch(clearVendorAuthData());
+
     setProfileOpen(false);
-    window.location.href = "/auctionbilling";
+    navigate("/");
   };
 
   // Close dropdown when clicking outside
@@ -64,8 +70,10 @@ const VentorLayout = () => {
 
 
   // Retrieve user info
-  const userName = localStorage.getItem("ventorUserName") || "Ventor";
-  const userPhoto = localStorage.getItem("ventorUserPhoto") || user;
+  const userName = vendorUserName || sessionStorage.getItem('vendorUserName') || "Vendor";
+  const userPhoto = vendorUserPhoto || sessionStorage.getItem('vendorUserPhoto') || user;
+  const userEmail = vendorUserEmail || sessionStorage.getItem('vendorUserEmail');
+
 
   return (
     <div className="app-container">
@@ -83,12 +91,12 @@ const VentorLayout = () => {
         <div className="header-profile-container" ref={profileRef}>
           <div className="header-profile" onClick={toggleProfile}>
             <p>{userName}</p>
-            <img 
-              src={userPhoto} 
-              alt="User" 
+            <img
+              src={resolveImageUrl(userPhoto, user)}
+              alt="User"
               referrerPolicy="no-referrer"
               className="header-profile-img"
-              onError={(e) => {e.target.src = user}} 
+              onError={(e) => { e.target.src = user }}
             />
           </div>
 
@@ -96,19 +104,19 @@ const VentorLayout = () => {
             <div className="profile-dropdown">
               {/* Dropdown Header with Profile Info */}
               <div className="profile-dropdown-header">
-                  <img 
-                      src={userPhoto} 
-                      alt="Profile" 
-                      className="profile-dropdown-img"
-                      onError={(e) => {e.target.src = user}}
-                  />
-                  <div className="profile-dropdown-name">{userName}</div>
-                  <div className="profile-dropdown-email">{localStorage.getItem('ventorUserEmail')}</div>
+                <img
+                  src={resolveImageUrl(userPhoto, user)}
+                  alt="Profile"
+                  className="profile-dropdown-img"
+                  onError={(e) => { e.target.src = user }}
+                />
+                <div className="profile-dropdown-name">{userName}</div>
+                <div className="profile-dropdown-email">{userEmail}</div>
               </div>
 
               <div className="dropdown-item" onClick={() => {
-                  navigate('/ventor/manage');
-                  setProfileOpen(false);
+                navigate('/vendor/manage');
+                setProfileOpen(false);
               }}>
                 <User size={16} /> {/* Changed icon to User */}
                 <span>My Profile</span>
@@ -131,7 +139,7 @@ const VentorLayout = () => {
       ></div>
 
       {/* Sidebar */}
-      <VentorSidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+      <VendorSidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
       {/* Main Content */}
       <main className="main-content">
@@ -141,4 +149,4 @@ const VentorLayout = () => {
   );
 };
 
-export default VentorLayout;
+export default VendorLayout;

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './SaaSAdmin.css';
 import { Link } from 'react-router-dom';
 import { Users, Crown, Banknote, Hourglass, Settings, Trash2 } from 'lucide-react';
-import { getVendors } from '../../api/ventorApi';
+import { getVendors } from '../../api/adminApi';
 import { formatDate } from '../../utils/dateUtils';
 
 const SaaSDashboard = () => {
@@ -91,7 +91,7 @@ const SaaSDashboard = () => {
         </div>
       </div>
 
-       <div className="saas-card">
+      <div className="saas-card">
         <div className="saas-card-header">
           <h3 className="saas-text-lg saas-font-semibold">Recent Vendor Registrations</h3>
           <Link to="/saas/vendors"> <button className="saas-btn btn-sm btn-outline">View All</button></Link>
@@ -105,7 +105,7 @@ const SaaSDashboard = () => {
                 <th>Plan</th>
                 <th>Status</th>
                 <th>Joined Date</th>
-            
+
               </tr>
             </thead>
             <tbody>
@@ -124,7 +124,7 @@ const SaaSDashboard = () => {
                     </span>
                   </td>
                   <td>{formatDate(vendor.joinedDate || vendor.createdAt)}</td>
-                   {/* <td>
+                  {/* <td>
                     <div className="action-buttons">
                         <button className="icon-btn edit" title="Manage Vendor">
                             <Settings size={18} />
@@ -139,7 +139,7 @@ const SaaSDashboard = () => {
             </tbody>
           </table>
         </div>
-      </div> 
+      </div>
     </div>
   );
 };

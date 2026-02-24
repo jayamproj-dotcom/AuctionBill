@@ -4,8 +4,8 @@ import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal.jsx';
 import { useSelector } from 'react-redux';
 import { Trash2, X, Search, Plus, Edit, Loader } from 'lucide-react';
-import { getVendors, createVendor, updateVendor, deleteVendor } from '../../api/ventorApi';
-import { getSubscriptions } from '../../api/adminApi';
+import { getSubscriptions, getVendors, createVendor, updateVendor, deleteVendor } from '../../api/adminApi';
+import { resolveImageUrl } from '../../utils/imageUtils';
 
 const VendorManagement = () => {
   const role = localStorage.getItem('saas_role');
@@ -13,9 +13,10 @@ const VendorManagement = () => {
   const [plans, setPlans] = useState([]);
   const { saasRole, saasPermissions } = useSelector((state) => state.saasAuth);
 
+  const [profilePicFile, setProfilePicFile] = useState(null);
+
   const isSubAdmin = saasRole === 'sub-admin' || saasRole === 'subadmin';
   const canManageVendors = !isSubAdmin || saasPermissions?.vendorAdd === true || String(saasPermissions?.vendorAdd).toLowerCase() === 'true';
-
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -69,7 +70,15 @@ const VendorManagement = () => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      await createVendor(newVendor);
+      const formData = new FormData();
+      Object.keys(newVendor).forEach(key => {
+        formData.append(key, newVendor[key]);
+      });
+      if (profilePicFile) {
+        formData.append('profilePic', profilePicFile);
+      }
+
+      await createVendor(formData);
       setIsAddModalOpen(false);
       setNewVendor({
         name: '',
@@ -79,6 +88,7 @@ const VendorManagement = () => {
         plan: plans.length > 0 ? plans[0]._id : '',
         status: 'Active'
       });
+      setProfilePicFile(null);
       loadData();
     } catch (error) {
       console.error(error);
@@ -90,6 +100,7 @@ const VendorManagement = () => {
 
   const handleEditClick = (vendor) => {
     setEditingVendor({ ...vendor, plan: vendor.plan?._id || vendor.plan });
+    setProfilePicFile(null);
     setIsEditModalOpen(true);
   };
 
@@ -105,9 +116,29 @@ const VendorManagement = () => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      await updateVendor(editingVendor._id || editingVendor.id, editingVendor);
+      const formData = new FormData();
+      Object.keys(editingVendor).forEach(key => {
+        // Exclude system fields or file objects when adding object properties to FormData
+        if (key !== '_id' && key !== 'id' && key !== 'profilePic' && key !== 'planEndDate' && key !== 'joinedDate') {
+          // If a property is an object, sending [object Object] would break the backend schema mapping
+          let value = editingVendor[key];
+          if (typeof value === 'object' && value !== null && value._id) {
+            value = value._id;
+          }
+          formData.append(key, value);
+        }
+      });
+
+      if (profilePicFile) {
+        formData.append('profilePic', profilePicFile);
+      } else if (editingVendor.profilePic) {
+        formData.append('profilePic', editingVendor.profilePic);
+      }
+
+      await updateVendor(editingVendor._id || editingVendor.id, formData);
       setIsEditModalOpen(false);
       setEditingVendor(null);
+      setProfilePicFile(null);
       loadData();
     } catch (error) {
       console.error(error);
@@ -139,6 +170,15 @@ const VendorManagement = () => {
         alert("Error deleting vendor");
       }
     }
+  };
+
+  const getInitials = (name) => {
+    if (!name) return '';
+    const words = name.trim().split(' ');
+    if (words.length === 1) {
+      return words[0].slice(0, 2).toUpperCase();
+    }
+    return (words[0][0] + words[1][0]).toUpperCase();
   };
 
   return (
@@ -198,7 +238,22 @@ const VendorManagement = () => {
                   onClick={() => handleRowClick(vendor)}
                   className="vendor-row"
                 >
-                  <td className="saas-font-medium">{vendor.name}</td>
+                  <td className="saas-font-medium">
+                    <div className="saas-flex saas-gap-05" style={{ alignItems: 'center' }}>
+                      {vendor.profilePic ? (
+                        <img
+                          src={resolveImageUrl(vendor.profilePic)}
+                          alt="profile"
+                          className="vendor-avatar-img-small"
+                        />
+                      ) : (
+                        <div className="vendor-avatar-small">
+                          {getInitials(vendor.name)}
+                        </div>
+                      )}
+                      {vendor.name}
+                    </div>
+                  </td>
                   <td>{vendor.email}</td>
                   <td>
                     <span className={`saas-badge ${(vendor.plan?.name || vendor.plan) === 'Premium' ? 'badge-info' : 'badge-warning'}`}>
@@ -320,6 +375,10 @@ const VendorManagement = () => {
                       rows="2"
                     ></textarea>
                   </div>
+                  <div className="form-group full-width">
+                    <label className="saas-label">Profile Image</label>
+                    <input type="file" accept="image/*" onChange={(e) => setProfilePicFile(e.target.files[0])} className="saas-input" />
+                  </div>
                 </div>
               </div>
               <div className="saas-modal-footer">
@@ -418,6 +477,21 @@ const VendorManagement = () => {
                       rows="2"
                     ></textarea>
                   </div>
+                  <div className="form-group full-width">
+                    <label className="saas-label">Profile Image</label>
+                    {editingVendor.profilePic ? (
+                      <img
+                        src={resolveImageUrl(editingVendor.profilePic)}
+                        alt="Current Profile"
+                        className="vendor-avatar-img-large"
+                      />
+                    ) : (
+                      <div className="vendor-avatar-large">
+                        {getInitials(editingVendor.name)}
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" onChange={(e) => setProfilePicFile(e.target.files[0])} className="saas-input" />
+                  </div>
                 </div>
               </div>
               <div className="saas-modal-footer">
@@ -450,6 +524,23 @@ const VendorManagement = () => {
               {/* Profile Section */}
               <div className="saas-mb-15">
                 <h4 className="saas-profile-header">Business Profile</h4>
+                <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  {selectedVendor.profilePic ? (
+                    <img
+                      src={resolveImageUrl(selectedVendor.profilePic)}
+                      alt="profile"
+                      className="vendor-avatar-img-large"
+                    />
+                  ) : (
+                    <div className="vendor-avatar-large">
+                      {getInitials(selectedVendor.name)}
+                    </div>
+                  )}
+                  <div>
+                    <h5 style={{ margin: 0, fontSize: '18px' }}>{selectedVendor.name}</h5>
+                    <span style={{ color: '#777', fontSize: '14px' }}>{selectedVendor.email}</span>
+                  </div>
+                </div>
                 <div className="inner-grid-2">
                   <div>
                     <label className="saas-label saas-text-muted">Vendor Name</label>

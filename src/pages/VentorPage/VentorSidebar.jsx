@@ -1,15 +1,17 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { House, ChartSpline,UserCog, PackageSearch, History, User, ShoppingCart, Settings, Handshake, Gem, LogOut, X } from "lucide-react";
+import { House, ChartSpline, UserCog, PackageSearch, History, User, ShoppingCart, Settings, Handshake, Gem, LogOut, X } from "lucide-react";
 import logo from "../../assets/images/logo-sidebar.png"
+import { useDispatch } from "react-redux";
+import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice";
 
-const VentorSidebar = ({ isOpen, onClose }) => {
+const VendorSidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleLogout = (e) => {
     e.preventDefault();
-    localStorage.removeItem("ventorLoggedIn");
-    localStorage.removeItem("ventorCredentials");
+    dispatch(clearVendorAuthData());
     onClose();
     navigate("/");
   };
@@ -33,7 +35,7 @@ const VentorSidebar = ({ isOpen, onClose }) => {
 
       <nav className="sidebar-nav">
         <NavLink
-          to="/ventor/dashboard"
+          to="/vendor/dashboard"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -42,7 +44,7 @@ const VentorSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/ventor/today-auction"
+          to="/vendor/today-auction"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -51,7 +53,7 @@ const VentorSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/ventor/pending-products"
+          to="/vendor/pending-products"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -60,7 +62,7 @@ const VentorSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/ventor/history"
+          to="/vendor/history"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -69,7 +71,7 @@ const VentorSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/ventor/seller-details"
+          to="/vendor/seller-details"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -78,7 +80,7 @@ const VentorSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/ventor/buyer-details"
+          to="/vendor/buyer-details"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -87,7 +89,7 @@ const VentorSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/ventor/commission"
+          to="/vendor/commission"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -96,7 +98,7 @@ const VentorSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/ventor/manage"
+          to="/vendor/manage"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -104,7 +106,7 @@ const VentorSidebar = ({ isOpen, onClose }) => {
           <span>Profile</span>
         </NavLink>
         <NavLink
-          to="/ventor/subscription"
+          to="/vendor/subscription"
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           onClick={onClose}
         >
@@ -125,4 +127,4 @@ const VentorSidebar = ({ isOpen, onClose }) => {
   );
 };
 
-export default VentorSidebar;
+export default VendorSidebar;
