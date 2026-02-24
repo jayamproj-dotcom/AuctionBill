@@ -1311,3 +1311,17 @@ body.saas-admin-active {
     transform: rotate(360deg);
   }
 }
+
+/* Utilities replacing inline styles */
+.saas-gap-10px { gap: 10px; }
+.saas-loading-padded { text-align: center; padding: 20px; }
+.saas-p-20 { padding: 20px; text-align: center; } /* For table cells */
+.saas-flex-center { display: flex; justify-content: center; align-items: center; }
+.saas-mt-8 { margin-top: 8px; }
+.saas-link-blue { color: #3b82f6; text-decoration: none; font-size: 14px; font-weight: 500; cursor: pointer; }
+.saas-link-blue:hover { text-decoration: underline; }
+.saas-link-danger { color: #ef4444; font-size: 13px; text-decoration: none; cursor: pointer; }
+.saas-link-danger:hover { text-decoration: underline; color: #dc2626; }
+.saas-relative { position: relative; }
+.saas-input-pr40 { padding-right: 40px; }
+.saas-hidden { display: none; }

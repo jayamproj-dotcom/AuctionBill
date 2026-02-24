@@ -248,19 +248,17 @@ const SubscriptionManagement = () => {
 
                 <div className="saas-form-group">
                   <label className="saas-label">Duration</label>
-                  <div className="saas-flex saas-gap-05" style={{ display: 'flex', gap: '8px' }}>
+                  <div className="saas-flex saas-gap-05">
                     <input
                       type="number"
                       min="1"
-                      className="saas-input"
-                      style={{ flex: 1 }}
+                      className="saas-input saas-flex-1"
                       value={editingPlan?.durationValue}
                       onChange={(e) => setEditingPlan({ ...editingPlan, durationValue: e.target.value })}
                       placeholder="e.g. 1"
                     />
                     <select
-                      className="saas-select"
-                      style={{ flex: 1 }}
+                      className="saas-select saas-flex-1"
                       value={editingPlan?.durationType}
                       onChange={(e) => setEditingPlan({ ...editingPlan, durationType: e.target.value })}
                     >

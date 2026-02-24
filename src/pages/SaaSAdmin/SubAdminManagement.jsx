@@ -173,7 +173,6 @@ const SubAdminManagement = () => {
       <div className="saas-card saas-mb-15 subAdminCard">
         <h2 className="saas-text-2xl saas-font-bold subAdminCardTitle">Sub-Admin Management</h2>
         <p className="saas-text-muted saas-text-sm saas-mb-15">Manage and monitor all sub-admins in the system</p>
-
         <div className="saas-flex-between subAdminTopControls">
           <div className="saasSearchWrapperWide">
             <Search size={18} className="saasSearchIconPosition" />
@@ -185,9 +184,9 @@ const SubAdminManagement = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="saas-flex" style={{ gap: '10px' }}>
-             <button className="saas-btn btn-outline btnSubAdminAdd" onClick={handleAddSubAdmin}>
-                <Plus size={16} /> Add Sub-Admin
+          <div className="saas-flex saas-gap-10px">
+             <button className="saas-btn btn-primary" onClick={handleAddSubAdmin}>
+                <Plus size={18} /> Add Sub-Admin
              </button>
              {/* <button className="saas-btn btn-primary btnSubAdminDownload">
                 <Download size={16} /> Download Sub-Admins List
@@ -195,10 +194,9 @@ const SubAdminManagement = () => {
           </div>
         </div>
       </div>
-
       <div className="saas-card subAdminTableCard">
         {isLoading ? (
-          <div className="saas-loading" style={{ textAlign: 'center', padding: '20px' }}>Loading sub-admins...</div>
+          <div className="saas-loading saas-loading-padded">Loading sub-admins...</div>
         ) : (
           <div className="saas-table-container">
             <table className="saas-table subAdminTable">
@@ -209,12 +207,12 @@ const SubAdminManagement = () => {
                   <th>Email</th>
                   <th>Status</th>
                   <th>Sub Admin Access</th>
-                  <th style={{ textAlign: 'center' }}>Actions</th>
+                  <th className="saas-text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredSubAdmins.length === 0 ? (
-                  <tr><td colSpan="6" style={{ textAlign: "center", padding: "20px" }}>No sub-admins found</td></tr>
+                  <tr><td colSpan="6" className="saas-text-center saas-p-20">No sub-admins found</td></tr>
                 ) : (
                   filteredSubAdmins.map((subAdmin, index) => {
                     const id = subAdmin._id || subAdmin.id;
@@ -256,7 +254,7 @@ const SubAdminManagement = () => {
                           </div>
                         </td>
                         <td className="text-center">
-                          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                          <div className="saas-flex-center saas-gap-05">
                             <button
                               className="icon-btn"
                               title="Edit Sub-Admin"
@@ -341,53 +339,36 @@ const SubAdminManagement = () => {
                     <label className="saas-label">Password {editingSubAdmin?._id ? '' : '*'}</label>
                     
                     {!isChangingPassword && editingSubAdmin?._id ? (
-                      <div style={{ marginTop: '8px' }}>
+                      <div className="saas-mt-8">
                         <a 
                           href="#!" 
                           onClick={(e) => { e.preventDefault(); setIsChangingPassword(true); }}
-                          style={{
-                            color: '#3b82f6',
-                            textDecoration: 'none',
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            cursor: 'pointer'
-                          }}
+                          className="saas-link saas-link-blue"
                         >
                           Change Password
                         </a>
                       </div>
                     ) : (
-                      <div style={{ position: 'relative' }}>
-                        <input 
-                          type={showPassword ? "text" : "password"} 
-                          className="saas-input"
-                          value={editingSubAdmin?.password || ''}
-                          onChange={(e) => setEditingSubAdmin({...editingSubAdmin, password: e.target.value})}
-                          placeholder={editingSubAdmin?._id ? "Enter new password" : "Enter password"}
-                          required={!editingSubAdmin?._id}
-                          style={{ paddingRight: '40px' }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          style={{
-                            position: 'absolute',
-                            right: '10px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: '#6b7280',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                        >
-                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
+                      <div>
+                        <div className="saas-relative">
+                          <input 
+                            type={showPassword ? "text" : "password"} 
+                            className="saas-input saas-input-pr40"
+                            value={editingSubAdmin?.password || ''}
+                            onChange={(e) => setEditingSubAdmin({...editingSubAdmin, password: e.target.value})}
+                            placeholder={editingSubAdmin?._id ? "Enter new password" : "Enter password"}
+                            required={!editingSubAdmin?._id}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="saas-password-toggle saas-pwd-toggle-btn"
+                          >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
                         {editingSubAdmin?._id && (
-                          <div style={{ marginTop: '8px', textAlign: 'right' }}>
+                          <div className="saas-mt-8 saas-text-right">
                              <a 
                               href="#!" 
                               onClick={(e) => { 
@@ -395,7 +376,7 @@ const SubAdminManagement = () => {
                                 setIsChangingPassword(false); 
                                 setEditingSubAdmin({...editingSubAdmin, password: ''}); 
                               }}
-                              style={{ color: '#ef4444', fontSize: '13px', textDecoration: 'none' }}
+                              className="saas-link saas-link-danger"
                              >
                                Cancel Change
                              </a>

@@ -29,7 +29,7 @@ const Notification = ({ expiryDate }) => {
                     title: 'Subscription Expired',
                     message: 'Your subscription has ended. Please renew immediately to continue using the services.',
                     time: 'Just now',
-                    link: '/admin/subscription'
+                    link: '/ventor/subscription'
                 };
             } else if (diffDays <= 5) {
                 notification = {
@@ -39,7 +39,7 @@ const Notification = ({ expiryDate }) => {
                     title: 'Subscription Expiring Soon',
                     message: `Your subscription will end in ${diffDays} days. Please renew to avoid interruption.`,
                     time: 'Just now',
-                    link: '/admin/subscription'
+                    link: '/ventor/subscription'
                 };
             }
 

@@ -131,7 +131,7 @@ const AdminProfile = () => {
         </div>
         <div className="saas-modal-content">
 
-          <div style={{ textAlign: "center", marginBottom: "30px" }}>
+          <div className="saas-text-center saas-mb-30">
             {/* <div 
                className="saas-settings-profile-photo"
                style={{ backgroundImage: settings.adminPhoto ? `url(${settings.adminPhoto})` : 'none' }}
@@ -148,12 +148,12 @@ const AdminProfile = () => {
               type="file"
               accept="image/*"
               ref={fileInputRef}
-              style={{ display: 'none' }}
+              className="saas-hidden"
               onChange={handlePhotoChange}
             />
 
-            <h4 style={{ fontSize: "1.2rem", fontWeight: "600" }}>{settings.adminName}</h4>
-            <p style={{ color: "gray" }}>{settings.adminEmail}</p>
+            <h4 className="saas-profile-name">{settings.adminName}</h4>
+            <p className="saas-profile-email">{settings.adminEmail}</p>
           </div>
 
           <div className="saas-form-group">
@@ -195,7 +195,7 @@ const AdminProfile = () => {
               <button className="saas-btn btn-outline saas-profile-action-btn" onClick={handleCancelClick} disabled={isLoading}>
                 <X size={16} /> Cancel
               </button>
-              <button className="saas-btn btn-primary" style={{ flex: 1 }} onClick={handleSave} disabled={isLoading}>
+              <button className="saas-btn btn-primary saas-flex-1" onClick={handleSave} disabled={isLoading}>
                 {isLoading ? <><Loader className="saas-spinner" size={16} /> Saving...</> : 'Save Changes'}
               </button>
             </div>
