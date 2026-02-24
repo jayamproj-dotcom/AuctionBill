@@ -144,13 +144,13 @@ const AdminProfile = () => {
                 </div>
              </div> */}
 
-            <input
+            {/* <input
               type="file"
               accept="image/*"
               ref={fileInputRef}
               className="saas-hidden"
               onChange={handlePhotoChange}
-            />
+            /> */}
 
             <h4 className="saas-profile-name">{settings.adminName}</h4>
             <p className="saas-profile-email">{settings.adminEmail}</p>
