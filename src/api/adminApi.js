@@ -239,4 +239,18 @@ export const deleteVendor = async (id) => {
     }
 };
 
+export const exportVendors = async (filters) => {
+    try {
+        const response = await api.post('/vendor/export', filters, {
+            responseType: 'blob'
+        });
+        return response;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
 

@@ -169,17 +169,11 @@ const VendorLogin = () => {
           />
         </div> */}
 
-        {/* <div className="login-footer">
-            <p className="signup-link-text">
-                Don't have an account? <Link to="/signup" className="link">Sign Up</Link>
-            </p>
-            <p className="saas-link-wrapper">
-                System Administrator?{" "}
-                <Link to="/saas" className="saas-link">
-                Go to SaaS Panel
-                </Link>
-            </p>
-        </div> */}
+        <div className="login-footer">
+          <p className="signup-link-text" style={{ textAlign: 'center', marginTop: '1.5rem', color: '#666', fontSize: '14px' }}>
+            Don't have an account? <Link to="/signup" style={{ color: '#1677ff', fontWeight: 600, textDecoration: 'none' }}>Request Access</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,18 @@
 import api from './api';
 
+// Vendor Signup
+export const vendorSignup = async (data) => {
+    try {
+        const response = await api.post('/vendor/signup', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
 //Vendor Login
 export const vendorLogin = async (data) => {
     try {
@@ -60,4 +73,3 @@ export const changePassword = async (data) => {
         throw error;
     }
 };
-

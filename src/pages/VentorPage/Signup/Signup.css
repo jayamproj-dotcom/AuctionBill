@@ -1,126 +1,377 @@
-Signup.css
 .signup-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    background-color: var(--bg-tertiary);
     padding: 2rem;
+    font-family: 'Inter', sans-serif;
 }
 
-.signup-card {
-    background: var(--bg-card);
-    padding: 2.5rem;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    width: 600px;
-    max-width: 90%;
+.signup-container {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    max-width: 1200px;
+    width: 100%;
 }
 
-.signup-card h2 {
-    color: var(--text-primary);
+.signup-container.plans-view {
+    max-width: 1100px;
+}
+
+.signup-container.form-view {
+    max-width: 900px;
+}
+
+.fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Section Header */
+.section-header {
     text-align: center;
+    padding: 3rem 2rem 2rem;
+}
+
+.section-header h1, .section-header h2 {
+    font-size: 2.5rem;
+    color: #1a1a1a;
     margin-bottom: 0.5rem;
+    font-weight: 800;
 }
 
-.signup-subtitle {
-    color: var(--text-secondary);
-    text-align: center;
-    margin-bottom: 2rem;
-    font-size: 0.9rem;
+.section-header p {
+    color: #666;
+    font-size: 1.1rem;
 }
 
-.signup-form {
+/* Plans Section */
+.plans-section {
+    padding-bottom: 3rem;
+}
+
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    padding: 0 3rem 2rem;
+}
+
+.plan-card {
+    background: #fff;
+    border: 2px solid #f0f0f0;
+    border-radius: 16px;
+    padding: 2.5rem;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
 }
 
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+.plan-card:hover {
+    transform: translateY(-8px);
+    border-color: #f39c12;
+    box-shadow: 0 15px 30px rgba(243, 156, 18, 0.1);
 }
 
-.form-group label {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-muted);
+.plan-card.selected {
+    border-color: #f39c12;
+    background: #fffdf9;
 }
 
-.form-group input,
-.form-group textarea {
-    padding: 0.75rem 2rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+.popular-badge {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #f39c12;
+    color: #fff;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.plan-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.plan-price {
+    margin-bottom: 1.5rem;
+}
+
+.plan-price .currency {
+    font-size: 1.5rem;
+    font-weight: 600;
+    vertical-align: top;
+    margin-right: 2px;
+}
+
+.plan-price .amount {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #1a1a1a;
+}
+
+.plan-price .duration {
+    color: #777;
+    font-size: 1rem;
+}
+
+.plan-description {
     font-size: 0.95rem;
-    background-color: var(--bg-tertiary);
+    color: #666;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem;
+    flex-grow: 1;
+}
+
+.plan-features li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+    color: #444;
+    font-size: 0.95rem;
+}
+
+.plan-features li svg {
+    color: #27ae60;
+}
+
+.select-plan-btn {
+    width: 100%;
+    padding: 1rem;
+    background: #f3f3f3;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     transition: all 0.2s;
 }
 
-.form-group input:focus,
-.form-group textarea:focus {
-    border-color: var(--primary-amber);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+.plan-card:hover .select-plan-btn {
+    background: #f39c12;
+    color: #fff;
 }
 
-.signup-btn {
-    margin-top: 1rem;
-    width: 100%;
+/* Details Section */
+.details-section {
+    padding: 0 3rem 3rem;
 }
 
-.error-msg {
-    color: var(--error);
-    background-color: rgba(239, 68, 68, 0.1);
-    padding: 0.5rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.85rem;
-    text-align: center;
-}
-
-.signup-footer {
-    margin-top: 1rem;
-    text-align: center;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-.link {
-    color: var(--primary-amber);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.link:hover {
-    text-decoration: underline;
-}
-
-/* Password Toggle Styles - Copied from Login.css for consistency */
-.password-input-wrapper {
-    position: relative;
+.back-btn {
     display: flex;
     align-items: center;
-}
-
-.password-input-wrapper input {
-    width: 100%;
-    padding-right: 40px; /* Make space for the eye icon */
-}
-
-.password-toggle-btn {
-    position: absolute;
-    right: 10px;
+    gap: 8px;
     background: none;
     border: none;
+    color: #f39c12;
+    font-weight: 600;
     cursor: pointer;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    margin-bottom: 1rem;
     padding: 0;
 }
 
-.password-toggle-btn:hover {
-    color: var(--text-primary);
+.signup-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-top: 2rem;
+}
+
+.form-subtitle {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 0.6rem;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 2px solid #eef0f2;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.2s;
+    background: #fbfbfc;
+}
+
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: #f39c12;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(243, 156, 18, 0.05);
+}
+
+.password-wrapper {
+    position: relative;
+}
+
+.toggle-eye {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.submit-section {
+    margin-top: 2.5rem;
+    padding: 2rem;
+    background: #fdfdfd;
+    border: 2px dashed #eee;
+    border-radius: 16px;
+}
+
+.selected-plan-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+}
+
+.selected-plan-info strong {
+    color: #f39c12;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 1.2rem;
+    background: #2d3436;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background: #f39c12;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(243, 156, 18, 0.2);
+}
+
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.terms-text {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: #999;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.form-error {
+    color: #e74c3c;
+    background: #fdf2f2;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    border-left: 4px solid #e74c3c;
+}
+
+.signup-loading {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: #666;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.signup-footer-links {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.signup-footer-links a {
+    color: #f39c12;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .signup-form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .section-header h1 { font-size: 1.8rem; }
+    .plans-grid { padding: 0 1rem 2rem; }
+    .details-section { padding: 0 1.5rem 2rem; }
 }
