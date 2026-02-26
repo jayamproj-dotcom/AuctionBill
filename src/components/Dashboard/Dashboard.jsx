@@ -203,7 +203,7 @@ function Dashboard() {
             <div className="content-body">
                 {/* Stats Grid - 5 Cards */}
                 <div className="stats-grid dashboard-stats-grid fade-in">
-                    {/* <div className="stat-card">
+                    <div className="stat-card">
                         <div className="stat-header">
                             <div className="stat-icon"><ChartNoAxesCombined /></div>
                             <Link to="/admin/today-auction"><div>
@@ -215,7 +215,7 @@ function Dashboard() {
                             <span>📅</span>
                             <span>Live Count</span>
                         </div>
-                    </div> */}
+                    </div>
 
                     <Link to="/vendor/seller-details">
                         <div className="stat-card">
