@@ -254,7 +254,7 @@ const SubAdminManagement = () => {
                           </div>
                         </td>
                         <td className="text-center">
-                          <div className="saas-flex-center saas-gap-05">
+                          <div className="action-buttons">
                             <button
                               className="icon-btn"
                               title="Edit Sub-Admin"

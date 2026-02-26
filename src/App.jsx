@@ -1,7 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import VendorLogin from "./pages/VentorPage/Login/Login.jsx";
+import ForgotPassword from "./pages/VentorPage/Login/ForgotPassword.jsx";
+import VendorChangePassword from "./pages/VentorPage/Login/VendorChangePassword.jsx";
+import SaasForgotPassword from "./pages/SaaSAdmin/SaasForgotPassword.jsx";
 import VendorLayout from "./pages/VentorPage/VentorLayout.jsx";
+
+
+
 import Signup from "./pages/VentorPage/Signup/Signup.jsx";
 import Dashboard from "./components/Dashboard/Dashboard.jsx";
 import TodayAuction from "./components/TodayAuction/TodayAuction.jsx";
@@ -54,7 +60,9 @@ function App() {
         <Routes>
           {/* Vendor Login */}
           <Route path="/" element={<VendorLogin />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/signup" element={<Signup />} />
+
 
           {/* Vendor area with nested routes */}
           <Route path="/vendor" element={<VendorLayout />}>
@@ -68,10 +76,14 @@ function App() {
             <Route path="commission" element={<CommissionRecord />} />
             <Route path="manage" element={<Manage />} />
             <Route path="subscription" element={<Subscription />} />
+            <Route path="change-password" element={<VendorChangePassword />} />
           </Route>
+
 
           {/* SaaS Admin Login */}
           <Route path="/saas-admin" element={<SaaSLogin />} />
+          <Route path="/saas-forgot-password" element={<SaasForgotPassword />} />
+
 
           {/* SaaS Admin Area */}
           <Route path="/saas" element={<SaaSLayout />}>

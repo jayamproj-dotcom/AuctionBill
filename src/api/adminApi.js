@@ -39,6 +39,31 @@ export const updateAdminPassword = async (data) => {
     }
 };
 
+export const adminForgotPassword = async (data) => {
+    try {
+        const response = await api.post('admin/forgot-password', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const adminResetPassword = async (data) => {
+    try {
+        const response = await api.post('admin/reset-password', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+
 // Get admin profile API
 export const getAdminProfile = async () => {
     try {
@@ -206,6 +231,20 @@ export const deleteVendor = async (id) => {
     try {
         const response = await api.delete(`/vendor/${id}`);
         return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const exportVendors = async (filters) => {
+    try {
+        const response = await api.post('/vendor/export', filters, {
+            responseType: 'blob'
+        });
+        return response;
     } catch (error) {
         if (error.response && error.response.data) {
             throw error.response.data;

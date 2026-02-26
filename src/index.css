@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   /* 🌟 Brand / Accent Colors (Amber) */
   --primary-amber: #f59e0b;

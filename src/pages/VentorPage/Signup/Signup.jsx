@@ -1,199 +1,391 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Check, ArrowRight, ArrowLeft, Loader, MapPin, Phone, Mail, User, Lock } from 'lucide-react';
+import { getSubscriptions } from '../../../api/adminApi';
+import { vendorSignup } from '../../../api/vendorApi';
+import { toast } from 'react-toastify';
 import './Signup.css';
 
 const Signup = () => {
     const navigate = useNavigate();
+    const [step, setStep] = useState(1); // 1: Plans, 2: Details
+    const [plans, setPlans] = useState([]);
+    const [selectedPlan, setSelectedPlan] = useState(null);
+    const [loadingPlans, setLoadingPlans] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [states, setStates] = useState([]);
+    const [cities, setCities] = useState([]);
+    const [loadingStates, setLoadingStates] = useState(false);
+    const [loadingCities, setLoadingCities] = useState(false);
+
     const [formData, setFormData] = useState({
-        username: '',
+        name: '',
         email: '',
         phone: '',
         password: '',
         confirmPassword: '',
-        address: ''
+        address: '',
+        city: '',
+        state: ''
     });
+
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    useEffect(() => {
+        fetchPlans();
+        fetchStates();
+    }, []);
+
+    const fetchPlans = async () => {
+        try {
+            const res = await getSubscriptions();
+            if (res.status && res.subscriptions) {
+                setPlans(res.subscriptions);
+            }
+        } catch (err) {
+            console.error("Error fetching plans:", err);
+            toast.error("Failed to load subscription plans");
+        } finally {
+            setLoadingPlans(false);
+        }
+    };
+
+    const fetchStates = async () => {
+        setLoadingStates(true);
+        try {
+            const response = await fetch('https://countriesnow.space/api/v0.1/countries/states', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ country: "India" })
+            });
+            const data = await response.json();
+            if (!data.error) {
+                setStates(data.data.states);
+            }
+        } catch (err) {
+            console.error("Error fetching states:", err);
+        } finally {
+            setLoadingStates(false);
+        }
+    };
+
+    const fetchCities = async (stateName) => {
+        setLoadingCities(true);
+        try {
+            const response = await fetch('https://countriesnow.space/api/v0.1/countries/state/cities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ country: "India", state: stateName })
+            });
+            const data = await response.json();
+            if (!data.error) {
+                setCities(data.data.map(city => ({ name: city })));
+            } else {
+                setCities([]);
+            }
+        } catch (err) {
+            console.error("Error fetching cities:", err);
+            setCities([]);
+        } finally {
+            setLoadingCities(false);
+        }
+    };
+
+    const handlePlanSelect = (plan) => {
+        setSelectedPlan(plan);
+        setStep(2);
+        window.scrollTo(0, 0);
+    };
+
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
         setError('');
+
+        if (name === 'state') {
+            setFormData(prev => ({ ...prev, city: '' }));
+            fetchCities(value);
+        }
     };
 
     const validate = () => {
-        if (!formData.username || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword || !formData.address) {
+        if (!formData.name || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword || !formData.address || !formData.city || !formData.state) {
             return "All fields are required";
         }
-
-        // Basic Email validation
-        if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            return "Invalid email address";
-        }
-
-        // Basic Phone validation (10 digits)
-        if (!/^\d{10}$/.test(formData.phone)) {
-            return "Phone number must be 10 digits";
-        }
-
-        if (formData.password !== formData.confirmPassword) {
-            return "Passwords do not match";
-        }
-
+        if (!/\S+@\S+\.\S+/.test(formData.email)) return "Invalid email address";
+        if (!/^\d{10}$/.test(formData.phone)) return "Phone number must be 10 digits";
+        if (formData.password !== formData.confirmPassword) return "Passwords do not match";
+        if (formData.password.length < 6) return "Password must be at least 6 characters";
         return null;
     };
 
-    const handleSignup = (e) => {
+    const handleSignup = async (e) => {
         e.preventDefault();
-
         const validationError = validate();
         if (validationError) {
             setError(validationError);
+            toast.error(validationError);
             return;
         }
 
-        const existingUsers = JSON.parse(localStorage.getItem('vendor_users')) || [];
+        setIsSubmitting(true);
+        try {
+            const payload = {
+                ...formData,
+                plan: selectedPlan._id
+            };
 
-        // Check for duplicate email
-        if (existingUsers.some(u => u.email.toLowerCase() === formData.email.toLowerCase())) {
-            setError("Email already registered");
-            return;
+            const res = await vendorSignup(payload);
+            if (res.status) {
+                toast.success(res.message || "Registration request submitted!");
+                alert("Subscription request received. Please wait for admin approval.");
+                navigate('/');
+            } else {
+                setError(res.message || "Signup failed");
+                toast.error(res.message || "Signup failed");
+            }
+        } catch (err) {
+            const msg = err.message || "Server error occurred";
+            setError(msg);
+            toast.error(msg);
+        } finally {
+            setIsSubmitting(false);
         }
-
-        // Check for duplicate phone
-        if (existingUsers.some(u => u.phone === formData.phone)) {
-            setError("Phone number already registered");
-            return;
-        }
-
-        // Check for duplicate username
-        if (existingUsers.some(u => u.username.toLowerCase() === formData.username.toLowerCase())) {
-            setError("Username already taken");
-            return;
-        }
-
-        const newUser = {
-            id: Date.now(),
-            username: formData.username,
-            email: formData.email,
-            phone: formData.phone,
-            password: formData.password,
-            address: formData.address
-        };
-
-        const updatedUsers = [...existingUsers, newUser];
-        localStorage.setItem('vendor_users', JSON.stringify(updatedUsers));
-
-        // Auto Login after successful signup
-        localStorage.setItem("vendorLoggedIn", "true");
-        localStorage.setItem("vendorUserEmail", newUser.email);
-        localStorage.setItem("vendorUserName", newUser.username);
-        localStorage.setItem("vendorUserPhoto", "");
-
-        alert("Account created successfully! Logging you in...");
-        navigate('/vendor');
     };
+
+    if (loadingPlans) {
+        return (
+            <div className="signup-loading">
+                <Loader className="spinner" size={40} />
+                <p>Loading subscription plans...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="signup-page">
-            <div className="signup-card">
-                <h2>Create Account</h2>
-                <p className="signup-subtitle">Join us to manage your auctions</p>
+            <div className={`signup-container ${step === 1 ? 'plans-view' : 'form-view'}`}>
 
-                <form onSubmit={handleSignup} className="signup-form">
-                    <div className="form-group">
-                        <label>Username</label>
-                        <input
-                            type="text"
-                            name="username"
-                            value={formData.username}
-                            onChange={handleChange}
-                            placeholder="Choose a username"
-                        />
-                    </div>
+                {step === 1 ? (
+                    <div className="plans-section fade-in">
+                        <div className="section-header">
+                            <h1>Choose Your Plan</h1>
+                            <p>Select a subscription plan that fits your business needs</p>
+                        </div>
 
-                    <div className="form-group">
-                        <label>Email Address</label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="Enter your email"
-                        />
-                    </div>
+                        <div className="plans-grid">
+                            {plans.map((plan) => (
+                                <div
+                                    key={plan._id}
+                                    className={`plan-card ${selectedPlan?._id === plan._id ? 'selected' : ''}`}
+                                    onClick={() => handlePlanSelect(plan)}
+                                >
+                                    {plan.isPopular && <div className="popular-badge">Most Popular</div>}
+                                    <h3 className="plan-name">{plan.name}</h3>
+                                    <div className="plan-price">
+                                        <span className="currency">₹</span>
+                                        <span className="amount">{plan.price}</span>
+                                        <span className="duration">/{plan.durationType === 'year' ? 'yr' : 'mo'}</span>
+                                    </div>
+                                    <div className="plan-description">{plan.description || 'Access to all auction tools and vendor features.'}</div>
+                                    <ul className="plan-features">
+                                        {(plan.features && plan.features.length > 0) ? (
+                                            plan.features.map((feature, idx) => (
+                                                <li key={idx}><Check size={16} /> {feature}</li>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <li><Check size={16} /> Unlimited Auctions</li>
+                                                <li><Check size={16} /> Real-time Bidding</li>
+                                                <li><Check size={16} /> Business Analytics</li>
+                                                <li><Check size={16} /> Dedicated Support</li>
+                                            </>
+                                        )}
+                                    </ul>
+                                    <button className="select-plan-btn">
+                                        Get Started <ArrowRight size={18} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
 
-                    <div className="form-group">
-                        <label>Phone Number</label>
-                        <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            placeholder="10-digit mobile number"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Password</label>
-                        <div className="password-input-wrapper">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                placeholder="Create a password"
-                            />
-                            <button
-                                type="button"
-                                className="password-toggle-btn"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </button>
+                        <div className="signup-footer-links">
+                            <p>Already have an account? <Link to="/">Login here</Link></p>
                         </div>
                     </div>
-
-                    <div className="form-group">
-                        <label>Confirm Password</label>
-                        <div className="password-input-wrapper">
-                            <input
-                                type={showConfirmPassword ? "text" : "password"}
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                placeholder="Confirm your password"
-                            />
-                            <button
-                                type="button"
-                                className="password-toggle-btn"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            >
-                                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                ) : (
+                    <div className="details-section fade-in">
+                        <div className="section-header">
+                            <button className="back-btn" onClick={() => setStep(1)}>
+                                <ArrowLeft size={20} /> Change Plan
                             </button>
+                            <h2>Complete Your Registration</h2>
+                            <p>You've selected the <strong>{selectedPlan.name}</strong> plan</p>
                         </div>
+
+                        <form onSubmit={handleSignup} className="signup-form-grid">
+                            <div className="form-column">
+                                <h3 className="form-subtitle">Business Information</h3>
+                                <div className="form-group">
+                                    <label><User size={16} /> Business Name *</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        placeholder="Your name"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label><Mail size={16} /> Email Address *</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        placeholder="email@example.com"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label><Phone size={16} /> Phone Number *</label>
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        placeholder="10-digit mobile number"
+                                        maxLength="10"
+                                        required
+                                    />
+                                </div>
+
+                                <h3 className="form-subtitle" style={{ marginTop: '20px' }}>Security</h3>
+                                <div className="form-group">
+                                    <label><Lock size={16} /> Password *</label>
+                                    <div className="password-wrapper">
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            placeholder="Min 6 characters"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            className="toggle-eye"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label><Lock size={16} /> Confirm Password *</label>
+                                    <div className="password-wrapper">
+                                        <input
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            name="confirmPassword"
+                                            value={formData.confirmPassword}
+                                            onChange={handleChange}
+                                            placeholder="Re-enter password"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            className="toggle-eye"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        >
+                                            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="form-column">
+                                <h3 className="form-subtitle">Address Details</h3>
+                                <div className="form-group full-width">
+                                    <label><MapPin size={16} /> Street Address *</label>
+                                    <textarea
+                                        name="address"
+                                        value={formData.address}
+                                        onChange={handleChange}
+                                        placeholder="Door No, Street Name, Area..."
+                                        rows="2"
+                                        required
+                                    ></textarea>
+                                </div>
+
+                                <div className="grid-2">
+                                    <div className="form-group">
+                                        <label>State *</label>
+                                        <select
+                                            name="state"
+                                            value={formData.state}
+                                            onChange={handleChange}
+                                            required
+                                            disabled={loadingStates}
+                                        >
+                                            <option value="">Select State</option>
+                                            {states.map(s => (
+                                                <option key={s.name} value={s.name}>{s.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>City *</label>
+                                        <select
+                                            name="city"
+                                            value={formData.city}
+                                            onChange={handleChange}
+                                            required
+                                            disabled={!formData.state || loadingCities}
+                                        >
+                                            <option value="">Select City</option>
+                                            {cities.map(c => (
+                                                <option key={c.name} value={c.name}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="submit-section">
+                                    <div className="selected-plan-info">
+                                        <span>Selected Plan:</span>
+                                        <strong>{selectedPlan.name} (₹{selectedPlan.price})</strong>
+                                    </div>
+
+                                    {error && <div className="form-error">{error}</div>}
+
+                                    <button
+                                        type="submit"
+                                        className="btn btn-primary submit-btn"
+                                        disabled={isSubmitting}
+                                    >
+                                        {isSubmitting ? (
+                                            <><Loader className="spinner" size={18} /> Sending Request...</>
+                                        ) : (
+                                            'Submit Subscription Request'
+                                        )}
+                                    </button>
+                                    <p className="terms-text">
+                                        By clicking submit, you agree to our Terms of Service and Privacy Policy.
+                                        Your account will be activated after admin review.
+                                    </p>
+                                </div>
+                            </div>
+                        </form>
                     </div>
-
-                    <div className="form-group">
-                        <label>Address</label>
-                        <textarea
-                            name="address"
-                            value={formData.address}
-                            onChange={handleChange}
-                            placeholder="Your full address"
-                            rows="3"
-                        ></textarea>
-                    </div>
-
-                    {error && <div className="error-msg">{error}</div>}
-
-                    <button type="submit" className="btn btn-primary signup-btn">Sign Up</button>
-
-                    <div className="signup-footer">
-                        <p>Already have an account? <Link to="/" className="link">Login here</Link></p>
-                    </div>
-                </form>
+                )}
             </div>
         </div>
     );

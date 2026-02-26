@@ -470,7 +470,7 @@ const [paymentNote, setPaymentNote] = useState('');
                                 onClick={openPaymentModal}
                                 disabled={selectedBuyer.balance <= 0}
                             >
-                                <Plus size={16} style={{ marginRight: '5px' }} /> Record Payment
+                                <Plus size={16} style={{ marginRight: '5px' }} /> Pay In
                             </button>
                         </div>
 
@@ -671,7 +671,7 @@ const [paymentNote, setPaymentNote] = useState('');
                 <div className="modal-overlay" onClick={() => setShowRecordPaymentModal(false)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 className="modal-title">Record Payment</h3>
+                            <h3 className="modal-title">Pay In</h3>
                             <button className="modal-close" onClick={() => setShowRecordPaymentModal(false)}><X /></button>
                         </div>
                         <form onSubmit={handleRecordPayment}>

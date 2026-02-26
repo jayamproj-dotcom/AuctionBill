@@ -10,8 +10,8 @@ const SubscriptionManagement = () => {
   const { saasRole, saasPermissions } = useSelector((state) => state.saasAuth);
 
   console.log(saasRole, saasPermissions);
-  
-  
+
+
   const isSubAdmin = saasRole === 'sub-admin' || saasRole === 'subadmin';
   const canManageSubscriptions = !isSubAdmin || saasPermissions?.subscriptionAccess === true || String(saasPermissions?.subscriptionAccess).toLowerCase() === 'true';
   const [plans, setPlans] = useState([]);
@@ -46,6 +46,8 @@ const SubscriptionManagement = () => {
       durationValue: plan.durationValue || 1,
       durationType: plan.durationType || 'month',
       status: plan.status || 'Active',
+      description: plan.description || '',
+      isPopular: plan.isPopular || false,
       featuresString: plan.features?.join('\n') || ''
     });
     setIsModalOpen(true);
@@ -61,6 +63,8 @@ const SubscriptionManagement = () => {
       status: 'Active',
       features: [],
       featuresString: '',
+      description: '',
+      isPopular: false,
     });
     setIsModalOpen(true);
   };
@@ -102,6 +106,8 @@ const SubscriptionManagement = () => {
       durationType: editingPlan.durationType || 'month',
       status: editingPlan.status || 'Active',
       features: updatedFeatures,
+      description: editingPlan.description || '',
+      isPopular: editingPlan.isPopular || false,
       slug: editingPlan.name.toLowerCase().replace(/\s+/g, '-')
     };
 
@@ -269,6 +275,26 @@ const SubscriptionManagement = () => {
                 </div>
               </div>
 
+              <div className="saas-form-group">
+                <label className="saas-label">Plan Description</label>
+                <textarea
+                  className="saas-textarea"
+                  rows="2"
+                  value={editingPlan?.description}
+                  onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })}
+                  placeholder="e.g. Best for growing businesses..."
+                ></textarea>
+              </div>
+              <div className="saas-form-group">
+                <label className="saas-label saas-flex saas-align-center saas-gap-05" style={{ cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={editingPlan?.isPopular}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, isPopular: e.target.checked })}
+                  />
+                  Mark as Popular Plan
+                </label>
+              </div>
               <div className="saas-form-group">
                 <label className="saas-label">Features (one per line)</label>
                 <textarea

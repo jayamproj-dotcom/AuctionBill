@@ -138,7 +138,14 @@ const VendorLogin = () => {
             </div>
           </div>
 
+          <div className="login-options">
+            <Link to="/forgot-password" style={{ fontSize: '14px', color: '#1677ff', textDecoration: 'none', float: 'right', marginBottom: '10px' }}>
+              Forgot Password?
+            </Link>
+          </div>
+
           {error && <div className="error-msg">{error}</div>}
+
 
           <button type="submit" className="btn btn-primary login-btn" disabled={isLoading}>
             {isLoading ? <><Loader className="saas-spinner" size={18} style={{ marginRight: '8px', animation: 'spin 1s linear infinite' }} /> Signing In...</> : "Login"}
@@ -162,17 +169,11 @@ const VendorLogin = () => {
           />
         </div> */}
 
-        {/* <div className="login-footer">
-            <p className="signup-link-text">
-                Don't have an account? <Link to="/signup" className="link">Sign Up</Link>
-            </p>
-            <p className="saas-link-wrapper">
-                System Administrator?{" "}
-                <Link to="/saas" className="saas-link">
-                Go to SaaS Panel
-                </Link>
-            </p>
-        </div> */}
+        <div className="login-footer">
+          <p className="signup-link-text" style={{ textAlign: 'center', marginTop: '1.5rem', color: '#666', fontSize: '14px' }}>
+            Don't have an account? <Link to="/signup" style={{ color: '#1677ff', fontWeight: 600, textDecoration: 'none' }}>Request Access</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

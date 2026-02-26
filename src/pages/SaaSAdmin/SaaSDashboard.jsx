@@ -105,7 +105,6 @@ const SaaSDashboard = () => {
                 <th>Plan</th>
                 <th>Status</th>
                 <th>Joined Date</th>
-
               </tr>
             </thead>
             <tbody>
