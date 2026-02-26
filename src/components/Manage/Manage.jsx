@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import './Manage.css';
-import { User, Mail, Phone, MapPin, Save, Camera, Lock, Loader } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Save, Camera, Loader } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateVendorProfileData } from '../../redux/slices/vendorAuthSlice';
 import { updateVendorProfile } from '../../api/vendorApi';
@@ -30,7 +30,6 @@ function Manage() {
 
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-
     const [profilePicFile, setProfilePicFile] = useState(null);
 
     // Sync local state with redux when redux store changes
@@ -65,7 +64,7 @@ function Manage() {
             formData.append('name', profile.name);
             formData.append('phone', profile.phone);
             formData.append('address', profile.address);
-            
+
             if (profile.password) {
                 formData.append('password', profile.password);
             }
@@ -227,8 +226,6 @@ function Manage() {
                                 />
                             </div>
                         </div>
-
-                      
 
                         <div className="form-actions">
                             {!isEditing ? (

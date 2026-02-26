@@ -118,9 +118,17 @@ const VendorLayout = () => {
                 navigate('/vendor/manage');
                 setProfileOpen(false);
               }}>
-                <User size={16} /> {/* Changed icon to User */}
+                <User size={16} />
                 <span>My Profile</span>
               </div>
+              <div className="dropdown-item" onClick={() => {
+                navigate('/vendor/change-password');
+                setProfileOpen(false);
+              }}>
+                <KeyRound size={16} />
+                <span>Change Password</span>
+              </div>
+
               <div className="dropdown-divider"></div>
               <div className="dropdown-item text-danger" onClick={handleLogout}>
                 <LogOut size={16} />

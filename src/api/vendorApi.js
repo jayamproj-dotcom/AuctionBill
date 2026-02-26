@@ -24,3 +24,40 @@ export const updateVendorProfile = async (id, data) => {
         throw error;
     }
 };
+
+export const forgotPassword = async (data) => {
+    try {
+        const response = await api.post('/vendor/forgot-password', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const resetPassword = async (data) => {
+    try {
+        const response = await api.post('/vendor/reset-password', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const changePassword = async (data) => {
+    try {
+        const response = await api.post('/vendor/change-password', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+

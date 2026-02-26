@@ -138,7 +138,14 @@ const VendorLogin = () => {
             </div>
           </div>
 
+          <div className="login-options">
+            <Link to="/forgot-password" style={{ fontSize: '14px', color: '#1677ff', textDecoration: 'none', float: 'right', marginBottom: '10px' }}>
+              Forgot Password?
+            </Link>
+          </div>
+
           {error && <div className="error-msg">{error}</div>}
+
 
           <button type="submit" className="btn btn-primary login-btn" disabled={isLoading}>
             {isLoading ? <><Loader className="saas-spinner" size={18} style={{ marginRight: '8px', animation: 'spin 1s linear infinite' }} /> Signing In...</> : "Login"}

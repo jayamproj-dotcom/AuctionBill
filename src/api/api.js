@@ -7,9 +7,21 @@ const api = axios.create({
 // Add a request interceptor to add the token
 api.interceptors.request.use(
     (config) => {
-        // Also check for 'admin_token' since auth sets 'admin_token'
         const state = store.getState();
-        const token = state.saasAuth?.adminToken || state.vendorAuth?.vendorToken || sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token') || sessionStorage.getItem('vendorToken') || localStorage.getItem('token') || sessionStorage.getItem('token');
+        let token = null;
+
+        const isAdminRoute = config.url.includes('/admin') || config.url.includes('/subscription');
+        const isVendorRoute = config.url.includes('/vendor') && !config.url.includes('/admin');
+
+        if (isAdminRoute) {
+            token = state.saasAuth?.adminToken || sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token');
+        } else if (isVendorRoute) {
+            token = state.vendorAuth?.vendorToken || sessionStorage.getItem('vendorToken') || localStorage.getItem('token') || sessionStorage.getItem('token');
+        } else {
+            // Fallback to existing logic if route is ambiguous
+            token = state.saasAuth?.adminToken || state.vendorAuth?.vendorToken || sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token') || sessionStorage.getItem('vendorToken') || localStorage.getItem('token') || sessionStorage.getItem('token');
+        }
+
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }

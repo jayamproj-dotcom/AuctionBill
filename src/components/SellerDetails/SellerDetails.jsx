@@ -474,7 +474,7 @@ function SellerDetails() {
                                 className="btn btn-primary"
                                 onClick={openGlobalPaymentModal}
                             >
-                                <Plus size={16} style={{ marginRight: '5px' }} /> Add Only Payment
+                                <Plus size={16} style={{ marginRight: '5px' }} />  Pay Out
                             </button>
                         </div>
 
@@ -757,7 +757,7 @@ function SellerDetails() {
                     <div className="modal-overlay" onClick={() => setShowRecordPaymentModal(false)}>
                         <div className="modal" onClick={(e) => e.stopPropagation()}>
                             <div className="modal-header">
-                                <h3 className="modal-title">Record Payment</h3>
+                                <h3 className="modal-title">Pay Out</h3>
                                 <button className="modal-close" onClick={() => setShowRecordPaymentModal(false)}>×</button>
                             </div>
                             <form onSubmit={handleRecordPayment}>

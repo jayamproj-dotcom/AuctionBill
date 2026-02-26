@@ -161,7 +161,13 @@ const SaaSLogin = () => {
                             </button>
                         </div>
                         {errors.password && <span className="error-msg">{errors.password}</span>}
+                        <div style={{ textAlign: 'right' }}>
+                            <Link to="/saas-forgot-password" style={{ fontSize: '13px', color: '#f39c12', textDecoration: 'none' }}>
+                                Forgot Password?
+                            </Link>
+                        </div>
                     </div>
+
 
                     <button type="submit" className="saas-btn btn-primary saas-login-btn" disabled={loading}>
                         {loading ? <><Loader className="saas-spinner" size={18} /> Logging in...</> : 'Login to Dashboard'}

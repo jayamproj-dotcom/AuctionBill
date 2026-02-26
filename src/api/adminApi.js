@@ -39,6 +39,31 @@ export const updateAdminPassword = async (data) => {
     }
 };
 
+export const adminForgotPassword = async (data) => {
+    try {
+        const response = await api.post('admin/forgot-password', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const adminResetPassword = async (data) => {
+    try {
+        const response = await api.post('admin/reset-password', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+
 // Get admin profile API
 export const getAdminProfile = async () => {
     try {
