@@ -10,6 +10,7 @@ function CommissionRecord() {
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFilter, setDateFilter] = useState('');
 
+    
     useEffect(() => {
         loadCommissions();
     }, []);
