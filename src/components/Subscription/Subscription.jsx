@@ -88,10 +88,10 @@ const Subscription = () => {
         if (!window.confirm(`Are you sure you want to upgrade to ${planToUpgradeTo.name}?`)) return;
 
         try {
-            const dataToUpdate = { plan: planToUpgradeTo._id };
+            const dataToUpdate = { requestedPlan: planToUpgradeTo._id };
             const res = await updateVendor(currentVendorId, dataToUpdate);
             if (res.status) {
-                alert(`Successfully upgraded to ${planToUpgradeTo.name}`);
+                alert(`Upgrade request for ${planToUpgradeTo.name} has been sent to the admin. Please await approval.`);
                 window.location.reload();
             } else {
                 alert(res.message || "Failed to upgrade plan.");
