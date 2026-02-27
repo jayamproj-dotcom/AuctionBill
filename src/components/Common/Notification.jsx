@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { getVendorProfile } from '../../api/vendorApi';
+import { getVendorNotifications } from '../../api/vendorApi';
 import './Notification.css';
 import { Bell } from 'lucide-react';
 
 const Notification = ({ expiryDate: propsExpiryDate }) => {
     const { vendorId } = useSelector((state) => state.vendorAuth);
-    const [fetchedExpiryDate, setFetchedExpiryDate] = useState(null);
+    const [dbNotifications, setDbNotifications] = useState([]);
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -15,72 +15,47 @@ const Notification = ({ expiryDate: propsExpiryDate }) => {
     const dropdownRef = useRef(null);
 
     useEffect(() => {
-        const fetchExpiryDate = async () => {
+        const fetchDbNotifications = async () => {
             if (vendorId) {
                 try {
-                    const data = await getVendorProfile(vendorId);
-                    if (data && data.vendor && data.vendor.planEndDate) {
-                        setFetchedExpiryDate(data.vendor.planEndDate);
+                    const data = await getVendorNotifications();
+                    if (data && data.status && data.notifications) {
+                        const formatted = data.notifications.map(n => {
+                            let icon = '🔔';
+                            let typeClass = 'info';
+                            if(n.type === 'plan_upgrade') { icon = '⭐'; typeClass='success'; }
+                            else if(n.type === 'asset_upgrade') { icon = '💎'; typeClass='primary'; }
+                            else if(n.type === 'new_registration') { icon = '🎉'; typeClass='success'; }
+                            else if(n.type === 'subscription_alert') { icon = '⚠️'; typeClass='warning'; }
+                            else if(n.type === 'other') { icon = 'ℹ️'; typeClass='info'; }
+                            
+                            if (n.title === 'Subscription Expired') {
+                                icon = '🚫'; typeClass = 'danger';
+                            }
+                            
+                            return {
+                                id: n._id,
+                                type: typeClass,
+                                icon,
+                                title: n.title,
+                                message: n.message,
+                                time: new Date(n.createdAt).toLocaleDateString(),
+                                link: null,
+                                fromDb: true
+                            };
+                        });
+                        setDbNotifications(formatted);
+                        setNotifications(formatted);
+                        setUnreadCount(formatted.length);
                     }
-                } catch (error) {
-                    console.error("Failed to fetch vendor profile:", error);
+                } catch(error) {
+                    console.error("Failed to fetch DB notifications:", error);
                 }
             }
         };
-        fetchExpiryDate();
+
+        fetchDbNotifications();
     }, [vendorId]);
-
-    useEffect(() => {
-        const activeExpiryDate = fetchedExpiryDate || propsExpiryDate;
-        if (!activeExpiryDate) return;
-
-        const checkExpiry = () => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            const expiry = new Date(activeExpiryDate);
-            expiry.setHours(0, 0, 0, 0);
-            
-            const diffTime = expiry.getTime() - today.getTime();
-            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-            console.log("activeExpiryDate:", activeExpiryDate, "diffDays:", diffDays);
-
-            let notification = null;
-
-            if (diffDays <= 0) {
-                notification = {
-                    id: 'expired',
-                    type: 'danger',
-                    icon: '🚫',
-                    title: 'Subscription Expired',
-                    message: 'Your subscription has ended. Please renew immediately to continue using the services.',
-                    time: 'Just now',
-                    link: '/vendor/subscription'
-                };
-            } else if (diffDays <= 7 && diffDays > 0) {
-                notification = {
-                    id: 'warning',
-                    type: diffDays <= 3 ? 'danger' : 'warning',
-                    icon: '⚠️',
-                    title: `Subscription Ends in ${diffDays} Day${diffDays > 1 ? 's' : ''}`,
-                    message: `Your active plan will expire in ${diffDays} day${diffDays > 1 ? 's' : ''}. Please renew to avoid account suspension.`,
-                    time: 'Just now',
-                    link: '/vendor/subscription' // fixed spelling from ventor to vendor
-                };
-            }
-
-            if (notification) {
-                setNotifications([notification]);
-                setUnreadCount(1);
-            } else {
-                setNotifications([]);
-                setUnreadCount(0);
-            }
-        };
-
-        checkExpiry();
-    }, [fetchedExpiryDate, propsExpiryDate]);
 
     // Handle outside click
     useEffect(() => {

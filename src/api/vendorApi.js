@@ -85,3 +85,15 @@ export const changePassword = async (data) => {
         throw error;
     }
 };
+
+export const getVendorNotifications = async () => {
+    try {
+        const response = await api.get('/notification/vendor');
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};

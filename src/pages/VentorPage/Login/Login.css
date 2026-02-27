@@ -245,7 +245,7 @@
 
 .login-form .form-group .password-input-wrapper input {
     width: 100%;
-    padding-right: 40px; /* Make space for the eye icon */
+    padding-right: 40px;
 }
 
 .password-toggle-btn {

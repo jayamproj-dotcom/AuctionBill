@@ -951,6 +951,49 @@ const VendorManagement = () => {
                       {selectedVendor.plan?.name || selectedVendor.plan}
                     </span>
                   </div>
+                  {selectedVendor.requestedPlan && (
+                    <div style={{ gridColumn: '1 / -1', background: '#fff3cd', padding: '10px', borderRadius: '5px', marginBottom: '10px' }}>
+                      <label className="saas-label saas-text-muted">Requested Plan Upgrade</label>
+                      <div className="saas-flex saas-flex-between">
+                         <span className="saas-font-medium saas-text-warning">
+                           {selectedVendor.requestedPlan?.name}
+                         </span>
+                         <div className="saas-flex">
+                           <button 
+                             className="saas-btn btn-primary btn-sm"
+                             onClick={async () => {
+                               if(window.confirm(`Approve upgrade to ${selectedVendor.requestedPlan?.name}?`)) {
+                                 try {
+                                   await updateVendor(selectedVendor._id || selectedVendor.id, { plan: selectedVendor.requestedPlan._id, requestedPlan: "" });
+                                   alert('Plan upgrade approved successfully');
+                                   setIsModalOpen(false);
+                                   loadData();
+                                 } catch(e) { alert('Error approving plan') }
+                               }
+                             }}
+                           >
+                             Approve
+                           </button>
+                           <button 
+                             className="saas-btn btn-outline btn-sm saas-ml-1"
+                             style={{ marginLeft: '10px' }}
+                             onClick={async () => {
+                               if(window.confirm(`Reject upgrade to ${selectedVendor.requestedPlan?.name}?`)) {
+                                 try {
+                                   await updateVendor(selectedVendor._id || selectedVendor.id, { requestedPlan: "" });
+                                   alert('Plan upgrade rejected');
+                                   setIsModalOpen(false);
+                                   loadData();
+                                 } catch(e) { alert('Error rejecting plan') }
+                               }
+                             }}
+                           >
+                             Reject
+                           </button>
+                         </div>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className="saas-label saas-text-muted">Account Status</label>
                     <span className={`saas-badge ${selectedVendor.status === 'Active' ? 'badge-success' :
