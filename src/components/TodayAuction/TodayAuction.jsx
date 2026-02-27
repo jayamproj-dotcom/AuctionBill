@@ -504,108 +504,99 @@ function TodayAuction() {
                             <p>No products available for auction today</p>
                         </div>
                     ) : (
-                        <div className="products-grid">
-                            {products
-                                .filter(product => {
-                                    if (!searchQuery) return true;
-                                    const query = searchQuery.toLowerCase();
-                                    const seller = sellers.find(s => s.id === product.sellerId);
-                                    const sellerName = seller ? seller.name.toLowerCase() : '';
-                                    const productName = product.name.toLowerCase();
-                                    const hasMatchingVariant = product.variants && product.variants.some(v => v.variety.toLowerCase().includes(query));
-                                    
-                                    return sellerName.includes(query) || productName.includes(query) || hasMatchingVariant;
-                                })
-                                .map(product => (
-                                    <div key={product.id} className={`data-card product-card ${product.isActive === false ? 'product-disabled' : ''}`}>
-                                        <div className="data-card-header product-card-header">
-                                            <div className="data-card-title product-card-title">
-                                                {capitalizeFirst(product.name)}
-                                                {product.varieties ? ` - ${capitalizeFirst(product.varieties)}` : ''}
-                                                {product.isActive === false && (
-                                                    <span className="badge badge-error ml-2">Disabled</span>
-                                                )}
-                                            </div>
-
-                                            <div className="action-buttons">
-                                                <button className="icon-btn" onClick={() => toggleProductStatus(product.id)} title={product.isActive === false ? "Enable" : "Disable"}>
-                                                    {product.isActive === false ? <Eye size={18} /> : <EyeOff size={18} />}
-                                                </button>
-                                                <button className="icon-btn edit" onClick={() => openEditModal(product)} title="Edit">
-                                                    <Edit2 size={18} />
-                                                </button>
-                                                <button className="icon-btn delete" onClick={() => handleDeleteClick(product.id)} title="Delete">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="data-card-body product-card-body">
-                                            <div className="product-image-container">
-                                                {product.image ? (
-                                                    <img
-                                                        src={product.image}
-                                                        alt={product.name}
-                                                        className={`product-image ${product.isActive === false ? 'grayscale' : ''}`}
-                                                    />
-                                                ) : (
-                                                    <span className="product-image-placeholder">📦</span>
-                                                )}
-                                            </div>
-
-                                            <div className="data-card-subtitle product-card-subtitle">
-                                                Seller: <strong>{sellers.find(s => s.id === product.sellerId)?.name}</strong>
-                                            </div>
-
-                                            <div className="product-variants">
-                                                {product.variants && product.variants.map(v => {
-                                                    const sold = v.sellQuantity || 0;
-                                                    const remaining = v.quantity - sold;
-                                                    return (
-                                                        <div key={v.id} className="variant-box" style={{
-                                                            background: 'rgba(255,255,255,0.05)',
-                                                            padding: '8px',
-                                                            borderRadius: '4px',
-                                                            marginBottom: '4px',
-                                                            fontSize: '0.9em'
-                                                        }}>
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
-                                                                <span>{capitalizeFirst(v.variety)}</span>
-                                                                <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`} style={{ fontSize: '0.7em', padding: '2px 6px' }}>{v.quality}</span>
-                                                            </div>
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                                                                <span>{remaining} {v.unit}</span>
-                                                                <span className="text-amber">{v.commission}% Comm</span>
-                                                            </div>
+                        <div className="table-responsive bg-card rounded-lg shadow-sm custom-table-wrapper">
+                            <table className="data-table custom-data-table">
+                                <thead className="bg-tertiary">
+                                    <tr>
+                                        <th className="custom-th">Product Details</th>
+                                        <th className="custom-th">Seller</th>
+                                        <th className="custom-th">Variants (Qty & Comm)</th>
+                                        <th className="custom-th">Status</th>
+                                        <th className="custom-th custom-th-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {products
+                                        .filter(product => {
+                                            if (!searchQuery) return true;
+                                            const query = searchQuery.toLowerCase();
+                                            const seller = sellers.find(s => s.id === product.sellerId);
+                                            const sellerName = seller ? seller.name.toLowerCase() : '';
+                                            const productName = product.name.toLowerCase();
+                                            const hasMatchingVariant = product.variants && product.variants.some(v => v.variety.toLowerCase().includes(query));
+                                            
+                                            return sellerName.includes(query) || productName.includes(query) || hasMatchingVariant;
+                                        })
+                                        .map(product => (
+                                            <tr key={product.id} className={`${product.isActive === false ? 'product-disabled' : ''} custom-tr`}>
+                                                <td className="custom-td">
+                                                    <div className="font-semibold text-primary table-product-name">
+                                                        {capitalizeFirst(product.name)}
+                                                    </div>
+                                                    {product.varieties && (
+                                                        <div className="text-muted table-product-subtext">
+                                                            {capitalizeFirst(product.varieties)}
                                                         </div>
-                                                    )
-                                                })}
-                                            </div>
-                                            {/* {product.credit > 0 && (
-                                            <div className="data-row">
-                                                <span className="data-label">Credit</span>
-                                                <span className="data-value text-error">₹{product.credit.toLocaleString()}</span>
-                                            </div>
-                                        )} */}
-                                        </div>
-
-                                        <div className="data-card-footer product-card-footer">
-                                            <button
-                                                className="btn btn-success sell-btn-full"
-                                                onClick={() => openSellModal(product)}
-                                                disabled={product.isActive === false || product.status === 'soldout'}
-                                            >
-                                                Sell
-                                            </button>
-                                        </div>
-
-                                        {product.status === 'soldout' && (
-                                            <div className="soldout-overlay">
-                                                SOLD OUT
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                                                    )}
+                                                </td>
+                                                <td className="custom-td">
+                                                    <strong>{sellers.find(s => s.id === product.sellerId)?.name}</strong>
+                                                </td>
+                                                <td className="custom-td custom-td-variants">
+                                                    <div className="product-variants">
+                                                        {product.variants && product.variants.map(v => {
+                                                            const sold = v.sellQuantity || 0;
+                                                            const remaining = v.quantity - sold;
+                                                            return (
+                                                                <div key={v.id} className="variant-card">
+                                                                    <div className="variant-card-header">
+                                                                        <span>{capitalizeFirst(v.variety)}</span>
+                                                                        <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'} badge-sm`}>{v.quality}</span>
+                                                                    </div>
+                                                                    <div className="variant-card-metrics">
+                                                                        <span>{remaining} {v.unit}</span>
+                                                                        <span className="text-amber font-semibold">{v.commission}% Comm</span>
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </td>
+                                                <td className="custom-td">
+                                                    {product.status === 'soldout' ? (
+                                                        <span className="badge badge-error">Sold Out</span>
+                                                    ) : product.isActive === false ? (
+                                                        <span className="badge badge-disabled">Disabled</span>
+                                                    ) : (
+                                                        <span className="badge badge-success">Available</span>
+                                                    )}
+                                                </td>
+                                                <td className="custom-td">
+                                                    <div className="action-stack">
+                                                        <button
+                                                            className="btn btn-success action-btn-wide"
+                                                            onClick={() => openSellModal(product)}
+                                                            disabled={product.isActive === false || product.status === 'soldout'}
+                                                        >
+                                                            Sell
+                                                        </button>
+                                                        <div className="action-icon-row">
+                                                            <button className="icon-btn action-icon-small" onClick={() => toggleProductStatus(product.id)} title={product.isActive === false ? "Enable" : "Disable"}>
+                                                                {product.isActive === false ? <Eye size={16} /> : <EyeOff size={16} />}
+                                                            </button>
+                                                            <button className="icon-btn edit action-icon-small" onClick={() => openEditModal(product)} title="Edit">
+                                                                <Edit2 size={16} />
+                                                            </button>
+                                                            <button className="icon-btn delete action-icon-small" onClick={() => handleDeleteClick(product.id)} title="Delete">
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>
@@ -675,9 +666,9 @@ function TodayAuction() {
                                                 setVariantData({ ...variantData, quality: e.target.value })
                                             }
                                         >
-                                            <option value="Excellent">Excellent</option>
-                                            <option value="Good">Good</option>
-                                            <option value="Fair">Fair</option>
+                                            <option value="Excellent">quality1</option>
+                                            <option value="Good">quality2</option>
+                                            <option value="Fair">quality3</option>
                                         </select>
 
                                         <input
@@ -754,7 +745,7 @@ function TodayAuction() {
                                         </table>
                                     </div>
                                 )}
-                                <div className="form-group">
+                                {/* <div className="form-group">
                                     <label className="form-label">Product Image</label>
                                     <input
                                         type="file"
@@ -771,7 +762,7 @@ function TodayAuction() {
                                             />
                                         </div>
                                     )}
-                                </div>
+                                </div> */}
 
                             </div>
                             <div className="modal-footer">

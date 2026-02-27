@@ -1,66 +1,41 @@
-import { useState } from 'react';
-import { Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Loader } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
+import { getVendors } from '../../api/adminApi';
 import './SaaSAdmin.css';
 
 const Purchases = () => {
-  // Mock Purchase Data
-  const [purchases] = useState([
-    {
-      id: 1,
-      vendorName: 'Royal Auctions',
-      plan: 'Premium',
-      price: '₹9,999',
-      paymentStatus: 'Paid',
-      status: 'Active',
-      expiryDate: '2026-03-20',
-      transactionId: 'TXN_882910'
-    },
-    {
-      id: 2,
-      vendorName: 'Heritage Bids',
-      plan: 'Basic',
-      price: '₹4,999',
-      paymentStatus: 'Paid',
-      status: 'Active',
-      expiryDate: '2026-02-18', // Expires very soon
-      transactionId: 'TXN_772190'
-    },
-    {
-      id: 3,
-      vendorName: 'City Auction House',
-      plan: 'Standard',
-      price: '₹7,499',
-      paymentStatus: 'Paid',
-      status: 'Expiring Soon',
-      expiryDate: '2026-02-14', // Within 3 days
-      transactionId: 'TXN_332101'
-    },
-    {
-      id: 4,
-      vendorName: 'South Gate Bidding',
-      plan: 'Premium',
-      price: '₹9,999',
-      paymentStatus: 'Failed',
-      status: 'Inactive',
-      expiryDate: '2025-12-01', // Already expired
-      transactionId: 'TXN_Failed'
-    },
-    {
-      id: 5,
-      vendorName: 'Alpha Traders',
-      plan: 'Basic',
-      price: '₹4,999',
-      paymentStatus: 'Paid',
-      status: 'Active',
-      expiryDate: '2026-08-20',
-      transactionId: 'TXN_992100'
-    },
-  ]);
-
+  const [purchases, setPurchases] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Helper to check if date is nearing expiry (e.g., within 30 days)
+  useEffect(() => {
+    const fetchPurchases = async () => {
+      try {
+        const response = await getVendors();
+        if (response.status && response.vendors) {
+          const vendorsData = response.vendors.map((vendor) => ({
+            id: vendor._id,
+            vendorName: vendor.name,
+            plan: vendor.plan?.name || 'Unknown',
+            price: vendor.plan?.price ? `₹${vendor.plan.price.toLocaleString()}` : '₹0',
+            paymentStatus: 'Paid', // Dummy static as there is no payment gateway yet
+            status: vendor.status,
+            expiryDate: vendor.planEndDate,
+            transactionId: `TXN_${vendor._id.slice(-6).toUpperCase()}`
+          }));
+          setPurchases(vendorsData);
+        }
+      } catch (error) {
+        console.error("Error fetching purchases:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPurchases();
+  }, []);
+
+  // Helper to check if date is nearing expiry (e.g., within 5 days)
   const isExpiringSoon = (dateString, status) => {
     if (status === 'Inactive' || status === 'Expiring Soon') return true;
 
@@ -71,7 +46,7 @@ const Purchases = () => {
     const diffTime = expiry - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    return diffDays > 0 && diffDays <= 30;
+    return diffDays > 0 && diffDays <= 5;
   };
 
   const getStatusBadge = (status, date) => {
@@ -125,7 +100,13 @@ const Purchases = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredPurchases.length > 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan="7" className="saas-text-center saas-py-4">
+                    <Loader className="saas-spinner saas-inline-block" size={24} /> Loading purchases...
+                  </td>
+                </tr>
+              ) : filteredPurchases.length > 0 ? (
                 filteredPurchases.map((purchase) => {
                   const expiring = isExpiringSoon(purchase.expiryDate, purchase.status);
 
@@ -148,7 +129,7 @@ const Purchases = () => {
                       </td>
                       <td>
                         <div className="saas-flex-col">
-                          <span>{formatDate(purchase.expiryDate)}</span>
+                          <span>{purchase.expiryDate ? formatDate(purchase.expiryDate) : 'N/A'}</span>
                           {expiring && (
                             <span className="saas-expiry-warning">
                               ⚠️ Renew Soon

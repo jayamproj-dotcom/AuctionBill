@@ -4,6 +4,7 @@ import { Eye, EyeOff, Check, ArrowRight, ArrowLeft, Loader, MapPin, Phone, Mail,
 import { getSubscriptions } from '../../../api/adminApi';
 import { vendorSignup } from '../../../api/vendorApi';
 import { toast } from 'react-toastify';
+import SearchableSelect from '../../../components/Common/SearchableSelect.jsx';
 import './Signup.css';
 
 const Signup = () => {
@@ -327,34 +328,26 @@ const Signup = () => {
                                 <div className="grid-2">
                                     <div className="form-group">
                                         <label>State *</label>
-                                        <select
+                                        <SearchableSelect
                                             name="state"
                                             value={formData.state}
                                             onChange={handleChange}
-                                            required
+                                            placeholder="Select State"
+                                            options={states.map(s => ({ label: s.name, value: s.name }))}
                                             disabled={loadingStates}
-                                        >
-                                            <option value="">Select State</option>
-                                            {states.map(s => (
-                                                <option key={s.name} value={s.name}>{s.name}</option>
-                                            ))}
-                                        </select>
+                                        />
                                     </div>
 
                                     <div className="form-group">
                                         <label>City *</label>
-                                        <select
+                                        <SearchableSelect
                                             name="city"
                                             value={formData.city}
                                             onChange={handleChange}
-                                            required
+                                            placeholder="Select City"
+                                            options={cities.map(c => ({ label: c.name, value: c.name }))}
                                             disabled={!formData.state || loadingCities}
-                                        >
-                                            <option value="">Select City</option>
-                                            {cities.map(c => (
-                                                <option key={c.name} value={c.name}>{c.name}</option>
-                                            ))}
-                                        </select>
+                                        />
                                     </div>
                                 </div>
 

@@ -21,8 +21,14 @@ function Dashboard() {
     const [dateFilter, setDateFilter] = useState('today');
     const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
     const [filteredTransactions, setFilteredTransactions] = useState([]);
+    const [demoExpiryDate, setDemoExpiryDate] = useState('');
 
     useEffect(() => {
+        // For testing the UI, let's set the expiry to 5 days from now
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 5);
+        setDemoExpiryDate(futureDate.toISOString().split('T')[0]);
+        
         calculateStats();
     }, [dateFilter, customDate]);
 
@@ -189,7 +195,7 @@ function Dashboard() {
                             )}
                         </div>
 
-                        <Notification expiryDate="2026-02-15" />
+                        <Notification expiryDate={demoExpiryDate} />
                         {/* Demo Button removed */}
                     </div>
                 </div>

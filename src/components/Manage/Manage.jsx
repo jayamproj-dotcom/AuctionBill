@@ -126,7 +126,7 @@ function Manage() {
             <div className="content-body manage-content">
                 <div className="card">
                     <div className="profile-header">
-                        <div className="profile-image-container">
+                        {/* <div className="profile-image-container">
                             <img
                                 src={resolveImageUrl(profile.photo, userPlaceholder)}
                                 alt="Profile"
@@ -160,7 +160,7 @@ function Manage() {
                                     />
                                 </label>
                             )}
-                        </div>
+                        </div> */}
                         <h2 className="profile-name">{profile.name || 'Vendor User'}</h2>
                         <p className="profile-email">{profile.email}</p>
                     </div>

@@ -75,6 +75,15 @@ const Subscription = () => {
         return diffDays;
     };
 
+    const calculateTotalDays = () => {
+        if (!subscription) return 365;
+        const start = new Date(subscription.startDate);
+        const expiry = new Date(subscription.expiryDate);
+        const diffTime = expiry - start;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays > 0 ? diffDays : 365;
+    };
+
     const handleUpgrade = async (planToUpgradeTo) => {
         if (!window.confirm(`Are you sure you want to upgrade to ${planToUpgradeTo.name}?`)) return;
 
@@ -193,10 +202,10 @@ const Subscription = () => {
                                 </div>
                                 <div className="days-remaining">
                                     <span className="days-count">{calculateDaysRemaining()}</span>
-                                    <span>Days Remaining</span>
+                                    <span> Days Remaining</span>
                                 </div>
                                 <div className="progress-bar-container">
-                                    <div className="progress-bar" style={{ width: `${Math.min((calculateDaysRemaining() / 365) * 100, 100)}%` }}></div>
+                                    <div className="progress-bar" style={{ width: `${Math.min((calculateDaysRemaining() / calculateTotalDays()) * 100, 100)}%` }}></div>
                                 </div>
                             </div>
 

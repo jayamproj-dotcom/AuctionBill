@@ -22,11 +22,16 @@ const SaaSDashboard = () => {
         if (response.status && response.vendors) {
           const vendors = response.vendors;
 
+          const calculatedRevenue = vendors.reduce((total, vendor) => {
+            return total + (Number(vendor.plan?.price) || 0);
+          }, 0);
+
           setStats(prev => ({
             ...prev,
             totalVendors: vendors.length,
             pendingApprovals: vendors.filter(v => v.status === 'Pending').length,
-            activeSubscriptions: vendors.filter(v => v.status === 'Active').length
+            activeSubscriptions: vendors.filter(v => v.status === 'Active').length,
+            monthlyRevenue: calculatedRevenue
           }));
 
           const sortedVendors = [...vendors].sort((a, b) => {

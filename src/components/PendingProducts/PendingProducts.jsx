@@ -169,80 +169,80 @@ function PendingProducts() {
                             <p>No pending products found.</p>
                         </div>
                     ) : (
-                        <div className="products-grid">
-                            {pendingProducts
-                                .filter(product => {
-                                    if (!searchQuery) return true;
-                                    const query = searchQuery.toLowerCase();
-                                    const seller = sellers.find(s => s.id === product.sellerId);
-                                    const sellerName = seller ? seller.name.toLowerCase() : '';
-                                    const productName = product.name.toLowerCase();
-                                    const hasMatchingVariant = product.variants && product.variants.some(v => v.variety.toLowerCase().includes(query));
+                        <div className="table-responsive bg-card rounded-lg shadow-sm custom-table-wrapper">
+                            <table className="data-table custom-data-table">
+                                <thead className="bg-tertiary">
+                                    <tr>
+                                        <th className="custom-th">Product Details</th>
+                                        <th className="custom-th">Seller & Date</th>
+                                        <th className="custom-th">Variants (Qty & Comm)</th>
+                                        <th className="custom-th custom-th-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {pendingProducts
+                                        .filter(product => {
+                                            if (!searchQuery) return true;
+                                            const query = searchQuery.toLowerCase();
+                                            const seller = sellers.find(s => s.id === product.sellerId);
+                                            const sellerName = seller ? seller.name.toLowerCase() : '';
+                                            const productName = product.name.toLowerCase();
+                                            const hasMatchingVariant = product.variants && product.variants.some(v => v.variety.toLowerCase().includes(query));
 
-                                    return sellerName.includes(query) || productName.includes(query) || hasMatchingVariant;
-                                })
-                                .map(product => (
-                                    <div key={product.id} className="data-card product-card pending-product-card">
-                                        <div className="data-card-header product-card-header">
-                                            <div className="data-card-title product-card-title">
-                                                {product.name}
-                                            </div>
-                                            <span className="pending-badge">Pending</span>
-                                        </div>
-
-                                        <div className="data-card-body product-card-body">
-                                            <div className="product-image-container">
-                                                {product.image ? (
-                                                    <img
-                                                        src={product.image}
-                                                        alt={product.name}
-                                                        className="product-image"
-                                                    />
-                                                ) : (
-                                                    <span className="product-image-placeholder">📦</span>
-                                                )}
-                                            </div>
-
-                                            <div className="data-card-subtitle product-card-subtitle">
-                                                Seller: <strong>{sellers.find(s => s.id === product.sellerId)?.name || 'Unknown'}</strong>
-                                            </div>
-
-                                            <div className="date-info">
-                                                <span>📅 Created: {formatDate(product.date || product.id)}</span>
-                                            </div>
-
-                                            <div className="product-variants">
-                                                {product.variants && product.variants.map(v => (
-                                                    <div key={v.id} className="variant-box">
-                                                        <div className="variant-box-header">
-                                                            <span>{v.variety}</span>
-                                                            <span className={`badge variant-badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'}`}>{v.quality}</span>
-                                                        </div>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                                                            <span>{v.remaining} {v.unit}</span>
-                                                            <span className="text-amber">{v.commission}% Comm</span>
-                                                        </div>
+                                            return sellerName.includes(query) || productName.includes(query) || hasMatchingVariant;
+                                        })
+                                        .map(product => (
+                                            <tr key={product.id} className="pending-product-card custom-tr">
+                                                <td className="custom-td">
+                                                    <div className="font-semibold text-primary table-product-name">
+                                                        {product.name}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                    <div className="data-card-footer product-card-footer pending-actions">
-                                        {/* <button
-                                            className="btn btn-error btn-pending-action return-btn"
-                                            onClick={() => handleReturnClick(product)}
-                                        >
-                                            <Undo2 /> Return
-                                        </button> */}
-                                        <button
-                                            className="btn btn-success btn-pending-action back-today-btn"
-                                            onClick={() => handleBackToToday(product)}
-                                        >
-                                            <ListFilterPlus /> To Today
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                                    <span className="badge badge-disabled">Pending</span>
+                                                </td>
+                                                <td className="custom-td">
+                                                    <div style={{ marginBottom: '4px' }}>
+                                                        <strong>{sellers.find(s => s.id === product.sellerId)?.name || 'Unknown'}</strong>
+                                                    </div>
+                                                    <div className="text-muted table-product-subtext">
+                                                        Created: {formatDate(product.date || product.id)}
+                                                    </div>
+                                                </td>
+                                                <td className="custom-td custom-td-variants">
+                                                    <div className="product-variants">
+                                                        {product.variants && product.variants.map(v => (
+                                                            <div key={v.id} className="variant-card">
+                                                                <div className="variant-card-header">
+                                                                    <span>{v.variety}</span>
+                                                                    <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'} badge-sm`}>{v.quality}</span>
+                                                                </div>
+                                                                <div className="variant-card-metrics">
+                                                                    <span>{v.remaining} {v.unit}</span>
+                                                                    <span className="text-amber font-semibold">{v.commission}% Comm</span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                                <td className="custom-td">
+                                                    <div className="action-stack">
+                                                        {/* <button
+                                                            className="btn btn-error btn-pending-action action-btn-wide"
+                                                            onClick={() => handleReturnClick(product)}
+                                                        >
+                                                            <Undo2 size={16} /> Return
+                                                        </button> */}
+                                                        <button
+                                                            className="btn btn-success btn-pending-action action-btn-wide"
+                                                            onClick={() => handleBackToToday(product)}
+                                                        >
+                                                            <ListFilterPlus size={16} /> To Today
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Loader } from 'lucide-react';
 import './ConfirmationModal.css';
 
 /**
@@ -13,6 +14,7 @@ import './ConfirmationModal.css';
  * @param {string} confirmText - Text for the confirm button (default: "Confirm")
  * @param {string} cancelText - Text for the cancel button (default: "Cancel")
  * @param {string} variant - 'danger' (red) or 'warning' (yellow) or 'info' (blue)
+ * @param {boolean} isLoading - Shows loading state on confirm button when true
  */
 const ConfirmationModal = ({ 
     isOpen, 
@@ -23,13 +25,14 @@ const ConfirmationModal = ({
     onConfirm, 
     confirmText = "Yes, Delete", 
     cancelText = "Cancel",
-    variant = "danger"
+    variant = "danger",
+    isLoading = false
 }) => {
     
     // Close on Escape key
     useEffect(() => {
         const handleEsc = (e) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape' && !isLoading) onClose();
         };
         if (isOpen) {
             window.addEventListener('keydown', handleEsc);
@@ -40,12 +43,12 @@ const ConfirmationModal = ({
             window.removeEventListener('keydown', handleEsc);
             document.body.style.overflow = 'unset';
         };
-    }, [isOpen, onClose]);
+    }, [isOpen, onClose, isLoading]);
 
     if (!isOpen) return null;
 
     return (
-        <div className="confirm-modal-overlay" onClick={onClose}>
+        <div className="confirm-modal-overlay" onClick={isLoading ? undefined : onClose}>
             <div className={`confirm-modal-container fade-in-up ${variant}`} onClick={e => e.stopPropagation()}>
                 
                 <div className="confirm-modal-icon">
@@ -85,9 +88,21 @@ const ConfirmationModal = ({
                 </div>
 
                 <div className="confirm-modal-actions">
-                    <button className="btn-cancel" onClick={onClose}>{cancelText}</button>
-                    <button className={`btn-confirm ${variant}`} onClick={onConfirm}>
-                        {confirmText}
+                    <button 
+                        className="btn-cancel" 
+                        onClick={onClose} 
+                        disabled={isLoading}
+                    >
+                        {cancelText}
+                    </button>
+                    <button 
+                        className={`btn-confirm ${variant}`} 
+                        onClick={onConfirm} 
+                        disabled={isLoading}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    >
+                        {isLoading && <Loader size={16} className="saas-spinner" />}
+                        {isLoading ? 'Processing...' : confirmText}
                     </button>
                 </div>
             </div>

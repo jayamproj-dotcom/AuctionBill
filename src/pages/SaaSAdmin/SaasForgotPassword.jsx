@@ -10,7 +10,8 @@ const SaasForgotPassword = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [formData, setFormData] = useState({
         email: "",
@@ -47,6 +48,17 @@ const SaasForgotPassword = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleVerifyOTP = (e) => {
+        e.preventDefault();
+        if (!formData.otp || formData.otp.length < 4) {
+            setError("Please enter a valid OTP");
+            return;
+        }
+        setError("");
+        setMessage("OTP accepted. Please enter your new password.");
+        setStep(3);
     };
 
     const handleResetPassword = async (e) => {
@@ -92,9 +104,9 @@ const SaasForgotPassword = () => {
                 <div className="saas-login-header">
                     <h2 style={{ color: '#333', fontSize: '24px', fontWeight: 'bold' }}>Forgot Password</h2>
                     <p className="saas-subtitle">
-                        {step === 1
-                            ? "Enter admin email to receive OTP"
-                            : "Enter OTP and set new admin password"}
+                        {step === 1 && "Enter admin email to receive OTP"}
+                        {step === 2 && "Enter OTP sent to your email"}
+                        {step === 3 && "Set your new admin password"}
                     </p>
                 </div>
 
@@ -123,8 +135,8 @@ const SaasForgotPassword = () => {
                             {isLoading ? <><Loader className="saas-spinner" size={18} /> Sending...</> : "Send OTP"}
                         </button>
                     </form>
-                ) : (
-                    <form onSubmit={handleResetPassword} className="saas-login-form">
+                ) : step === 2 ? (
+                    <form onSubmit={handleVerifyOTP} className="saas-login-form">
                         <div className="saas-form-group">
                             <label className="saas-label">OTP</label>
                             <div className="saas-input-container">
@@ -142,12 +154,21 @@ const SaasForgotPassword = () => {
                             </div>
                         </div>
 
+                        {error && <div className="error-msg" style={{ color: '#e74c3c', marginBottom: '15px' }}>{error}</div>}
+                        {message && <div className="success-msg" style={{ color: '#27ae60', marginBottom: '15px' }}>{message}</div>}
+
+                        <button type="submit" className="saas-btn btn-primary saas-login-btn">
+                            Verify OTP
+                        </button>
+                    </form>
+                ) : (
+                    <form onSubmit={handleResetPassword} className="saas-login-form">
                         <div className="saas-form-group">
                             <label className="saas-label">New Password</label>
                             <div className="saas-input-container">
                                 <Lock size={18} className="saas-input-icon" />
                                 <input
-                                    type={showPassword ? "text" : "password"}
+                                    type={showNewPassword ? "text" : "password"}
                                     name="newPassword"
                                     className="saas-input saas-input-with-icon"
                                     value={formData.newPassword}
@@ -158,9 +179,9 @@ const SaasForgotPassword = () => {
                                 <button
                                     type="button"
                                     className="saas-password-toggle"
-                                    onClick={() => setShowPassword(!showPassword)}
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
                                 >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
                         </div>
@@ -170,7 +191,7 @@ const SaasForgotPassword = () => {
                             <div className="saas-input-container">
                                 <Lock size={18} className="saas-input-icon" />
                                 <input
-                                    type={showPassword ? "text" : "password"}
+                                    type={showConfirmPassword ? "text" : "password"}
                                     name="confirmPassword"
                                     className="saas-input saas-input-with-icon"
                                     value={formData.confirmPassword}
@@ -178,6 +199,13 @@ const SaasForgotPassword = () => {
                                     placeholder="Confirm new password"
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    className="saas-password-toggle"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                >
+                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </div>
                         </div>
 

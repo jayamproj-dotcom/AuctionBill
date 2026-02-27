@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { getVendorProfile } from '../../api/vendorApi';
 import './Notification.css';
 import { Bell } from 'lucide-react';
 
-const Notification = ({ expiryDate }) => {
+const Notification = ({ expiryDate: propsExpiryDate }) => {
+    const { vendorId } = useSelector((state) => state.vendorAuth);
+    const [fetchedExpiryDate, setFetchedExpiryDate] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -11,13 +15,36 @@ const Notification = ({ expiryDate }) => {
     const dropdownRef = useRef(null);
 
     useEffect(() => {
-        if (!expiryDate) return;
+        const fetchExpiryDate = async () => {
+            if (vendorId) {
+                try {
+                    const data = await getVendorProfile(vendorId);
+                    if (data && data.vendor && data.vendor.planEndDate) {
+                        setFetchedExpiryDate(data.vendor.planEndDate);
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch vendor profile:", error);
+                }
+            }
+        };
+        fetchExpiryDate();
+    }, [vendorId]);
+
+    useEffect(() => {
+        const activeExpiryDate = fetchedExpiryDate || propsExpiryDate;
+        if (!activeExpiryDate) return;
 
         const checkExpiry = () => {
             const today = new Date();
-            const expiry = new Date(expiryDate);
-            const diffTime = expiry - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            today.setHours(0, 0, 0, 0);
+            
+            const expiry = new Date(activeExpiryDate);
+            expiry.setHours(0, 0, 0, 0);
+            
+            const diffTime = expiry.getTime() - today.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+            console.log("activeExpiryDate:", activeExpiryDate, "diffDays:", diffDays);
 
             let notification = null;
 
@@ -29,17 +56,17 @@ const Notification = ({ expiryDate }) => {
                     title: 'Subscription Expired',
                     message: 'Your subscription has ended. Please renew immediately to continue using the services.',
                     time: 'Just now',
-                    link: '/ventor/subscription'
+                    link: '/vendor/subscription'
                 };
-            } else if (diffDays <= 5) {
+            } else if (diffDays <= 7 && diffDays > 0) {
                 notification = {
                     id: 'warning',
-                    type: 'warning',
+                    type: diffDays <= 3 ? 'danger' : 'warning',
                     icon: '⚠️',
-                    title: 'Subscription Expiring Soon',
-                    message: `Your subscription will end in ${diffDays} days. Please renew to avoid interruption.`,
+                    title: `Subscription Ends in ${diffDays} Day${diffDays > 1 ? 's' : ''}`,
+                    message: `Your active plan will expire in ${diffDays} day${diffDays > 1 ? 's' : ''}. Please renew to avoid account suspension.`,
                     time: 'Just now',
-                    link: '/ventor/subscription'
+                    link: '/vendor/subscription' // fixed spelling from ventor to vendor
                 };
             }
 
@@ -53,7 +80,7 @@ const Notification = ({ expiryDate }) => {
         };
 
         checkExpiry();
-    }, [expiryDate]);
+    }, [fetchedExpiryDate, propsExpiryDate]);
 
     // Handle outside click
     useEffect(() => {

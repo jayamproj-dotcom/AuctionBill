@@ -551,3 +551,190 @@
     transform: translateY(-50%);
     color: #9ca3af;
 }
+
+/* Custom Table Styles */
+.custom-table-wrapper {
+    border: 1px solid var(--border-color);
+}
+
+.custom-data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.custom-data-table th.custom-th {
+    padding: 10px 12px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
+    text-align: left;
+}
+
+.custom-data-table th.custom-th-center {
+    text-align: center;
+}
+
+.custom-data-table td.custom-td {
+    padding: 12px 10px;
+    vertical-align: middle;
+}
+
+.custom-data-table td.custom-td-variants {
+    min-width: 180px;
+}
+
+.custom-data-table tr.custom-tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.custom-data-table tr.custom-tr:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.table-product-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+}
+
+.table-product-subtext {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.variant-card {
+    background: var(--bg-tertiary);
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    border: 1px solid var(--border-color);
+}
+
+.variant-card:last-child {
+    margin-bottom: 0;
+}
+
+.variant-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.variant-card-metrics {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-secondary);
+}
+
+.badge-disabled {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.action-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.action-btn-wide {
+    width: 100%;
+    padding: 8px 16px;
+    justify-content: center;
+    min-width: 90px;
+}
+
+.action-icon-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    width: 100%;
+}
+
+.action-icon-small {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+/* Responsive Table Styles */
+@media (max-width: 630px) {
+    .custom-data-table,
+    .custom-data-table thead,
+    .custom-data-table tbody,
+    .custom-data-table th,
+    .custom-data-table td,
+    .custom-data-table tr {
+        display: block;
+    }
+
+    .custom-data-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .custom-data-table tr.custom-tr {
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: 16px;
+        background-color: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 8px 0;
+    }
+
+    .custom-data-table td.custom-td {
+        border: none;
+        border-bottom: 1px solid var(--border-color);
+        position: relative;
+        padding-left: 45%;
+        padding-top: 14px;
+        padding-bottom: 14px;
+        text-align: right;
+    }
+
+    .custom-data-table td.custom-td:last-child {
+        border-bottom: none;
+    }
+
+    .custom-data-table td.custom-td:before {
+        position: absolute;
+        top: 14px;
+        left: 16px;
+        width: 40%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+    
+    .action-stack {
+        align-items: flex-end;
+    }
+    
+    .action-icon-row {
+        justify-content: flex-end;
+    }
+
+    /* Add data labels for Today Auction and Pending Products explicitly */
+    .custom-data-table td.custom-td:nth-of-type(1):before { content: "Product Details"; }
+    .custom-data-table td.custom-td:nth-of-type(2):before { content: "Seller / Date"; }
+    .custom-data-table td.custom-td:nth-of-type(3):before { content: "Variants"; }
+    .custom-data-table td.custom-td:nth-of-type(4):before { content: "Status / Actions"; }
+    .custom-data-table td.custom-td:nth-of-type(5):before { content: "Actions"; }
+}

@@ -26,6 +26,18 @@ export const vendorLogin = async (data) => {
     }
 };
 
+export const getVendorProfile = async (id) => {
+    try {
+        const response = await api.get(`/vendor/${id}`);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
 export const updateVendorProfile = async (id, data) => {
     try {
         const response = await api.put(`/vendor/${id}`, data);

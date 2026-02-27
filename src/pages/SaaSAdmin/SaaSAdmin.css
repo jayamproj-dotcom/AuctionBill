@@ -873,22 +873,22 @@ body.saas-admin-active {
 }
 
 .saas-filter-popover {
-  position: absolute;
-  top: 30%;
-  right: 0;
-  background-color: #fff;
-  border: 1px solid var(--saas-border);
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  width: 250px;
-  height: 250px;
-  overflow-x: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  animation: saasFadeInUp 0.2s ease-out;
+ position: absolute;
+    top: 19%;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid var(--saas-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    width: 250px;
+    height: 350px;
+    overflow-x: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    animation: saasFadeInUp 0.2s ease-out
 }
 
 .filter-header{

@@ -90,6 +90,19 @@ export const updateAdminProfile = async (data) => {
     }
 };
 
+// Send OTP for updating admin email
+export const sendAdminEmailUpdateOtp = async (data) => {
+    try {
+        const response = await api.post('admin/send-email-update-otp', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
 
 //Subscriptions API
 export const getSubscriptions = async () => {

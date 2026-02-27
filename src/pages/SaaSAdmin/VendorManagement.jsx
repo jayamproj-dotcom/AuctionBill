@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 import { Trash2, X, Search, Plus, Edit, Loader, Filter, Download } from 'lucide-react';
 import { getSubscriptions, getVendors, createVendor, updateVendor, deleteVendor, exportVendors } from '../../api/adminApi';
 import useOfflineForm from '../../hooks/useOfflineForm';
+import SearchableSelect from '../../components/Common/SearchableSelect.jsx';
 
 const VendorManagement = () => {
   const role = localStorage.getItem('saas_role');
@@ -39,6 +40,7 @@ const VendorManagement = () => {
   const [exportCities, setExportCities] = useState([]);
   const [loadingExportCities, setLoadingExportCities] = useState(false);
   const [vendorToDelete, setVendorToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -277,6 +279,7 @@ const VendorManagement = () => {
 
   const confirmDelete = async () => {
     if (vendorToDelete) {
+      setIsDeleting(true);
       try {
         await deleteVendor(vendorToDelete._id || vendorToDelete.id);
         setVendorToDelete(null);
@@ -285,6 +288,8 @@ const VendorManagement = () => {
       } catch (error) {
         console.error(error);
         alert("Error deleting vendor");
+      } finally {
+        setIsDeleting(false);
       }
     }
   };
@@ -370,6 +375,7 @@ const VendorManagement = () => {
         confirmText="Yes, Delete Vendor"
         cancelText="Cancel"
         variant="danger"
+        isLoading={isDeleting}
       />
 
       {/* Export Modal */}
@@ -408,31 +414,29 @@ const VendorManagement = () => {
               <div className="inner-grid-2">
                 <div className="">
                   <label className="saas-label">State</label>
-                  <select
-                    className="saas-select"
+                  <SearchableSelect
+                    name="state"
                     value={exportParams.state}
                     onChange={(e) => {
                       const val = e.target.value;
                       setExportParams(prev => ({ ...prev, state: val, city: '' }));
                       fetchExportCities(val);
                     }}
-                  >
-                    <option value="">All States</option>
-                    {states.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-                  </select>
+                    placeholder="All States"
+                    options={states.map(s => ({ label: s.name, value: s.name }))}
+                  />
                 </div>
 
                 <div className="">
                   <label className="saas-label">City</label>
-                  <select
-                    className="saas-select"
+                  <SearchableSelect
+                    name="city"
                     value={exportParams.city}
                     onChange={(e) => setExportParams(prev => ({ ...prev, city: e.target.value }))}
                     disabled={!exportParams.state || loadingExportCities}
-                  >
-                    <option value="">{loadingExportCities ? 'Loading...' : 'All Cities'}</option>
-                    {exportCities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-                  </select>
+                    placeholder={loadingExportCities ? 'Loading...' : 'All Cities'}
+                    options={exportCities.map(c => ({ label: c.name, value: c.name }))}
+                  />
                 </div>
 
                 <div className="">
@@ -519,29 +523,25 @@ const VendorManagement = () => {
 
                     <div className="">
                       <label className="saas-label">State</label>
-                      <select
+                      <SearchableSelect
                         name="state"
-                        className="saas-select"
                         value={filters.state}
                         onChange={handleFilterChange}
-                      >
-                        <option value="">All States</option>
-                        {states.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
-                      </select>
+                        placeholder="All States"
+                        options={states.map(s => ({ label: s.name, value: s.name }))}
+                      />
                     </div>
 
                     <div className="">
                       <label className="saas-label">City</label>
-                      <select
+                      <SearchableSelect
                         name="city"
-                        className="saas-select"
                         value={filters.city}
                         onChange={handleFilterChange}
                         disabled={!filters.state || loadingFilterCities}
-                      >
-                        <option value="">{loadingFilterCities ? 'Loading...' : 'All Cities'}</option>
-                        {filterCities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-                      </select>
+                        placeholder={loadingFilterCities ? 'Loading...' : 'All Cities'}
+                        options={filterCities.map(c => ({ label: c.name, value: c.name }))}
+                      />
                     </div>
 
                     <div className="">
@@ -684,6 +684,28 @@ const VendorManagement = () => {
               <div className="saas-modal-content">
                 <div className="inner-grid-2">
                   <div className="form-group">
+                    <label className="saas-label">State *</label>
+                    <SearchableSelect
+                      name="state"
+                      value={newVendor.state}
+                      onChange={handleInputChangeSimple}
+                      placeholder="Select State"
+                      options={states.map(s => ({ label: s.name, value: s.name }))}
+                      disabled={loadingStates}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="saas-label">City *</label>
+                    <SearchableSelect
+                      name="city"
+                      value={newVendor.city}
+                      onChange={handleInputChangeSimple}
+                      placeholder="Select City"
+                      options={cities.map(c => ({ label: c.name, value: c.name }))}
+                      disabled={!newVendor.state || loadingCities}
+                    />
+                  </div>
+                  <div className="form-group">
                     <label className="saas-label">Vendor Name *</label>
                     <input
                       type="text"
@@ -739,38 +761,6 @@ const VendorManagement = () => {
                       rows="2"
                     ></textarea>
                   </div>
-                  <div className="form-group">
-                    <label className="saas-label">State *</label>
-                    <select
-                      name="state"
-                      value={newVendor.state}
-                      onChange={handleInputChangeSimple}
-                      className="saas-select"
-                      required
-                      disabled={loadingStates}
-                    >
-                      <option value="">Select State</option>
-                      {states.map(s => (
-                        <option key={s.name} value={s.name}>{s.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="saas-label">City *</label>
-                    <select
-                      name="city"
-                      value={newVendor.city}
-                      onChange={handleInputChangeSimple}
-                      className="saas-select"
-                      required
-                      disabled={!newVendor.state || loadingCities}
-                    >
-                      <option value="">Select City</option>
-                      {cities.map(c => (
-                        <option key={c.name} value={c.name}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
                 </div>
               </div>
               <div className="saas-modal-footer">
@@ -800,6 +790,28 @@ const VendorManagement = () => {
             <form onSubmit={handleUpdateSubmit}>
               <div className="saas-modal-content">
                 <div className="inner-grid-2">
+                  <div className="form-group">
+                    <label className="saas-label">State *</label>
+                    <SearchableSelect
+                      name="state"
+                      value={editingVendor.state}
+                      onChange={handleEditChange}
+                      placeholder="Select State"
+                      options={states.map(s => ({ label: s.name, value: s.name }))}
+                      disabled={loadingStates}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="saas-label">City *</label>
+                    <SearchableSelect
+                      name="city"
+                      value={editingVendor.city}
+                      onChange={handleEditChange}
+                      placeholder="Select City"
+                      options={cities.map(c => ({ label: c.name, value: c.name }))}
+                      disabled={!editingVendor.state || loadingCities}
+                    />
+                  </div>
                   <div className="form-group">
                     <label className="saas-label">Vendor Name *</label>
                     <input
@@ -868,38 +880,6 @@ const VendorManagement = () => {
                       className="saas-textarea"
                       rows="2"
                     ></textarea>
-                  </div>
-                  <div className="form-group">
-                    <label className="saas-label">State *</label>
-                    <select
-                      name="state"
-                      value={editingVendor.state}
-                      onChange={handleEditChange}
-                      className="saas-select"
-                      required
-                      disabled={loadingStates}
-                    >
-                      <option value="">Select State</option>
-                      {states.map(s => (
-                        <option key={s.name} value={s.name}>{s.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="saas-label">City *</label>
-                    <select
-                      name="city"
-                      value={editingVendor.city}
-                      onChange={handleEditChange}
-                      className="saas-select"
-                      required
-                      disabled={!editingVendor.state || loadingCities}
-                    >
-                      <option value="">Select City</option>
-                      {cities.map(c => (
-                        <option key={c.name} value={c.name}>{c.name}</option>
-                      ))}
-                    </select>
                   </div>
                 </div>
               </div>

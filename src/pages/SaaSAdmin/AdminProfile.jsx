@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setSaasAuthData } from '../../redux/slices/saasAuthSlice';
-import { User, Camera, Edit, X, Loader } from 'lucide-react';
+import { User, Camera, Edit, X, Loader, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { updateAdminProfile } from '../../api/adminApi';
+import { updateAdminProfile, sendAdminEmailUpdateOtp, verifyAdminPassword } from '../../api/adminApi';
 import './SaaSAdmin.css';
 
 const AdminProfile = () => {
@@ -19,6 +19,11 @@ const AdminProfile = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const [emailUpdateStep, setEmailUpdateStep] = useState(0); // 0=none, 1=password, 2=otp
+  const [authPassword, setAuthPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -48,12 +53,25 @@ const AdminProfile = () => {
       return toast.error("Name and email are required");
     }
 
+    const currentEmail = adminData?.email || "admin@auctionbill.com";
+    const isEmailChanged = settings.adminEmail !== currentEmail;
+
+    if (isEmailChanged && emailUpdateStep === 0) {
+      setEmailUpdateStep(1);
+      return;
+    }
+
+    await performSave();
+  };
+
+  const performSave = async (otpParam = {}) => {
     setIsLoading(true);
     try {
       // Update via backend API
       const payload = {
         username: settings.adminName,
-        email: settings.adminEmail
+        email: settings.adminEmail,
+        ...otpParam
       };
 
       const response = await updateAdminProfile(payload);
@@ -90,6 +108,9 @@ const AdminProfile = () => {
         window.dispatchEvent(new Event('saas_profile_updated'));
 
         setIsEditing(false);
+        setEmailUpdateStep(0);
+        setOtp("");
+        setAuthPassword("");
         toast.success(response.message || "Profile configurations saved successfully!");
       } else {
         toast.error(response.message || "Failed to update profile");
@@ -101,12 +122,49 @@ const AdminProfile = () => {
     }
   };
 
+  const handleVerifyPassword = async () => {
+    if (!authPassword) {
+      return toast.error("Please enter your current password");
+    }
+    setIsLoading(true);
+    try {
+      const username = saasAdminName || adminData?.username || 'admin';
+      const response = await verifyAdminPassword({ username, password: authPassword });
+      
+      if (response.status) {
+        const otpResponse = await sendAdminEmailUpdateOtp({ email: settings.adminEmail });
+        if (otpResponse.status) {
+          toast.success(otpResponse.message || "OTP sent to new email.");
+          setEmailUpdateStep(2);
+        } else {
+          toast.error(otpResponse.message || "Failed to send OTP to new email.");
+        }
+      } else {
+        toast.error(response.message || "Incorrect password");
+      }
+    } catch (error) {
+      toast.error(error.message || "Verification failed. Check password.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtpAndSave = async () => {
+    if (!otp || otp.length < 4) {
+      return toast.error("Please enter a valid OTP");
+    }
+    await performSave({ otp });
+  };
+
   const handleEditClick = () => {
     setIsEditing(true);
   };
 
   const handleCancelClick = () => {
     setIsEditing(false);
+    setEmailUpdateStep(0);
+    setAuthPassword("");
+    setOtp("");
     
     setSettings({
       adminName: saasAdminName || adminData?.username || "Super Admin",
@@ -114,6 +172,88 @@ const AdminProfile = () => {
       adminPhoto: saasAdminPhoto || null
     });
   };
+
+  if (emailUpdateStep === 1) {
+    return (
+      <div className="fade-in">
+        <div className="saas-card saas-profile-container">
+          <div className="saas-card-header saas-profile-header-wrap">
+            <h3 className="saas-text-lg saas-font-semibold">Security Verification</h3>
+          </div>
+          <div className="saas-modal-content">
+            <p className="saas-text-muted saas-mb-20">Please enter your current password to authorize changing your email address.</p>
+            <div className="saas-form-group">
+                <label className="saas-label">Current Password</label>
+                <div className="saas-input-container">
+                    <Lock size={18} className="saas-input-icon" />
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        className="saas-input saas-input-with-icon"
+                        value={authPassword}
+                        onChange={(e) => setAuthPassword(e.target.value)}
+                        placeholder="Enter current password"
+                    />
+                    <button
+                        type="button"
+                        className="saas-password-toggle"
+                        onClick={() => setShowPassword(!showPassword)}
+                    >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                </div>
+            </div>
+            
+            <div className="saas-profile-actions">
+                <button className="saas-btn btn-outline saas-profile-action-btn" onClick={() => setEmailUpdateStep(0)} disabled={isLoading}>
+                    Cancel
+                </button>
+                <button className="saas-btn btn-primary saas-flex-1" onClick={handleVerifyPassword} disabled={isLoading}>
+                    {isLoading ? <><Loader className="saas-spinner" size={16} /> Verifying...</> : 'Verify Password'}
+                </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (emailUpdateStep === 2) {
+    return (
+      <div className="fade-in">
+        <div className="saas-card saas-profile-container">
+          <div className="saas-card-header saas-profile-header-wrap">
+            <h3 className="saas-text-lg saas-font-semibold">Verify New Email</h3>
+          </div>
+          <div className="saas-modal-content">
+            <p className="saas-text-muted saas-mb-20">An OTP has been sent to {settings.adminEmail}. Please enter it below.</p>
+            <div className="saas-form-group">
+                <label className="saas-label">OTP Code</label>
+                <div className="saas-input-container">
+                    <ShieldCheck size={18} className="saas-input-icon" />
+                    <input
+                        type="text"
+                        className="saas-input saas-input-with-icon"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        placeholder="6-digit OTP"
+                        maxLength="6"
+                    />
+                </div>
+            </div>
+            
+            <div className="saas-profile-actions">
+                <button className="saas-btn btn-outline saas-profile-action-btn" onClick={() => setEmailUpdateStep(0)} disabled={isLoading}>
+                    Cancel
+                </button>
+                <button className="saas-btn btn-primary saas-flex-1" onClick={handleVerifyOtpAndSave} disabled={isLoading}>
+                    {isLoading ? <><Loader className="saas-spinner" size={16} /> Verifying...</> : 'Verify OTP & Save'}
+                </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fade-in">
