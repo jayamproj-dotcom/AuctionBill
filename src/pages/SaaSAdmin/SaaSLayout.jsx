@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { clearSaasAuthData, setSaasAuthData } from '../../redux/slices/saasAuthSlice';
-import { getAdminProfile } from '../../api/adminApi';
-import { House, ShoppingCart, Users, Gem, Settings, LogOut, Menu, X, Bell, User, Lock } from 'lucide-react';
+import { getAdminProfile, getAdminNotifications, markNotificationAsRead } from '../../api/adminApi';
+import { House, ShoppingCart, Users, Gem, Settings, LogOut, Menu, X, Bell, User, Lock, ExternalLink } from 'lucide-react';
 import './SaaSAdmin.css';
 
 const SaaSLayout = () => {
@@ -12,7 +12,12 @@ const SaaSLayout = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const profileRef = useRef(null);
+  const notificationRef = useRef(null);
   const location = useLocation();
+
+  const [notifications, setNotifications] = useState([]);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const {
     saasAdminPhoto,
@@ -31,6 +36,9 @@ const SaaSLayout = () => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setProfileOpen(false);
       }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setNotificationOpen(false);
+      }
     };
 
     const handleProfileUpdate = () => {
@@ -46,6 +54,37 @@ const SaaSLayout = () => {
       window.removeEventListener("saas_profile_updated", handleProfileUpdate);
     };
   }, []);
+
+  // Fetch notifications
+  const fetchNotifications = () => {
+    getAdminNotifications().then(res => {
+      if (res.status) {
+        setNotifications(res.notifications || []);
+        setUnreadCount(res.notifications?.length || 0);
+      }
+    }).catch(err => console.error("Error fetching notifications:", err));
+  };
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchNotifications();
+      // Poll notifications every 30 seconds
+      const nIntervalId = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(nIntervalId);
+    }
+  }, [isAdmin]);
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      const res = await markNotificationAsRead(id);
+      if (res.status) {
+        setNotifications(prev => prev.filter(n => n._id !== id));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (err) {
+      console.error("Error marking notification as read:", err);
+    }
+  };
 
   // Add a class to body when in SaaS Admin to allow full-width override
   useEffect(() => {
@@ -184,9 +223,73 @@ const SaaSLayout = () => {
           </div>
           <div className="saas-header-right">
             <div className="saas-header-right-content">
-              <button className="saas-btn btn-sm btn-outline icon-only">
-                <Bell size={20} />
-              </button>
+              <div className="saas-notification-container" ref={notificationRef}>
+                <button 
+                  className={`saas-btn btn-sm btn-outline icon-only ${unreadCount > 0 ? 'has-badge' : ''}`}
+                  onClick={() => setNotificationOpen(!notificationOpen)}
+                >
+                  <Bell size={20} />
+                  {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+                </button>
+
+                {notificationOpen && (
+                  <div className="saas-notification-dropdown">
+                    <div className="notification-dropdown-header">
+                      <h4 className="notification-dropdown-title">Notifications</h4>
+                      <span className="notification-count">{unreadCount} Unread</span>
+                    </div>
+                    
+                    <div className="notification-list">
+                      {notifications.length > 0 ? (
+                        notifications.map((notif) => (
+                          <div key={notif._id} className="notification-item">
+                            <div className="notif-content">
+                              <div className="notif-title">
+                                {notif.vendorId?.name || 'Unknown Vendor'}
+                              </div>
+                              <div className="notif-email">{notif.vendorId?.email}</div>
+                              <p className="notif-msg">{notif.message}</p>
+                              <div className="notif-meta">
+                                <span className="notif-type">
+                                  {notif.type === 'plan_upgrade' ? 'Plan Upgrade' : 
+                                   notif.type === 'new_registration' ? 'New Registration' : 'Asset Upgrade'}
+                                </span>
+                                <span className="notif-time">
+                                  {new Date(notif.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="notif-actions">
+                              <button 
+                                className="notif-btn more-btn"
+                                onClick={() => {
+                                  navigate('/saas/vendors');
+                                  setNotificationOpen(false);
+                                  handleMarkAsRead(notif._id);
+                                }}
+                              >
+                                <ExternalLink size={14} />
+                                More
+                              </button>
+                              <button 
+                                className="notif-btn read-btn"
+                                onClick={() => handleMarkAsRead(notif._id)}
+                              >
+                                Mark as read
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="notification-empty">
+                          <Bell size={32} className="empty-icon" />
+                          <p>No new notifications</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <div className="saas-header-profile-container" ref={profileRef}>
                 <div
