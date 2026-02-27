@@ -266,4 +266,29 @@ export const exportVendors = async (filters) => {
     }
 };
 
+// Notification APIs
+export const getAdminNotifications = async () => {
+    try {
+        const response = await api.get('/notification/admin');
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const markNotificationAsRead = async (id) => {
+    try {
+        const response = await api.put(`/notification/read/${id}`);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
 
