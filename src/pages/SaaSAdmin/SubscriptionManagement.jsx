@@ -46,9 +46,8 @@ const SubscriptionManagement = () => {
       durationValue: plan.durationValue || 1,
       durationType: plan.durationType || 'month',
       status: plan.status || 'Active',
-      description: plan.description || '',
       isPopular: plan.isPopular || false,
-      featuresString: plan.features?.join('\n') || ''
+      features: plan.features || []
     });
     setIsModalOpen(true);
   };
@@ -61,10 +60,8 @@ const SubscriptionManagement = () => {
       durationValue: 1,
       durationType: 'month',
       status: 'Active',
-      features: [],
-      featuresString: '',
-      description: '',
       isPopular: false,
+      features: []
     });
     setIsModalOpen(true);
   };
@@ -95,7 +92,6 @@ const SubscriptionManagement = () => {
       return toast.error("Name, price, and duration are required");
     }
 
-    const updatedFeatures = editingPlan.featuresString.split('\n').filter(f => f.trim() !== '');
     const numericPrice = Number(editingPlan.price.toString().replace(/[^0-9]/g, ''));
     const numericDuration = Number(editingPlan.durationValue);
 
@@ -105,8 +101,7 @@ const SubscriptionManagement = () => {
       durationValue: numericDuration,
       durationType: editingPlan.durationType || 'month',
       status: editingPlan.status || 'Active',
-      features: updatedFeatures,
-      description: editingPlan.description || '',
+      features: editingPlan.features || [],
       isPopular: editingPlan.isPopular || false,
       slug: editingPlan.name.toLowerCase().replace(/\s+/g, '-')
     };
@@ -276,15 +271,65 @@ const SubscriptionManagement = () => {
               </div>
 
               <div className="saas-form-group">
-                <label className="saas-label">Plan Description</label>
-                <textarea
-                  className="saas-textarea"
-                  rows="2"
-                  value={editingPlan?.description}
-                  onChange={(e) => setEditingPlan({ ...editingPlan, description: e.target.value })}
-                  placeholder="e.g. Best for growing businesses..."
-                ></textarea>
+                <label className="saas-label">Features</label>
+                <select
+                  className="saas-select saas-mb-15"
+                  value=""
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val && !editingPlan.features?.includes(val)) {
+                      setEditingPlan({
+                        ...editingPlan,
+                        features: [...(editingPlan.features || []), val]
+                      });
+                    }
+                  }}
+                  style={{ marginBottom: '10px' }}
+                >
+                  <option value="">Select a feature to add</option>
+                  {[
+                    "3 Branches",
+                    "Unlimited Branches",
+                    "Email Support",
+                    "Normal Analytics",
+                    "Advanced Analytics",
+                    "Download Excel Report"
+                  ].map(f => (
+                    <option key={f} value={f} disabled={editingPlan?.features?.includes(f)}>{f}</option>
+                  ))}
+                </select>
+
+                <div className="saas-flex saas-gap-05 saas-flex-wrap">
+                  {editingPlan?.features?.map((feat, idx) => (
+                    <div 
+                      key={idx} 
+                      className="saas-badge badge-info saas-flex saas-align-center saas-gap-05" 
+                      style={{ padding: '0.4rem 0.7rem', display: 'inline-flex', alignItems: 'center' }}
+                    >
+                      <span>{feat}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setEditingPlan({
+                          ...editingPlan, 
+                          features: editingPlan.features.filter(f => f !== feat)
+                        })}
+                        style={{ 
+                          background: 'none', 
+                          border: 'none', 
+                          cursor: 'pointer', 
+                          padding: 0, 
+                          display: 'flex',
+                          color: 'inherit',
+                          opacity: 0.7
+                        }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
+
               <div className="saas-form-group">
                 <label className="saas-label saas-flex saas-align-center saas-gap-05" style={{ cursor: 'pointer' }}>
                   <input
@@ -294,16 +339,6 @@ const SubscriptionManagement = () => {
                   />
                   Mark as Popular Plan
                 </label>
-              </div>
-              <div className="saas-form-group">
-                <label className="saas-label">Features (one per line)</label>
-                <textarea
-                  className="saas-textarea"
-                  rows="5"
-                  value={editingPlan?.featuresString}
-                  onChange={(e) => setEditingPlan({ ...editingPlan, featuresString: e.target.value })}
-                  placeholder="Enter features..."
-                ></textarea>
               </div>
             </div>
             <div className="saas-modal-footer">
