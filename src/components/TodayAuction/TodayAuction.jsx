@@ -903,18 +903,7 @@ function TodayAuction() {
                         </div>
                         <form onSubmit={handleSellProduct}>
                             <div className="modal-body">
-                                <SearchableSelect
-                                    label="Buyer"
-                                    options={buyers}
-                                    value={saleData.buyerName}
-                                    onChange={(buyer) => setSaleData({
-                                        ...saleData,
-                                        buyerId: buyer.id,
-                                        buyerName: buyer.name
-                                    })}
-                                    placeholder="Type to search buyer..."
-                                    required
-                                />
+                                
 
                                 <div className="form-group">
                                     <label className="form-label">Select Variant</label>
@@ -987,7 +976,7 @@ function TodayAuction() {
                                                     required
                                                 />
                                             </div>
-                                            <div className="form-grid qty-input-group">
+                                            {/* <div className="form-grid qty-input-group">
                                                 <div className="form-group">
                                                     <label className="form-label">Payment Status</label>
                                                     <select
@@ -1014,7 +1003,19 @@ function TodayAuction() {
                                                         />
                                                     </div>
                                                 )}
-                                            </div>
+                                            </div> */}
+                                            <SearchableSelect
+                                    label="Buyer"
+                                    options={buyers}
+                                    value={saleData.buyerName}
+                                    onChange={(buyer) => setSaleData({
+                                        ...saleData,
+                                        buyerId: buyer.id,
+                                        buyerName: buyer.name
+                                    })}
+                                    placeholder="Type to search buyer..."
+                                    required
+                                />
                                             <div className="card calc-card">
                                                 <p className="calc-row">
                                                     <strong>Commission ({v.commission}%):</strong>{' '}
