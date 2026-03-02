@@ -7,7 +7,6 @@ import ConfirmationModal from '../../components/Common/ConfirmationModal.jsx';
 import { useSelector } from 'react-redux';
 import { Trash2, X, Search, Plus, Edit, Loader, Filter, Download } from 'lucide-react';
 import { getSubscriptions, getVendors, createVendor, updateVendor, deleteVendor, exportVendors } from '../../api/adminApi';
-import useOfflineForm from '../../hooks/useOfflineForm';
 import SearchableSelect from '../../components/Common/SearchableSelect.jsx';
 
 const VendorManagement = () => {
@@ -70,23 +69,40 @@ const VendorManagement = () => {
     status: 'Active'
   };
 
-  const {
-    formData: newVendor,
-    setFormData: setNewVendor,
-    handleChange: handleInputChange,
-    handleSubmit: handleAddSubmit,
-    isSubmitting: isSavingAdd,
-    resetForm: resetAddForm
-  } = useOfflineForm('draft_new_vendor', initialNewVendor, async (data) => {
-    const formData = new FormData();
-    Object.keys(data).forEach(key => {
-      formData.append(key, data[key]);
-    });
-    await createVendor(formData);
-    setIsAddModalOpen(false);
-    resetAddForm();
-    loadData();
-  });
+  const [newVendor, setNewVendor] = useState(initialNewVendor);
+  const [isSavingAdd, setIsSavingAdd] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewVendor(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const resetAddForm = () => {
+    setNewVendor(initialNewVendor);
+  };
+
+  const handleAddSubmit = async (e) => {
+    e.preventDefault();
+    setIsSavingAdd(true);
+    try {
+      const formData = new FormData();
+      Object.keys(newVendor).forEach(key => {
+        formData.append(key, newVendor[key]);
+      });
+      await createVendor(formData);
+      setIsAddModalOpen(false);
+      resetAddForm();
+      loadData();
+    } catch (error) {
+      console.error(error);
+      alert("Error adding vendor");
+    } finally {
+      setIsSavingAdd(false);
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -212,8 +228,6 @@ const VendorManagement = () => {
       fetchCities(value);
     }
   };
-
-  // handleAddSubmit is now handled by useOfflineForm
 
   const handleEditClick = (vendor) => {
     setEditingVendor({ ...vendor, plan: vendor.plan?._id || vendor.plan });
