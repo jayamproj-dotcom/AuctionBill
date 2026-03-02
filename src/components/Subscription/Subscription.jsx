@@ -8,7 +8,6 @@ import { getSubscriptions, getVendors, updateVendor } from '../../api/adminApi';
 
 const Subscription = () => {
     const { vendorId } = useSelector((state) => state.vendorAuth);
-    console.log("vendorId", vendorId);
 
     const fallbackVendorId = sessionStorage.getItem('vendorId');
     const currentVendorId = vendorId || fallbackVendorId;
@@ -35,19 +34,26 @@ const Subscription = () => {
                 const currentVendor = vendors.find(v => v._id === currentVendorId);
 
                 if (currentVendor) {
-                    const vendorPlanId = typeof currentVendor.plan === 'object' ? currentVendor.plan?._id : currentVendor.plan;
-                    const currentPlanDetails = fetchedPlans.find(p => p._id === vendorPlanId);
+                    const activeSub = currentVendor.activeSubscription;
+                    const vendorPlan = currentVendor.plan || {};
+                    const vendorPlanId = typeof vendorPlan === 'object' ? vendorPlan._id : vendorPlan;
+                    const planName = vendorPlan.name || 'Current Plan';
 
-                    if (currentPlanDetails) {
+                    if (activeSub || vendorPlanId) {
+                        let featuresToSet = activeSub?.featuresAtPurchase || vendorPlan.features || [];
+                        if (!Array.isArray(featuresToSet)) {
+                            featuresToSet = typeof featuresToSet === 'object' && featuresToSet !== null ? Object.values(featuresToSet) : [];
+                        }
+
                         setSubscription({
                             id: currentVendor._id,
-                            plan: currentPlanDetails.name,
-                            planId: currentPlanDetails._id,
+                            plan: planName,
+                            planId: activeSub?.subscriptionId || vendorPlanId,
                             status: currentVendor.status || 'Active',
-                            startDate: currentVendor.createdAt || new Date().toISOString(),
-                            expiryDate: currentVendor.planEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
-                            price: currentPlanDetails.price || 0,
-                            features: currentPlanDetails.features || []
+                            startDate: activeSub?.startDate || currentVendor.joinedDate || currentVendor.createdAt || new Date().toISOString(),
+                            expiryDate: activeSub?.endDate || currentVendor.planEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+                            price: activeSub?.priceAtPurchase ?? vendorPlan.price ?? 0,
+                            features: featuresToSet
                         });
                     }
                 }
@@ -133,7 +139,27 @@ const Subscription = () => {
 
     // Filter out the current plan to show other available plans for upgrade/change
     const upgradeOptions = subscription
-        ? plans.filter(p => p._id !== subscription.planId && p.status === 'Active')
+        ? plans.filter(p => {
+            if (p.status !== 'Active') return false;
+            if (String(p._id) !== String(subscription.planId)) return true;
+            
+            // If it is the same plan ID, allow upgrade/update if features or price changed
+            if (p.price !== subscription.price) return true;
+            
+            const currentFeatures = Array.isArray(subscription.features) ? subscription.features : [];
+            const planFeatures = Array.isArray(p.features) ? p.features : [];
+            
+            if (currentFeatures.length !== planFeatures.length) return true;
+            
+            const sortedCurrent = [...currentFeatures].sort();
+            const sortedPlan = [...planFeatures].sort();
+            
+            for (let i = 0; i < sortedCurrent.length; i++) {
+                if (sortedCurrent[i] !== sortedPlan[i]) return true;
+            }
+            
+            return false;
+        })
         : [];
 
     if (loading) {

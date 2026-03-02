@@ -47,7 +47,7 @@ const SubscriptionManagement = () => {
       durationType: plan.durationType || 'month',
       status: plan.status || 'Active',
       isPopular: plan.isPopular || false,
-      features: plan.features || []
+      features: Array.isArray(plan.features) ? plan.features : []
     });
     setIsModalOpen(true);
   };
@@ -162,7 +162,7 @@ const SubscriptionManagement = () => {
               </div>
               <div className="saas-content saas-flex-1">
                 <ul className="saas-feature-list">
-                  {(plan.features || []).map((feature, index) => (
+                  {(Array.isArray(plan.features) ? plan.features : []).map((feature, index) => (
                     <li key={index} className="saas-feature-item">
                       <span className="saas-text-success">✓</span> {feature}
                     </li>
