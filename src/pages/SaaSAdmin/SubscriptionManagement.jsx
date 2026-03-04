@@ -126,7 +126,8 @@ const SubscriptionManagement = () => {
 
   // Helper function to format duration display
   const formatDurationDisplay = (val, type) => {
-    if (!val || !type) return '/month';
+    if (!val || !type) return '/30 Days';
+    if (type === 'month') return `/${val * 30} Days`;
     return `/${val} ${type}${val > 1 ? 's' : ''}`;
   };
 
@@ -263,7 +264,7 @@ const SubscriptionManagement = () => {
                       value={editingPlan?.durationType}
                       onChange={(e) => setEditingPlan({ ...editingPlan, durationType: e.target.value })}
                     >
-                      <option value="month">Month(s)</option>
+                      <option value="month">Month (30 Days)</option>
                       <option value="year">Year(s)</option>
                     </select>
                   </div>

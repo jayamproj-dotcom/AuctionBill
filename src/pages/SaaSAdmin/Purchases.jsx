@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Loader } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
-import { getVendors } from '../../api/adminApi';
+import { getVendorPurchases } from '../../api/adminApi';
 import './SaaSAdmin.css';
 
 const Purchases = () => {
@@ -12,17 +12,18 @@ const Purchases = () => {
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
-        const response = await getVendors();
-        if (response.status && response.vendors) {
-          const vendorsData = response.vendors.map((vendor) => ({
-            id: vendor._id,
-            vendorName: vendor.name,
-            plan: vendor.plan?.name || 'Unknown',
-            price: vendor.plan?.price ? `₹${vendor.plan.price.toLocaleString()}` : '₹0',
-            paymentStatus: 'Paid', // Dummy static as there is no payment gateway yet
-            status: vendor.status,
-            expiryDate: vendor.planEndDate,
-            transactionId: `TXN_${vendor._id.slice(-6).toUpperCase()}`
+        const response = await getVendorPurchases();
+        if (response.status && response.purchases) {
+          const vendorsData = response.purchases.map((purchase) => ({
+            id: purchase.id,
+            vendorName: purchase.vendorName,
+            plan: purchase.plan || 'Unknown',
+            price: purchase.price ? `₹${purchase.price.toLocaleString()}` : '₹0',
+            paymentStatus: purchase.paymentStatus || 'Paid',
+            status: purchase.status,
+            expiryDate: purchase.expiryDate,
+            transactionId: purchase.transactionId || `TXN_${purchase.id.slice(-6).toUpperCase()}`,
+            startDate: purchase.startDate
           }));
           setPurchases(vendorsData);
         }
@@ -37,7 +38,7 @@ const Purchases = () => {
 
   // Helper to check if date is nearing expiry (e.g., within 5 days)
   const isExpiringSoon = (dateString, status) => {
-    if (status === 'Inactive' || status === 'Expiring Soon') return true;
+    if (status === 'Inactive' || status === 'Expired' || status === 'Expiring Soon') return false;
 
     // Simple logic for visual highlighting only, purely illustrative
     // In a real app, combine this with the 'status' field from DB
@@ -50,7 +51,7 @@ const Purchases = () => {
   };
 
   const getStatusBadge = (status, date) => {
-    if (status === 'Inactive') return 'badge-danger';
+    if (status === 'Inactive' || status === 'Expired') return 'badge-danger';
     if (status === 'Expiring Soon' || isExpiringSoon(date, status)) return 'badge-warning';
     return 'badge-success';
   };
@@ -94,7 +95,8 @@ const Purchases = () => {
                 <th>Plan Detail</th>
                 <th>Price</th>
                 <th>Payment</th>
-                <th>Status</th>
+                <th>Current Status</th>
+                <th>Purchase Date</th>
                 <th>Expiry Date</th>
                 <th>Transaction ID</th>
               </tr>
@@ -102,7 +104,7 @@ const Purchases = () => {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="7" className="saas-text-center saas-py-4">
+                  <td colSpan="8" className="saas-text-center saas-py-4">
                     <Loader className="saas-spinner saas-inline-block" size={24} /> Loading purchases...
                   </td>
                 </tr>
@@ -129,6 +131,11 @@ const Purchases = () => {
                       </td>
                       <td>
                         <div className="saas-flex-col">
+                          <span>{purchase.startDate ? formatDate(purchase.startDate) : '--'}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="saas-flex-col">
                           <span>{purchase.expiryDate ? formatDate(purchase.expiryDate) : 'N/A'}</span>
                           {expiring && (
                             <span className="saas-expiry-warning">
@@ -145,7 +152,7 @@ const Purchases = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="7" className="saas-text-center saas-py-4">
+                  <td colSpan="8" className="saas-text-center saas-py-4">
                     No purchases found matching "{searchQuery}"
                   </td>
                 </tr>

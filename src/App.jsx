@@ -56,7 +56,7 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <BrowserRouter basename="/auctionbilling">
+      <BrowserRouter basename={import.meta.env.VITE_BASE_URL}>
         <Routes>
           {/* Vendor Login */}
           <Route path="/" element={<VendorLogin />} />

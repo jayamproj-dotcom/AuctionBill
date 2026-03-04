@@ -189,7 +189,7 @@ const Signup = () => {
                                     <div className="plan-price">
                                         <span className="currency">₹</span>
                                         <span className="amount">{plan.price}</span>
-                                        <span className="duration">/{plan.durationType === 'year' ? 'yr' : 'mo'}</span>
+                                        <span className="duration">/{plan.durationType === 'year' ? 'yr' : '30 days'}</span>
                                     </div>
                                     <div className="plan-description">{plan.description || 'Access to all auction tools and vendor features.'}</div>
                                     <ul className="plan-features">

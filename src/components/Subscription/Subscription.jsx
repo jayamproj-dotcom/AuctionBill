@@ -4,7 +4,7 @@ import { formatDate } from '../../utils/dateUtils';
 import { jsPDF } from 'jspdf';
 import './Subscription.css';
 import { CreditCard, CheckCircle2, TrendingUp, Check, Plus, FileText, Download } from 'lucide-react';
-import { getSubscriptions, getVendors, updateVendor } from '../../api/adminApi';
+import { getSubscriptions, getVendors, updateVendor, getVendorPurchasesById } from '../../api/adminApi';
 
 const Subscription = () => {
     const { vendorId } = useSelector((state) => state.vendorAuth);
@@ -14,22 +14,30 @@ const Subscription = () => {
 
     const [plans, setPlans] = useState([]);
     const [subscription, setSubscription] = useState(null);
-    const [invoices, setInvoices] = useState([
-        { id: "INV-2025-001", date: "2025-01-01", amount: 4999, status: "Paid", description: "Basic Plan - Yearly" },
-        { id: "INV-2024-001", date: "2024-01-01", amount: 4999, status: "Paid", description: "Basic Plan - Yearly" }
-    ]);
+    const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [selectedUpgradePlan, setSelectedUpgradePlan] = useState(null);
+    const [showAllInvoices, setShowAllInvoices] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch all plans
-                const plansRes = await getSubscriptions();
+                // Fetch all plans and billing history concurrently with vendors
+                const [plansRes, vendorsRes, purchasesRes] = await Promise.all([
+                    getSubscriptions(),
+                    getVendors(),
+                    getVendorPurchasesById(currentVendorId)
+                ]);
+                
                 const fetchedPlans = plansRes.subscriptions || [];
                 setPlans(fetchedPlans);
 
+                if (purchasesRes && purchasesRes.purchases) {
+                    setInvoices(purchasesRes.purchases);
+                }
+
                 // Fetch current vendor
-                const vendorsRes = await getVendors();
                 const vendors = vendorsRes.vendors || [];
                 const currentVendor = vendors.find(v => v._id === currentVendorId);
 
@@ -53,7 +61,9 @@ const Subscription = () => {
                             startDate: activeSub?.startDate || currentVendor.joinedDate || currentVendor.createdAt || new Date().toISOString(),
                             expiryDate: activeSub?.endDate || currentVendor.planEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
                             price: activeSub?.priceAtPurchase ?? vendorPlan.price ?? 0,
-                            features: featuresToSet
+                            features: featuresToSet,
+                            durationType: vendorPlan.durationType,
+                            durationValue: vendorPlan.durationValue
                         });
                     }
                 }
@@ -90,14 +100,23 @@ const Subscription = () => {
         return diffDays > 0 ? diffDays : 365;
     };
 
-    const handleUpgrade = async (planToUpgradeTo) => {
-        if (!window.confirm(`Are you sure you want to upgrade to ${planToUpgradeTo.name}?`)) return;
+    const handleUpgrade = (planToUpgradeTo) => {
+        setSelectedUpgradePlan(planToUpgradeTo);
+        setIsUpgradeModalOpen(true);
+    };
+
+    const confirmUpgrade = async (upgradeType) => {
+        if (!selectedUpgradePlan) return;
+        setIsUpgradeModalOpen(false);
 
         try {
-            const dataToUpdate = { requestedPlan: planToUpgradeTo._id };
+            const dataToUpdate = { 
+                requestedPlan: selectedUpgradePlan._id,
+                upgradeType: upgradeType 
+            };
             const res = await updateVendor(currentVendorId, dataToUpdate);
             if (res.status) {
-                alert(`Upgrade request for ${planToUpgradeTo.name} has been sent to the admin. Please await approval.`);
+                alert(`Upgrade request for ${selectedUpgradePlan.name} has been sent to the admin. Upgrade will be active ${upgradeType === 'from_today' ? 'from today for 30 days' : 'after the current plan ends'}. Please await approval.`);
                 window.location.reload();
             } else {
                 alert(res.message || "Failed to upgrade plan.");
@@ -137,29 +156,9 @@ const Subscription = () => {
         doc.save(`Invoice_${invoice.id}.pdf`);
     };
 
-    // Filter out the current plan to show other available plans for upgrade/change
+    // Filter out inactive plans, but keep all active ones so users can renew their current plan or upgrade
     const upgradeOptions = subscription
-        ? plans.filter(p => {
-            if (p.status !== 'Active') return false;
-            if (String(p._id) !== String(subscription.planId)) return true;
-            
-            // If it is the same plan ID, allow upgrade/update if features or price changed
-            if (p.price !== subscription.price) return true;
-            
-            const currentFeatures = Array.isArray(subscription.features) ? subscription.features : [];
-            const planFeatures = Array.isArray(p.features) ? p.features : [];
-            
-            if (currentFeatures.length !== planFeatures.length) return true;
-            
-            const sortedCurrent = [...currentFeatures].sort();
-            const sortedPlan = [...planFeatures].sort();
-            
-            for (let i = 0; i < sortedCurrent.length; i++) {
-                if (sortedCurrent[i] !== sortedPlan[i]) return true;
-            }
-            
-            return false;
-        })
+        ? plans.filter(p => p.status === 'Active')
         : [];
 
     if (loading) {
@@ -213,7 +212,7 @@ const Subscription = () => {
                                     </span>
                                 </div>
                                 <div className="plan-price">
-                                    ₹{subscription.price.toLocaleString()} <span>/ year</span>
+                                    ₹{subscription.price?.toLocaleString()} <span>/ {subscription.durationType === 'year' ? 'year' : '30 Days'}</span>
                                 </div>
                             </div>
 
@@ -251,13 +250,13 @@ const Subscription = () => {
                         {/* Available Upgrades Section */}
                         {upgradeOptions.length > 0 && (
                             <div className="upgrade-section">
-                                <h3 className="section-subtitle"><TrendingUp size={18} /> Available Upgrades</h3>
+                                <h3 className="section-subtitle"><TrendingUp size={18} /> Available Upgrades & Renewals</h3>
                                 <div className="upgrade-grid">
                                     {upgradeOptions.map((plan, index) => (
                                         <div key={index} className="subs-card upgrade-card">
                                             <div className="upgrade-header">
                                                 <h4>{plan.name}</h4>
-                                                <div className="upgrade-price">₹{plan.price.toLocaleString()}<span>/{plan.durationType === 'year' ? 'yr' : 'mo'}</span></div>
+                                                <div className="upgrade-price">₹{plan.price.toLocaleString()}<span>/{plan.durationType === 'year' ? 'yr' : '30 days'}</span></div>
                                             </div>
                                             <ul className="upgrade-features">
                                                 {plan.features?.slice(0, 3).map((f, i) => (
@@ -269,7 +268,7 @@ const Subscription = () => {
                                                 className="btn btn-primary upgrade-btn"
                                                 onClick={() => handleUpgrade(plan)}
                                             >
-                                                Upgrade to {plan.name}
+                                                {String(plan._id) === String(subscription.planId) ? `Renew ${plan.name}` : `Upgrade to ${plan.name}`}
                                             </button>
                                         </div>
                                     ))}
@@ -290,26 +289,72 @@ const Subscription = () => {
                                     <span>Status</span>
                                     <span>Action</span>
                                 </div>
-                                {invoices.map((invoice, index) => (
-                                    <div key={index} className="invoice-row">
-                                        <span className="inv-id">{invoice.id}</span>
-                                        <span className="inv-date">{formatDate(invoice.date)}</span>
-                                        <span className="inv-amount">₹{invoice.amount.toLocaleString()}</span>
-                                        <span className="inv-status"><span className="badge-paid">{invoice.status}</span></span>
-                                        <button
-                                            className="btn-download icon-btn"
-                                            onClick={() => handleDownloadInvoice(invoice)}
-                                            title="Download Invoice"
+                                <div className={`invoice-rows-container ${showAllInvoices ? 'expanded' : ''}`}>
+                                    {(showAllInvoices ? invoices : invoices.slice(0, 5)).map((invoice, index) => (
+                                        <div key={index} className="invoice-row">
+                                            <span className="inv-id">{invoice.id}</span>
+                                            <span className="inv-date">{formatDate(invoice.date)}</span>
+                                            <span className="inv-amount">₹{invoice.amount.toLocaleString()}</span>
+                                            <span className="inv-status"><span className="badge-paid">{invoice.status}</span></span>
+                                            <button
+                                                className="btn-download icon-btn"
+                                                onClick={() => handleDownloadInvoice(invoice)}
+                                                title="Download Invoice"
+                                            >
+                                                <Download size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                {invoices.length > 5 && (
+                                    <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                                        <button 
+                                            className="btn btn-outline" 
+                                            onClick={() => setShowAllInvoices(!showAllInvoices)}
+                                            style={{ fontSize: '0.85rem', padding: '0.4rem 1rem' }}
                                         >
-                                            <Download size={18} />
+                                            {showAllInvoices ? 'Show Less' : 'Show All History'}
                                         </button>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Upgrade Modal */}
+            {isUpgradeModalOpen && selectedUpgradePlan && (
+                <div className="upgrade-modal-overlay">
+                    <div className="upgrade-modal-content">
+                        <h3>{String(selectedUpgradePlan._id) === String(subscription.planId) ? 'Renew Plan' : 'Upgrade Plan'}</h3>
+                        <p>Do you want to {String(selectedUpgradePlan._id) === String(subscription.planId) ? 'renew' : 'upgrade to'} <strong>{selectedUpgradePlan.name}</strong> from today or after your current plan ends?</p>
+                        <div className="upgrade-modal-actions">
+                            <button 
+                                className="btn btn-primary" 
+                                onClick={() => confirmUpgrade('from_today')}
+                            >
+                                From Today (30 Days)
+                            </button>
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={() => confirmUpgrade('after_current')}
+                            >
+                                After Current Plan Ends
+                            </button>
+                            <button 
+                                className="btn btn-danger" 
+                                onClick={() => {
+                                    setIsUpgradeModalOpen(false);
+                                    setSelectedUpgradePlan(null);
+                                }}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

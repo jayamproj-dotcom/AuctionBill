@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './SaaSAdmin.css';
 import { Link } from 'react-router-dom';
 import { Users, Crown, Banknote, Hourglass, Settings, Trash2 } from 'lucide-react';
-import { getVendors } from '../../api/adminApi';
+import { getVendors, getVendorPurchases } from '../../api/adminApi';
 import { formatDate } from '../../utils/dateUtils';
 
 const SaaSDashboard = () => {
@@ -18,13 +18,28 @@ const SaaSDashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await getVendors();
-        if (response.status && response.vendors) {
-          const vendors = response.vendors;
-
-          const calculatedRevenue = vendors.reduce((total, vendor) => {
-            return total + (Number(vendor.plan?.price) || 0);
+        const [vendorsRes, purchasesRes] = await Promise.all([
+          getVendors(),
+          getVendorPurchases()
+        ]);
+        
+        let calculatedRevenue = 0;
+        
+        if (purchasesRes.status && purchasesRes.purchases) {
+          const currentMonth = new Date().getMonth();
+          const currentYear = new Date().getFullYear();
+          
+          calculatedRevenue = purchasesRes.purchases.reduce((total, purchase) => {
+             const purchaseDate = new Date(purchase.startDate || new Date());
+             if (purchaseDate.getMonth() === currentMonth && purchaseDate.getFullYear() === currentYear) {
+                 return total + (Number(purchase.price) || 0);
+             }
+             return total;
           }, 0);
+        }
+
+        if (vendorsRes.status && vendorsRes.vendors) {
+          const vendors = vendorsRes.vendors;
 
           setStats(prev => ({
             ...prev,

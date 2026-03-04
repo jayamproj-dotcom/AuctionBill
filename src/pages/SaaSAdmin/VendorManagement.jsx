@@ -42,6 +42,8 @@ const VendorManagement = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [upgradeConfirmConfig, setUpgradeConfirmConfig] = useState({ isOpen: false, type: null });
+  const [isProcessingUpgrade, setIsProcessingUpgrade] = useState(false);
 
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
@@ -377,6 +379,30 @@ const VendorManagement = () => {
     return matchesSearch && matchesState && matchesCity && matchesStatus && matchesPlan;
   });
 
+  const handleUpgradeAction = async () => {
+    if (!selectedVendor || !upgradeConfirmConfig.type) return;
+    
+    setIsProcessingUpgrade(true);
+    const type = upgradeConfirmConfig.type;
+    
+    try {
+      if (type === 'approve') {
+        await updateVendor(selectedVendor._id || selectedVendor.id, { plan: selectedVendor.requestedPlan._id, requestedPlan: "" });
+        alert('Plan upgrade approved successfully');
+      } else {
+        await updateVendor(selectedVendor._id || selectedVendor.id, { requestedPlan: "" });
+        alert('Plan upgrade rejected');
+      }
+      setUpgradeConfirmConfig({ isOpen: false, type: null });
+      setIsModalOpen(false);
+      loadData();
+    } catch (e) {
+      alert(`Error ${type === 'approve' ? 'approving' : 'rejecting'} plan upgrade`);
+    } finally {
+      setIsProcessingUpgrade(false);
+    }
+  };
+
   return (
     <div className="fade-in relative">
       <ConfirmationModal
@@ -390,6 +416,19 @@ const VendorManagement = () => {
         cancelText="Cancel"
         variant="danger"
         isLoading={isDeleting}
+      />
+
+      <ConfirmationModal
+        isOpen={upgradeConfirmConfig.isOpen}
+        onClose={() => setUpgradeConfirmConfig({ isOpen: false, type: null })}
+        onConfirm={handleUpgradeAction}
+        title={upgradeConfirmConfig.type === 'approve' ? "Approve Plan Upgrade" : "Reject Plan Upgrade"}
+        message={`Are you sure you want to ${upgradeConfirmConfig.type} the upgrade to ${selectedVendor?.requestedPlan?.name}?`}
+        subMessage={upgradeConfirmConfig.type === 'approve' ? "This will update the vendor's billing plan and permissions." : "The vendor will remain on their current plan."}
+        confirmText={upgradeConfirmConfig.type === 'approve' ? "Yes, Approve Upgrade" : "Yes, Reject Upgrade"}
+        cancelText="Cancel"
+        variant={upgradeConfirmConfig.type === 'approve' ? "success" : "danger"}
+        isLoading={isProcessingUpgrade}
       />
 
       {/* Export Modal */}
@@ -629,7 +668,14 @@ const VendorManagement = () => {
                   className="vendor-row"
                 >
                   <td className="saas-font-medium">
-                    {vendor.name}
+                    <div className="saas-flex saas-align-center saas-gap-05">
+                      {vendor.name}
+                      {vendor.requestedPlan && (
+                        <span className="saas-badge badge-warning" style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem' }} title="Plan Upgrade Requested">
+                          Upgrade Req.
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td>{vendor.email}</td>
                   <td>{vendor.city || 'N/A'}, {vendor.state || 'N/A'}</td>
@@ -984,38 +1030,27 @@ const VendorManagement = () => {
                     <div style={{ gridColumn: '1 / -1', background: '#fff3cd', padding: '10px', borderRadius: '5px', marginBottom: '10px' }}>
                       <label className="saas-label saas-text-muted">Requested Plan Upgrade</label>
                       <div className="saas-flex saas-flex-between">
-                         <span className="saas-font-medium saas-text-warning">
-                           {selectedVendor.requestedPlan?.name}
-                         </span>
+                         <div className="saas-flex saas-flex-col saas-align-start">
+                           <span className="saas-font-medium saas-text-warning">
+                             {selectedVendor.requestedPlan?.name}
+                           </span>
+                           {selectedVendor.upgradeType && (
+                             <span className="saas-text-xs saas-text-muted" style={{marginTop: '4px'}}>
+                               Activation: {selectedVendor.upgradeType === 'from_today' ? 'From Today (30 Days)' : 'After Current Plan'}
+                             </span>
+                           )}
+                         </div>
                          <div className="saas-flex">
                            <button 
                              className="saas-btn btn-primary btn-sm"
-                             onClick={async () => {
-                               if(window.confirm(`Approve upgrade to ${selectedVendor.requestedPlan?.name}?`)) {
-                                 try {
-                                   await updateVendor(selectedVendor._id || selectedVendor.id, { plan: selectedVendor.requestedPlan._id, requestedPlan: "" });
-                                   alert('Plan upgrade approved successfully');
-                                   setIsModalOpen(false);
-                                   loadData();
-                                 } catch(e) { alert('Error approving plan') }
-                               }
-                             }}
+                             onClick={() => setUpgradeConfirmConfig({ isOpen: true, type: 'approve' })}
                            >
                              Approve
                            </button>
                            <button 
                              className="saas-btn btn-outline btn-sm saas-ml-1"
                              style={{ marginLeft: '10px' }}
-                             onClick={async () => {
-                               if(window.confirm(`Reject upgrade to ${selectedVendor.requestedPlan?.name}?`)) {
-                                 try {
-                                   await updateVendor(selectedVendor._id || selectedVendor.id, { requestedPlan: "" });
-                                   alert('Plan upgrade rejected');
-                                   setIsModalOpen(false);
-                                   loadData();
-                                 } catch(e) { alert('Error rejecting plan') }
-                               }
-                             }}
+                             onClick={() => setUpgradeConfirmConfig({ isOpen: true, type: 'reject' })}
                            >
                              Reject
                            </button>

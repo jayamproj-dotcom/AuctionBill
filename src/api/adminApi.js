@@ -252,6 +252,30 @@ export const deleteVendor = async (id) => {
     }
 };
 
+export const getVendorPurchases = async () => {
+    try {
+        const response = await api.get('/vendor/purchases');
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const getVendorPurchasesById = async (id) => {
+    try {
+        const response = await api.get(`/vendor/${id}/purchases`);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
 export const exportVendors = async (filters) => {
     try {
         const response = await api.post('/vendor/export', filters, {

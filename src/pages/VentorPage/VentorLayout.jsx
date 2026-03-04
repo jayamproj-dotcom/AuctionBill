@@ -9,6 +9,7 @@ import { googleLogout } from '@react-oauth/google';
 import { useSelector, useDispatch } from "react-redux";
 import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice";
 import { resolveImageUrl } from "../../utils/imageUtils";
+import { getVendorProfile } from "../../api/vendorApi";
 
 const VendorLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,7 +18,7 @@ const VendorLayout = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { vendorLoggedIn, vendorUserName, vendorUserEmail, vendorUserPhoto } = useSelector(state => state.vendorAuth);
+  const { vendorLoggedIn, vendorUserName, vendorUserEmail, vendorUserPhoto, vendorId } = useSelector(state => state.vendorAuth);
 
   // Also provide a session fallback check in case Redux unmounts right before router handles
   const isSessionActive = sessionStorage.getItem("vendorLoggedIn") === "true" || localStorage.getItem("vendorLoggedIn") === "true";
@@ -29,6 +30,51 @@ const VendorLayout = () => {
       navigate("/");
     }
   }, [isLoggedIn, navigate]);
+
+  const fallbackVendorId = sessionStorage.getItem('vendorId');
+  const currentVendorId = vendorId || fallbackVendorId;
+
+  const handleLogout = () => {
+    googleLogout(); // Sign out from Google
+    dispatch(clearVendorAuthData());
+
+    setProfileOpen(false);
+    navigate("/");
+  };
+
+  // Global subscription check
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if (isLoggedIn && currentVendorId) {
+        try {
+          const res = await getVendorProfile(currentVendorId);
+          if (res.status && res.vendor) {
+            const currentVendor = res.vendor;
+            
+            // Allow if status is somehow not Active maybe? But backend blocks inactive anyway
+            const activeSub = currentVendor.activeSubscription;
+            const expiryDate = activeSub?.endDate || currentVendor.planEndDate;
+            
+            if (expiryDate) {
+              const today = new Date();
+              const expiry = new Date(expiryDate);
+              const diffTime = expiry - today;
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              
+              if (diffDays <= 0) {
+                alert("Your subscription has expired. Please log in after renewing your plan.");
+                handleLogout();
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error checking subscription:", error);
+        }
+      }
+    };
+
+    checkSubscription();
+  }, [isLoggedIn, currentVendorId]);
 
   // If not logged in, don't render anything (prevents flash of content)
   if (!isLoggedIn) return null;
@@ -44,14 +90,6 @@ const VendorLayout = () => {
   // Profile dropdown toggles
   const toggleProfile = () => {
     setProfileOpen(!profileOpen);
-  };
-
-  const handleLogout = () => {
-    googleLogout(); // Sign out from Google
-    dispatch(clearVendorAuthData());
-
-    setProfileOpen(false);
-    navigate("/");
   };
 
   // Close dropdown when clicking outside

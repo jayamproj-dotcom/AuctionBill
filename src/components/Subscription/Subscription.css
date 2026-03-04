@@ -229,6 +229,34 @@
     font-size: 0.85rem;
 }
 
+.invoice-rows-container {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.invoice-rows-container.expanded {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.invoice-rows-container.expanded::-webkit-scrollbar {
+    width: 6px;
+}
+
+.invoice-rows-container.expanded::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+    border-radius: 4px;
+}
+
+.invoice-rows-container.expanded::-webkit-scrollbar-thumb {
+    background: #c1c1c1; 
+    border-radius: 4px;
+}
+
+.invoice-rows-container.expanded::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8; 
+}
+
 .badge-paid {
     background-color: #dcfce7;
     color: #166534;
@@ -260,4 +288,72 @@
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+.upgrade-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.upgrade-modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.upgrade-modal-content h3 {
+    margin-top: 0;
+    color: var(--primary-amber-dark);
+}
+
+.upgrade-modal-content p {
+    margin: 1rem 0 1.5rem 0;
+    color: var(--text-muted);
+}
+
+.upgrade-modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.upgrade-modal-actions .btn {
+    width: 100%;
+    padding: 0.75rem;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.upgrade-modal-actions .btn-primary {
+    background: var(--primary-amber);
+    color: white;
+    border: none;
+}
+
+.upgrade-modal-actions .btn-secondary {
+    background: #e5e7eb;
+    color: #374151;
+    border: none;
+}
+
+.upgrade-modal-actions .btn-danger {
+    background: #fee2e2;
+    color: #ef4444;
+    border: 1px solid #f87171;
+}
+
+.upgrade-modal-actions .btn:hover {
+    opacity: 0.9;
 }
