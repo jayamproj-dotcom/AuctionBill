@@ -2159,6 +2159,117 @@ body.saas-admin-active {
   transform: translateX(0);
 }
 
+/* Modern Duration Input Group */
+.saas-duration-group {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--saas-border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+  background-color: var(--saas-card-bg);
+}
+
+.saas-duration-group:focus-within {
+  border-color: var(--saas-primary);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.saas-duration-number {
+  border: none !important;
+  border-radius: 0 !important;
+  width: 80px;
+  border-right: 1px solid var(--saas-border) !important;
+  padding: 0.6rem 0.8rem !important;
+  box-shadow: none !important;
+  text-align: center;
+}
+
+.saas-duration-number:focus {
+  outline: none;
+  border-right-color: var(--saas-primary) !important;
+}
+
+.saas-duration-type {
+  border: none !important;
+  border-radius: 0 !important;
+  flex: 1;
+  background-color: #f8fafc !important;
+  padding: 0.6rem 0.8rem !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+/* Modern Fancy Toggle Switch */
+.saas-modern-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.2rem;
+  background-color: #f8fafc;
+  border: 1px solid var(--saas-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.saas-modern-toggle:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.saas-modern-toggle-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.saas-modern-toggle-title {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.saas-modern-toggle-desc {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.saas-toggle-checkbox {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  appearance: none;
+  background-color: #cbd5e1;
+  border-radius: 99px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+}
+
+.saas-toggle-checkbox:checked {
+  background-color: var(--saas-primary);
+}
+
+.saas-toggle-checkbox::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  background-color: white;
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.saas-toggle-checkbox:checked::after {
+  transform: translateX(22px);
+}
+
+
 /* Inline Styles Replacement Classes */
 .saas-export-modal {
   max-width: 400px;

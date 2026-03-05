@@ -4,6 +4,7 @@ import ConfirmationModal from '../Common/ConfirmationModal';
 import './TodayAuction.css';
 import { toast } from 'react-toastify';
 import { Plus, Trash2, Edit2, X, Eye, EyeOff, PackageSearch, Search } from 'lucide-react';
+import * as productApi from '../../api/vendorApi';
 
 const SearchableSelect = ({ options, value, onChange, placeholder, required, label }) => {
     const [searchTerm, setSearchTerm] = useState(value || '');
@@ -24,7 +25,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, required, lab
     };
 
     return (
-        <div className="form-group form-group-relative">
+        <div className="form-group form-group-relative" style={{ zIndex: isOpen ? 9999 : 1 }}>
             <label className="form-label">{label}</label>
             <input
                 type="text"
@@ -79,6 +80,11 @@ function TodayAuction() {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [editingProduct, setEditingProduct] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [masterProducts, setMasterProducts] = useState([]);
+    
+    // Vendor ID to fetch masterProducts
+    const vendor = JSON.parse(localStorage.getItem('vendor')) || {};
+    const vendorId = vendor.id || vendor._id;
 
 
     const [newProduct, setNewProduct] = useState({
@@ -86,7 +92,8 @@ function TodayAuction() {
         sellerId: '',
         sellerName: '',
         date: new Date().toISOString().split('T')[0],
-        variants: []
+        variants: [],
+        masterProduct: null // Track selected master product
     });
 
     const [variantData, setVariantData] = useState({
@@ -132,7 +139,8 @@ function TodayAuction() {
             sellerName: '',
             date: new Date().toISOString().split('T')[0],
             variants: [],
-            image: ''
+            image: '',
+            masterProduct: null
         });
         setImagePreview(null);
         resetVariantData();
@@ -262,7 +270,16 @@ function TodayAuction() {
 
     useEffect(() => {
         loadData();
-    }, []);
+        const fetchMasterProducts = async () => {
+            try {
+                const data = await productApi.getProducts({ vendorId });
+                setMasterProducts(data);
+            } catch (error) {
+                console.error("Failed to fetch master products", error);
+            }
+        };
+        fetchMasterProducts();
+    }, [vendorId]);
 
     const loadData = () => {
         const data = getAuctionData();
@@ -612,7 +629,7 @@ function TodayAuction() {
                         </div>
                         <form onSubmit={handleAddProduct}>
                             <div className="modal-body">
-                                <div className="form-group">
+                                {/* <div className="form-group">
                                     <label className="form-label">Auction Date</label>
                                     <input
                                         type="date"
@@ -620,17 +637,37 @@ function TodayAuction() {
                                         onChange={(e) => setNewProduct({ ...newProduct, date: e.target.value })}
                                         disabled
                                     />
-                                </div>
+                                </div> */}
 
                                 <div className="form-group">
                                     <label className="form-label">Product Name</label>
-                                    <input
-                                        type="text"
-                                        value={newProduct.name}
-                                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value.replace(/\s/g, '').toLowerCase() })}
-                                        placeholder="e.g. Vintage Clock, Fruits..."
+                                    <select
+                                        className="search-input"
+                                        value={newProduct.name || ""}
+                                        onChange={(e) => {
+                                            const selectedOpt = masterProducts.find(p => p.name === e.target.value);
+                                            setNewProduct({
+                                                ...newProduct,
+                                                name: selectedOpt.name,
+                                                masterProduct: selectedOpt || null
+                                            });
+                                            // Auto-select first available unit if product is selected
+                                            const defaultUnit = selectedOpt && selectedOpt.units && selectedOpt.units.length > 0 
+                                                ? selectedOpt.units[0] 
+                                                : '';
+                                            const defaultVariety = selectedOpt && selectedOpt.varieties && selectedOpt.varieties.length > 0
+                                                ? selectedOpt.varieties[0].toLowerCase()
+                                                : '';
+                                            // Reset variety to empty string or default
+                                            setVariantData(prev => ({ ...prev, variety: defaultVariety, unit: defaultUnit }));
+                                        }}
                                         required
-                                    />
+                                    >
+                                        <option value="" disabled>Click to select product...</option>
+                                        {masterProducts.map(p => (
+                                            <option key={p._id || p.id} value={p.name}>{p.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <SearchableSelect
@@ -651,14 +688,20 @@ function TodayAuction() {
                                 <div className="form-group">
                                     <label className="form-label">Variants</label>
                                     <div className="variant-row">
-                                        <input
-                                            type="text"
-                                            placeholder="Variety"
+                                        <select
                                             value={variantData.variety}
-                                            onChange={(e) =>
-                                                setVariantData({ ...variantData, variety: e.target.value.toLowerCase() })
-                                            }
-                                        />
+                                            onChange={(e) => setVariantData({ ...variantData, variety: e.target.value })}
+                                            required
+                                        >
+                                            <option value="" disabled>Select Variety</option>
+                                            {newProduct.masterProduct && newProduct.masterProduct.varieties && newProduct.masterProduct.varieties.length > 0 ? (
+                                                newProduct.masterProduct.varieties.map((v, i) => (
+                                                    <option key={i} value={v.toLowerCase()}>{v}</option>
+                                                ))
+                                            ) : (
+                                                <option value="" disabled>No Varieties</option>
+                                            )}
+                                        </select>
 
                                         <select
                                             value={variantData.quality}
@@ -683,15 +726,17 @@ function TodayAuction() {
 
                                         <select
                                             value={variantData.unit}
-                                            onChange={(e) =>
-                                                setVariantData({ ...variantData, unit: e.target.value })
-                                            }
+                                            onChange={(e) => setVariantData({ ...variantData, unit: e.target.value })}
+                                            required
                                         >
-                                            <option value="kg">kg</option>
-                                            <option value="qty">qty</option>
-                                            <option value="pcs">pcs</option>
-                                            <option value="ltr">ltr</option>
-                                            <option value="box">box</option>
+                                            <option value="" disabled>Select Unit</option>
+                                            {newProduct.masterProduct && newProduct.masterProduct.units && newProduct.masterProduct.units.length > 0 ? (
+                                                newProduct.masterProduct.units.map((u, i) => (
+                                                    <option key={i} value={u}>{u}</option>
+                                                ))
+                                            ) : (
+                                                <option value="" disabled>No Units</option>
+                                            )}
                                         </select>
 
                                         <input
@@ -807,13 +852,17 @@ function TodayAuction() {
 
                                 <div className="form-group">
                                     <label className="form-label">Product Name</label>
-                                    <input
-                                        type="text"
-                                        value={editingProduct.name}
-                                        onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value.replace(/\s/g, '').toLowerCase() })}
-                                        placeholder="Product Name"
+                                    <select
+                                        className="search-input"
+                                        value={editingProduct.name || ""}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
                                         required
-                                    />
+                                    >
+                                        <option value="" disabled>Click to select product...</option>
+                                        {masterProducts.map(p => (
+                                            <option key={p._id || p.id} value={p.name}>{p.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <SearchableSelect
                                     label="Seller"

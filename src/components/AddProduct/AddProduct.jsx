@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Trash2, Plus, X, Loader2, Edit2 } from 'lucide-react';
+import { Trash2, Plus, X, Loader2, Edit2, Search } from 'lucide-react';
 import * as productApi from '../../api/vendorApi';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './AddProduct.css';
@@ -14,6 +14,7 @@ function AddProduct() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [productToDelete, setProductToDelete] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     
     const [newMaster, setNewMaster] = useState({
         name: '',
@@ -172,6 +173,24 @@ function AddProduct() {
             </div>
 
             <div className="add-product-content-body table-responsive bg-card rounded-lg shadow-sm custom-table-wrapper">
+                
+                {/* Search Bar */}
+                <div className="card fade-in search-card" style={{ padding: '15px' }}>
+                    <div className="form-group search-form-group" style={{ marginBottom: 0 }}>
+                        <div className="search-icon-container" style={{ position: 'relative' }}>
+                            <input
+                                type="text"
+                                placeholder="Search by product name or variety..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="search-input"
+                                style={{ width: '100%', padding: '10px 15px', paddingRight: '40px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                            />
+                            <Search size={20} className="search-icon-absolute" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                        </div>
+                    </div>
+                </div>
+
                 <div className="add-product-card fade-in">
                     <div className="add-product-table-responsive">
                         <table className="add-product-variant-table">
@@ -200,7 +219,15 @@ function AddProduct() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    masterProducts.map(item => (
+                                    masterProducts
+                                        .filter(item => {
+                                            if (!searchQuery) return true;
+                                            const query = searchQuery.toLowerCase();
+                                            const nameMatch = item.name.toLowerCase().includes(query);
+                                            const varietyMatch = (item.varieties || []).some(v => v.toLowerCase().includes(query));
+                                            return nameMatch || varietyMatch;
+                                        })
+                                        .map(item => (
                                         <tr key={item._id || item.id}>
                                             <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{item.name}</td>
                                             <td>

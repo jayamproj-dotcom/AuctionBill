@@ -250,17 +250,17 @@ const SubscriptionManagement = () => {
 
                 <div className="saas-form-group">
                   <label className="saas-label">Duration</label>
-                  <div className="saas-flex saas-gap-05">
+                  <div className="saas-duration-group">
                     <input
                       type="number"
                       min="1"
-                      className="saas-input saas-flex-1"
+                      className="saas-input saas-duration-number"
                       value={editingPlan?.durationValue}
                       onChange={(e) => setEditingPlan({ ...editingPlan, durationValue: e.target.value })}
                       placeholder="e.g. 1"
                     />
                     <select
-                      className="saas-select saas-flex-1"
+                      className="saas-select saas-duration-type"
                       value={editingPlan?.durationType}
                       onChange={(e) => setEditingPlan({ ...editingPlan, durationType: e.target.value })}
                     >
@@ -331,14 +331,18 @@ const SubscriptionManagement = () => {
                 </div>
               </div>
 
-              <div className="saas-form-group">
-                <label className="saas-label saas-flex saas-align-center saas-gap-05" style={{ cursor: 'pointer' }}>
+              <div className="saas-form-group" style={{ marginTop: '1rem' }}>
+                <label className="saas-modern-toggle">
+                  <div className="saas-modern-toggle-content">
+                    <span className="saas-modern-toggle-title">Mark as Popular Plan</span>
+                    <span className="saas-modern-toggle-desc">Highlight this plan to make it stand out to customers</span>
+                  </div>
                   <input
                     type="checkbox"
-                    checked={editingPlan?.isPopular}
+                    className="saas-toggle-checkbox"
+                    checked={editingPlan?.isPopular || false}
                     onChange={(e) => setEditingPlan({ ...editingPlan, isPopular: e.target.checked })}
                   />
-                  Mark as Popular Plan
                 </label>
               </div>
             </div>
