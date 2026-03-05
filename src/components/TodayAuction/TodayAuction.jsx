@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './TodayAuction.css';
@@ -6,27 +6,53 @@ import { toast } from 'react-toastify';
 import { Plus, Trash2, Edit2, X, Eye, EyeOff, PackageSearch, Search } from 'lucide-react';
 import * as productApi from '../../api/vendorApi';
 
-const SearchableSelect = ({ options, value, onChange, placeholder, required, label }) => {
+const SearchableSelect = ({ options, value, onChange, placeholder, required, label, className = "", style = {} }) => {
     const [searchTerm, setSearchTerm] = useState(value || '');
     const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef(null);
+    const skipBlurProcessing = useRef(false);
 
     useEffect(() => {
         setSearchTerm(value || '');
     }, [value]);
 
-    const filteredOptions = options.filter(opt =>
-        opt.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (containerRef.current && !containerRef.current.contains(e.target)) {
+                if (isOpen) {
+                    processBlur();
+                    setIsOpen(false);
+                }
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen, options, value, searchTerm]); // re-bind to latest state
+
+    const processBlur = () => {
+        if (skipBlurProcessing.current) {
+            skipBlurProcessing.current = false;
+            return;
+        }
+        const match = options.find(o => o.name.toLowerCase() === searchTerm.toLowerCase());
+        if (match) {
+            if (match.name !== value) onChange(match);
+        } else {
+            onChange({ id: '', name: '' });
+            setSearchTerm('');
+        }
+    };
 
     const handleSelect = (opt) => {
+        skipBlurProcessing.current = true; // Tell onBlur to skip since we cleanly selected
         onChange(opt);
         setSearchTerm(opt.name);
         setIsOpen(false);
     };
 
     return (
-        <div className="form-group form-group-relative" style={{ zIndex: isOpen ? 9999 : 1 }}>
-            <label className="form-label">{label}</label>
+        <div ref={containerRef} className={`form-group form-group-relative ${className}`} style={{ zIndex: isOpen ? 9999 : 1, ...style }}>
+            {label && <label className="form-label">{label}</label>}
             <input
                 type="text"
                 value={searchTerm}
@@ -36,36 +62,38 @@ const SearchableSelect = ({ options, value, onChange, placeholder, required, lab
                     if (e.target.value === '') onChange({ id: '', name: '' });
                 }}
                 onFocus={() => setIsOpen(true)}
-                onBlur={() => {
-                    setTimeout(() => {
-                        const match = options.find(o => o.name.toLowerCase() === searchTerm.toLowerCase());
-                        if (match) {
-                            if (match.name !== value) onChange(match);
-                        } else {
-                            onChange({ id: '', name: '' });
-                            setSearchTerm('');
-                        }
-                        setIsOpen(false);
-                    }, 200);
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' && isOpen && options.length > 0) {
+                        e.preventDefault();
+                        const match = options.find(opt => opt.name.toLowerCase() === searchTerm.toLowerCase()) 
+                            || options.filter(opt => opt.name.toLowerCase().includes(searchTerm.toLowerCase()))[0];
+                        if (match) handleSelect(match);
+                    }
                 }}
                 placeholder={placeholder}
                 required={required}
                 autoComplete="off"
             />
-            {isOpen && filteredOptions.length > 0 && (
+            {isOpen && (
                 <ul className="dropdown-options">
-                    {filteredOptions.map(opt => (
-                        <li
-                            key={opt.id}
-                            onMouseDown={() => handleSelect(opt)}
-                            className="dropdown-item"
-                        >
-                            {opt.name}
-                        </li>
-                    ))}
+                    {options.filter(opt => opt.name.toLowerCase().includes(searchTerm.toLowerCase())).length > 0 ? (
+                        options.filter(opt => opt.name.toLowerCase().includes(searchTerm.toLowerCase())).map(opt => (
+                            <li
+                                key={opt.id}
+                                onMouseDown={(e) => {
+                                    e.preventDefault(); // crucial to prevent focus loss before click completes
+                                    handleSelect(opt);
+                                }}
+                                className="dropdown-item"
+                            >
+                                {opt.name}
+                            </li>
+                        ))
+                    ) : (
+                        <li className="dropdown-item text-muted">No options</li>
+                    )}
                 </ul>
             )}
-
         </div>
     );
 };
@@ -639,37 +667,6 @@ function TodayAuction() {
                                     />
                                 </div> */}
 
-                                <div className="form-group">
-                                    <label className="form-label">Product Name</label>
-                                    <select
-                                        className="search-input"
-                                        value={newProduct.name || ""}
-                                        onChange={(e) => {
-                                            const selectedOpt = masterProducts.find(p => p.name === e.target.value);
-                                            setNewProduct({
-                                                ...newProduct,
-                                                name: selectedOpt.name,
-                                                masterProduct: selectedOpt || null
-                                            });
-                                            // Auto-select first available unit if product is selected
-                                            const defaultUnit = selectedOpt && selectedOpt.units && selectedOpt.units.length > 0 
-                                                ? selectedOpt.units[0] 
-                                                : '';
-                                            const defaultVariety = selectedOpt && selectedOpt.varieties && selectedOpt.varieties.length > 0
-                                                ? selectedOpt.varieties[0].toLowerCase()
-                                                : '';
-                                            // Reset variety to empty string or default
-                                            setVariantData(prev => ({ ...prev, variety: defaultVariety, unit: defaultUnit }));
-                                        }}
-                                        required
-                                    >
-                                        <option value="" disabled>Click to select product...</option>
-                                        {masterProducts.map(p => (
-                                            <option key={p._id || p.id} value={p.name}>{p.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
                                 <SearchableSelect
                                     label="Seller"
                                     options={sellers}
@@ -685,23 +682,47 @@ function TodayAuction() {
                                     required
                                 />
 
+                                <SearchableSelect
+                                    label="Product Name"
+                                    options={masterProducts.map(p => ({ id: p._id || p.id, name: p.name }))}
+                                    value={newProduct.name || ''}
+                                    onChange={(opt) => {
+                                        const selectedOpt = opt && opt.name ? masterProducts.find(p => p.name === opt.name) : null;
+                                        if (!selectedOpt) {
+                                            setNewProduct({ ...newProduct, name: '', masterProduct: null });
+                                            setVariantData(prev => ({ ...prev, variety: '', unit: '' }));
+                                            return;
+                                        }
+                                        const defaultUnit = selectedOpt.units && selectedOpt.units.length > 0 ? selectedOpt.units[0] : '';
+                                        const defaultVariety =
+                                            selectedOpt?.varieties && selectedOpt.varieties.length > 0
+                                                ? ''
+                                                : '';
+
+                                        setNewProduct(prev => ({ ...prev, name: selectedOpt.name, masterProduct: selectedOpt }));
+                                        setVariantData(prev => ({ ...prev, variety: defaultVariety, unit: defaultUnit }));
+                                    }}
+                                    placeholder="Click to search product..."
+                                    required
+                                />
+
                                 <div className="form-group">
                                     <label className="form-label">Variants</label>
                                     <div className="variant-row">
-                                        <select
-                                            value={variantData.variety}
-                                            onChange={(e) => setVariantData({ ...variantData, variety: e.target.value })}
+                                        <SearchableSelect
+                                            options={
+                                                newProduct.masterProduct && newProduct.masterProduct.varieties && newProduct.masterProduct.varieties.length > 0
+                                                    ? newProduct.masterProduct.varieties.map((v, i) => ({ id: `${i}-${v}`, name: v }))
+                                                    : []
+                                            }
+                                            value={variantData.variety || ''}
+                                            onChange={(opt) => {
+                                                setVariantData(prev => ({ ...prev, variety: opt && opt.name ? opt.name : '' }));
+                                            }}
+                                            placeholder="Variety"
                                             required
-                                        >
-                                            <option value="" disabled>Select Variety</option>
-                                            {newProduct.masterProduct && newProduct.masterProduct.varieties && newProduct.masterProduct.varieties.length > 0 ? (
-                                                newProduct.masterProduct.varieties.map((v, i) => (
-                                                    <option key={i} value={v.toLowerCase()}>{v}</option>
-                                                ))
-                                            ) : (
-                                                <option value="" disabled>No Varieties</option>
-                                            )}
-                                        </select>
+                                            style={{ margin: 0, flex: 1, minWidth: '130px' }}
+                                        />
 
                                         <select
                                             value={variantData.quality}
@@ -728,6 +749,7 @@ function TodayAuction() {
                                             value={variantData.unit}
                                             onChange={(e) => setVariantData({ ...variantData, unit: e.target.value })}
                                             required
+                                            placeholder="Unit"
                                         >
                                             <option value="" disabled>Select Unit</option>
                                             {newProduct.masterProduct && newProduct.masterProduct.units && newProduct.masterProduct.units.length > 0 ? (
@@ -739,7 +761,7 @@ function TodayAuction() {
                                             )}
                                         </select>
 
-                                        <input
+                                        {/* <input
                                             type="number"
                                             placeholder="Comm %"
                                             min={0}
@@ -747,13 +769,15 @@ function TodayAuction() {
                                             onChange={(e) =>
                                                 setVariantData({ ...variantData, commission: e.target.value })
                                             }
-                                        />
+                                        /> */}
 
                                         <button type="button" className="btn btn-primary add-variant-btn" onClick={handleAddVariant}>
                                             Add
                                         </button>
                                     </div>
                                 </div>
+
+
                                 {newProduct.variants && newProduct.variants.length > 0 && (
                                     <div className="table-responsive table-responsive-variants">
                                         <table className="variant-table">
@@ -850,20 +874,16 @@ function TodayAuction() {
                                     />
                                 </div>
 
-                                <div className="form-group">
-                                    <label className="form-label">Product Name</label>
-                                    <select
-                                        className="search-input"
-                                        value={editingProduct.name || ""}
-                                        onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                                        required
-                                    >
-                                        <option value="" disabled>Click to select product...</option>
-                                        {masterProducts.map(p => (
-                                            <option key={p._id || p.id} value={p.name}>{p.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                                <SearchableSelect
+                                    label="Product Name"
+                                    options={masterProducts.map(p => ({ id: p._id || p.id, name: p.name }))}
+                                    value={editingProduct.name || ''}
+                                    onChange={(opt) => {
+                                        setEditingProduct({ ...editingProduct, name: opt ? opt.name : '' });
+                                    }}
+                                    placeholder="Click to search product..."
+                                    required
+                                />
                                 <SearchableSelect
                                     label="Seller"
                                     options={sellers}

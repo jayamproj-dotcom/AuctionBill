@@ -228,7 +228,7 @@
 
 .form-group input, .form-group select, .form-group textarea {
     width: 100%;
-    padding: 0.8rem 1rem;
+    /* padding: 0.8rem 1rem; */
     border: 2px solid #eef0f2;
     border-radius: 10px;
     font-size: 1rem;

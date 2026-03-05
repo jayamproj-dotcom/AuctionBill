@@ -10,7 +10,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice";
 import { resolveImageUrl } from "../../utils/imageUtils";
 import { getVendorProfile } from "../../api/vendorApi";
-import GoogleTranslate from "../../components/Common/GoogleTranslate";
+
 
 const VendorLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -128,7 +128,7 @@ const VendorLayout = () => {
         </div>
 
         <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          {/* <GoogleTranslate /> */}
+
           <div className="header-profile-container" ref={profileRef}>
             <div className="header-profile" onClick={toggleProfile}>
               <p>{userName}</p>

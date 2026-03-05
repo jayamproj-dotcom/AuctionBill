@@ -7,7 +7,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { Eye, EyeOff, Loader } from "lucide-react";
 import "./Login.css";
-import GoogleTranslate from "../../../components/Common/GoogleTranslate";
+
 
 const VendorLogin = () => {
   const navigate = useNavigate();
@@ -101,7 +101,7 @@ const VendorLogin = () => {
   return (
     <div className="login-page">
       <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1000 }}>
-        {/* <GoogleTranslate /> */}
+
       </div>
       <div className="login-card">
         <h2>Vendor Login</h2>

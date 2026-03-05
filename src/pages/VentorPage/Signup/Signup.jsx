@@ -6,7 +6,7 @@ import { vendorSignup } from '../../../api/vendorApi';
 import { toast } from 'react-toastify';
 import SearchableSelect from '../../../components/Common/SearchableSelect.jsx';
 import './Signup.css';
-import GoogleTranslate from '../../../components/Common/GoogleTranslate';
+
 
 const Signup = () => {
     const navigate = useNavigate();
@@ -170,7 +170,7 @@ const Signup = () => {
     return (
         <div className="signup-page">
             <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1000 }}>
-                {/* <GoogleTranslate /> */}
+
             </div>
             <div className={`signup-container ${step === 1 ? 'plans-view' : 'form-view'}`}>
 
