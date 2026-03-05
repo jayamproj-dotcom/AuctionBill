@@ -158,9 +158,8 @@ const SaaSLayout = () => {
     navItems = navItems.filter(item => {
       if (item.path === '/saas/settings') return false;
       if (item.path === '/saas/subadmins') return false;
-      if (item.path === '/saas/change-password') {
-        return saasPermissions?.passwordChange === true || String(saasPermissions?.passwordChange).toLowerCase() === 'true';
-      }
+      // Always allow sub-admins to change their own password
+      if (item.path === '/saas/change-password') return true;
       return true;
     });
   }

@@ -69,12 +69,12 @@ const SaaSChangePassword = () => {
     e.preventDefault();
 
     if (passwords.newPassword.length < 6) {
-      toast.error("Error: Password must be at least 6 characters.");
+      toast.error("Password must be at least 6 characters.");
       return;
     }
 
     if (passwords.newPassword !== passwords.confirmPassword) {
-      toast.error("Error: New Password and Confirm Password do not match.");
+      toast.error("New Password and Confirm Password do not match.");
       return;
     }
 

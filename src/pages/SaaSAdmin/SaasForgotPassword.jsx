@@ -2,16 +2,16 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { adminForgotPassword, adminResetPassword } from "../../api/adminApi";
 import { Eye, EyeOff, Loader, ArrowLeft, Mail, ShieldCheck, Lock } from "lucide-react";
+import { toast } from "react-toastify";
 import "./SaaSAdmin.css";
 
 const SaasForgotPassword = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [message, setMessage] = useState("");
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [resendTimer, setResendTimer] = useState(0);
 
     const [formData, setFormData] = useState({
         email: "",
@@ -22,29 +22,66 @@ const SaasForgotPassword = () => {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        setError("");
-        setMessage("");
     };
 
     const handleSendOTP = async (e) => {
         e.preventDefault();
         if (!formData.email) {
-            setError("Please enter your email address");
+            toast.error("Please enter your email address");
             return;
         }
 
         setIsLoading(true);
-        setError("");
         try {
             const res = await adminForgotPassword({ email: formData.email });
             if (res.status) {
-                setMessage(res.message || "OTP sent to your email.");
+                toast.success(res.message || "OTP sent to your email.");
                 setStep(2);
+                startResendTimer();
             } else {
-                setError(res.message || "Failed to send OTP.");
+                toast.error(res.message || "Failed to send OTP.");
             }
         } catch (err) {
-            setError(err.message || "Something went wrong.");
+            toast.error(err.message || "Something went wrong.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const startResendTimer = () => {
+        setResendTimer(60); // 60 seconds
+        const interval = setInterval(() => {
+            setResendTimer((prev) => {
+                if (prev <= 1) {
+                    clearInterval(interval);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    const formatTime = (seconds) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    };
+
+    const handleResendOTP = async () => {
+        if (resendTimer > 0) return;
+        
+        setIsLoading(true);
+        
+        try {
+            const res = await adminForgotPassword({ email: formData.email });
+            if (res.status) {
+                toast.success(res.message || "OTP resent to your email.");
+                startResendTimer();
+            } else {
+                toast.error(res.message || "Failed to resend OTP.");
+            }
+        } catch (err) {
+            toast.error(err.message || "Something went wrong.");
         } finally {
             setIsLoading(false);
         }
@@ -53,11 +90,10 @@ const SaasForgotPassword = () => {
     const handleVerifyOTP = (e) => {
         e.preventDefault();
         if (!formData.otp || formData.otp.length < 4) {
-            setError("Please enter a valid OTP");
+            toast.error("Please enter a valid OTP");
             return;
         }
-        setError("");
-        setMessage("OTP accepted. Please enter your new password.");
+        toast.success("OTP accepted. Please enter your new password.");
         setStep(3);
     };
 
@@ -66,29 +102,28 @@ const SaasForgotPassword = () => {
         const { email, otp, newPassword, confirmPassword } = formData;
 
         if (!otp || !newPassword || !confirmPassword) {
-            setError("Please fill in all fields");
+            toast.error("Please fill in all fields");
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            setError("Passwords do not match");
+            toast.error("Passwords do not match");
             return;
         }
 
         setIsLoading(true);
-        setError("");
         try {
             const res = await adminResetPassword({ email, otp, newPassword });
             if (res.status) {
-                setMessage("Password reset successfully! Redirecting to login...");
+                toast.success("Password reset successfully! Redirecting to login...");
                 setTimeout(() => {
                     navigate("/saas-admin");
                 }, 3000);
             } else {
-                setError(res.message || "Failed to reset password.");
+                toast.error(res.message || "Failed to reset password.");
             }
         } catch (err) {
-            setError(err.message || "Something went wrong.");
+            toast.error(err.message || "Something went wrong.");
         } finally {
             setIsLoading(false);
         }
@@ -128,9 +163,6 @@ const SaasForgotPassword = () => {
                             </div>
                         </div>
 
-                        {error && <div className="error-msg" style={{ color: '#e74c3c', marginBottom: '15px' }}>{error}</div>}
-                        {message && <div className="success-msg" style={{ color: '#27ae60', marginBottom: '15px' }}>{message}</div>}
-
                         <button type="submit" className="saas-btn btn-primary saas-login-btn" disabled={isLoading}>
                             {isLoading ? <><Loader className="saas-spinner" size={18} /> Sending...</> : "Send OTP"}
                         </button>
@@ -154,12 +186,36 @@ const SaasForgotPassword = () => {
                             </div>
                         </div>
 
-                        {error && <div className="error-msg" style={{ color: '#e74c3c', marginBottom: '15px' }}>{error}</div>}
-                        {message && <div className="success-msg" style={{ color: '#27ae60', marginBottom: '15px' }}>{message}</div>}
-
                         <button type="submit" className="saas-btn btn-primary saas-login-btn">
                             Verify OTP
                         </button>
+                        
+                        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px' }}>
+                            <span style={{ color: '#666' }}>Didn't receive the OTP? </span>
+                            {resendTimer > 0 ? (
+                                <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>
+                                    Wait {formatTime(resendTimer)}
+                                </span>
+                            ) : (
+                                <button 
+                                    type="button" 
+                                    onClick={handleResendOTP} 
+                                    disabled={isLoading}
+                                    style={{ 
+                                        background: 'transparent', 
+                                        border: 'none', 
+                                        color: '#007bff', 
+                                        cursor: 'pointer',
+                                        fontWeight: '600',
+                                        padding: '0',
+                                        fontSize: '14px',
+                                        textDecoration: 'none'
+                                    }}
+                                >
+                                    Resend OTP
+                                </button>
+                            )}
+                        </div>
                     </form>
                 ) : (
                     <form onSubmit={handleResetPassword} className="saas-login-form">
@@ -208,9 +264,6 @@ const SaasForgotPassword = () => {
                                 </button>
                             </div>
                         </div>
-
-                        {error && <div className="error-msg" style={{ color: '#e74c3c', marginBottom: '15px' }}>{error}</div>}
-                        {message && <div className="success-msg" style={{ color: '#27ae60', marginBottom: '15px' }}>{message}</div>}
 
                         <button type="submit" className="saas-btn btn-primary saas-login-btn" disabled={isLoading}>
                             {isLoading ? <><Loader className="saas-spinner" size={18} /> Resetting...</> : "Reset Password"}

@@ -11,6 +11,7 @@ const ForgotPassword = () => {
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [resendTimer, setResendTimer] = useState(0);
 
     const [formData, setFormData] = useState({
         email: "",
@@ -39,11 +40,62 @@ const ForgotPassword = () => {
             if (res.status) {
                 setMessage(res.message || "OTP sent to your email.");
                 setStep(2);
+                startResendTimer();
             } else {
                 setError(res.message || "Failed to send OTP.");
             }
         } catch (err) {
-            setError(err.message || "Something went wrong.");
+            // Check specifically for an inactive sub-admin
+            if (err.message && err.message.toLowerCase().includes("inactive")) {
+                setError("Your account is inactive. Please contact the Admin.");
+            } else {
+                setError(err.message || "Something went wrong.");
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const startResendTimer = () => {
+        setResendTimer(60); // 60 seconds
+        const interval = setInterval(() => {
+            setResendTimer((prev) => {
+                if (prev <= 1) {
+                    clearInterval(interval);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    const formatTime = (seconds) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    };
+
+    const handleResendOTP = async () => {
+        if (resendTimer > 0) return;
+        
+        setIsLoading(true);
+        setError("");
+        setMessage("");
+        
+        try {
+            const res = await forgotPassword({ email: formData.email });
+            if (res.status) {
+                setMessage(res.message || "OTP resent to your email.");
+                startResendTimer();
+            } else {
+                setError(res.message || "Failed to resend OTP.");
+            }
+        } catch (err) {
+            if (err.message && err.message.toLowerCase().includes("inactive")) {
+                setError("Your account is inactive. Please contact the Admin.");
+            } else {
+                setError(err.message || "Something went wrong.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -188,9 +240,32 @@ const ForgotPassword = () => {
                             {isLoading ? <><Loader className="saas-spinner" size={18} /> Resetting...</> : "Reset Password"}
                         </button>
 
-                        <button type="button" className="saas-btn btn-secondary" onClick={() => setStep(1)} style={{ width: '100%', marginTop: '10px', background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }}>
-                            Resend OTP
-                        </button>
+                        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px' }}>
+                            <span style={{ color: '#666' }}>Didn't receive the OTP? </span>
+                            {resendTimer > 0 ? (
+                                <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>
+                                    Wait {formatTime(resendTimer)}
+                                </span>
+                            ) : (
+                                <button 
+                                    type="button" 
+                                    onClick={handleResendOTP} 
+                                    disabled={isLoading}
+                                    style={{ 
+                                        background: 'transparent', 
+                                        border: 'none', 
+                                        color: '#007bff', 
+                                        cursor: 'pointer',
+                                        fontWeight: '600',
+                                        padding: '0',
+                                        fontSize: '14px',
+                                        textDecoration: 'none'
+                                    }}
+                                >
+                                    Resend OTP
+                                </button>
+                            )}
+                        </div>
                     </form>
                 )}
             </div>

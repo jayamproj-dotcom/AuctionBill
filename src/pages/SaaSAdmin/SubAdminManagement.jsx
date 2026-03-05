@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal';
-import { Plus, X, Download, Trash2, Search, Check, Edit, Eye, EyeOff, Loader } from 'lucide-react';
+import { Plus, X, Download, Trash2, Search, Check, Edit, Loader } from 'lucide-react';
 import { getSubAdmins, createSubAdmin, updateSubAdmin, deleteSubAdmin } from '../../api/adminApi';
 import { toast } from 'react-toastify';
 
@@ -13,8 +13,6 @@ const SubAdminManagement = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingSubAdmin, setEditingSubAdmin] = useState(null);
   const [adminToDelete, setAdminToDelete] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -38,7 +36,6 @@ const SubAdminManagement = () => {
       _id: null,
       username: '',
       email: '',
-      password: '',
       status: 'Active',
       permissions: {
         vendorAdd: false,
@@ -46,16 +43,13 @@ const SubAdminManagement = () => {
         passwordChange: false
       }
     });
-    setIsChangingPassword(true);
     setIsModalOpen(true);
   };
 
   const handleEdit = (subAdmin) => {
     setEditingSubAdmin({
-      ...subAdmin,
-      password: '' // empty so they don't see hashed
+      ...subAdmin
     });
-    setIsChangingPassword(false);
     setIsModalOpen(true);
   };
 
@@ -83,16 +77,12 @@ const SubAdminManagement = () => {
     if (!editingSubAdmin.username || !editingSubAdmin.email) {
       return toast.error('Name and email are required');
     }
-    if (!editingSubAdmin._id && !editingSubAdmin.password) {
-      return toast.error('Password is required for new sub-admins');
-    }
 
     setIsSaving(true);
     try {
       if (editingSubAdmin._id) {
         // Handle update
         const payload = { ...editingSubAdmin };
-        if (!payload.password) delete payload.password; // Don't send empty password 
         await updateSubAdmin(editingSubAdmin._id, payload);
         toast.success('Sub-admin updated successfully');
       } else {
@@ -333,57 +323,6 @@ const SubAdminManagement = () => {
                     placeholder="e.g. email@example.com"
                     required
                   />
-                </div>
-
-                <div className="saas-form-group">
-                    <label className="saas-label">Password {editingSubAdmin?._id ? '' : '*'}</label>
-                    
-                    {!isChangingPassword && editingSubAdmin?._id ? (
-                      <div className="saas-mt-8">
-                        <a 
-                          href="#!" 
-                          onClick={(e) => { e.preventDefault(); setIsChangingPassword(true); }}
-                          className="saas-link saas-link-blue"
-                        >
-                          Change Password
-                        </a>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="saas-relative">
-                          <input 
-                            type={showPassword ? "text" : "password"} 
-                            className="saas-input saas-input-pr40"
-                            value={editingSubAdmin?.password || ''}
-                            onChange={(e) => setEditingSubAdmin({...editingSubAdmin, password: e.target.value})}
-                            placeholder={editingSubAdmin?._id ? "Enter new password" : "Enter password"}
-                            required={!editingSubAdmin?._id}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="saas-password-toggle saas-pwd-toggle-btn"
-                          >
-                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                          </button>
-                        </div>
-                        {editingSubAdmin?._id && (
-                          <div className="saas-mt-8 saas-text-right">
-                             <a 
-                              href="#!" 
-                              onClick={(e) => { 
-                                e.preventDefault(); 
-                                setIsChangingPassword(false); 
-                                setEditingSubAdmin({...editingSubAdmin, password: ''}); 
-                              }}
-                              className="saas-link saas-link-danger"
-                             >
-                               Cancel Change
-                             </a>
-                          </div>
-                        )}
-                      </div>
-                    )}
                 </div>
 
               </div>
