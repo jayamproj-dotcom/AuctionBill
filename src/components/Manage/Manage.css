@@ -284,13 +284,13 @@
 .modal-title {
     font-size: 1.25rem;
     font-weight: 600;
-    margin-bottom: 1.5rem;
+    /* margin-bottom: 1.5rem; */
     color: #111827;
 }
 
 .modal-close {
     position: absolute;
-    top: 1rem;
+    /* top: 1rem; */
     right: 1rem;
     cursor: pointer;
     background: none;

@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { House, ChartSpline, UserCog, PackageSearch, History, User, ShoppingCart, Settings, Handshake, Gem, LogOut, X } from "lucide-react";
+import { House, ChartSpline, UserCog, PackageSearch, PackagePlus, History, User, ShoppingCart, Settings, Handshake, Gem, LogOut, X } from "lucide-react";
 import logo from "../../assets/images/logo-sidebar.png"
 import { useDispatch } from "react-redux";
 import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice";
@@ -41,6 +41,15 @@ const VendorSidebar = ({ isOpen, onClose }) => {
         >
           <span className="nav-icon"><House /></span>
           <span>Dashboard</span>
+        </NavLink>
+
+        <NavLink
+          to="/vendor/add-product"
+          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          onClick={onClose}
+        >
+          <span className="nav-icon"><PackagePlus /></span>
+          <span>Product List</span>
         </NavLink>
 
         <NavLink

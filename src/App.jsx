@@ -10,6 +10,7 @@ import VendorLayout from "./pages/VentorPage/VentorLayout.jsx";
 
 import Signup from "./pages/VentorPage/Signup/Signup.jsx";
 import Dashboard from "./components/Dashboard/Dashboard.jsx";
+import AddProduct from "./components/AddProduct/AddProduct.jsx";
 import TodayAuction from "./components/TodayAuction/TodayAuction.jsx";
 import History from "./components/History/History.jsx";
 import SellerDetails from "./components/SellerDetails/SellerDetails.jsx";
@@ -68,6 +69,7 @@ function App() {
           <Route path="/vendor" element={<VendorLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="add-product" element={<AddProduct />} />
             <Route path="today-auction" element={<TodayAuction />} />
             <Route path="pending-products" element={<PendingProducts />} />
             <Route path="history" element={<History />} />

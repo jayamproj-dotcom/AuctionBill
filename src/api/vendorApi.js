@@ -97,3 +97,51 @@ export const getVendorNotifications = async () => {
         throw error;
     }
 };
+
+export const addProduct = async (data) => {
+    try {
+        const response = await api.post('/product/add', data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const getProducts = async (params) => {
+    try {
+        const response = await api.get('/product/list', { params });
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const updateProduct = async (id, data) => {
+    try {
+        const response = await api.put(`/product/update/${id}`, data);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};
+
+export const deleteProduct = async (id) => {
+    try {
+        const response = await api.delete(`/product/delete/${id}`);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};

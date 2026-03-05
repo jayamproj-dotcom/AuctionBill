@@ -166,7 +166,13 @@ export const initialData = {
 
 
     // 🔥 New Table: buyerPayments (Money Received from Buyer)
-    buyerPayments: []
+    buyerPayments: [],
+
+    // 🔥 New Table: productMasterList (Reusable product templates)
+    productMasterList: [
+        { id: 1, name: 'Salem Turmeric', varieties: ['Standard', 'Premium'], units: ['kg', 'bag'] },
+        { id: 2, name: 'Madurai Jasmine Flowers', varieties: ['Fresh Morning'], units: ['kg'] }
+    ]
 };
 
 export const getAuctionData = () => {
