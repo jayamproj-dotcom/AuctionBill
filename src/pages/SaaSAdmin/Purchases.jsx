@@ -69,27 +69,30 @@ const Purchases = () => {
 
   return (
     <div className="fade-in">
-      <div className="saas-card">
-        <div className="saas-card-header">
-          <h3 className="saas-text-lg saas-font-semibold">Vendor Purchase History</h3>
-          <div className="saas-flex saas-gap-05">
-            <div className="saas-search-icon-container">
-              <input
-                type="text"
-                placeholder="Search purchases..."
-                className="saas-input saas-search-input-wrapper"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Search size={18} className="saas-search-icon-absolute" />
-            </div>
+      <div className="saas-card saas-mb-15 subAdminCard">
+        <h2 className="saas-text-2xl saas-font-bold subAdminCardTitle">Vendor Purchase History</h2>
+        <p className="saas-text-muted saas-text-sm saas-mb-15">View all vendor subscriptions and purchases</p>
+        <div className="saas-flex-between subAdminTopControls">
+          <div className="saasSearchWrapperWide">
+            <Search size={18} className="saasSearchIconPosition" />
+            <input
+              type="text"
+              className="saas-input saasSearchInputWide"
+              placeholder="Search purchases..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="saas-flex saas-gap-10px">
             <button className="saas-btn btn-outline">Export CSV</button>
           </div>
         </div>
+      </div>
 
+      <div className="saas-card subAdminTableCard">
         <div className="saas-table-container">
-          <table className="saas-table">
-            <thead>
+          <table className="saas-table subAdminTable">
+            <thead className="subAdminTableHeader">
               <tr>
                 <th>Vendor Name</th>
                 <th>Plan Detail</th>

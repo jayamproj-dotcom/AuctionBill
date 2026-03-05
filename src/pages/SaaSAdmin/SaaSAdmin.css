@@ -372,6 +372,7 @@
   background-color: white;
   border-color: var(--saas-border);
   color: var(--saas-text-main);
+  margin-right: 10px;
 }
 
 .btn-outline:hover {
@@ -2158,3 +2159,104 @@ body.saas-admin-active {
   transform: translateX(0);
 }
 
+/* Inline Styles Replacement Classes */
+.saas-export-modal {
+  max-width: 400px;
+}
+
+.saas-badge-warning-req {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+}
+
+.saas-req-upgrade-box {
+  grid-column: 1 / -1;
+  background: #fff3cd;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.saas-req-upgrade-sub {
+  margin-top: 4px;
+}
+
+.saas-ml-10px {
+  margin-left: 10px;
+}
+
+.saas-mb-10px {
+  margin-bottom: 10px;
+}
+
+.saas-feature-badge-inline {
+  padding: 0.4rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.saas-feature-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.saas-cursor-pointer-flex {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.saas-text-align-right {
+  text-align: right;
+}
+
+.saas-forgot-pwd-link {
+  font-size: 13px;
+  color: #f39c12;
+  text-decoration: none;
+}
+
+.saas-login-back-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 20px;
+}
+
+.saas-forgot-pwd-heading {
+  color: #333;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.saas-resend-text-container {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.saas-text-666 {
+  color: #666;
+}
+
+.saas-text-danger-bold {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.saas-resend-otp-btn {
+  background: transparent;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0;
+  font-size: 14px;
+  text-decoration: none;
+}

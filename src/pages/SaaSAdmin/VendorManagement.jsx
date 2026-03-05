@@ -434,7 +434,7 @@ const VendorManagement = () => {
       {/* Export Modal */}
       {isExportModalOpen && (
         <div className="saas-modal-overlay" onClick={() => setIsExportModalOpen(false)}>
-          <div className="saas-modal" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+          <div className="saas-modal saas-export-modal" onClick={e => e.stopPropagation()}>
             <div className="saas-modal-header">
               <h3 className="saas-text-xl saas-font-semibold">Export Vendor Data</h3>
               <button
@@ -533,25 +533,22 @@ const VendorManagement = () => {
         </div>
       )}
 
-      <div className="saas-card">
-        <div className="saas-card-header saas-flex-col saas-align-start saas-gap-10">
-          <div className="saas-flex-between saas-w-full">
-            <h3 className="saas-text-lg saas-font-semibold">Manage Vendors</h3>
-            <div className="saas-flex saas-gap-05 flex-wrap">
-              <div className="saas-search-icon-container">
-                <input
-                  type="text"
-                  placeholder="Search vendors..."
-                  className="saas-input saas-search-input-wrapper"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Search size={18} className="saas-search-icon-absolute" />
-              </div>
-              {/* <div className="saas-relative">
-                
-              </div> */}
-              <button
+      <div className="saas-card saas-mb-15 subAdminCard">
+        <h2 className="saas-text-2xl saas-font-bold subAdminCardTitle">Manage Vendors</h2>
+        <p className="saas-text-muted saas-text-sm saas-mb-15">Manage and monitor all vendors in the system</p>
+        <div className="saas-flex-between subAdminTopControls">
+          <div className="saasSearchWrapperWide">
+            <Search size={18} className="saasSearchIconPosition" />
+            <input
+              type="text"
+              className="saas-input saasSearchInputWide"
+              placeholder="Search vendors..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="saas-flex saas-gap-10px">
+                <button
                   className={`saas-btn ${showFilters ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setShowFilters(!showFilters)}
                 >
@@ -643,14 +640,14 @@ const VendorManagement = () => {
                   <Plus size={18} /> Add Vendor
                 </button>
               )}
-            </div>
           </div>
-
         </div>
+      </div>
 
+      <div className="saas-card subAdminTableCard">
         <div className="saas-table-container">
-          <table className="saas-table">
-            <thead>
+          <table className="saas-table subAdminTable">
+            <thead className="subAdminTableHeader">
               <tr>
                 <th>Vendor Name</th>
                 <th>Email</th>
@@ -671,7 +668,7 @@ const VendorManagement = () => {
                     <div className="saas-flex saas-align-center saas-gap-05">
                       {vendor.name}
                       {vendor.requestedPlan && (
-                        <span className="saas-badge badge-warning" style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem' }} title="Plan Upgrade Requested">
+                        <span className="saas-badge badge-warning saas-badge-warning-req" title="Plan Upgrade Requested">
                           Upgrade Req.
                         </span>
                       )}
@@ -1027,7 +1024,7 @@ const VendorManagement = () => {
                     </span>
                   </div>
                   {selectedVendor.requestedPlan && (
-                    <div style={{ gridColumn: '1 / -1', background: '#fff3cd', padding: '10px', borderRadius: '5px', marginBottom: '10px' }}>
+                    <div className="saas-req-upgrade-box">
                       <label className="saas-label saas-text-muted">Requested Plan Upgrade</label>
                       <div className="saas-flex saas-flex-between">
                          <div className="saas-flex saas-flex-col saas-align-start">
@@ -1035,7 +1032,7 @@ const VendorManagement = () => {
                              {selectedVendor.requestedPlan?.name}
                            </span>
                            {selectedVendor.upgradeType && (
-                             <span className="saas-text-xs saas-text-muted" style={{marginTop: '4px'}}>
+                             <span className="saas-text-xs saas-text-muted saas-req-upgrade-sub">
                                Activation: {selectedVendor.upgradeType === 'from_today' ? 'From Today (30 Days)' : 'After Current Plan'}
                              </span>
                            )}
@@ -1048,8 +1045,7 @@ const VendorManagement = () => {
                              Approve
                            </button>
                            <button 
-                             className="saas-btn btn-outline btn-sm saas-ml-1"
-                             style={{ marginLeft: '10px' }}
+                             className="saas-btn btn-outline btn-sm saas-ml-10px"
                              onClick={() => setUpgradeConfirmConfig({ isOpen: true, type: 'reject' })}
                            >
                              Reject
