@@ -5,9 +5,6 @@ import ForgotPassword from "./pages/VentorPage/Login/ForgotPassword.jsx";
 import VendorChangePassword from "./pages/VentorPage/Login/VendorChangePassword.jsx";
 import SaasForgotPassword from "./pages/SaaSAdmin/SaasForgotPassword.jsx";
 import VendorLayout from "./pages/VentorPage/VentorLayout.jsx";
-
-
-
 import Signup from "./pages/VentorPage/Signup/Signup.jsx";
 import Dashboard from "./components/Dashboard/Dashboard.jsx";
 import TodayAuction from "./components/TodayAuction/TodayAuction.jsx";
