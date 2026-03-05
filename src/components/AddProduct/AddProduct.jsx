@@ -4,6 +4,7 @@ import { Trash2, Plus, X, Loader2, Edit2, Search } from 'lucide-react';
 import * as productApi from '../../api/vendorApi';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './AddProduct.css';
+import '../TodayAuction/TodayAuction.css';
 
 function AddProduct() {
     const [masterProducts, setMasterProducts] = useState([]);
@@ -155,123 +156,137 @@ function AddProduct() {
         }
     };
 
+    const filteredProducts = masterProducts.filter(item => {
+        if (!searchQuery) return true;
+        const query = searchQuery.toLowerCase();
+        const nameMatch = item.name.toLowerCase().includes(query);
+        const varietyMatch = (item.varieties || []).some(v => v.toLowerCase().includes(query));
+        return nameMatch || varietyMatch;
+    });
+
     return (
-        <div className="main-content">
+        <>
+            {/* Header */}
             <div className="content-header">
-                <div className="add-product-header-top">
+                <div className="header-top">
                     <h1>Product List</h1>
-                    <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                        <Plus size={18} style={{ marginRight: '8px' }} />
-                        Add Product
-                    </button>
+                    <div className="header-actions">
+                        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                            <Plus size={18} />
+                            Add Product
+                        </button>
+                    </div>
                 </div>
-                <div className="add-product-breadcrumb">
+                <div className="breadcrumb">
                     <span>Home</span>
-                    <span className="add-product-breadcrumb-separator">/</span>
+                    <span className="breadcrumb-separator">/</span>
                     <span>Product List</span>
                 </div>
             </div>
 
-            <div className="add-product-content-body table-responsive bg-card rounded-lg shadow-sm custom-table-wrapper">
-                
+            <div className="content-body">
+                {/* Section header */}
+                <div className="section-header">
+                    <h3 className="section-title">All Products ({masterProducts.length})</h3>
+                </div>
+
                 {/* Search Bar */}
-                <div className="card fade-in search-card" style={{ padding: '15px' }}>
-                    <div className="form-group search-form-group" style={{ marginBottom: 0 }}>
-                        <div className="search-icon-container" style={{ position: 'relative' }}>
+                <div className="card fade-in search-card">
+                    <div className="form-group search-form-group">
+                        <div className="search-icon-container">
                             <input
                                 type="text"
                                 placeholder="Search by product name or variety..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="search-input"
-                                style={{ width: '100%', padding: '10px 15px', paddingRight: '40px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
                             />
-                            <Search size={20} className="search-icon-absolute" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                            <Search size={20} className="search-icon-absolute" />
                         </div>
                     </div>
                 </div>
 
-                <div className="add-product-card fade-in">
-                    <div className="add-product-table-responsive">
-                        <table className="add-product-variant-table">
-                            <thead>
-                                <tr>
-                                    <th>Product Name</th>
-                                    <th>Varieties</th>
-                                    <th>Quantity Types</th>
-                                    <th style={{ textAlign: 'center' }}>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {loading ? (
+                {/* Table */}
+                <div className="card-list fade-in">
+                    {loading ? (
+                        <div className="empty-state">
+                            <div className="empty-state-icon">
+                                <Loader2 className="animate-spin" size={32} color="var(--primary-color)" />
+                            </div>
+                            <p>Loading products...</p>
+                        </div>
+                    ) : filteredProducts.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-state-icon">📦</div>
+                            <p>
+                                {searchQuery
+                                    ? 'No products matched your search.'
+                                    : 'No products found. Click "Add Product" to start building your list.'}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="table-responsive bg-card rounded-lg shadow-sm custom-table-wrapper">
+                            <table className="data-table custom-data-table">
+                                <thead className="bg-tertiary">
                                     <tr>
-                                        <td colSpan="4" style={{ textAlign: 'center', padding: '40px' }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                                                <Loader2 className="animate-spin" size={24} color="var(--primary-color)" />
-                                                <span style={{ color: 'var(--text-secondary)' }}>Loading products...</span>
-                                            </div>
-                                        </td>
+                                        <th className="custom-th">Product Name</th>
+                                        <th className="custom-th">Varieties</th>
+                                        <th className="custom-th">Quantity Types</th>
+                                        <th className="custom-th custom-th-center">Actions</th>
                                     </tr>
-                                ) : masterProducts.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="4" style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-                                            No products found. Click "Add Product" to start building your list.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    masterProducts
-                                        .filter(item => {
-                                            if (!searchQuery) return true;
-                                            const query = searchQuery.toLowerCase();
-                                            const nameMatch = item.name.toLowerCase().includes(query);
-                                            const varietyMatch = (item.varieties || []).some(v => v.toLowerCase().includes(query));
-                                            return nameMatch || varietyMatch;
-                                        })
-                                        .map(item => (
-                                        <tr key={item._id || item.id}>
-                                            <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{item.name}</td>
-                                            <td>
+                                </thead>
+                                <tbody>
+                                    {filteredProducts.map(item => (
+                                        <tr key={item._id || item.id} className="custom-tr">
+                                            <td className="custom-td">
+                                                <div className="font-semibold text-primary table-product-name">
+                                                    {item.name}
+                                                </div>
+                                            </td>
+                                            <td className="custom-td">
                                                 <div className="tag-container">
                                                     {(item.varieties || []).map((v, idx) => (
                                                         <span key={idx} className="variety-tag">{v}</span>
                                                     ))}
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td className="custom-td">
                                                 <div className="tag-container">
                                                     {(item.units || []).map((u, idx) => (
                                                         <span key={idx} className="unit-tag">{u}</span>
                                                     ))}
                                                 </div>
                                             </td>
-                                            <td style={{ textAlign: 'center' }}>
-                                                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
-                                                    <button
-                                                        className="icon-btn edit"
-                                                        onClick={() => openEditModal(item)}
-                                                        title="Edit Product"
-                                                    >
-                                                        <Edit2 size={18} />
-                                                    </button>
-                                                    <button
-                                                        className="icon-btn delete"
-                                                        onClick={() => handleDeleteClick(item._id)}
-                                                        title="Delete Product"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
+                                            <td className="custom-td">
+                                                <div className="action-stack">
+                                                    <div className="action-icon-row">
+                                                        <button
+                                                            className="icon-btn edit action-icon-small"
+                                                            onClick={() => openEditModal(item)}
+                                                            title="Edit Product"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            className="icon-btn delete action-icon-small"
+                                                            onClick={() => handleDeleteClick(item._id)}
+                                                            title="Delete Product"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Modal Popup */}
+            {/* Add / Edit Modal */}
             {showModal && (
                 <div className="modal-overlay" onClick={closeModal}>
                     <div className="modal" onClick={e => e.stopPropagation()}>
@@ -367,7 +382,7 @@ function AddProduct() {
                 confirmText="Yes, Remove"
                 isLoading={deleteLoading}
             />
-        </div>
+        </>
     );
 }
 

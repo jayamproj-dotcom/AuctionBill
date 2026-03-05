@@ -509,7 +509,7 @@ function TodayAuction() {
                     <div className="header-actions">
 
                         <button className="btn btn-primary" onClick={() => setShowAddProduct(true)}>
-                            <span><Plus /></span>
+                            <span>  <Plus size={18} /></span>
                             Add Product
                         </button>
                     </div>
@@ -720,7 +720,6 @@ function TodayAuction() {
                                                 setVariantData(prev => ({ ...prev, variety: opt && opt.name ? opt.name : '' }));
                                             }}
                                             placeholder="Variety"
-                                            required
                                             style={{ margin: 0, flex: 1, minWidth: '130px' }}
                                         />
 
@@ -730,9 +729,9 @@ function TodayAuction() {
                                                 setVariantData({ ...variantData, quality: e.target.value })
                                             }
                                         >
-                                            <option value="Excellent">quality1</option>
-                                            <option value="Good">quality2</option>
-                                            <option value="Fair">quality3</option>
+                                            <option value="quality1">quality1</option>
+                                            <option value="quality2">quality2</option>
+                                            <option value="quality3">quality3</option>
                                         </select>
 
                                         <input
