@@ -8,16 +8,16 @@ function CommissionRecord() {
     const [commissions, setCommissions] = useState([]);
     const [filteredCommissions, setFilteredCommissions] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [dateFilter, setDateFilter] = useState('');
+    const [dateFilter, setDateFilter] = useState('all');
+    const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
 
-    
     useEffect(() => {
         loadCommissions();
     }, []);
 
     useEffect(() => {
         filterCommissions();
-    }, [searchTerm, dateFilter, commissions]);
+    }, [searchTerm, dateFilter, customDate, commissions]);
 
     const loadCommissions = () => {
         const data = getAuctionData();
@@ -37,6 +37,38 @@ function CommissionRecord() {
         }
     };
 
+    const getDateRange = (filter) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        switch (filter) {
+            case 'today':
+                return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            case 'yesterday':
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                return { start: yesterday, end: today };
+            case 'week':
+                const weekStart = new Date(today);
+                weekStart.setDate(weekStart.getDate() - 7);
+                return { start: weekStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            case 'month':
+                const monthStart = new Date(today);
+                monthStart.setDate(1);
+                return { start: monthStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            case 'year':
+                const yearStart = new Date(today.getFullYear(), 0, 1);
+                return { start: yearStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            case 'custom':
+                const custom = new Date(customDate);
+                custom.setHours(0, 0, 0, 0);
+                return { start: custom, end: new Date(custom.getTime() + 24 * 60 * 60 * 1000) };
+            case 'all':
+            default:
+                return null;
+        }
+    };
+
     const filterCommissions = () => {
         let filtered = [...commissions];
 
@@ -47,8 +79,14 @@ function CommissionRecord() {
             );
         }
 
-        if (dateFilter) {
-            filtered = filtered.filter(c => c.date === dateFilter);
+        if (dateFilter !== 'all') {
+            const dateRange = getDateRange(dateFilter);
+            if (dateRange) {
+                filtered = filtered.filter(c => {
+                    const transDate = new Date(c.date);
+                    return transDate >= dateRange.start && transDate < dateRange.end;
+                });
+            }
         }
 
         setFilteredCommissions(filtered);
@@ -75,6 +113,50 @@ function CommissionRecord() {
                 <div className="header-top">
                     <h1>Commission</h1>
                     <div className="header-actions">
+                        <div className="dashboard-filter-container">
+                            <div className="search-icon-container" style={{ position: 'relative' }}>
+                                <input
+                                    type="text"
+                                    placeholder="Search product or seller..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="search-input dashboard-filter-select"
+                                    style={{ padding: '0.35rem 0.75rem', paddingRight: '35px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#fff', fontSize: '0.875rem' }}
+                                />
+                                <Search size={16} className="search-icon-absolute" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }} />
+                            </div>
+
+                            <div className="filter-dropdown-wrapper">
+                                <Filter className="filter-icon" size={16} />
+                                <select
+                                    value={dateFilter}
+                                    onChange={(e) => setDateFilter(e.target.value)}
+                                    className="dashboard-filter-select"
+                                >
+                                    <option value="all">All Time</option>
+                                    <option value="today">Today</option>
+                                    <option value="yesterday">Yesterday</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="year">This Year</option>
+                                    <option value="custom">📅 Custom Date</option>
+                                </select>
+                            </div>
+
+                            {dateFilter === 'custom' && (
+                                <div className="custom-date-wrapper fade-in">
+                                    <Calendar className="calendar-icon" size={16} />
+                                    <input
+                                        type="date"
+                                        value={customDate}
+                                        onChange={(e) => setCustomDate(e.target.value)}
+                                        max={new Date().toISOString().split('T')[0]}
+                                        className="dashboard-date-input"
+                                    />
+                                </div>
+                            )}
+
+                        </div>
                         <button className="btn btn-outline btn-sm">
                             <span><Download size={18} /></span>
                         </button>
@@ -126,7 +208,7 @@ function CommissionRecord() {
                     </div>
                 </div>
 
-                {/* Monthly Breakdown */}
+                {/* Monthly Breakdown
                 {Object.keys(monthlyCommissions).length > 0 && (
                     <div className="card fade-in summary-card-margin">
                         <div className="section-header">
@@ -145,42 +227,9 @@ function CommissionRecord() {
                             ))}
                         </div>
                     </div>
-                )}
+                )} */}
 
-                {/* Filters */}
-                <div className="card fade-in filter-card-margin">
-                    <div className="form-grid">
-                        <div className="form-group">
-                            <label className="form-label">Search</label>
-                            <div style={{ position: 'relative' }}>
-                                <input
-                                    type="text"
-                                    placeholder="Product or seller..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    style={{ paddingRight: '35px', width: '100%' }}
-                                />
-                                <Search size={18} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                            </div>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Date</label>
-                            <input
-                                type="date"
-                                value={dateFilter}
-                                onChange={(e) => setDateFilter(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    {(searchTerm || dateFilter) && (
-                        <button
-                            className="btn btn-secondary btn-sm clear-filters-btn"
-                            onClick={() => { setSearchTerm(''); setDateFilter(''); }}
-                        >
-                            Clear Filters
-                        </button>
-                    )}
-                </div>
+                {/* Filters - Moved to header */}
 
                 {/* Commission Cards */}
                 <div className="section-header commission-details-header">
