@@ -3,361 +3,398 @@ import { useSelector } from 'react-redux';
 import { formatDate } from '../../utils/dateUtils';
 import { jsPDF } from 'jspdf';
 import './Subscription.css';
-import { CreditCard, CheckCircle2, TrendingUp, Check, Plus, FileText, Download } from 'lucide-react';
+import '../TodayAuction/TodayAuction.css';
+import {
+    CreditCard, CheckCircle2, TrendingUp, Check,
+    Plus, FileText, Download, CalendarDays, Zap
+} from 'lucide-react';
 import { getSubscriptions, getVendors, updateVendor, getVendorPurchasesById } from '../../api/adminApi';
 
 const Subscription = () => {
     const { vendorId } = useSelector((state) => state.vendorAuth);
-
     const fallbackVendorId = sessionStorage.getItem('vendorId');
     const currentVendorId = vendorId || fallbackVendorId;
 
-    const [plans, setPlans] = useState([]);
-    const [subscription, setSubscription] = useState(null);
-    const [invoices, setInvoices] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [plans, setPlans]                       = useState([]);
+    const [subscription, setSubscription]         = useState(null);
+    const [invoices, setInvoices]                 = useState([]);
+    const [loading, setLoading]                   = useState(true);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [selectedUpgradePlan, setSelectedUpgradePlan] = useState(null);
-    const [showAllInvoices, setShowAllInvoices] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch all plans and billing history concurrently with vendors
                 const [plansRes, vendorsRes, purchasesRes] = await Promise.all([
                     getSubscriptions(),
                     getVendors(),
                     getVendorPurchasesById(currentVendorId)
                 ]);
-                
+
                 const fetchedPlans = plansRes.subscriptions || [];
                 setPlans(fetchedPlans);
 
-                if (purchasesRes && purchasesRes.purchases) {
-                    setInvoices(purchasesRes.purchases);
-                }
+                if (purchasesRes?.purchases) setInvoices(purchasesRes.purchases);
 
-                // Fetch current vendor
-                const vendors = vendorsRes.vendors || [];
+                const vendors       = vendorsRes.vendors || [];
                 const currentVendor = vendors.find(v => v._id === currentVendorId);
 
                 if (currentVendor) {
-                    const activeSub = currentVendor.activeSubscription;
-                    const vendorPlan = currentVendor.plan || {};
+                    const activeSub   = currentVendor.activeSubscription;
+                    const vendorPlan  = currentVendor.plan || {};
                     const vendorPlanId = typeof vendorPlan === 'object' ? vendorPlan._id : vendorPlan;
-                    const planName = vendorPlan.name || 'Current Plan';
+                    const planName    = vendorPlan.name || 'Current Plan';
 
                     if (activeSub || vendorPlanId) {
-                        let featuresToSet = activeSub?.featuresAtPurchase || vendorPlan.features || [];
-                        if (!Array.isArray(featuresToSet)) {
-                            featuresToSet = typeof featuresToSet === 'object' && featuresToSet !== null ? Object.values(featuresToSet) : [];
-                        }
+                        let features = activeSub?.featuresAtPurchase || vendorPlan.features || [];
+                        if (!Array.isArray(features))
+                            features = typeof features === 'object' && features !== null ? Object.values(features) : [];
 
                         setSubscription({
-                            id: currentVendor._id,
-                            plan: planName,
-                            planId: activeSub?.subscriptionId || vendorPlanId,
-                            status: currentVendor.status || 'Active',
-                            startDate: activeSub?.startDate || currentVendor.joinedDate || currentVendor.createdAt || new Date().toISOString(),
-                            expiryDate: activeSub?.endDate || currentVendor.planEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
-                            price: activeSub?.priceAtPurchase ?? vendorPlan.price ?? 0,
-                            features: featuresToSet,
+                            id:           currentVendor._id,
+                            plan:         planName,
+                            planId:       activeSub?.subscriptionId || vendorPlanId,
+                            status:       currentVendor.status || 'Active',
+                            startDate:    activeSub?.startDate    || currentVendor.joinedDate || currentVendor.createdAt || new Date().toISOString(),
+                            expiryDate:   activeSub?.endDate      || currentVendor.planEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+                            price:        activeSub?.priceAtPurchase ?? vendorPlan.price ?? 0,
+                            features,
                             durationType: vendorPlan.durationType,
-                            durationValue: vendorPlan.durationValue
+                            durationValue: vendorPlan.durationValue,
                         });
                     }
                 }
-            } catch (error) {
-                console.error("Error fetching subscription data:", error);
+            } catch (e) {
+                console.error('Error fetching subscription data:', e);
             } finally {
                 setLoading(false);
             }
         };
 
-        if (currentVendorId) {
-            fetchData();
-        } else {
-            setLoading(false);
-        }
+        currentVendorId ? fetchData() : setLoading(false);
     }, [currentVendorId]);
 
     const calculateDaysRemaining = () => {
         if (!subscription) return 0;
-        const today = new Date();
-        const expiry = new Date(subscription.expiryDate);
-        const diffTime = expiry - today;
-        if (diffTime < 0) return 0;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays;
+        const diff = new Date(subscription.expiryDate) - new Date();
+        return diff < 0 ? 0 : Math.ceil(diff / (1000 * 60 * 60 * 24));
     };
 
     const calculateTotalDays = () => {
         if (!subscription) return 365;
-        const start = new Date(subscription.startDate);
-        const expiry = new Date(subscription.expiryDate);
-        const diffTime = expiry - start;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays > 0 ? diffDays : 365;
+        const diff = new Date(subscription.expiryDate) - new Date(subscription.startDate);
+        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        return days > 0 ? days : 365;
     };
 
-    const handleUpgrade = (planToUpgradeTo) => {
-        setSelectedUpgradePlan(planToUpgradeTo);
+    const handleUpgrade = (plan) => {
+        setSelectedUpgradePlan(plan);
         setIsUpgradeModalOpen(true);
     };
 
     const confirmUpgrade = async (upgradeType) => {
         if (!selectedUpgradePlan) return;
         setIsUpgradeModalOpen(false);
-
         try {
-            const dataToUpdate = { 
+            const res = await updateVendor(currentVendorId, {
                 requestedPlan: selectedUpgradePlan._id,
-                upgradeType: upgradeType 
-            };
-            const res = await updateVendor(currentVendorId, dataToUpdate);
+                upgradeType
+            });
             if (res.status) {
-                alert(`Upgrade request for ${selectedUpgradePlan.name} has been sent to the admin. Upgrade will be active ${upgradeType === 'from_today' ? 'from today for 30 days' : 'after the current plan ends'}. Please await approval.`);
+                alert(`Upgrade request for ${selectedUpgradePlan.name} sent. Upgrade will be active ${upgradeType === 'from_today' ? 'from today for 30 days' : 'after current plan ends'}. Awaiting admin approval.`);
                 window.location.reload();
             } else {
-                alert(res.message || "Failed to upgrade plan.");
+                alert(res.message || 'Failed to upgrade plan.');
             }
-        } catch (error) {
-            console.error("Upgrade error:", error);
-            alert("Error upgrading subscription. Please try again.");
+        } catch (e) {
+            console.error('Upgrade error:', e);
+            alert('Error upgrading subscription. Please try again.');
         }
     };
 
     const handleDownloadInvoice = (invoice) => {
         const doc = new jsPDF();
-        doc.setFontSize(22);
-        doc.setTextColor(40, 40, 40);
-        doc.text("INVOICE", 20, 20);
+        doc.setFontSize(22); doc.setTextColor(40, 40, 40);
+        doc.text('INVOICE', 20, 20);
         doc.setFontSize(10);
-        doc.text("Auction Billing SaaS", 20, 30);
-        doc.text("123 Tech Park, Chennai", 20, 35);
-        doc.text("support@auctionbill.com", 20, 40);
+        doc.text('Auction Billing SaaS', 20, 30);
+        doc.text('123 Tech Park, Chennai', 20, 35);
+        doc.text('support@auctionbill.com', 20, 40);
         doc.setFontSize(12);
         doc.text(`Invoice ID: ${invoice.id}`, 140, 30);
         doc.text(`Date: ${invoice.date}`, 140, 36);
         doc.text(`Status: ${invoice.status}`, 140, 42);
-        doc.setLineWidth(0.5);
-        doc.line(20, 50, 190, 50);
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.text("Description", 20, 65);
-        doc.text("Amount", 160, 65);
-        doc.setFont("helvetica", "normal");
+        doc.setLineWidth(0.5); doc.line(20, 50, 190, 50);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Description', 20, 65); doc.text('Amount', 160, 65);
+        doc.setFont('helvetica', 'normal');
         doc.text(invoice.description, 20, 75);
         doc.text(`INR ${invoice.amount.toLocaleString()}`, 160, 75);
         doc.line(20, 85, 190, 85);
-        doc.setFont("helvetica", "bold");
-        doc.text("Total", 120, 95);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Total', 120, 95);
         doc.text(`INR ${invoice.amount.toLocaleString()}`, 160, 95);
         doc.save(`Invoice_${invoice.id}.pdf`);
     };
 
-    // Filter out inactive plans, but keep all active ones so users can renew their current plan or upgrade
-    const upgradeOptions = subscription
-        ? plans.filter(p => p.status === 'Active')
-        : [];
+    const upgradeOptions = subscription ? plans.filter(p => p.status === 'Active') : [];
+    const daysRemaining  = calculateDaysRemaining();
+    const totalDays      = calculateTotalDays();
+    const progressPct    = Math.min((daysRemaining / totalDays) * 100, 100);
+    const isExpiringSoon = daysRemaining <= 10 && daysRemaining > 0;
+    const isExpired      = daysRemaining === 0;
 
-    if (loading) {
-        return (
-            <div className="subscription-container fade-in">
-                <div className="content-header">
-                    <div className="header-top">
-                        <h1><CreditCard className="header-icon" /> Subscription & Billing</h1>
-                    </div>
-                </div>
-                <div style={{ padding: '2rem', textAlign: 'center' }}>Loading subscription details...</div>
+    /* ── Loading / No-sub states ────────────────────────── */
+    if (loading) return (
+        <>
+            <div className="content-header">
+                <div className="header-top"><h1><CreditCard size={22} /> Subscription &amp; Billing</h1></div>
+                <div className="breadcrumb"><span>Home</span><span className="breadcrumb-separator">/</span><span>Subscription</span></div>
             </div>
-        );
-    }
+            <div className="content-body">
+                <div className="sb-loading-state"><div className="sb-spinner"></div><p>Loading subscription details…</p></div>
+            </div>
+        </>
+    );
 
-    if (!subscription) {
-        return (
-            <div className="subscription-container fade-in">
-                <div className="content-header">
-                    <div className="header-top">
-                        <h1><CreditCard className="header-icon" /> Subscription & Billing</h1>
-                    </div>
-                </div>
-                <div style={{ padding: '2rem', textAlign: 'center' }}>No active subscription found. Please contact support.</div>
+    if (!subscription) return (
+        <>
+            <div className="content-header">
+                <div className="header-top"><h1><CreditCard size={22} /> Subscription &amp; Billing</h1></div>
+                <div className="breadcrumb"><span>Home</span><span className="breadcrumb-separator">/</span><span>Subscription</span></div>
             </div>
-        );
-    }
+            <div className="content-body">
+                <div className="empty-state"><div className="empty-state-icon">💳</div><p>No active subscription found. Please contact support.</p></div>
+            </div>
+        </>
+    );
 
     return (
-        <div className="subscription-container fade-in">
+        <>
+            {/* ── Page Header ──────────────────────────────── */}
             <div className="content-header">
                 <div className="header-top">
-                    <h1><CreditCard className="header-icon" /> Subscription & Billing</h1>
-                    <div className="header-actions">
-                        <span className="plan-badge">{subscription.plan} Member</span>
-                    </div>
+                    <h1><CreditCard size={20} className="sb-header-icon" /> Subscription &amp; Billing</h1>
+                    <span className="sb-plan-chip">
+                        <Zap size={12} />
+                        {subscription.plan}
+                    </span>
+                </div>
+                <div className="breadcrumb">
+                    <span>Home</span>
+                    <span className="breadcrumb-separator">/</span>
+                    <span>Subscription</span>
                 </div>
             </div>
 
-            <div className="subscription-scroll-area">
-                <div className="subscription-grid-layout">
-                    {/* Left Column: Current Plan & Upgrade Options */}
-                    <div className="left-column">
-                        {/* Current Plan Card */}
-                        <div className="subs-card plan-card">
-                            <div className="plan-header">
-                                <div className="plan-title">
-                                    <h3>Current Plan</h3>
-                                    <span className={`status-badge ${subscription.status.toLowerCase()}`}>
-                                        {subscription.status}
-                                    </span>
-                                </div>
-                                <div className="plan-price">
-                                    ₹{subscription.price?.toLocaleString()} <span>/ {subscription.durationType === 'year' ? 'year' : '30 Days'}</span>
-                                </div>
-                            </div>
+            {/* ── Scrollable body ──────────────────────────── */}
+            <div className="content-body sb-body">
 
-                            <div className="plan-details">
-                                <div className="detail-item">
-                                    <span className="detail-label">Start Date</span>
-                                    <span className="detail-value">{formatDate(subscription.startDate)}</span>
-                                </div>
-                                <div className="detail-item">
-                                    <span className="detail-label">Expiry Date</span>
-                                    <span className="detail-value">{formatDate(subscription.expiryDate)}</span>
-                                </div>
-                                <div className="days-remaining">
-                                    <span className="days-count">{calculateDaysRemaining()}</span>
-                                    <span> Days Remaining</span>
-                                </div>
-                                <div className="progress-bar-container">
-                                    <div className="progress-bar" style={{ width: `${Math.min((calculateDaysRemaining() / calculateTotalDays()) * 100, 100)}%` }}></div>
-                                </div>
-                            </div>
+                {/* ── Current Plan card ────────────────────── */}
+                <div className="card fade-in sb-plan-card">
 
-                            <div className="plan-features">
-                                <h4>Included Features:</h4>
-                                <ul>
-                                    {subscription.features && subscription.features.map((feature, index) => (
-                                        <li key={index}><CheckCircle2 size={16} className="text-success" /> {feature}</li>
-                                    ))}
-                                    {(!subscription.features || subscription.features.length === 0) && (
-                                        <li><CheckCircle2 size={16} className="text-success" /> Standard Features Included</li>
-                                    )}
-                                </ul>
+                    {/* Header row */}
+                    <div className="sb-plan-top">
+                        <div>
+                            <div className="sb-plan-label">Current Plan</div>
+                            <div className="sb-plan-name">{subscription.plan}</div>
+                        </div>
+                        <div className="sb-plan-right">
+                            <span className={`sb-status-badge ${isExpired ? 'expired' : isExpiringSoon ? 'expiring' : 'active'}`}>
+                                {isExpired ? 'Expired' : isExpiringSoon ? 'Expiring Soon' : subscription.status}
+                            </span>
+                            <div className="sb-plan-price">
+                                ₹{subscription.price?.toLocaleString()}
+                                <span>/ {subscription.durationType === 'year' ? 'year' : '30 days'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Progress */}
+                    <div className="sb-progress-section">
+                        <div className="sb-progress-labels">
+                            <span className="sb-days-count">{daysRemaining} days left</span>
+                            <span className="sb-progress-pct">{Math.round(progressPct)}%</span>
+                        </div>
+                        <div className="sb-progress-track">
+                            <div
+                                className={`sb-progress-fill ${isExpiringSoon ? 'warning' : isExpired ? 'danger' : ''}`}
+                                style={{ width: `${progressPct}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Date details + Features in 2-col grid */}
+                    <div className="sb-plan-info-grid">
+                        <div className="sb-info-block">
+                            <div className="sb-info-item">
+                                <CalendarDays size={14} className="sb-info-icon" />
+                                <span className="sb-info-label">Start Date</span>
+                                <span className="sb-info-value">{formatDate(subscription.startDate)}</span>
+                            </div>
+                            <div className="sb-info-item">
+                                <CalendarDays size={14} className="sb-info-icon" />
+                                <span className="sb-info-label">Expiry Date</span>
+                                <span className="sb-info-value">{formatDate(subscription.expiryDate)}</span>
                             </div>
                         </div>
 
-                        {/* Available Upgrades Section */}
-                        {upgradeOptions.length > 0 && (
-                            <div className="upgrade-section">
-                                <h3 className="section-subtitle"><TrendingUp size={18} /> Available Upgrades & Renewals</h3>
-                                <div className="upgrade-grid">
-                                    {upgradeOptions.map((plan, index) => (
-                                        <div key={index} className="subs-card upgrade-card">
-                                            <div className="upgrade-header">
-                                                <h4>{plan.name}</h4>
-                                                <div className="upgrade-price">₹{plan.price.toLocaleString()}<span>/{plan.durationType === 'year' ? 'yr' : '30 days'}</span></div>
-                                            </div>
-                                            <ul className="upgrade-features">
-                                                {plan.features?.slice(0, 3).map((f, i) => (
-                                                    <li key={i}><Check size={14} /> {f}</li>
-                                                ))}
-                                                {plan.features?.length > 3 && <li><Plus size={14} /> {plan.features.length - 3} more...</li>}
-                                            </ul>
-                                            <button
-                                                className="btn btn-primary upgrade-btn"
-                                                onClick={() => handleUpgrade(plan)}
-                                            >
-                                                {String(plan._id) === String(subscription.planId) ? `Renew ${plan.name}` : `Upgrade to ${plan.name}`}
-                                            </button>
-                                        </div>
+                        {subscription.features?.length > 0 && (
+                            <div className="sb-features-block">
+                                <div className="sb-features-title">Included Features</div>
+                                <ul className="sb-features-list">
+                                    {subscription.features.map((f, i) => (
+                                        <li key={i}><CheckCircle2 size={13} className="sb-check-icon" />{f}</li>
                                     ))}
-                                </div>
+                                </ul>
                             </div>
                         )}
                     </div>
+                </div>
 
-                    {/* Right Column: Invoices */}
-                    <div className="right-column">
-                        <div className="subs-card invoice-card">
-                            <h3><FileText size={18} /> Billing History</h3>
-                            <div className="invoice-list">
-                                <div className="invoice-header-row">
-                                    <span>Invoice ID</span>
-                                    <span>Date</span>
-                                    <span>Amount</span>
-                                    <span>Status</span>
-                                    <span>Action</span>
-                                </div>
-                                <div className={`invoice-rows-container ${showAllInvoices ? 'expanded' : ''}`}>
-                                    {(showAllInvoices ? invoices : invoices.slice(0, 5)).map((invoice, index) => (
-                                        <div key={index} className="invoice-row">
-                                            <span className="inv-id">{invoice.id}</span>
-                                            <span className="inv-date">{formatDate(invoice.date)}</span>
-                                            <span className="inv-amount">₹{invoice.amount.toLocaleString()}</span>
-                                            <span className="inv-status"><span className="badge-paid">{invoice.status}</span></span>
-                                            <button
-                                                className="btn-download icon-btn"
-                                                onClick={() => handleDownloadInvoice(invoice)}
-                                                title="Download Invoice"
-                                            >
-                                                <Download size={18} />
-                                            </button>
+                {/* ── Upgrade / Renew Plans ─────────────────── */}
+                {upgradeOptions.length > 0 && (
+                    <div className="fade-in">
+                        <div className="section-header sb-section-header">
+                            <h3 className="section-title"><TrendingUp size={16} /> Available Plans</h3>
+                        </div>
+                        <div className="sb-upgrade-grid">
+                            {upgradeOptions.map((plan, i) => {
+                                const isCurrent = String(plan._id) === String(subscription.planId);
+                                return (
+                                    <div key={i} className={`card sb-upgrade-card ${isCurrent ? 'current' : ''}`}>
+                                        <div className="sb-upgrade-header">
+                                            <div>
+                                                {isCurrent && <span className="sb-current-chip">Current</span>}
+                                                <div className="sb-upgrade-name">{plan.name}</div>
+                                            </div>
+                                            <div className="sb-upgrade-price">
+                                                ₹{plan.price.toLocaleString()}
+                                                <span>/{plan.durationType === 'year' ? 'yr' : '30d'}</span>
+                                            </div>
                                         </div>
-                                    ))}
-                                </div>
-                                {invoices.length > 5 && (
-                                    <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                                        <button 
-                                            className="btn btn-outline" 
-                                            onClick={() => setShowAllInvoices(!showAllInvoices)}
-                                            style={{ fontSize: '0.85rem', padding: '0.4rem 1rem' }}
+                                        <ul className="sb-upgrade-features">
+                                            {plan.features?.slice(0, 3).map((f, fi) => (
+                                                <li key={fi}><Check size={12} />{f}</li>
+                                            ))}
+                                            {plan.features?.length > 3 && (
+                                                <li className="sb-more-features"><Plus size={12} />{plan.features.length - 3} more features</li>
+                                            )}
+                                        </ul>
+                                        <button
+                                            className={`btn ${isCurrent ? 'btn-outline' : 'btn-primary'} sb-upgrade-btn`}
+                                            onClick={() => handleUpgrade(plan)}
                                         >
-                                            {showAllInvoices ? 'Show Less' : 'Show All History'}
+                                            {isCurrent ? `Renew ${plan.name}` : `Upgrade to ${plan.name}`}
                                         </button>
                                     </div>
-                                )}
-                            </div>
+                                );
+                            })}
                         </div>
                     </div>
+                )}
+
+                {/* ── Billing History ───────────────────────── */}
+                <div className="fade-in">
+                    <div className="section-header sb-section-header">
+                        <h3 className="section-title"><FileText size={16} /> Billing History</h3>
+                        <span className="cr-count-chip">{invoices.length} invoices</span>
+                    </div>
+
+                    {invoices.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-state-icon">🧾</div>
+                            <p>No billing history yet</p>
+                        </div>
+                    ) : (
+                        <div className="table-responsive bg-card rounded-lg shadow-sm custom-table-wrapper">
+                            <div className="sb-invoice-scroll">
+                                <table className="data-table custom-data-table sb-invoice-table">
+                                    <thead className="bg-tertiary">
+                                        <tr>
+                                            <th className="custom-th">Invoice ID</th>
+                                            <th className="custom-th">Date</th>
+                                            <th className="custom-th">Description</th>
+                                            <th className="custom-th sb-num-col">Amount</th>
+                                            <th className="custom-th sb-center-col">Status</th>
+                                            <th className="custom-th sb-center-col">Download</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {invoices.map((inv, idx) => (
+                                            <tr key={idx} className={`custom-tr ${idx % 2 === 0 ? 'sb-row-even' : ''}`}>
+                                                <td className="custom-td">
+                                                    <span className="sb-inv-id">{inv.id}</span>
+                                                </td>
+                                                <td className="custom-td">
+                                                    <span className="cr-date-badge">{formatDate(inv.date)}</span>
+                                                </td>
+                                                <td className="custom-td">
+                                                    <span className="sb-inv-desc">{inv.description}</span>
+                                                </td>
+                                                <td className="custom-td sb-num-col">
+                                                    <span className="sb-inv-amount">₹{inv.amount.toLocaleString()}</span>
+                                                </td>
+                                                <td className="custom-td sb-center-col">
+                                                    <span className={`badge ${inv.status?.toLowerCase() === 'paid' ? 'badge-success' : 'badge-warning'}`}>
+                                                        {inv.status}
+                                                    </span>
+                                                </td>
+                                                <td className="custom-td sb-center-col">
+                                                    <button
+                                                        className="icon-btn sb-download-btn"
+                                                        onClick={() => handleDownloadInvoice(inv)}
+                                                        title="Download Invoice"
+                                                    >
+                                                        <Download size={15} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </div>
+
             </div>
 
-            {/* Upgrade Modal */}
+            {/* ── Upgrade Modal ─────────────────────────────── */}
             {isUpgradeModalOpen && selectedUpgradePlan && (
-                <div className="upgrade-modal-overlay">
-                    <div className="upgrade-modal-content">
-                        <h3>{String(selectedUpgradePlan._id) === String(subscription.planId) ? 'Renew Plan' : 'Upgrade Plan'}</h3>
-                        <p>Do you want to {String(selectedUpgradePlan._id) === String(subscription.planId) ? 'renew' : 'upgrade to'} <strong>{selectedUpgradePlan.name}</strong> from today or after your current plan ends?</p>
-                        <div className="upgrade-modal-actions">
-                            <button 
-                                className="btn btn-primary" 
-                                onClick={() => confirmUpgrade('from_today')}
-                            >
-                                From Today (30 Days)
-                            </button>
-                            <button 
-                                className="btn btn-secondary" 
-                                onClick={() => confirmUpgrade('after_current')}
-                            >
-                                After Current Plan Ends
-                            </button>
-                            <button 
-                                className="btn btn-danger" 
-                                onClick={() => {
-                                    setIsUpgradeModalOpen(false);
-                                    setSelectedUpgradePlan(null);
-                                }}
-                            >
-                                Cancel
-                            </button>
+                <div className="sb-modal-overlay" onClick={() => setIsUpgradeModalOpen(false)}>
+                    <div className="sb-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">
+                                {String(selectedUpgradePlan._id) === String(subscription.planId) ? 'Renew Plan' : 'Upgrade Plan'}
+                            </h3>
+                            <button className="modal-close" onClick={() => setIsUpgradeModalOpen(false)}>✕</button>
+                        </div>
+                        <div className="modal-body sb-modal-body">
+                            <p className="sb-modal-desc">
+                                You're {String(selectedUpgradePlan._id) === String(subscription.planId) ? 'renewing' : 'upgrading to'}
+                                {' '}<strong>{selectedUpgradePlan.name}</strong>.
+                                When would you like it to start?
+                            </p>
+                            <div className="sb-modal-options">
+                                <button className="btn btn-primary sb-modal-opt-btn" onClick={() => confirmUpgrade('from_today')}>
+                                    <Zap size={15} />
+                                    Start Today (30 Days)
+                                </button>
+                                <button className="btn btn-secondary sb-modal-opt-btn" onClick={() => confirmUpgrade('after_current')}>
+                                    <CalendarDays size={15} />
+                                    After Current Plan Ends
+                                </button>
+                                <button className="btn btn-outline sb-modal-opt-btn" onClick={() => { setIsUpgradeModalOpen(false); setSelectedUpgradePlan(null); }}>
+                                    Cancel
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 };
 
 export default Subscription;
-

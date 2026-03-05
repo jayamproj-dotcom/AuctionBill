@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
 import { formatDate } from '../../utils/dateUtils';
 import './CommissionRecord.css';
-import { Download, BadgeIndianRupee, ArrowRightLeft, ChartNoAxesColumn, Search, Filter, Calendar, Save } from 'lucide-react';
+import '../TodayAuction/TodayAuction.css';
+import {
+    BadgeIndianRupee, ArrowRightLeft, ChartNoAxesColumn,
+    Search, Filter, Calendar, Save, TrendingUp
+} from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
 import { getCommission, updateCommission } from '../../api/commissionApi';
@@ -60,13 +64,13 @@ function CommissionRecord() {
         if (data && data.transactions) {
             const enriched = data.transactions.map(t => {
                 const product = data.products.find(p => p.id === t.productId);
-                const seller = data.sellers.find(s => s.id === t.sellerId);
+                const seller  = data.sellers.find(s => s.id === t.sellerId);
                 return {
                     ...t,
-                    productName: product ? product.name : 'Unknown Product',
-                    sellerName: seller ? seller.name : 'Unknown Seller',
+                    productName:      product ? product.name : 'Unknown Product',
+                    sellerName:       seller  ? seller.name  : 'Unknown Seller',
                     commissionAmount: t.commissionAmount || 0,
-                    finalAmount: t.finalAmount || 0
+                    finalAmount:      t.finalAmount      || 0,
                 };
             });
             setCommissions(enriched.sort((a, b) => new Date(b.date) - new Date(a.date)));
@@ -76,98 +80,71 @@ function CommissionRecord() {
     const getDateRange = (filter) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-
+        const next = (d) => new Date(d.getTime() + 24 * 60 * 60 * 1000);
         switch (filter) {
-            case 'today':
-                return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
-            case 'yesterday':
-                const yesterday = new Date(today);
-                yesterday.setDate(yesterday.getDate() - 1);
-                return { start: yesterday, end: today };
-            case 'week':
-                const weekStart = new Date(today);
-                weekStart.setDate(weekStart.getDate() - 7);
-                return { start: weekStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
-            case 'month':
-                const monthStart = new Date(today);
-                monthStart.setDate(1);
-                return { start: monthStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
-            case 'year':
-                const yearStart = new Date(today.getFullYear(), 0, 1);
-                return { start: yearStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
-            case 'custom':
-                const custom = new Date(customDate);
-                custom.setHours(0, 0, 0, 0);
-                return { start: custom, end: new Date(custom.getTime() + 24 * 60 * 60 * 1000) };
-            case 'all':
-            default:
-                return null;
+            case 'today':     return { start: today, end: next(today) };
+            case 'yesterday': { const y = new Date(today); y.setDate(y.getDate() - 1); return { start: y, end: today }; }
+            case 'week':      { const w = new Date(today); w.setDate(w.getDate() - 7); return { start: w, end: next(today) }; }
+            case 'month':     { const m = new Date(today); m.setDate(1); return { start: m, end: next(today) }; }
+            case 'year':      return { start: new Date(today.getFullYear(), 0, 1), end: next(today) };
+            case 'custom':    { const c = new Date(customDate); c.setHours(0,0,0,0); return { start: c, end: next(c) }; }
+            default:          return null;
         }
     };
 
     const filterCommissions = () => {
         let filtered = [...commissions];
-
         if (searchTerm) {
             filtered = filtered.filter(c =>
                 c.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 c.sellerName.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
-
         if (dateFilter !== 'all') {
-            const dateRange = getDateRange(dateFilter);
-            if (dateRange) {
-                filtered = filtered.filter(c => {
-                    const transDate = new Date(c.date);
-                    return transDate >= dateRange.start && transDate < dateRange.end;
-                });
-            }
+            const range = getDateRange(dateFilter);
+            if (range) filtered = filtered.filter(c => {
+                const d = new Date(c.date);
+                return d >= range.start && d < range.end;
+            });
         }
-
         setFilteredCommissions(filtered);
     };
 
-    const getTotalCommission = () => {
-        return filteredCommissions.reduce((sum, c) => sum + (c.commissionAmount || 0), 0);
-    };
-
-    const getCommissionByMonth = () => {
-        const monthlyData = {};
-        filteredCommissions.forEach(c => {
-            const month = c.date.substring(0, 7); // YYYY-MM
-            monthlyData[month] = (monthlyData[month] || 0) + (c.commissionAmount || 0);
-        });
-        return monthlyData;
-    };
-
-    const monthlyCommissions = getCommissionByMonth();
+    const getTotalCommission  = () => filteredCommissions.reduce((s, c) => s + (c.commissionAmount || 0), 0);
+    const getTotalSales       = () => filteredCommissions.reduce((s, c) => s + (c.finalAmount      || 0), 0);
+    const getAvgCommission    = () => filteredCommissions.length > 0
+        ? Math.round(getTotalCommission() / filteredCommissions.length)
+        : 0;
 
     return (
         <>
+            {/* ── Page Header ──────────────────────────────────── */}
             <div className="content-header">
                 <div className="header-top">
                     <h1>Commission</h1>
-                    <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-muted)' }}>Global Commission</label>
-                            <div style={{ position: 'relative' }}>
-                                <input 
-                                    type="number" 
-                                    value={globalCommission}
-                                    onChange={(e) => setGlobalCommission(e.target.value)}
-                                    style={{ width: '80px', padding: '0.4rem 0.75rem', paddingRight: '25px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.875rem' }} 
-                                    placeholder="0"
-                                />
-                                <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', fontSize: '0.875rem' }}>%</span>
-                            </div>
+
+                    {/* Global Commission quick-set */}
+                    <div className="cr-global-bar">
+                        <span className="cr-global-label">Global&nbsp;Commission</span>
+                        <div className="cr-global-input-wrap">
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={globalCommission}
+                                onChange={(e) => setGlobalCommission(e.target.value)}
+                                className="cr-global-input"
+                                placeholder="0"
+                            />
+                            <span className="cr-percent-badge">%</span>
                         </div>
-                        <button className="btn btn-primary btn-sm" onClick={handleSaveCommission} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <Save size={16} />
+                        <button className="btn btn-primary btn-sm cr-save-btn" onClick={handleSaveCommission}>
+                            <Save size={14} />
                             Save
                         </button>
                     </div>
                 </div>
+
                 <div className="breadcrumb">
                     <span>Home</span>
                     <span className="breadcrumb-separator">/</span>
@@ -176,21 +153,22 @@ function CommissionRecord() {
             </div>
 
             <div className="content-body">
-                {/* Summary Cards */}
+
+                {/* ── Summary Stats ──────────────────────────────── */}
                 <div className="stats-grid fade-in">
-                    <div className="stat-card">
+                    <div className="stat-card cr-stat-card cr-stat-amber">
                         <div className="stat-header">
-                            <div className="stat-icon"><BadgeIndianRupee /></div>
+                            <div className="stat-icon cr-stat-icon-amber"><BadgeIndianRupee size={20} /></div>
                             <div>
                                 <div className="stat-value">₹{(getTotalCommission() / 1000).toFixed(1)}K</div>
-                                <div className="stat-label">Total</div>
+                                <div className="stat-label">Total Commission</div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="stat-card">
+                    <div className="stat-card cr-stat-card cr-stat-blue">
                         <div className="stat-header">
-                            <div className="stat-icon"><ArrowRightLeft /></div>
+                            <div className="stat-icon cr-stat-icon-blue"><ArrowRightLeft size={20} /></div>
                             <div>
                                 <div className="stat-value">{filteredCommissions.length}</div>
                                 <div className="stat-label">Transactions</div>
@@ -198,135 +176,131 @@ function CommissionRecord() {
                         </div>
                     </div>
 
-                    <div className="stat-card">
+                    <div className="stat-card cr-stat-card cr-stat-green">
                         <div className="stat-header">
-                            <div className="stat-icon"><ChartNoAxesColumn /></div>
+                            <div className="stat-icon cr-stat-icon-green"><TrendingUp size={20} /></div>
                             <div>
-                                <div className="stat-value">
-                                    {filteredCommissions.length > 0
-                                        ? `₹${Math.round(getTotalCommission() / filteredCommissions.length).toLocaleString()}`
-                                        : '₹0'
-                                    }
-                                </div>
-                                <div className="stat-label">Average</div>
+                                <div className="stat-value">₹{getAvgCommission().toLocaleString()}</div>
+                                <div className="stat-label">Avg / Transaction</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Monthly Breakdown
-                {Object.keys(monthlyCommissions).length > 0 && (
-                    <div className="card fade-in summary-card-margin">
-                        <div className="section-header">
-                            <h3 className="section-title">Monthly Breakdown</h3>
-                        </div>
-                        <div className="monthly-breakdown-grid">
-                            {Object.entries(monthlyCommissions).map(([month, amount]) => (
-                                <div key={month} className="card monthly-card">
-                                    <div className="monthly-label">
-                                        {new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                                    </div>
-                                    <div className="monthly-amount">
-                                        ₹{amount.toLocaleString()}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )} */}
-                {/* Filters - Moved below stat cards */}
-                <div className="card fade-in filter-card-margin" style={{ padding: '20px' }}>
-                    <div className="saas-flex-between" style={{ width: '100%', alignItems: 'center' }}>
-                        
-                        <div className="saasSearchWrapperWide" style={{ maxWidth: '400px' }}>
-                            <Search size={18} className="saasSearchIconPosition" />
+                {/* ── Filters Card ───────────────────────────────── */}
+                <div className="card fade-in cr-filter-card">
+                    <div className="cr-filter-row">
+
+                        {/* Search */}
+                        <div className="cr-search-wrap">
+                            <Search size={15} className="cr-search-icon" />
                             <input
                                 type="text"
-                                className="saas-input saasSearchInputWide"
-                                placeholder="Search product or seller..."
+                                className="cr-search-input"
+                                placeholder="Search product or seller…"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
 
-                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-
-                        <div className="filter-dropdown-wrapper">
-                            <Filter className="filter-icon" size={16} />
-                            <select
-                                value={dateFilter}
-                                onChange={(e) => setDateFilter(e.target.value)}
-                                className="dashboard-filter-select"
-                            >
-                                <option value="all">All Time</option>
-                                <option value="today">Today</option>
-                                <option value="yesterday">Yesterday</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                                <option value="year">This Year</option>
-                                <option value="custom">📅 Custom Date</option>
-                            </select>
-                        </div>
-
-                        </div>
-                        {dateFilter === 'custom' && (
-                            <div className="custom-date-wrapper fade-in" style={{ marginLeft: '1rem' }}>
-                                <Calendar className="calendar-icon" size={16} />
-                                <input
-                                    type="date"
-                                    value={customDate}
-                                    onChange={(e) => setCustomDate(e.target.value)}
-                                    max={new Date().toISOString().split('T')[0]}
-                                    className="dashboard-date-input"
-                                />
+                        {/* Period filter */}
+                        <div className="cr-controls">
+                            <div className="cr-select-wrap">
+                                <Filter size={13} className="cr-select-icon" />
+                                <select
+                                    value={dateFilter}
+                                    onChange={(e) => setDateFilter(e.target.value)}
+                                    className="cr-select"
+                                >
+                                    <option value="all">All Time</option>
+                                    <option value="today">Today</option>
+                                    <option value="yesterday">Yesterday</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="year">This Year</option>
+                                    <option value="custom">📅 Custom Date</option>
+                                </select>
                             </div>
-                        )}
 
+                            {dateFilter === 'custom' && (
+                                <div className="cr-date-wrap fade-in">
+                                    <Calendar size={13} className="cr-date-icon" />
+                                    <input
+                                        type="date"
+                                        value={customDate}
+                                        onChange={(e) => setCustomDate(e.target.value)}
+                                        max={new Date().toISOString().split('T')[0]}
+                                        className="cr-date-input"
+                                    />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* Commission Cards */}
-                <div className="section-header commission-details-header">
+                {/* ── Commission Table ────────────────────────────── */}
+                <div className="section-header cr-section-header">
                     <h3 className="section-title">Commission Details</h3>
+                    <span className="cr-count-chip">{filteredCommissions.length} records</span>
                 </div>
 
-                <div className="card-list fade-in">
+                <div className="fade-in">
                     {filteredCommissions.length === 0 ? (
                         <div className="empty-state">
                             <div className="empty-state-icon">💰</div>
                             <p>No commission records found</p>
                         </div>
                     ) : (
-                        filteredCommissions.map(commission => (
-                            <div key={commission.id} className="data-card">
-                                <div className="data-card-header">
-                                    <div>
-                                        <div className="data-card-title">{commission.productName}</div>
-                                        <div className="data-card-subtitle">{formatDate(commission.date)}</div>
-                                    </div>
-                                    <div className="badge badge-success">{commission.commissionPercent}%</div>
-                                </div>
+                        <div className="table-responsive bg-card rounded-lg shadow-sm custom-table-wrapper cr-table-wrapper">
+                            <table className="data-table custom-data-table commission-table">
+                                <thead className="bg-tertiary">
+                                    <tr>
+                                        <th className="custom-th">Product</th>
+                                        <th className="custom-th">Seller</th>
+                                        <th className="custom-th">Date</th>
+                                        <th className="custom-th cr-num-col">Sale Amount</th>
+                                        <th className="custom-th cr-center-col">Comm&nbsp;%</th>
+                                        <th className="custom-th cr-num-col cr-highlight-col">Earned</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredCommissions.map((c, idx) => (
+                                        <tr key={c.id} className={`custom-tr ${idx % 2 === 0 ? 'cr-row-even' : ''}`}>
+                                            <td className="custom-td">
+                                                <span className="cr-product-name">{c.productName}</span>
+                                            </td>
+                                            <td className="custom-td">
+                                                <span className="cr-seller-name">{c.sellerName}</span>
+                                            </td>
+                                            <td className="custom-td">
+                                                <span className="cr-date-badge">{formatDate(c.date)}</span>
+                                            </td>
+                                            <td className="custom-td cr-num-col">
+                                                <span className="cr-sale-amount">
+                                                    ₹{(c.finalAmount || 0).toLocaleString()}
+                                                </span>
+                                            </td>
+                                            <td className="custom-td cr-center-col">
+                                                <span className="badge badge-warning cr-pct-badge">
+                                                    {c.commissionPercent}%
+                                                </span>
+                                            </td>
+                                            <td className="custom-td cr-num-col cr-highlight-col">
+                                                <span className="cr-earned">
+                                                    ₹{(c.commissionAmount || 0).toLocaleString()}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
 
-                                <div className="data-card-body">
-                                    <div className="data-row">
-                                        <span className="data-label">Seller</span>
-                                        <span className="data-value">{commission.sellerName}</span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Sale Price</span>
-                                        <span className="data-value">₹{(commission.finalAmount || 0).toLocaleString()}</span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Commission</span>
-                                        <span className="data-value text-amber commission-value-large">
-                                            ₹{(commission.commissionAmount || 0).toLocaleString()}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
+                                {/* ── Summary footer ── */}
+                                
+                            </table>
+                        </div>
                     )}
                 </div>
+
             </div>
         </>
     );
