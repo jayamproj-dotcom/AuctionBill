@@ -481,7 +481,7 @@ function TodayAuction() {
                     <div className="header-actions">
 
                         <button className="btn btn-primary" onClick={() => setShowAddProduct(true)}>
-                            <span><Plus /></span>
+                            <span>  <Plus size={18} /></span>
                             Add Product
                         </button>
                     </div>

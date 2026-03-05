@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
 import { formatDate } from '../../utils/dateUtils';
 import './CommissionRecord.css';
-import { Download, BadgeIndianRupee, ArrowRightLeft, ChartNoAxesColumn, Search } from 'lucide-react';
+import { Download, BadgeIndianRupee, ArrowRightLeft, ChartNoAxesColumn, Search, Filter, Calendar, Save } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 function CommissionRecord() {
     const [commissions, setCommissions] = useState([]);
@@ -10,6 +11,16 @@ function CommissionRecord() {
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFilter, setDateFilter] = useState('all');
     const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
+    const [globalCommission, setGlobalCommission] = useState('');
+
+    const handleSaveCommission = () => {
+        if (!globalCommission) {
+            toast.error('Please enter a commission value');
+            return;
+        }
+        toast.success(`Global commission of ${globalCommission}% saved successfully!`);
+        // In a real app, you would make an API call to save this setting
+    };
 
     useEffect(() => {
         loadCommissions();
@@ -112,53 +123,23 @@ function CommissionRecord() {
             <div className="content-header">
                 <div className="header-top">
                     <h1>Commission</h1>
-                    <div className="header-actions">
-                        <div className="dashboard-filter-container">
-                            <div className="search-icon-container" style={{ position: 'relative' }}>
-                                <input
-                                    type="text"
-                                    placeholder="Search product or seller..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="search-input dashboard-filter-select"
-                                    style={{ padding: '0.35rem 0.75rem', paddingRight: '35px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: '#fff', fontSize: '0.875rem' }}
+                    <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <label style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-muted)' }}>Global Commission</label>
+                            <div style={{ position: 'relative' }}>
+                                <input 
+                                    type="number" 
+                                    value={globalCommission}
+                                    onChange={(e) => setGlobalCommission(e.target.value)}
+                                    style={{ width: '80px', padding: '0.4rem 0.75rem', paddingRight: '25px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '0.875rem' }} 
+                                    placeholder="0"
                                 />
-                                <Search size={16} className="search-icon-absolute" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }} />
+                                <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', fontSize: '0.875rem' }}>%</span>
                             </div>
-
-                            <div className="filter-dropdown-wrapper">
-                                <Filter className="filter-icon" size={16} />
-                                <select
-                                    value={dateFilter}
-                                    onChange={(e) => setDateFilter(e.target.value)}
-                                    className="dashboard-filter-select"
-                                >
-                                    <option value="all">All Time</option>
-                                    <option value="today">Today</option>
-                                    <option value="yesterday">Yesterday</option>
-                                    <option value="week">This Week</option>
-                                    <option value="month">This Month</option>
-                                    <option value="year">This Year</option>
-                                    <option value="custom">📅 Custom Date</option>
-                                </select>
-                            </div>
-
-                            {dateFilter === 'custom' && (
-                                <div className="custom-date-wrapper fade-in">
-                                    <Calendar className="calendar-icon" size={16} />
-                                    <input
-                                        type="date"
-                                        value={customDate}
-                                        onChange={(e) => setCustomDate(e.target.value)}
-                                        max={new Date().toISOString().split('T')[0]}
-                                        className="dashboard-date-input"
-                                    />
-                                </div>
-                            )}
-
                         </div>
-                        <button className="btn btn-outline btn-sm">
-                            <span><Download size={18} /></span>
+                        <button className="btn btn-primary btn-sm" onClick={handleSaveCommission} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Save size={16} />
+                            Save
                         </button>
                     </div>
                 </div>
@@ -228,8 +209,56 @@ function CommissionRecord() {
                         </div>
                     </div>
                 )} */}
+                {/* Filters - Moved below stat cards */}
+                <div className="card fade-in filter-card-margin" style={{ padding: '20px' }}>
+                    <div className="saas-flex-between" style={{ width: '100%', alignItems: 'center' }}>
+                        
+                        <div className="saasSearchWrapperWide" style={{ maxWidth: '400px' }}>
+                            <Search size={18} className="saasSearchIconPosition" />
+                            <input
+                                type="text"
+                                className="saas-input saasSearchInputWide"
+                                placeholder="Search product or seller..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
 
-                {/* Filters - Moved to header */}
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+
+                        <div className="filter-dropdown-wrapper">
+                            <Filter className="filter-icon" size={16} />
+                            <select
+                                value={dateFilter}
+                                onChange={(e) => setDateFilter(e.target.value)}
+                                className="dashboard-filter-select"
+                            >
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="year">This Year</option>
+                                <option value="custom">📅 Custom Date</option>
+                            </select>
+                        </div>
+
+                        </div>
+                        {dateFilter === 'custom' && (
+                            <div className="custom-date-wrapper fade-in" style={{ marginLeft: '1rem' }}>
+                                <Calendar className="calendar-icon" size={16} />
+                                <input
+                                    type="date"
+                                    value={customDate}
+                                    onChange={(e) => setCustomDate(e.target.value)}
+                                    max={new Date().toISOString().split('T')[0]}
+                                    className="dashboard-date-input"
+                                />
+                            </div>
+                        )}
+
+                    </div>
+                </div>
 
                 {/* Commission Cards */}
                 <div className="section-header commission-details-header">
