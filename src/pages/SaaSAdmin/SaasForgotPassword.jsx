@@ -4,6 +4,7 @@ import { adminForgotPassword, adminResetPassword } from "../../api/adminApi";
 import { Eye, EyeOff, Loader, ArrowLeft, Mail, ShieldCheck, Lock } from "lucide-react";
 import { toast } from "react-toastify";
 import "./SaaSAdmin.css";
+import GoogleTranslate from "../../components/Common/GoogleTranslate";
 
 const SaasForgotPassword = () => {
     const navigate = useNavigate();
@@ -131,6 +132,9 @@ const SaasForgotPassword = () => {
 
     return (
         <div className="saas-login-container">
+            <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1000 }}>
+                {/* <GoogleTranslate /> */}
+            </div>
             <div className="saas-login-card fade-in">
                 <Link to="/saas-admin" className="saas-link" style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '20px' }}>
                     <ArrowLeft size={16} /> Back to Admin Login

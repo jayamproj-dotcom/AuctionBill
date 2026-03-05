@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+import { toast } from 'react-toastify';
 import { formatDate } from '../../utils/dateUtils';
 import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal.jsx';
@@ -98,9 +99,10 @@ const VendorManagement = () => {
       setIsAddModalOpen(false);
       resetAddForm();
       loadData();
+      toast.success("Vendor added successfully");
     } catch (error) {
       console.error(error);
-      alert("Error adding vendor");
+      toast.error(error?.message || "Error adding vendor");
     } finally {
       setIsSavingAdd(false);
     }
@@ -275,9 +277,10 @@ const VendorManagement = () => {
       setIsEditModalOpen(false);
       setEditingVendor(null);
       loadData();
+      toast.success("Vendor updated successfully");
     } catch (error) {
       console.error(error);
-      alert("Error updating vendor");
+      toast.error(error?.message || "Error updating vendor");
     } finally {
       setIsSaving(false);
     }
@@ -301,9 +304,10 @@ const VendorManagement = () => {
         setVendorToDelete(null);
         setIsConfirmOpen(false);
         loadData();
+        toast.success("Vendor deleted successfully");
       } catch (error) {
         console.error(error);
-        alert("Error deleting vendor");
+        toast.error(error?.message || "Error deleting vendor");
       } finally {
         setIsDeleting(false);
       }
@@ -357,9 +361,10 @@ const VendorManagement = () => {
       link.remove();
       
       setIsExportModalOpen(false);
+      toast.success("Vendors exported successfully");
     } catch (error) {
       console.error("Export error:", error);
-      alert("Error exporting data");
+      toast.error("Error exporting data. Please try again.");
     } finally {
       setExportLoading(false);
     }
@@ -388,16 +393,16 @@ const VendorManagement = () => {
     try {
       if (type === 'approve') {
         await updateVendor(selectedVendor._id || selectedVendor.id, { plan: selectedVendor.requestedPlan._id, requestedPlan: "" });
-        alert('Plan upgrade approved successfully');
+        toast.success('Plan upgrade approved successfully');
       } else {
         await updateVendor(selectedVendor._id || selectedVendor.id, { requestedPlan: "" });
-        alert('Plan upgrade rejected');
+        toast.info('Plan upgrade rejected');
       }
       setUpgradeConfirmConfig({ isOpen: false, type: null });
       setIsModalOpen(false);
       loadData();
     } catch (e) {
-      alert(`Error ${type === 'approve' ? 'approving' : 'rejecting'} plan upgrade`);
+      toast.error(`Error ${type === 'approve' ? 'approving' : 'rejecting'} plan upgrade`);
     } finally {
       setIsProcessingUpgrade(false);
     }
@@ -635,6 +640,8 @@ const VendorManagement = () => {
                     </div>
                   </div>
                 )}
+
+
               {canManageVendors && (
                 <button className="saas-btn btn-primary" onClick={() => setIsAddModalOpen(true)}>
                   <Plus size={18} /> Add Vendor
@@ -756,28 +763,6 @@ const VendorManagement = () => {
               <div className="saas-modal-content">
                 <div className="inner-grid-2">
                   <div className="form-group">
-                    <label className="saas-label">State *</label>
-                    <SearchableSelect
-                      name="state"
-                      value={newVendor.state}
-                      onChange={handleInputChangeSimple}
-                      placeholder="Select State"
-                      options={states.map(s => ({ label: s.name, value: s.name }))}
-                      disabled={loadingStates}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="saas-label">City *</label>
-                    <SearchableSelect
-                      name="city"
-                      value={newVendor.city}
-                      onChange={handleInputChangeSimple}
-                      placeholder="Select City"
-                      options={cities.map(c => ({ label: c.name, value: c.name }))}
-                      disabled={!newVendor.state || loadingCities}
-                    />
-                  </div>
-                  <div className="form-group">
                     <label className="saas-label">Vendor Name *</label>
                     <input
                       type="text"
@@ -788,6 +773,7 @@ const VendorManagement = () => {
                       required
                     />
                   </div>
+
                   <div className="form-group">
                     <label className="saas-label">Email Address *</label>
                     <input
@@ -799,6 +785,7 @@ const VendorManagement = () => {
                       required
                     />
                   </div>
+
                   <div className="form-group">
                     <label className="saas-label">Phone Number *</label>
                     <input
@@ -810,6 +797,7 @@ const VendorManagement = () => {
                       required
                     />
                   </div>
+
                   <div className="form-group">
                     <label className="saas-label">Plan</label>
                     <select
@@ -823,6 +811,31 @@ const VendorManagement = () => {
                       ))}
                     </select>
                   </div>
+
+                  <div className="form-group">
+                    <label className="saas-label">State *</label>
+                    <SearchableSelect
+                      name="state"
+                      value={newVendor.state}
+                      onChange={handleInputChangeSimple}
+                      placeholder="Select State"
+                      options={states.map(s => ({ label: s.name, value: s.name }))}
+                      disabled={loadingStates}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="saas-label">City *</label>
+                    <SearchableSelect
+                      name="city"
+                      value={newVendor.city}
+                      onChange={handleInputChangeSimple}
+                      placeholder="Select City"
+                      options={cities.map(c => ({ label: c.name, value: c.name }))}
+                      disabled={!newVendor.state || loadingCities}
+                    />
+                  </div>
+
                   <div className="form-group full-width">
                     <label className="saas-label">Address</label>
                     <textarea

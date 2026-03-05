@@ -5,6 +5,7 @@ import { clearSaasAuthData, setSaasAuthData } from '../../redux/slices/saasAuthS
 import { getAdminProfile, getAdminNotifications, markNotificationAsRead } from '../../api/adminApi';
 import { House, ShoppingCart, Users, Gem, Settings, LogOut, Menu, X, Bell, User, Lock, ExternalLink } from 'lucide-react';
 import './SaaSAdmin.css';
+import GoogleTranslate from '../../components/Common/GoogleTranslate';
 
 const SaaSLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -222,6 +223,7 @@ const SaaSLayout = () => {
           </div>
           <div className="saas-header-right">
             <div className="saas-header-right-content">
+              {/* <GoogleTranslate /> */}
               <div className="saas-notification-container" ref={notificationRef}>
                 <button 
                   className={`saas-btn btn-sm btn-outline icon-only ${unreadCount > 0 ? 'has-badge' : ''}`}

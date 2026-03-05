@@ -7,6 +7,7 @@ import { useDispatch } from 'react-redux';
 import { adminLogin } from '../../api/adminApi';
 import { setSaasAuthData } from '../../redux/slices/saasAuthSlice';
 import './SaaSAdmin.css';
+import GoogleTranslate from '../../components/Common/GoogleTranslate';
 
 const SaaSLogin = () => {
     const [credentials, setCredentials] = useState({ username: '', password: '' });
@@ -115,6 +116,9 @@ const SaaSLogin = () => {
 
     return (
         <div className="saas-login-container">
+            <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1000 }}>
+                {/* <GoogleTranslate /> */}
+            </div>
             <div className="saas-login-card fade-in">
                 <div className="saas-login-header">
                     <p className="saas-subtitle">Super Admin Access</p>

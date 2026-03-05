@@ -2,15 +2,16 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { forgotPassword, resetPassword } from "../../../api/vendorApi";
 import { Eye, EyeOff, Loader, ArrowLeft, Mail, ShieldCheck, Lock } from "lucide-react";
+import { toast } from "react-toastify";
 import "../../SaaSAdmin/SaaSAdmin.css";
+// import GoogleTranslate from "../../../components/Common/GoogleTranslate";
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
-    const [step, setStep] = useState(1); // 1: Email, 2: OTP & New Password
+    const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [message, setMessage] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [resendTimer, setResendTimer] = useState(0);
 
     const [formData, setFormData] = useState({
@@ -22,34 +23,30 @@ const ForgotPassword = () => {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-        setError("");
-        setMessage("");
     };
 
     const handleSendOTP = async (e) => {
         e.preventDefault();
         if (!formData.email) {
-            setError("Please enter your email address");
+            toast.error("Please enter your email address");
             return;
         }
 
         setIsLoading(true);
-        setError("");
         try {
             const res = await forgotPassword({ email: formData.email });
             if (res.status) {
-                setMessage(res.message || "OTP sent to your email.");
+                toast.success(res.message || "OTP sent to your email.");
                 setStep(2);
                 startResendTimer();
             } else {
-                setError(res.message || "Failed to send OTP.");
+                toast.error(res.message || "Failed to send OTP.");
             }
         } catch (err) {
-            // Check specifically for an inactive sub-admin
             if (err.message && err.message.toLowerCase().includes("inactive")) {
-                setError("Your account is inactive. Please contact the Admin.");
+                toast.error("Your account is inactive. Please contact the Admin.");
             } else {
-                setError(err.message || "Something went wrong.");
+                toast.error(err.message || "Something went wrong.");
             }
         } finally {
             setIsLoading(false);
@@ -79,26 +76,34 @@ const ForgotPassword = () => {
         if (resendTimer > 0) return;
         
         setIsLoading(true);
-        setError("");
-        setMessage("");
         
         try {
             const res = await forgotPassword({ email: formData.email });
             if (res.status) {
-                setMessage(res.message || "OTP resent to your email.");
+                toast.success(res.message || "OTP resent to your email.");
                 startResendTimer();
             } else {
-                setError(res.message || "Failed to resend OTP.");
+                toast.error(res.message || "Failed to resend OTP.");
             }
         } catch (err) {
             if (err.message && err.message.toLowerCase().includes("inactive")) {
-                setError("Your account is inactive. Please contact the Admin.");
+                toast.error("Your account is inactive. Please contact the Admin.");
             } else {
-                setError(err.message || "Something went wrong.");
+                toast.error(err.message || "Something went wrong.");
             }
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleVerifyOTP = (e) => {
+        e.preventDefault();
+        if (!formData.otp || formData.otp.length < 4) {
+            toast.error("Please enter a valid OTP");
+            return;
+        }
+        toast.success("OTP accepted. Please enter your new password.");
+        setStep(3);
     };
 
     const handleResetPassword = async (e) => {
@@ -106,29 +111,28 @@ const ForgotPassword = () => {
         const { email, otp, newPassword, confirmPassword } = formData;
 
         if (!otp || !newPassword || !confirmPassword) {
-            setError("Please fill in all fields");
+            toast.error("Please fill in all fields");
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            setError("Passwords do not match");
+            toast.error("Passwords do not match");
             return;
         }
 
         setIsLoading(true);
-        setError("");
         try {
             const res = await resetPassword({ email, otp, newPassword });
             if (res.status) {
-                setMessage("Password reset successfully! Redirecting to login...");
+                toast.success("Password reset successfully! Redirecting to login...");
                 setTimeout(() => {
                     navigate("/");
                 }, 3000);
             } else {
-                setError(res.message || "Failed to reset password.");
+                toast.error(res.message || "Failed to reset password.");
             }
         } catch (err) {
-            setError(err.message || "Something went wrong.");
+            toast.error(err.message || "Something went wrong.");
         } finally {
             setIsLoading(false);
         }
@@ -136,6 +140,9 @@ const ForgotPassword = () => {
 
     return (
         <div className="saas-login-container">
+            <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1000 }}>
+                {/* <GoogleTranslate /> */}
+            </div>
             <div className="saas-login-card fade-in">
                 <Link to="/" className="saas-link" style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '20px' }}>
                     <ArrowLeft size={16} /> Back to Login
@@ -144,9 +151,9 @@ const ForgotPassword = () => {
                 <div className="saas-login-header">
                     <h2 style={{ color: '#333', fontSize: '24px', fontWeight: 'bold' }}>Forgot Password</h2>
                     <p className="saas-subtitle">
-                        {step === 1
-                            ? "Enter your email to receive a password reset OTP"
-                            : "Enter the OTP sent to your email and set a new password"}
+                        {step === 1 && "Enter vendor email to receive OTP"}
+                        {step === 2 && "Enter OTP sent to your email"}
+                        {step === 3 && "Set your new vendor password"}
                     </p>
                 </div>
 
@@ -162,21 +169,18 @@ const ForgotPassword = () => {
                                     className="saas-input saas-input-with-icon"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    placeholder="Enter your email"
+                                    placeholder="Enter your registered email"
                                     required
                                 />
                             </div>
                         </div>
 
-                        {error && <div className="error-msg" style={{ color: '#e74c3c', marginBottom: '15px' }}>{error}</div>}
-                        {message && <div className="success-msg" style={{ color: '#27ae60', marginBottom: '15px' }}>{message}</div>}
-
                         <button type="submit" className="saas-btn btn-primary saas-login-btn" disabled={isLoading}>
                             {isLoading ? <><Loader className="saas-spinner" size={18} /> Sending...</> : "Send OTP"}
                         </button>
                     </form>
-                ) : (
-                    <form onSubmit={handleResetPassword} className="saas-login-form">
+                ) : step === 2 ? (
+                    <form onSubmit={handleVerifyOTP} className="saas-login-form">
                         <div className="saas-form-group">
                             <label className="saas-label">OTP</label>
                             <div className="saas-input-container">
@@ -194,52 +198,10 @@ const ForgotPassword = () => {
                             </div>
                         </div>
 
-                        <div className="saas-form-group">
-                            <label className="saas-label">New Password</label>
-                            <div className="saas-input-container">
-                                <Lock size={18} className="saas-input-icon" />
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    name="newPassword"
-                                    className="saas-input saas-input-with-icon"
-                                    value={formData.newPassword}
-                                    onChange={handleChange}
-                                    placeholder="New password"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    className="saas-password-toggle"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="saas-form-group">
-                            <label className="saas-label">Confirm Password</label>
-                            <div className="saas-input-container">
-                                <Lock size={18} className="saas-input-icon" />
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    name="confirmPassword"
-                                    className="saas-input saas-input-with-icon"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    placeholder="Confirm new password"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        {error && <div className="error-msg" style={{ color: '#e74c3c', marginBottom: '15px' }}>{error}</div>}
-                        {message && <div className="success-msg" style={{ color: '#27ae60', marginBottom: '15px' }}>{message}</div>}
-
-                        <button type="submit" className="saas-btn btn-primary saas-login-btn" disabled={isLoading}>
-                            {isLoading ? <><Loader className="saas-spinner" size={18} /> Resetting...</> : "Reset Password"}
+                        <button type="submit" className="saas-btn btn-primary saas-login-btn">
+                            Verify OTP
                         </button>
-
+                        
                         <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '14px' }}>
                             <span style={{ color: '#666' }}>Didn't receive the OTP? </span>
                             {resendTimer > 0 ? (
@@ -266,6 +228,58 @@ const ForgotPassword = () => {
                                 </button>
                             )}
                         </div>
+                    </form>
+                ) : (
+                    <form onSubmit={handleResetPassword} className="saas-login-form">
+                        <div className="saas-form-group">
+                            <label className="saas-label">New Password</label>
+                            <div className="saas-input-container">
+                                <Lock size={18} className="saas-input-icon" />
+                                <input
+                                    type={showNewPassword ? "text" : "password"}
+                                    name="newPassword"
+                                    className="saas-input saas-input-with-icon"
+                                    value={formData.newPassword}
+                                    onChange={handleChange}
+                                    placeholder="New password"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className="saas-password-toggle"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                >
+                                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="saas-form-group">
+                            <label className="saas-label">Confirm Password</label>
+                            <div className="saas-input-container">
+                                <Lock size={18} className="saas-input-icon" />
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    name="confirmPassword"
+                                    className="saas-input saas-input-with-icon"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    placeholder="Confirm new password"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className="saas-password-toggle"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                >
+                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" className="saas-btn btn-primary saas-login-btn" disabled={isLoading}>
+                            {isLoading ? <><Loader className="saas-spinner" size={18} /> Resetting...</> : "Reset Password"}
+                        </button>
                     </form>
                 )}
             </div>

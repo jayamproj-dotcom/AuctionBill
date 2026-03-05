@@ -10,6 +10,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice";
 import { resolveImageUrl } from "../../utils/imageUtils";
 import { getVendorProfile } from "../../api/vendorApi";
+import GoogleTranslate from "../../components/Common/GoogleTranslate";
 
 const VendorLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -126,54 +127,57 @@ const VendorLayout = () => {
           <h2>Auction Billing</h2>
         </div>
 
-        <div className="header-profile-container" ref={profileRef}>
-          <div className="header-profile" onClick={toggleProfile}>
-            <p>{userName}</p>
-            <img
-              src={resolveImageUrl(userPhoto, user)}
-              alt="User"
-              referrerPolicy="no-referrer"
-              className="header-profile-img"
-              onError={(e) => { e.target.src = user }}
-            />
-          </div>
-
-          {profileOpen && (
-            <div className="profile-dropdown">
-              {/* Dropdown Header with Profile Info */}
-              <div className="profile-dropdown-header">
-                <img
-                  src={resolveImageUrl(userPhoto, user)}
-                  alt="Profile"
-                  className="profile-dropdown-img"
-                  onError={(e) => { e.target.src = user }}
-                />
-                <div className="profile-dropdown-name">{userName}</div>
-                <div className="profile-dropdown-email">{userEmail}</div>
-              </div>
-
-              <div className="dropdown-item" onClick={() => {
-                navigate('/vendor/manage');
-                setProfileOpen(false);
-              }}>
-                <User size={16} />
-                <span>My Profile</span>
-              </div>
-              <div className="dropdown-item" onClick={() => {
-                navigate('/vendor/change-password');
-                setProfileOpen(false);
-              }}>
-                <KeyRound size={16} />
-                <span>Change Password</span>
-              </div>
-
-              <div className="dropdown-divider"></div>
-              <div className="dropdown-item text-danger" onClick={handleLogout}>
-                <LogOut size={16} />
-                <span>Logout</span>
-              </div>
+        <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {/* <GoogleTranslate /> */}
+          <div className="header-profile-container" ref={profileRef}>
+            <div className="header-profile" onClick={toggleProfile}>
+              <p>{userName}</p>
+              <img
+                src={resolveImageUrl(userPhoto, user)}
+                alt="User"
+                referrerPolicy="no-referrer"
+                className="header-profile-img"
+                onError={(e) => { e.target.src = user }}
+              />
             </div>
-          )}
+
+            {profileOpen && (
+              <div className="profile-dropdown">
+                {/* Dropdown Header with Profile Info */}
+                <div className="profile-dropdown-header">
+                  <img
+                    src={resolveImageUrl(userPhoto, user)}
+                    alt="Profile"
+                    className="profile-dropdown-img"
+                    onError={(e) => { e.target.src = user }}
+                  />
+                  <div className="profile-dropdown-name">{userName}</div>
+                  <div className="profile-dropdown-email">{userEmail}</div>
+                </div>
+
+                <div className="dropdown-item" onClick={() => {
+                  navigate('/vendor/manage');
+                  setProfileOpen(false);
+                }}>
+                  <User size={16} />
+                  <span>My Profile</span>
+                </div>
+                <div className="dropdown-item" onClick={() => {
+                  navigate('/vendor/change-password');
+                  setProfileOpen(false);
+                }}>
+                  <KeyRound size={16} />
+                  <span>Change Password</span>
+                </div>
+
+                <div className="dropdown-divider"></div>
+                <div className="dropdown-item text-danger" onClick={handleLogout}>
+                  <LogOut size={16} />
+                  <span>Logout</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
