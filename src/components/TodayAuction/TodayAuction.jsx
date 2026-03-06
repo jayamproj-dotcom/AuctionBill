@@ -336,7 +336,7 @@ function TodayAuction() {
         if (!vendorId) return;
         try {
             const today = new Date().toISOString().split('T')[0];
-            const productResponse = await auctionApi.getAuctionProducts(vendorId, today);
+            const productResponse = await auctionApi.getAuctionProducts(vendorId, { date: today });
             
             if (productResponse.success) {
                 const mappedProducts = productResponse.data.map(p => {

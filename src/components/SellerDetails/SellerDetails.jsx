@@ -15,8 +15,9 @@ import {
     toggleSellerStatus,
     recordSellerPayment,
     getSellerPayments,
+    getSellerSummary,
 } from '../../api/sellerApi';
-import { getAuctionData, getSellerLedger } from '../../utils/localStorage';
+
 
 function SellerDetails() {
     // ── Auth ─────────────────────────────────────────────
@@ -28,6 +29,8 @@ function SellerDetails() {
     const [loading, setLoading]           = useState(false);
     const [selectedSeller, setSelectedSeller] = useState(null);
     const [ledger, setLedger]             = useState([]);
+    const [allTransactions, setAllTransactions] = useState([]);
+    const [allSellerPayments, setAllSellerPayments] = useState([]);
     const [searchQuery, setSearchQuery]   = useState('');
     const [activeTab, setActiveTab]       = useState('products');
 
@@ -106,53 +109,13 @@ function SellerDetails() {
     };
 
     // ─────────────────────────────────────────────────────
-    //  Load Sellers from DB + merge local transaction stats
+    //  Load Sellers from DB
     // ─────────────────────────────────────────────────────
     const loadSellers = async () => {
         setLoading(true);
         try {
             const res = await getSellers(currentVendorId);
-            const rawSellers = res.data || res.sellers || [];
-
-            // Merge with local auction data for transaction/payment stats
-            const localData   = getAuctionData();
-            const allProducts = localData?.products     || [];
-            const allTxns     = localData?.transactions || [];
-            const allPayments = localData?.sellerPayments || [];
-            const allCredits  = localData?.sellerCredits  || [];
-
-            const enriched = rawSellers.map(seller => {
-                const sid = seller._id || seller.id;
-                const sellerProducts    = allProducts.filter(p => p.sellerId === sid);
-                const sellerTransactions = allTxns.filter(t  => t.sellerId  === sid);
-                const sellerPayments    = allPayments.filter(p => p.sellerId === sid);
-                const sellerCredits     = allCredits.filter(c  => c.sellerId === sid);
-
-                const totalGrossSales = sellerTransactions.reduce((s, t) => s + (t.finalAmount    || 0), 0);
-                const totalCommission = sellerTransactions.reduce((s, t) => s + (t.commissionAmount || 0), 0);
-                const totalNetSales   = sellerTransactions.reduce((s, t) => s + (t.netAmount       || 0), 0);
-                const totalPaid       = sellerPayments.reduce((s, p)    => s + (p.amount           || 0), 0);
-                const totalCredit     = sellerCredits.reduce((s, c)     => s + (c.amount           || 0), 0);
-                const balance         = totalNetSales - totalPaid - totalCredit;
-
-                return {
-                    ...seller,
-                    id: sid,   // normalise id
-                    totalItems: sellerProducts.length,
-                    totalSales: totalNetSales,
-                    totalGrossSales,
-                    totalCommission,
-                    totalCredit,
-                    totalPaid,
-                    balance,
-                    products:     sellerProducts,
-                    transactions: sellerTransactions,
-                    payments:     sellerPayments,
-                    credits:      sellerCredits,
-                };
-            });
-
-            setSellers(enriched);
+            setSellers(res.data || []);
         } catch (err) {
             console.error('Error loading sellers:', err);
             toast.error(err?.message || 'Failed to load sellers');
@@ -162,18 +125,31 @@ function SellerDetails() {
     };
 
     // ─────────────────────────────────────────────────────
-    //  Open seller detail view
+    //  Open seller detail view – fetch summary from API
     // ─────────────────────────────────────────────────────
-    const openDetailsModal = (seller) => {
-        const localData     = getAuctionData();
-        const sellerProducts = (localData?.products || [])
-            .filter(p => p.sellerId === seller.id)
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        setSelectedSeller({ ...seller, products: sellerProducts });
-        setLedger(getSellerLedger(seller.id));
+    const openDetailsModal = async (seller) => {
         setActiveTab('products');
+        const sid = seller._id?.toString() || seller.id;
+        try {
+            const res = await getSellerSummary(sid);
+            if (res.success) {
+                const { seller: profile, products, ledger, transactions, payments } = res.data;
+                setSelectedSeller({
+                    ...profile,
+                    products,
+                    transactions,
+                    payments
+                });
+                setLedger(ledger);
+            }
+        } catch (err) {
+            console.error('Failed to load seller summary:', err);
+            toast.error('Failed to load seller details');
+            setSelectedSeller({ ...seller, id: sid, products: [], payments: [], balance: seller.balance });
+            setLedger([]);
+        }
     };
+
 
     const handleBackToSellers = () => setSelectedSeller(null);
 
@@ -352,12 +328,10 @@ function SellerDetails() {
             setPaymentAmount('');
             setPaymentNote('');
             setPaymentConfig(null);
-            // Refresh seller data
+            // Refresh seller list then re-open detail view
             await loadSellers();
-            // Re-open detail view with fresh data
-            const updated = sellers.find(s => s.id === (selectedSeller._id || selectedSeller.id));
-            if (updated) setSelectedSeller({ ...updated, products: selectedSeller.products });
-            setLedger(getSellerLedger(selectedSeller._id || selectedSeller.id));
+            // Re-fetch payments and rebuild ledger for the currently selected seller
+            await openDetailsModal(selectedSeller);
         } catch (err) {
             toast.error(err?.message || 'Failed to record payment');
         } finally {
@@ -372,34 +346,21 @@ function SellerDetails() {
         const product = selectedSeller.products.find(p => p.id === productId);
         if (!product) return;
 
-        const relatedTxns   = (selectedSeller.transactions || []).filter(t => t.productId === productId);
-        const variantsWithStats = (product.variants || []).map(variant => {
-            const vt = relatedTxns.filter(t => t.variantId === variant.id);
-            return {
-                ...variant,
-                sellQuantity: vt.reduce((s, t) => s + (Number(t.quantity) || 0), 0),
-                stats: {
-                    price:      vt.reduce((s, t) => s + (t.finalAmount      || 0), 0),
-                    commission: vt.reduce((s, t) => s + (t.commissionAmount  || 0), 0),
-                    net:        vt.reduce((s, t) => s + (t.netAmount         || 0), 0),
-                },
-            };
-        });
-
-        const totalSales      = relatedTxns.reduce((s, t) => s + (t.finalAmount      || 0), 0);
-        const totalCommission = relatedTxns.reduce((s, t) => s + (t.commissionAmount  || 0), 0);
-        const totalNet        = relatedTxns.reduce((s, t) => s + (t.netAmount         || 0), 0);
-        const pPayments       = (selectedSeller.payments || []).filter(p => p.productId === productId);
-        const totalPaid       = pPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
-
         setViewingProduct({
             ...product,
-            variants: variantsWithStats,
-            stats: { price: totalSales, commission: totalCommission, net: totalNet, paid: totalPaid, balance: totalNet - totalPaid },
-            relatedTransactions: relatedTxns,
+            stats: { 
+                price: (product.totalNet || 0) + (product.totalCommission || 0), 
+                commission: product.totalCommission || 0,
+                net: product.totalNet || 0, 
+                paid: product.totalPaid || 0, 
+                balance: product.totalBal || 0 
+            },
+            relatedTransactions: (selectedSeller.transactions || []).filter(t => t.productId === productId),
         });
         setShowProductViewModal(true);
     };
+
+
 
     // ─────────────────────────────────────────────────────
     //  Render
@@ -609,8 +570,9 @@ function SellerDetails() {
                                             <th>Date</th>
                                             <th>Product</th>
                                             <th>Sales (Net)</th>
-                                            <th>Paid</th>
-                                            <th>Balance</th>
+                                            {/* <th>Commission</th> */}
+                                            {/* <th>Total Amount</th> */}
+                                            {/* <th>Balance</th> */}
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -618,53 +580,32 @@ function SellerDetails() {
                                         {(!selectedSeller.products || selectedSeller.products.length === 0) ? (
                                             <tr><td colSpan="6" className="empty-td">No items submitted yet</td></tr>
                                         ) : (
-                                            (() => {
-                                                const sellerTotalNet  = (selectedSeller.transactions || []).reduce((s, t) => s + (Number(t.netAmount) || 0), 0);
-                                                const sellerTotalPaid = (selectedSeller.payments    || []).reduce((s, p) => s + (Number(p.amount)   || 0), 0);
-                                                const sellerCredits   = (selectedSeller.credits     || []).reduce((s, c) => s + (Number(c.amount)   || 0), 0);
-                                                const sellerBalance   = sellerTotalNet - sellerTotalPaid - sellerCredits;
-                                                let remainingAdvance  = sellerBalance < 0 ? Math.abs(sellerBalance) : 0;
-
-                                                return selectedSeller.products.map(p => {
-                                                    const pTxns    = (selectedSeller.transactions || []).filter(t => t.productId === p.id);
-                                                    const totalNet = pTxns.reduce((s, t) => s + (Number(t.netAmount) || 0), 0);
-                                                    const pPmts    = (selectedSeller.payments    || []).filter(pm => pm.productId === p.id);
-                                                    let totalPaid  = pPmts.reduce((s, pm) => s + (Number(pm.amount) || 0), 0);
-                                                    let totalBal   = totalNet - totalPaid;
-
-                                                    if (remainingAdvance > 0 && totalBal > 0) {
-                                                        const used = Math.min(remainingAdvance, totalBal);
-                                                        totalPaid       += used;
-                                                        totalBal        -= used;
-                                                        remainingAdvance -= used;
-                                                    }
-
-                                                    return (
-                                                        <tr key={p.id}>
-                                                            <td>{formatDate(p.date)}</td>
-                                                            <td className="product-name-bold">{p.name}</td>
-                                                            <td>₹{totalNet.toLocaleString()}</td>
-                                                            <td className="text-success">₹{totalPaid.toLocaleString()}</td>
-                                                            <td className={`text-error ${totalBal > 0 ? 'font-bold' : ''}`}>
-                                                                ₹{Math.max(0, totalBal).toLocaleString()}
-                                                            </td>
-                                                            <td>
-                                                                <div style={{ display: 'flex', gap: '5px' }}>
-                                                                    <button className="btn btn-sm btn-info" onClick={() => handleViewProduct(p.id)} title="View">
-                                                                        <Eye size={16} />
-                                                                    </button>
-                                                                    {totalBal > 0 && (
-                                                                        <button className="btn btn-sm btn-primary" onClick={() => openProductPaymentModal(p)} title="Pay">
-                                                                            Pay
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                });
-                                            })()
+                                            selectedSeller.products.map(p => (
+                                                <tr key={p.id}>
+                                                    <td>{formatDate(p.date)}</td>
+                                                    <td className="product-name-bold">{p.name}</td>
+                                                    <td>₹{(p.totalNet || 0).toLocaleString()}</td>
+                                                    {/* <td className="text-success">₹{(p.totalPaid || 0).toLocaleString()}</td>
+                                                    <td className={`text-error ${p.totalBal > 0 ? 'font-bold' : ''}`}>
+                                                        ₹{Math.max(0, p.totalBal || 0).toLocaleString()}
+                                                    </td> */}
+                                                    <td>
+                                                        <div style={{ display: 'flex', gap: '5px' }}>
+                                                            <button className="btn btn-sm btn-info" onClick={() => handleViewProduct(p.id)} title="View">
+                                                                <Eye size={16} />
+                                                            </button>
+                                                            {/* {(p.totalBal > 0) && (
+                                                                <button className="btn btn-sm btn-primary" onClick={() => openProductPaymentModal(p)} title="Pay">
+                                                                    Pay
+                                                                </button>
+                                                            )} */}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
                                         )}
+
+
                                     </tbody>
                                 </table>
                             </div>
@@ -820,11 +761,14 @@ function SellerDetails() {
                                     </div>
                                     <div className="product-info-details" style={{ flex: 1 }}>
                                         <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
-                                            <div>Total Sales: <b>₹{viewingProduct.stats.price.toLocaleString()}</b></div>
-                                            <div>Commission: <b>₹{viewingProduct.stats.commission.toLocaleString()}</b></div>
-                                            <div className="text-success">Total Paid: <b>₹{viewingProduct.stats.paid.toLocaleString()}</b></div>
-                                            <div className="text-error">Total Balance: <b>₹{viewingProduct.stats.balance.toLocaleString()}</b></div>
+                                            <div>Total Sales: <b>₹{(viewingProduct.stats?.price || 0).toLocaleString()}</b></div>
+                                            <div>Commission: <b>₹{(viewingProduct.stats?.commission || 0).toLocaleString()}</b></div>
+                                            <div style={{ color: '#2563eb' }}>Total Amount: <b>₹{(viewingProduct.stats?.net || 0).toLocaleString()}</b></div>
+                                            {/* <div className="text-success">Total Paid: <b>₹{(viewingProduct.stats?.paid || 0).toLocaleString()}</b></div>
+                                            <div className="text-error">Total Balance: <b>₹{(viewingProduct.stats?.balance || 0).toLocaleString()}</b></div> */}
+
                                         </div>
+
                                     </div>
                                 </div>
                                 <h4 style={{ margin: '0 0 10px 0' }}>Variant Details</h4>

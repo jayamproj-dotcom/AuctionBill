@@ -22,6 +22,18 @@ export const getSellerById = async (sellerId) => {
     }
 };
 
+// Get seller summary (profile, products, ledger, balance)
+export const getSellerSummary = async (sellerId) => {
+    try {
+        const response = await api.get(`/seller/summary/${sellerId}`);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) throw error.response.data;
+        throw error;
+    }
+};
+
+
 // Add a new seller
 export const createSeller = async (data) => {
     try {
