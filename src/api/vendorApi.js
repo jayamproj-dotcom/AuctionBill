@@ -134,9 +134,9 @@ export const updateProduct = async (id, data) => {
     }
 };
 
-export const deleteProduct = async (id) => {
+export const deleteProduct = async (id, params) => {
     try {
-        const response = await api.delete(`/product/delete/${id}`);
+        const response = await api.delete(`/product/delete/${id}`, { params });
         return response.data;
     } catch (error) {
         if (error.response && error.response.data) {

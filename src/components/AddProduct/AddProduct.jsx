@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { Trash2, Plus, X, Loader2, Edit2, Search } from 'lucide-react';
+import { useSelector } from 'react-redux';
 import * as productApi from '../../api/vendorApi';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './AddProduct.css';
@@ -25,17 +26,18 @@ function AddProduct() {
     const [tempVariety, setTempVariety] = useState('');
     const [tempUnit, setTempUnit] = useState('kg');
 
-    const vendor = JSON.parse(localStorage.getItem('vendor')) || {};
-    const vendorId = vendor.id || vendor._id;
+    const { vendorId } = useSelector(state => state.vendorAuth);
+    // Fallback to session storage if redux state is lost on refresh
+    const currentVendorId = vendorId || sessionStorage.getItem('vendorId');
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [currentVendorId]);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            const data = await productApi.getProducts({ vendorId });
+            const data = await productApi.getProducts({ vendorId: currentVendorId });
             setMasterProducts(data);
         } catch (error) {
             toast.error("Failed to load products");
@@ -62,13 +64,13 @@ function AddProduct() {
 
         try {
             if (isEditing) {
-                const result = await productApi.updateProduct(editingProductId, newMaster);
-                setMasterProducts(masterProducts.map(p => p._id === editingProductId ? result.product : p));
+                const result = await productApi.updateProduct(editingProductId, { ...newMaster, vendorId: currentVendorId });
+                setMasterProducts(prev => prev.map(p => p._id === editingProductId ? result.product : p));
                 toast.success("Product updated successfully");
             } else {
                 const result = await productApi.addProduct({
                     ...newMaster,
-                    vendorId
+                    vendorId: currentVendorId
                 });
                 setMasterProducts([result.product, ...masterProducts]);
                 toast.success("Product added successfully");
@@ -144,8 +146,8 @@ function AddProduct() {
     const confirmDelete = async () => {
         setDeleteLoading(true);
         try {
-            await productApi.deleteProduct(productToDelete);
-            setMasterProducts(masterProducts.filter(item => item._id !== productToDelete));
+            await productApi.deleteProduct(productToDelete, { vendorId: currentVendorId });
+            setMasterProducts(prev => prev.filter(item => item._id !== productToDelete));
             toast.success("Product removed from list");
             setShowDeleteModal(false);
         } catch (error) {
