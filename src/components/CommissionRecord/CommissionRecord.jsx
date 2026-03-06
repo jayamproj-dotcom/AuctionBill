@@ -5,7 +5,7 @@ import './CommissionRecord.css';
 import '../TodayAuction/TodayAuction.css';
 import {
     BadgeIndianRupee, ArrowRightLeft, ChartNoAxesColumn,
-    Search, Filter, Calendar, Save, TrendingUp
+    Search, Filter, Calendar, Save, Pencil, TrendingUp
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
@@ -18,6 +18,7 @@ function CommissionRecord() {
     const [dateFilter, setDateFilter] = useState('all');
     const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
     const [globalCommission, setGlobalCommission] = useState('');
+    const [isEditingCommission, setIsEditingCommission] = useState(false);
 
     const { vendorId } = useSelector(state => state.vendorAuth);
     const currentVendorId = vendorId || sessionStorage.getItem('vendorId');
@@ -27,7 +28,6 @@ function CommissionRecord() {
             toast.error('Please enter a commission value');
             return;
         }
-        
         try {
             const res = await updateCommission(currentVendorId, globalCommission);
             if (res.success) {
@@ -35,6 +35,17 @@ function CommissionRecord() {
             }
         } catch (error) {
             toast.error(error.message || 'Failed to save commission');
+        }
+    };
+
+    const handleEditToggle = async () => {
+        if (isEditingCommission) {
+            // Save mode → call API then lock
+            await handleSaveCommission();
+            setIsEditingCommission(false);
+        } else {
+            // View mode → unlock for editing
+            setIsEditingCommission(true);
         }
     };
 
@@ -133,14 +144,18 @@ function CommissionRecord() {
                                 max="100"
                                 value={globalCommission}
                                 onChange={(e) => setGlobalCommission(e.target.value)}
-                                className="cr-global-input"
+                                className={`cr-global-input${!isEditingCommission ? ' cr-global-input--readonly' : ''}`}
                                 placeholder="0"
+                                readOnly={!isEditingCommission}
                             />
                             <span className="cr-percent-badge">%</span>
                         </div>
-                        <button className="btn btn-primary btn-sm cr-save-btn" onClick={handleSaveCommission}>
-                            <Save size={14} />
-                            Save
+                        <button
+                            className={`btn btn-sm cr-save-btn${isEditingCommission ? ' btn-primary' : ' btn-outline-secondary cr-edit-btn'}`}
+                            onClick={handleEditToggle}
+                        >
+                            {isEditingCommission ? <Save size={14} /> : <Pencil size={14} />}
+                            {isEditingCommission ? 'Save' : 'Edit'}
                         </button>
                     </div>
                 </div>

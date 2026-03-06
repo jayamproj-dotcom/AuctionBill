@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { getAuctionData, saveAuctionData, getBuyerLedger } from '../../utils/localStorage';
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './BuyerDetails.css';
 import { Plus, Pencil, Trash2, X, ShoppingCart, Search, Eye } from 'lucide-react';
+import SearchableSelect from '../Common/SearchableSelect';
 import { toast } from 'react-toastify';
 
 function BuyerDetails() {
@@ -16,9 +18,17 @@ function BuyerDetails() {
         name: '',
         contact: '',
         address: '',
+        state: '',
+        city: '',
         email: '',
         buyerType: 'Retailer'
     });
+
+    // State / City for Add Buyer form
+    const [states, setStates] = useState([]);
+    const [cities, setCities] = useState([]);
+    const [loadingStates, setLoadingStates] = useState(false);
+    const [loadingCities, setLoadingCities] = useState(false);
     const [activeTab, setActiveTab] = useState('purchases');
 
     // Payment Modal State
@@ -72,7 +82,34 @@ const [paymentNote, setPaymentNote] = useState('');
 
     useEffect(() => {
         loadBuyers();
+        fetchStates();
     }, []);
+
+    const fetchStates = async () => {
+        setLoadingStates(true);
+        try {
+            const { data } = await axios.post('https://countriesnow.space/api/v0.1/countries/states', { country: 'India' });
+            if (!data.error) setStates(data.data.states);
+        } catch (err) {
+            console.error('Error fetching states:', err);
+        } finally {
+            setLoadingStates(false);
+        }
+    };
+
+    const fetchCities = async (stateName) => {
+        if (!stateName) { setCities([]); return; }
+        setLoadingCities(true);
+        try {
+            const { data } = await axios.post('https://countriesnow.space/api/v0.1/countries/state/cities', { country: 'India', state: stateName });
+            setCities(data.error ? [] : data.data.map(c => ({ name: c })));
+        } catch (err) {
+            console.error('Error fetching cities:', err);
+            setCities([]);
+        } finally {
+            setLoadingCities(false);
+        }
+    };
 
     const loadBuyers = () => {
         const data = getAuctionData();
@@ -193,7 +230,8 @@ const [paymentNote, setPaymentNote] = useState('');
         data.buyers.push(buyer);
         saveAuctionData(data);
 
-        setNewBuyer({ name: '', contact: '', address: '', email: '', buyerType: 'Retailer' });
+        setNewBuyer({ name: '', contact: '', address: '', state: '', city: '', email: '', buyerType: 'Retailer' });
+        setCities([]);
         setShowAddModal(false);
         loadBuyers();
     };
@@ -384,8 +422,10 @@ const [paymentNote, setPaymentNote] = useState('');
 
                                             <div className="data-card-body">
                                                 <div className="data-row">
-                                                    <span className="data-label">Address</span>
-                                                    <span className="data-value">{buyer.address}</span>
+                                                    <span className="data-label">Location</span>
+                                                    <span className="data-value">
+                                                        {[buyer.city, buyer.state].filter(Boolean).join(', ') || buyer.address || 'N/A'}
+                                                    </span>
                                                 </div>
                                                 <div className="data-row">
                                                     <span className="data-label">Login Access</span>
@@ -428,8 +468,16 @@ const [paymentNote, setPaymentNote] = useState('');
                                         <span className="data-value">{selectedBuyer.email || 'N/A'}</span>
                                     </div>
                                     <div className="data-row">
+                                        <span className="data-label">State</span>
+                                        <span className="data-value">{selectedBuyer.state || 'N/A'}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">City</span>
+                                        <span className="data-value">{selectedBuyer.city || 'N/A'}</span>
+                                    </div>
+                                    <div className="data-row">
                                         <span className="data-label">Address</span>
-                                        <span className="data-value">{selectedBuyer.address}</span>
+                                        <span className="data-value">{selectedBuyer.address || 'N/A'}</span>
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Type</span>
@@ -889,15 +937,33 @@ const [paymentNote, setPaymentNote] = useState('');
                                         placeholder="example@mail.com"
                                     />
                                 </div>
-                                <div className="form-group">
-                                    <label className="form-label">Buyer Type</label>
-                                    <select
-                                        value={newBuyer.buyerType}
-                                        onChange={(e) => setNewBuyer({ ...newBuyer, buyerType: e.target.value })}
-                                    >
-                                        <option value="Retailer">Retailer</option>
-                                        <option value="Wholesale">Wholesale</option>
-                                    </select>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    <div className="form-group">
+                                        <label className="form-label">State</label>
+                                        <SearchableSelect
+                                            name="state"
+                                            value={newBuyer.state}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setNewBuyer(prev => ({ ...prev, state: val, city: '' }));
+                                                fetchCities(val);
+                                            }}
+                                            placeholder={loadingStates ? 'Loading...' : 'Select State'}
+                                            options={states.map(s => ({ label: s.name, value: s.name }))}
+                                            disabled={loadingStates}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">City</label>
+                                        <SearchableSelect
+                                            name="city"
+                                            value={newBuyer.city}
+                                            onChange={(e) => setNewBuyer(prev => ({ ...prev, city: e.target.value }))}
+                                            placeholder={loadingCities ? 'Loading cities...' : !newBuyer.state ? 'Select state first' : 'Select City'}
+                                            options={cities.map(c => ({ label: c.name, value: c.name }))}
+                                            disabled={!newBuyer.state || loadingCities}
+                                        />
+                                    </div>
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Address</label>
@@ -905,8 +971,7 @@ const [paymentNote, setPaymentNote] = useState('');
                                         value={newBuyer.address}
                                         onChange={(e) => setNewBuyer({ ...newBuyer, address: e.target.value })}
                                         rows="2"
-                                        placeholder="Full address (Shop / Office details)"
-                                        required
+                                        placeholder="Street / Shop / Office details"
                                     />
                                 </div>
                             </div>

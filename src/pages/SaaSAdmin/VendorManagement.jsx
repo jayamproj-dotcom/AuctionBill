@@ -7,6 +7,7 @@ import './SaaSAdmin.css';
 import ConfirmationModal from '../../components/Common/ConfirmationModal.jsx';
 import { useSelector } from 'react-redux';
 import { Trash2, X, Search, Plus, Edit, Loader, Filter, Download } from 'lucide-react';
+import axios from 'axios';
 import { getSubscriptions, getVendors, createVendor, updateVendor, deleteVendor, exportVendors } from '../../api/adminApi';
 import SearchableSelect from '../../components/Common/SearchableSelect.jsx';
 
@@ -116,17 +117,10 @@ const VendorManagement = () => {
   const fetchStates = async () => {
     setLoadingStates(true);
     try {
-      const response = await fetch('https://countriesnow.space/api/v0.1/countries/states', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ country: "India" })
-      });
-      const data = await response.json();
-      if (!data.error) {
-        setStates(data.data.states);
-      }
+      const { data } = await axios.post('https://countriesnow.space/api/v0.1/countries/states', { country: 'India' });
+      if (!data.error) setStates(data.data.states);
     } catch (err) {
-      console.error("Error fetching states:", err);
+      console.error('Error fetching states:', err);
     } finally {
       setLoadingStates(false);
     }
@@ -135,19 +129,14 @@ const VendorManagement = () => {
   const fetchCities = async (stateName) => {
     setLoadingCities(true);
     try {
-      const response = await fetch('https://countriesnow.space/api/v0.1/countries/state/cities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ country: "India", state: stateName })
-      });
-      const data = await response.json();
+      const { data } = await axios.post('https://countriesnow.space/api/v0.1/countries/state/cities', { country: 'India', state: stateName });
       if (!data.error) {
         setCities(data.data.map(city => ({ name: city })));
       } else {
         setCities([]);
       }
     } catch (err) {
-      console.error("Error fetching cities:", err);
+      console.error('Error fetching cities:', err);
       setCities([]);
     } finally {
       setLoadingCities(false);
@@ -155,25 +144,17 @@ const VendorManagement = () => {
   };
 
   const fetchFilterCities = async (stateName) => {
-    if (!stateName) {
-      setFilterCities([]);
-      return;
-    }
+    if (!stateName) { setFilterCities([]); return; }
     setLoadingFilterCities(true);
     try {
-      const response = await fetch('https://countriesnow.space/api/v0.1/countries/state/cities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ country: "India", state: stateName })
-      });
-      const data = await response.json();
+      const { data } = await axios.post('https://countriesnow.space/api/v0.1/countries/state/cities', { country: 'India', state: stateName });
       if (!data.error) {
         setFilterCities(data.data.map(city => ({ name: city })));
       } else {
         setFilterCities([]);
       }
     } catch (err) {
-      console.error("Error fetching filter cities:", err);
+      console.error('Error fetching filter cities:', err);
       setFilterCities([]);
     } finally {
       setLoadingFilterCities(false);
@@ -181,25 +162,17 @@ const VendorManagement = () => {
   };
 
   const fetchExportCities = async (stateName) => {
-    if (!stateName) {
-      setExportCities([]);
-      return;
-    }
+    if (!stateName) { setExportCities([]); return; }
     setLoadingExportCities(true);
     try {
-      const response = await fetch('https://countriesnow.space/api/v0.1/countries/state/cities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ country: "India", state: stateName })
-      });
-      const data = await response.json();
+      const { data } = await axios.post('https://countriesnow.space/api/v0.1/countries/state/cities', { country: 'India', state: stateName });
       if (!data.error) {
         setExportCities(data.data.map(city => ({ name: city })));
       } else {
         setExportCities([]);
       }
     } catch (err) {
-      console.error("Error fetching export cities:", err);
+      console.error('Error fetching export cities:', err);
       setExportCities([]);
     } finally {
       setLoadingExportCities(false);

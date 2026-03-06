@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Check, ArrowRight, ArrowLeft, Loader, MapPin, Phone, Mail, User, Lock } from 'lucide-react';
 import { getSubscriptions } from '../../../api/adminApi';
@@ -58,17 +59,10 @@ const Signup = () => {
     const fetchStates = async () => {
         setLoadingStates(true);
         try {
-            const response = await fetch('https://countriesnow.space/api/v0.1/countries/states', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ country: "India" })
-            });
-            const data = await response.json();
-            if (!data.error) {
-                setStates(data.data.states);
-            }
+            const { data } = await axios.post('https://countriesnow.space/api/v0.1/countries/states', { country: 'India' });
+            if (!data.error) setStates(data.data.states);
         } catch (err) {
-            console.error("Error fetching states:", err);
+            console.error('Error fetching states:', err);
         } finally {
             setLoadingStates(false);
         }
@@ -77,19 +71,14 @@ const Signup = () => {
     const fetchCities = async (stateName) => {
         setLoadingCities(true);
         try {
-            const response = await fetch('https://countriesnow.space/api/v0.1/countries/state/cities', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ country: "India", state: stateName })
-            });
-            const data = await response.json();
+            const { data } = await axios.post('https://countriesnow.space/api/v0.1/countries/state/cities', { country: 'India', state: stateName });
             if (!data.error) {
                 setCities(data.data.map(city => ({ name: city })));
             } else {
                 setCities([]);
             }
         } catch (err) {
-            console.error("Error fetching cities:", err);
+            console.error('Error fetching cities:', err);
             setCities([]);
         } finally {
             setLoadingCities(false);

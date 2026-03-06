@@ -1,214 +1,248 @@
 import { useState, useEffect } from 'react';
-import { getAuctionData, saveAuctionData, getSellerLedger } from '../../utils/localStorage';
+import axios from 'axios';
+import { useSelector } from 'react-redux';
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './SellerDetails.css';
-import { Plus, Pencil, Trash2, X, Eye, Search } from 'lucide-react';
+import { Plus, Trash2, X, Eye, Search, Loader } from 'lucide-react';
+import SearchableSelect from '../Common/SearchableSelect';
 import { toast } from 'react-toastify';
+import {
+    getSellers,
+    createSeller,
+    deleteSeller,
+    toggleSellerStatus,
+    recordSellerPayment,
+    getSellerPayments,
+} from '../../api/sellerApi';
+import { getAuctionData, getSellerLedger } from '../../utils/localStorage';
 
 function SellerDetails() {
-    const [sellers, setSellers] = useState([]);
-    const [transactions, setTransactions] = useState([]);
+    // ── Auth ─────────────────────────────────────────────
+    const { vendorId } = useSelector((state) => state.vendorAuth);
+    const currentVendorId = vendorId || sessionStorage.getItem('vendorId');
+
+    // ── Sellers list ──────────────────────────────────────
+    const [sellers, setSellers]           = useState([]);
+    const [loading, setLoading]           = useState(false);
     const [selectedSeller, setSelectedSeller] = useState(null);
-    const [ledger, setLedger] = useState([]);
-    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [ledger, setLedger]             = useState([]);
+    const [searchQuery, setSearchQuery]   = useState('');
+    const [activeTab, setActiveTab]       = useState('products');
+
+    // ── Add Seller modal ──────────────────────────────────
     const [showAddModal, setShowAddModal] = useState(false);
-    const [newSeller, setNewSeller] = useState({
-        name: '',
-        contact: '',
-        address: '',
-        email: '',
+    const [isSaving, setIsSaving]         = useState(false);
+    const [newSeller, setNewSeller]       = useState({
+        name: '', contact: '', address: '', state: '', city: '', email: '',
     });
-    // Payment Modal State
-    // Payment Modal State
+
+    // ── State / City (countriesnow) ───────────────────────
+    const [states, setStates]             = useState([]);
+    const [cities, setCities]             = useState([]);
+    const [loadingStates, setLoadingStates] = useState(false);
+    const [loadingCities, setLoadingCities] = useState(false);
+
+    // ── Delete confirm ───────────────────────────────────
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [sellerToDelete, setSellerToDelete]           = useState(null);
+    const [isDeleting, setIsDeleting]                   = useState(false);
+
+    // ── Payment modal ─────────────────────────────────────
     const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false);
-    const [paymentConfig, setPaymentConfig] = useState(null); // { type: 'product'|'global', targetId: string, targetName: string, maxAmount: number }
+    const [paymentConfig, setPaymentConfig] = useState(null);
     const [paymentAmount, setPaymentAmount] = useState('');
-    const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+    const [paymentDate, setPaymentDate]     = useState(new Date().toISOString().split('T')[0]);
     const [paymentMethod, setPaymentMethod] = useState('Cash');
-    const [paymentNote, setPaymentNote] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
+    const [paymentNote, setPaymentNote]     = useState('');
+    const [isPaymentSaving, setIsPaymentSaving] = useState(false);
 
-    const [activeTab, setActiveTab] = useState('products');
+    // ── Product view modal ────────────────────────────────
+    const [viewingProduct, setViewingProduct]           = useState(null);
+    const [showProductViewModal, setShowProductViewModal] = useState(false);
 
+    // ─────────────────────────────────────────────────────
+    //  Init
+    // ─────────────────────────────────────────────────────
     useEffect(() => {
-        loadSellers();
-    }, []);
+        if (currentVendorId) loadSellers();
+        fetchStates();
+    }, [currentVendorId]);
 
-    const loadSellers = () => {
-        const data = getAuctionData();
-        if (data && data.sellers) {
-            const allProducts = data.products || [];
-            const allTransactions = data.transactions || [];
-            const allPayments = data.sellerPayments || [];
-            const allCredits = data.sellerCredits || [];
+    // ─────────────────────────────────────────────────────
+    //  State / City API
+    // ─────────────────────────────────────────────────────
+    const fetchStates = async () => {
+        setLoadingStates(true);
+        try {
+            const { data } = await axios.post('https://countriesnow.space/api/v0.1/countries/states', { country: 'India' });
+            if (!data.error) setStates(data.data.states);
+        } catch (err) {
+            console.error('Error fetching states:', err);
+        } finally {
+            setLoadingStates(false);
+        }
+    };
 
-            // Calculate stats for each seller
-            const sellersWithStats = data.sellers.map(seller => {
-                const sellerProducts = allProducts.filter(p => p.sellerId === seller.id);
-                const sellerTransactions = allTransactions.filter(t => t.sellerId === seller.id);
-                const sellerPayments = allPayments.filter(p => p.sellerId === seller.id);
-                const sellerCredits = allCredits.filter(c => c.sellerId === seller.id);
+    const fetchCities = async (stateName) => {
+        if (!stateName) { setCities([]); return; }
+        setLoadingCities(true);
+        try {
+            const { data } = await axios.post('https://countriesnow.space/api/v0.1/countries/state/cities', { country: 'India', state: stateName });
+            setCities(data.error ? [] : data.data.map(c => ({ name: c })));
+        } catch (err) {
+            console.error('Error fetching cities:', err);
+            setCities([]);
+        } finally {
+            setLoadingCities(false);
+        }
+    };
 
-                // Calculate Totals
-                const totalGrossSales = sellerTransactions.reduce((sum, t) => sum + (t.finalAmount || 0), 0);
-                const totalCommission = sellerTransactions.reduce((sum, t) => sum + (t.commissionAmount || 0), 0);
-                const totalNetSales = sellerTransactions.reduce((sum, t) => sum + (t.netAmount || 0), 0);
+    // ─────────────────────────────────────────────────────
+    //  Load Sellers from DB + merge local transaction stats
+    // ─────────────────────────────────────────────────────
+    const loadSellers = async () => {
+        setLoading(true);
+        try {
+            const res = await getSellers(currentVendorId);
+            const rawSellers = res.data || res.sellers || [];
 
-                const totalPaid = sellerPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
-                // For now assuming credit is "money given to seller" (like advance), so it reduces the balance owed.
-                const totalCredit = sellerCredits.reduce((sum, c) => sum + (c.amount || 0), 0);
+            // Merge with local auction data for transaction/payment stats
+            const localData   = getAuctionData();
+            const allProducts = localData?.products     || [];
+            const allTxns     = localData?.transactions || [];
+            const allPayments = localData?.sellerPayments || [];
+            const allCredits  = localData?.sellerCredits  || [];
 
-                // Balance = Net Sales - Paid - Credit
-                const balance = totalNetSales - totalPaid - totalCredit;
+            const enriched = rawSellers.map(seller => {
+                const sid = seller._id || seller.id;
+                const sellerProducts    = allProducts.filter(p => p.sellerId === sid);
+                const sellerTransactions = allTxns.filter(t  => t.sellerId  === sid);
+                const sellerPayments    = allPayments.filter(p => p.sellerId === sid);
+                const sellerCredits     = allCredits.filter(c  => c.sellerId === sid);
 
+                const totalGrossSales = sellerTransactions.reduce((s, t) => s + (t.finalAmount    || 0), 0);
+                const totalCommission = sellerTransactions.reduce((s, t) => s + (t.commissionAmount || 0), 0);
+                const totalNetSales   = sellerTransactions.reduce((s, t) => s + (t.netAmount       || 0), 0);
+                const totalPaid       = sellerPayments.reduce((s, p)    => s + (p.amount           || 0), 0);
+                const totalCredit     = sellerCredits.reduce((s, c)     => s + (c.amount           || 0), 0);
+                const balance         = totalNetSales - totalPaid - totalCredit;
 
                 return {
                     ...seller,
+                    id: sid,   // normalise id
                     totalItems: sellerProducts.length,
-                    totalSales: totalNetSales, // Use Net Sales for consistency
+                    totalSales: totalNetSales,
                     totalGrossSales,
                     totalCommission,
                     totalCredit,
                     totalPaid,
                     balance,
-                    products: sellerProducts,
+                    products:     sellerProducts,
                     transactions: sellerTransactions,
-                    payments: sellerPayments,
-                    credits: sellerCredits
+                    payments:     sellerPayments,
+                    credits:      sellerCredits,
                 };
             });
-            setSellers(sellersWithStats);
-            return sellersWithStats;
+
+            setSellers(enriched);
+        } catch (err) {
+            console.error('Error loading sellers:', err);
+            toast.error(err?.message || 'Failed to load sellers');
+        } finally {
+            setLoading(false);
         }
-        return [];
     };
 
+    // ─────────────────────────────────────────────────────
+    //  Open seller detail view
+    // ─────────────────────────────────────────────────────
     const openDetailsModal = (seller) => {
-        // Find seller products from data if not already attached via simplified loadSellers
-        const data = getAuctionData();
-        const sellerProducts = (data.products || []).filter(p => p.sellerId === seller.id)
-            .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date desc
+        const localData     = getAuctionData();
+        const sellerProducts = (localData?.products || [])
+            .filter(p => p.sellerId === seller.id)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
 
         setSelectedSeller({ ...seller, products: sellerProducts });
         setLedger(getSellerLedger(seller.id));
-        // setShowDetailsModal(true); // No longer needed
+        setActiveTab('products');
     };
 
-    const handleToggleStatus = (id) => {
-        const data = getAuctionData();
-        const index = data.sellers.findIndex(s => s.id === id);
-        if (index !== -1) {
-            data.sellers[index].status = data.sellers[index].status === 'inactive' ? 'active' : 'inactive';
-            saveAuctionData(data);
+    const handleBackToSellers = () => setSelectedSeller(null);
+
+    // ─────────────────────────────────────────────────────
+    //  Add Seller
+    // ─────────────────────────────────────────────────────
+    const handleAddSeller = async (e) => {
+        e.preventDefault();
+        if (!currentVendorId) { toast.error('Vendor not authenticated'); return; }
+        setIsSaving(true);
+        try {
+            const payload = {
+                ...newSeller,
+                vendorId: currentVendorId,
+            };
+            await createSeller(payload);
+            toast.success('Seller added successfully!');
+            setNewSeller({ name: '', contact: '', address: '', state: '', city: '', email: '' });
+            setCities([]);
+            setShowAddModal(false);
             loadSellers();
-            // Update selected seller if modal is open
-            if (selectedSeller && selectedSeller.id === id) {
-                setSelectedSeller({ ...selectedSeller, status: data.sellers[index].status });
-            }
+        } catch (err) {
+            toast.error(err?.message || 'Failed to add seller');
+        } finally {
+            setIsSaving(false);
         }
     };
 
-    const handleAddSeller = (e) => {
-        e.preventDefault();
-        const data = getAuctionData();
-
-        const seller = {
-            id: Date.now(),
-            ...newSeller,
-            totalSales: 0,
-            status: 'active',
-            password: '123' // Default password
-        };
-
-        data.sellers.push(seller);
-        saveAuctionData(data);
-
-        setNewSeller({ name: '', contact: '', address: '', email: '' });
-        setShowAddModal(false);
-        loadSellers();
-    };
-
-    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-    const [sellerToDelete, setSellerToDelete] = useState(null);
-
-    const handleDeleteClick = (id) => {
-        setSellerToDelete(id);
+    // ─────────────────────────────────────────────────────
+    //  Delete Seller
+    // ─────────────────────────────────────────────────────
+    const handleDeleteClick = (seller) => {
+        setSellerToDelete(seller);
         setIsDeleteConfirmOpen(true);
     };
 
-    const confirmDeleteSeller = () => {
-        if (sellerToDelete) {
-            const data = getAuctionData();
-            data.sellers = data.sellers.filter(s => s.id !== sellerToDelete);
-            saveAuctionData(data);
-            loadSellers();
+    const confirmDeleteSeller = async () => {
+        if (!sellerToDelete) return;
+        setIsDeleting(true);
+        try {
+            await deleteSeller(sellerToDelete._id || sellerToDelete.id);
+            toast.success('Seller deleted successfully');
             setIsDeleteConfirmOpen(false);
             setSellerToDelete(null);
+            loadSellers();
+        } catch (err) {
+            toast.error(err?.message || 'Failed to delete seller');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
-    const handleRecordPayment = (e) => {
-        e.preventDefault();
-        const amount = parseFloat(paymentAmount);
-
-        if (isNaN(amount) || amount <= 0) {
-            toast.error("Please enter a valid amount.");
-            return;
+    // ─────────────────────────────────────────────────────
+    //  Toggle Status
+    // ─────────────────────────────────────────────────────
+    const handleToggleStatus = async (id) => {
+        const seller = sellers.find(s => s.id === id) || selectedSeller;
+        if (!seller) return;
+        const newStatus = seller.status === 'inactive' ? 'active' : 'inactive';
+        try {
+            await toggleSellerStatus(id, newStatus);
+            toast.success(`Login ${newStatus === 'active' ? 'enabled' : 'disabled'}`);
+            if (selectedSeller?.id === id) {
+                setSelectedSeller(prev => ({ ...prev, status: newStatus }));
+            }
+            loadSellers();
+        } catch (err) {
+            toast.error(err?.message || 'Failed to update status');
         }
-
-        if (paymentConfig.type === 'product' && paymentConfig.maxAmount !== undefined && amount > paymentConfig.maxAmount) {
-            toast.error(`Payment amount cannot exceed the pending balance of ₹${paymentConfig.maxAmount.toLocaleString()}`);
-            return;
-        }
-
-        const data = getAuctionData();
-
-        // New Payment Record
-        const newPayment = {
-            id: Date.now(),
-            sellerId: selectedSeller.id,
-            productId: paymentConfig.type === 'product' ? paymentConfig.targetId : null,
-            date: paymentDate,
-            amount: amount,
-            method: paymentMethod,
-            type: paymentConfig.type === 'product' ? 'Sale' : 'Payment',
-            note: paymentNote || (paymentConfig.type === 'product' ? `Payment for ${paymentConfig.targetName}` : 'Global Payment'),
-            reference: `PAY-${Date.now()}`
-        };
-
-        if (!data.sellerPayments) {
-            data.sellerPayments = [];
-        }
-        data.sellerPayments.push(newPayment);
-
-        saveAuctionData(data);
-
-        // Recalculate and reload from source
-        const updatedSellers = loadSellers();
-        const updatedSeller = updatedSellers.find(s => s.id === selectedSeller.id);
-
-        if (updatedSeller) {
-            // Ensure products are sorted just like in openDetailsModal
-            updatedSeller.products.sort((a, b) => new Date(b.date) - new Date(a.date));
-            setSelectedSeller(updatedSeller);
-        }
-
-        setLedger(getSellerLedger(selectedSeller.id));
-
-        setShowRecordPaymentModal(false);
-        setPaymentAmount('');
-        setPaymentNote('');
-        setPaymentConfig(null);
-        toast.success(`Payment of ₹${amount.toLocaleString()} recorded successfully.`);
     };
 
+    // ─────────────────────────────────────────────────────
+    //  Payment modal helpers
+    // ─────────────────────────────────────────────────────
     const openGlobalPaymentModal = () => {
-        setPaymentConfig({
-            type: 'global',
-            targetName: 'Global Account',
-            maxAmount: selectedSeller.balance // Global balance
-        });
+        setPaymentConfig({ type: 'global', targetName: 'Global Account', maxAmount: selectedSeller.balance });
         setPaymentAmount('');
         setPaymentDate(new Date().toISOString().split('T')[0]);
         setPaymentMethod('Cash');
@@ -218,107 +252,102 @@ function SellerDetails() {
 
     const openProductPaymentModal = (product) => {
         const pTransactions = (selectedSeller.transactions || []).filter(t => t.productId === product.id);
-        const totalNet = pTransactions.reduce((sum, t) => sum + (Number(t.netAmount) || 0), 0);
-
+        const totalNet  = pTransactions.reduce((s, t) => s + (Number(t.netAmount) || 0), 0);
         const pPayments = (selectedSeller.payments || []).filter(p => p.productId === product.id);
-        const totalPaid = pPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        const totalPaid = pPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+        const balance   = totalNet - totalPaid;
 
-        const balance = totalNet - totalPaid;
-
-        if (balance <= 0) {
-            // Allow payment even if balance is 0? Maybe advance? 
-            // For now, let's warn but allow if they really want, or just set maxAmount 0
-        }
-
-        setPaymentConfig({
-            type: 'product',
-            targetId: product.id,
-            targetName: product.name,
-            maxAmount: Math.max(0, balance)
-        });
-        setPaymentAmount(''); // Don't prefill full amount, let user type
+        setPaymentConfig({ type: 'product', targetId: product.id, targetName: product.name, maxAmount: Math.max(0, balance) });
+        setPaymentAmount('');
         setPaymentDate(new Date().toISOString().split('T')[0]);
         setPaymentMethod('Cash');
         setPaymentNote(`Payment for ${product.name}`);
         setShowRecordPaymentModal(true);
     };
 
-    // Product View Modal State
-    const [viewingProduct, setViewingProduct] = useState(null);
-    const [showProductViewModal, setShowProductViewModal] = useState(false);
+    const handleRecordPayment = async (e) => {
+        e.preventDefault();
+        const amount = parseFloat(paymentAmount);
+        if (isNaN(amount) || amount <= 0) { toast.error('Please enter a valid amount.'); return; }
+        if (paymentConfig?.type === 'product' && paymentConfig.maxAmount !== undefined && amount > paymentConfig.maxAmount) {
+            toast.error(`Payment cannot exceed ₹${paymentConfig.maxAmount.toLocaleString()}`);
+            return;
+        }
 
+        setIsPaymentSaving(true);
+        try {
+            const payload = {
+                vendorId:  currentVendorId,
+                sellerId:  selectedSeller._id || selectedSeller.id,
+                productId: paymentConfig.type === 'product' ? paymentConfig.targetId : null,
+                date:      paymentDate,
+                amount,
+                method:    paymentMethod,
+                type:      paymentConfig.type === 'product' ? 'Sale' : 'Payment',
+                note:      paymentNote || (paymentConfig.type === 'product' ? `Payment for ${paymentConfig.targetName}` : 'Global Payment'),
+                reference: `PAY-${Date.now()}`,
+            };
+
+            await recordSellerPayment(payload);
+            toast.success(`Payment of ₹${amount.toLocaleString()} recorded successfully.`);
+            setShowRecordPaymentModal(false);
+            setPaymentAmount('');
+            setPaymentNote('');
+            setPaymentConfig(null);
+            // Refresh seller data
+            await loadSellers();
+            // Re-open detail view with fresh data
+            const updated = sellers.find(s => s.id === (selectedSeller._id || selectedSeller.id));
+            if (updated) setSelectedSeller({ ...updated, products: selectedSeller.products });
+            setLedger(getSellerLedger(selectedSeller._id || selectedSeller.id));
+        } catch (err) {
+            toast.error(err?.message || 'Failed to record payment');
+        } finally {
+            setIsPaymentSaving(false);
+        }
+    };
+
+    // ─────────────────────────────────────────────────────
+    //  Product View
+    // ─────────────────────────────────────────────────────
     const handleViewProduct = (productId) => {
         const product = selectedSeller.products.find(p => p.id === productId);
         if (!product) return;
 
-        // Find related transactions for this product
-        const relatedTransactions = (selectedSeller.transactions || []).filter(t => t.productId === productId);
-
-        // Calculate Stats PER VARIANT
+        const relatedTxns   = (selectedSeller.transactions || []).filter(t => t.productId === productId);
         const variantsWithStats = (product.variants || []).map(variant => {
-            const variantTransactions = relatedTransactions.filter(t => t.variantId === variant.id);
-            const price = variantTransactions.reduce((sum, t) => sum + (t.finalAmount || 0), 0);
-            const commission = variantTransactions.reduce((sum, t) => sum + (t.commissionAmount || 0), 0);
-            const net = variantTransactions.reduce((sum, t) => sum + (t.netAmount || 0), 0);
-            const soldQty = variantTransactions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
-
-            // We don't track payments per variant in UI yet, but we could if we wanted.
-            // For now, sticky to Product-level tracking as requested.
+            const vt = relatedTxns.filter(t => t.variantId === variant.id);
             return {
                 ...variant,
-                sellQuantity: soldQty,
-                stats: { price, commission, net }
+                sellQuantity: vt.reduce((s, t) => s + (Number(t.quantity) || 0), 0),
+                stats: {
+                    price:      vt.reduce((s, t) => s + (t.finalAmount      || 0), 0),
+                    commission: vt.reduce((s, t) => s + (t.commissionAmount  || 0), 0),
+                    net:        vt.reduce((s, t) => s + (t.netAmount         || 0), 0),
+                },
             };
         });
 
-        // Calculate Grand Totals for the product
-        const totalSales = relatedTransactions.reduce((sum, t) => sum + (t.finalAmount || 0), 0);
-        const totalCommission = relatedTransactions.reduce((sum, t) => sum + (t.commissionAmount || 0), 0);
-        const totalNet = relatedTransactions.reduce((sum, t) => sum + (t.netAmount || 0), 0);
-
-        // Calculate Paid from payments
-        const pPayments = (selectedSeller.payments || []).filter(p => p.productId === productId);
-        const totalPaid = pPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-        const totalBalance = totalNet - totalPaid;
+        const totalSales      = relatedTxns.reduce((s, t) => s + (t.finalAmount      || 0), 0);
+        const totalCommission = relatedTxns.reduce((s, t) => s + (t.commissionAmount  || 0), 0);
+        const totalNet        = relatedTxns.reduce((s, t) => s + (t.netAmount         || 0), 0);
+        const pPayments       = (selectedSeller.payments || []).filter(p => p.productId === productId);
+        const totalPaid       = pPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
 
         setViewingProduct({
             ...product,
             variants: variantsWithStats,
-            stats: {
-                price: totalSales,
-                commission: totalCommission,
-                net: totalNet,
-                paid: totalPaid,
-                balance: totalBalance
-            },
-            relatedTransactions
+            stats: { price: totalSales, commission: totalCommission, net: totalNet, paid: totalPaid, balance: totalNet - totalPaid },
+            relatedTransactions: relatedTxns,
         });
         setShowProductViewModal(true);
     };
 
-    const handlePayBalance = (productId) => {
-        // No obsolete logic here, now calling openProductPaymentModal
-        // But we need the product object, and here we only got productId in previous implementation loop? 
-        // Let's find the product again or pass it. The map loop below has 'p' which is product.
-        // It's cleaner to pass 'p' in the JSX.
-        // For backwards compatibility relative to where this function sat in logic...
-        const product = selectedSeller.products.find(p => p.id === productId);
-        if (product) openProductPaymentModal(product);
-    };
-
-    // Obsolete function removed. 
-
-    // Helper to close details view
-    const handleBackToSellers = () => {
-        setSelectedSeller(null);
-    };
-
-
-
-
+    // ─────────────────────────────────────────────────────
+    //  Render
+    // ─────────────────────────────────────────────────────
     return (
         <>
-            {/* ... Modal Wrappers ... */}
             <ConfirmationModal
                 isOpen={isDeleteConfirmOpen}
                 onClose={() => setIsDeleteConfirmOpen(false)}
@@ -329,10 +358,11 @@ function SellerDetails() {
                 confirmText="Yes, Delete Seller"
                 cancelText="Cancel"
                 variant="danger"
+                isLoading={isDeleting}
             />
 
+            {/* ── Page Header ── */}
             <div className="content-header">
-                {/* ... Header Content ... */}
                 <div className="header-top">
                     <h1>{selectedSeller ? 'Seller Details' : 'Sellers'}</h1>
                     <div className="header-actions">
@@ -351,7 +381,10 @@ function SellerDetails() {
                 <div className="breadcrumb">
                     <span>Home</span>
                     <span className="breadcrumb-separator">/</span>
-                    <span onClick={selectedSeller ? handleBackToSellers : undefined} style={{ cursor: selectedSeller ? 'pointer' : 'default', textDecoration: selectedSeller ? 'underline' : 'none' }}>
+                    <span
+                        onClick={selectedSeller ? handleBackToSellers : undefined}
+                        style={{ cursor: selectedSeller ? 'pointer' : 'default', textDecoration: selectedSeller ? 'underline' : 'none' }}
+                    >
                         Sellers
                     </span>
                     {selectedSeller && (
@@ -370,6 +403,7 @@ function SellerDetails() {
                             <h3 className="section-title">All Sellers ({sellers.length})</h3>
                         </div>
 
+                        {/* Search */}
                         <div className="card fade-in search-card">
                             <div className="form-group search-form-group">
                                 <div style={{ position: 'relative' }}>
@@ -386,15 +420,21 @@ function SellerDetails() {
                             </div>
                         </div>
 
+                        {/* Seller Cards */}
                         <div className="card-list fade-in">
-                            {sellers.length === 0 ? (
+                            {loading ? (
+                                <div className="empty-state">
+                                    <Loader size={32} className="spin" />
+                                    <p>Loading sellers...</p>
+                                </div>
+                            ) : sellers.length === 0 ? (
                                 <div className="empty-state">
                                     <div className="empty-state-icon">👤</div>
                                     <p>No sellers registered yet</p>
                                 </div>
                             ) : (
                                 sellers
-                                    .filter(seller => seller.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                                    .filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
                                     .map(seller => (
                                         <div key={seller.id} className="data-card clickable-card" onClick={() => openDetailsModal(seller)}>
                                             <div className="data-card-header">
@@ -402,18 +442,26 @@ function SellerDetails() {
                                                     <div className="data-card-title">{seller.name}</div>
                                                     <div className="data-card-subtitle">{seller.contact}</div>
                                                 </div>
-                                                <button className="icon-btn delete" onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteClick(seller.id);
-                                                }} title="Delete Seller">
+                                                <button
+                                                    className="icon-btn delete"
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteClick(seller); }}
+                                                    title="Delete Seller"
+                                                >
                                                     <Trash2 size={18} />
                                                 </button>
                                             </div>
-
                                             <div className="data-card-body">
                                                 <div className="data-row">
-                                                    <span className="data-label">Address</span>
-                                                    <span className="data-value">{seller.address}</span>
+                                                    <span className="data-label">Location</span>
+                                                    <span className="data-value">
+                                                        {[seller.city, seller.state].filter(Boolean).join(', ') || seller.address || 'N/A'}
+                                                    </span>
+                                                </div>
+                                                <div className="data-row">
+                                                    <span className="data-label">Vendor ID</span>
+                                                    <span className="data-value" style={{ fontFamily: 'monospace', fontSize: '0.78rem', opacity: 0.7 }}>
+                                                        {seller.vendorId || currentVendorId}
+                                                    </span>
                                                 </div>
                                                 <div className="data-row">
                                                     <span className="data-label">Login Access</span>
@@ -428,11 +476,23 @@ function SellerDetails() {
                         </div>
                     </>
                 ) : (
-                    /* Detail View Logic */
+                    /* Detail View */
                     <div className="fade-in">
                         <div className="card profile-container" style={{ marginBottom: '2rem' }}>
                             <div className="profile-layout">
                                 <div className="profile-info">
+                                    <div className="data-row">
+                                        <span className="data-label">Seller ID</span>
+                                        <span className="data-value" style={{ fontFamily: 'monospace', fontSize: '0.78rem', opacity: 0.7 }}>
+                                            {selectedSeller._id || selectedSeller.id}
+                                        </span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">Vendor ID</span>
+                                        <span className="data-value" style={{ fontFamily: 'monospace', fontSize: '0.78rem', opacity: 0.7 }}>
+                                            {selectedSeller.vendorId || currentVendorId}
+                                        </span>
+                                    </div>
                                     <div className="data-row">
                                         <span className="data-label">Contact</span>
                                         <span className="data-value">{selectedSeller.contact}</span>
@@ -442,54 +502,42 @@ function SellerDetails() {
                                         <span className="data-value">{selectedSeller.email || 'N/A'}</span>
                                     </div>
                                     <div className="data-row">
+                                        <span className="data-label">State</span>
+                                        <span className="data-value">{selectedSeller.state || 'N/A'}</span>
+                                    </div>
+                                    <div className="data-row">
+                                        <span className="data-label">City</span>
+                                        <span className="data-value">{selectedSeller.city || 'N/A'}</span>
+                                    </div>
+                                    <div className="data-row">
                                         <span className="data-label">Address</span>
-                                        <span className="data-value">{selectedSeller.address}</span>
+                                        <span className="data-value">{selectedSeller.address || 'N/A'}</span>
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Login Access</span>
-                                        <span onClick={() => handleToggleStatus(selectedSeller.id)} className={`cursor-pointer badge btn ${selectedSeller.status === 'inactive' ? 'btn-success' : 'btn-error'} status-toggle-btn`}>
+                                        <span
+                                            onClick={() => handleToggleStatus(selectedSeller.id)}
+                                            className={`cursor-pointer badge btn ${selectedSeller.status === 'inactive' ? 'btn-success' : 'btn-error'} status-toggle-btn`}
+                                        >
                                             {selectedSeller.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
                                         </span>
                                     </div>
                                 </div>
-                                {/* <div className="profile-actions">
-                                    <button
-                                        className={`btn ${selectedSeller.status === 'inactive' ? 'btn-success' : 'btn-error'} status-toggle-btn`}
-                                        onClick={() => handleToggleStatus(selectedSeller.id)}
-                                    >
-                                        {selectedSeller.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
-                                    </button>
-                                    <button
-                                        className="btn btn-primary status-toggle-btn"
-                                        onClick={openGlobalPaymentModal}
-                                    >
-                                        Add Global Payment
-                                    </button>
-                                </div> */}
                             </div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                            <button
-                                className="btn btn-primary"
-                                onClick={openGlobalPaymentModal}
-                            >
-                                <Plus size={16} style={{ marginRight: '5px' }} />  Pay Out
+                            <button className="btn btn-primary" onClick={openGlobalPaymentModal}>
+                                <Plus size={16} style={{ marginRight: '5px' }} /> Pay Out
                             </button>
                         </div>
 
+                        {/* Tabs */}
                         <div className="history-tabs">
-                            <button
-                                className={`tab-button ${activeTab === 'products' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('products')}
-                            >
-                                {/* Selling Products ({selectedSeller.products?.length || 0}) */}
+                            <button className={`tab-button ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')}>
                                 Selling Products
                             </button>
-                            <button
-                                className={`tab-button ${activeTab === 'payments' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('payments')}
-                            >
+                            <button className={`tab-button ${activeTab === 'payments' ? 'active' : ''}`} onClick={() => setActiveTab('payments')}>
                                 Payments History
                             </button>
                         </div>
@@ -504,61 +552,33 @@ function SellerDetails() {
                                             <th>Sales (Net)</th>
                                             <th>Paid</th>
                                             <th>Balance</th>
-                                            {/* <th>Status</th> */}
                                             <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {(!selectedSeller.products || selectedSeller.products.length === 0) ? (
-                                            <tr>
-                                                <td colSpan="7" className="empty-td">No items submitted yet</td>
-                                            </tr>
+                                            <tr><td colSpan="6" className="empty-td">No items submitted yet</td></tr>
                                         ) : (
                                             (() => {
-                                                // 🔥 Calculate Seller Advance First
-                                                const sellerTotalNet = (selectedSeller.transactions || [])
-                                                    .reduce((sum, t) => sum + (Number(t.netAmount) || 0), 0);
-
-                                                const sellerTotalPaid = (selectedSeller.payments || [])
-                                                    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-
-                                                const sellerCredits = (selectedSeller.credits || [])
-                                                    .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
-
-                                                const sellerBalance = sellerTotalNet - sellerTotalPaid - sellerCredits;
-
-                                                let remainingAdvance = sellerBalance < 0
-                                                    ? Math.abs(sellerBalance)
-                                                    : 0;
+                                                const sellerTotalNet  = (selectedSeller.transactions || []).reduce((s, t) => s + (Number(t.netAmount) || 0), 0);
+                                                const sellerTotalPaid = (selectedSeller.payments    || []).reduce((s, p) => s + (Number(p.amount)   || 0), 0);
+                                                const sellerCredits   = (selectedSeller.credits     || []).reduce((s, c) => s + (Number(c.amount)   || 0), 0);
+                                                const sellerBalance   = sellerTotalNet - sellerTotalPaid - sellerCredits;
+                                                let remainingAdvance  = sellerBalance < 0 ? Math.abs(sellerBalance) : 0;
 
                                                 return selectedSeller.products.map(p => {
-                                                    // Calculate product stats from transactions
-                                                    const pTransactions = (selectedSeller.transactions || []).filter(t => t.productId === p.id);
+                                                    const pTxns    = (selectedSeller.transactions || []).filter(t => t.productId === p.id);
+                                                    const totalNet = pTxns.reduce((s, t) => s + (Number(t.netAmount) || 0), 0);
+                                                    const pPmts    = (selectedSeller.payments    || []).filter(pm => pm.productId === p.id);
+                                                    let totalPaid  = pPmts.reduce((s, pm) => s + (Number(pm.amount) || 0), 0);
+                                                    let totalBal   = totalNet - totalPaid;
 
-                                                    // Net Sales for this product
-                                                    const totalNet = pTransactions.reduce((sum, t) => sum + (Number(t.netAmount) || 0), 0);
-
-                                                    // Calculations using sellerPayments table for this product
-                                                    const pPayments = (selectedSeller.payments || []).filter(pmt => pmt.productId === p.id);
-                                                    let totalPaid = pPayments.reduce((sum, pmt) => sum + (Number(pmt.amount) || 0), 0);
-
-                                                    let totalBalance = totalNet - totalPaid;
-
-                                                    // 🔥 Apply Advance Adjustment
-                                                    let advanceUsed = 0;
-
-                                                    if (remainingAdvance > 0 && totalBalance > 0) {
-                                                        advanceUsed = Math.min(remainingAdvance, totalBalance);
-
-                                                        totalPaid += advanceUsed;       // ✅ Add to Paid column
-                                                        totalBalance -= advanceUsed;    // ✅ Reduce Balance
-                                                        remainingAdvance -= advanceUsed;
+                                                    if (remainingAdvance > 0 && totalBal > 0) {
+                                                        const used = Math.min(remainingAdvance, totalBal);
+                                                        totalPaid       += used;
+                                                        totalBal        -= used;
+                                                        remainingAdvance -= used;
                                                     }
-
-                                                    console.log(advanceUsed, totalPaid, totalBalance, remainingAdvance);
-
-
-                                                    const isPaidOff = totalBalance <= 0 && totalNet > 0;
 
                                                     return (
                                                         <tr key={p.id}>
@@ -566,25 +586,16 @@ function SellerDetails() {
                                                             <td className="product-name-bold">{p.name}</td>
                                                             <td>₹{totalNet.toLocaleString()}</td>
                                                             <td className="text-success">₹{totalPaid.toLocaleString()}</td>
-                                                            <td className={`text-error ${totalBalance > 0 ? 'font-bold' : ''}`}>
-                                                                ₹{Math.max(0, totalBalance).toLocaleString()}
+                                                            <td className={`text-error ${totalBal > 0 ? 'font-bold' : ''}`}>
+                                                                ₹{Math.max(0, totalBal).toLocaleString()}
                                                             </td>
-                                                            {/* <td>
-                                                            {isPaidOff ? (
-                                                                <span className="badge badge-success">Paid</span>
-                                                            ) : (
-                                                                <span className={`badge ${p.status === 'soldout' ? 'badge-warning' : 'badge-info'}`}>
-                                                                    {p.status}
-                                                                </span>
-                                                            )}
-                                                        </td> */}
                                                             <td>
                                                                 <div style={{ display: 'flex', gap: '5px' }}>
-                                                                    <button className="btn btn-sm btn-info" onClick={() => handleViewProduct(p.id)} title="View Details">
+                                                                    <button className="btn btn-sm btn-info" onClick={() => handleViewProduct(p.id)} title="View">
                                                                         <Eye size={16} />
                                                                     </button>
-                                                                    {totalBalance > 0 && (
-                                                                        <button className="btn btn-sm btn-primary" onClick={() => openProductPaymentModal(p)} title="Pay Balance">
+                                                                    {totalBal > 0 && (
+                                                                        <button className="btn btn-sm btn-primary" onClick={() => openProductPaymentModal(p)} title="Pay">
                                                                             Pay
                                                                         </button>
                                                                     )}
@@ -592,7 +603,7 @@ function SellerDetails() {
                                                             </td>
                                                         </tr>
                                                     );
-                                                })
+                                                });
                                             })()
                                         )}
                                     </tbody>
@@ -613,21 +624,16 @@ function SellerDetails() {
                                         </thead>
                                         <tbody>
                                             {ledger.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan="5" className="empty-td">No transactions found</td>
-                                                </tr>
+                                                <tr><td colSpan="5" className="empty-td">No transactions found</td></tr>
                                             ) : (
-                                                ledger.map((entry, index) => (
-                                                    <tr key={index}>
+                                                ledger.map((entry, idx) => (
+                                                    <tr key={idx}>
                                                         <td>{formatDate(entry.date)}</td>
                                                         <td>{entry.description}</td>
                                                         <td className="text-success">{entry.credit > 0 ? `₹${entry.credit.toLocaleString()}` : '-'}</td>
                                                         <td className="text-error">{entry.debit > 0 ? `₹${entry.debit.toLocaleString()}` : '-'}</td>
                                                         <td style={{ fontWeight: 'bold' }} className={entry.balance < 0 ? 'text-success' : ''}>
-                                                            {entry.balance < 0
-                                                                ? `Advance ₹${Math.abs(entry.balance).toLocaleString()}`
-                                                                : `₹${entry.balance.toLocaleString()}`
-                                                            }
+                                                            {entry.balance < 0 ? `Advance ₹${Math.abs(entry.balance).toLocaleString()}` : `₹${entry.balance.toLocaleString()}`}
                                                         </td>
                                                     </tr>
                                                 ))
@@ -639,266 +645,229 @@ function SellerDetails() {
                         )}
                     </div>
                 )}
-            </div >
+            </div>
 
-            {/* Product View Modal */}
-            {
-                showProductViewModal && viewingProduct && (
-                    <div className="modal-overlay" style={{ zIndex: 999 }} onClick={() => setShowProductViewModal(false)}>
-                        <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
-                            <div className="modal-header">
-                                <h3 className="modal-title">Product Details ({viewingProduct.name})</h3>
-
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    {viewingProduct.stats.balance > 0 && (
-                                        <div className='badge badge-error'>Total Due: ₹{viewingProduct.stats.balance}</div>
-                                    )}
-                                    <button className="modal-close" onClick={() => setShowProductViewModal(false)}><X /></button>
-                                </div>
-                            </div>
-                            <div className="modal-body">
-                                <div className="product-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                    <div style={{ display: 'flex', gap: '20px' }}>
-                                        <div className="product-image-preview" style={{ flex: '0 0 150px' }}>
-                                            {viewingProduct.image ? (
-                                                <img
-                                                    src={viewingProduct.image}
-                                                    alt={viewingProduct.name}
-                                                    style={{
-                                                        width: '100%',
-                                                        borderRadius: '8px',
-                                                        border: '1px solid #ddd'
-                                                    }}
-                                                />
-                                            ) : (
-                                                <div
-                                                    className="product-image-placeholder"
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '120px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        fontSize: '40px',
-                                                        border: '1px solid #ddd',
-                                                        borderRadius: '8px',
-                                                        background: '#f5f5f5'
-                                                    }}
-                                                >
-                                                    📦
-                                                </div>
-                                            )}
-                                            <div style={{ marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>
-                                                {formatDate(viewingProduct.date)}
-                                            </div>
-                                        </div>
-
-                                        <div className="product-info-details" style={{ flex: 1 }}>
-                                            {/* Summarized Stats */}
-                                            <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
-                                                <div>Total Sales: <b>₹{viewingProduct.stats.price.toLocaleString()}</b></div>
-                                                <div>Commission: <b>₹{viewingProduct.stats.commission.toLocaleString()}</b></div>
-                                                <div className="text-success">Total Paid: <b>₹{viewingProduct.stats.paid.toLocaleString()}</b></div>
-                                                <div className="text-error">Total Balance: <b>₹{viewingProduct.stats.balance.toLocaleString()}</b></div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <h4 style={{ margin: '0 0 10px 0' }}>Variant Details</h4>
-                                    <div className="table-wrapper">
-                                        <table className="history-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Variety</th>
-                                                    <th>Qty</th>
-                                                    <th>Sold Qty</th>
-                                                    <th>Sales</th>
-                                                    <th>Comm.</th>
-                                                    <th>Net Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {viewingProduct.variants.map((v, idx) => (
-                                                    <tr key={idx}>
-                                                        <td>{v.variety}</td>
-                                                        <td>{v.quantity} {v.unit}</td>
-                                                        <td>{v.sellQuantity || 0} {v.unit}</td>
-                                                        <td>₹{(v.stats?.price || 0).toLocaleString()}</td>
-                                                        <td>₹{(v.stats?.commission || 0).toLocaleString()}</td>
-                                                        <td className="text-success" style={{ fontWeight: 'bold' }}>
-                                                            ₹{(v.stats?.net || 0).toLocaleString()}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                                {viewingProduct.variants.length === 0 && (
-                                                    <tr><td colSpan="6" className="text-center">No variants found</td></tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
+            {/* ── Product View Modal ── */}
+            {showProductViewModal && viewingProduct && (
+                <div className="modal-overlay" style={{ zIndex: 999 }} onClick={() => setShowProductViewModal(false)}>
+                    <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Product Details ({viewingProduct.name})</h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 {viewingProduct.stats.balance > 0 && (
-                                    <button className="btn btn-primary" onClick={() => openProductPaymentModal(viewingProduct)}>
-                                        Pay Total Balance
-                                    </button>
+                                    <div className="badge badge-error">Total Due: ₹{viewingProduct.stats.balance}</div>
                                 )}
-                                <button className="btn btn-secondary" onClick={() => setShowProductViewModal(false)}>Close</button>
+                                <button className="modal-close" onClick={() => setShowProductViewModal(false)}><X /></button>
                             </div>
                         </div>
-                    </div>
-                )
-            }
-
-            {/* Record Payment Modal (Replaces Bulk Payment) */}
-            {
-                showRecordPaymentModal && selectedSeller && (
-                    <div className="modal-overlay" onClick={() => setShowRecordPaymentModal(false)}>
-                        <div className="modal" onClick={(e) => e.stopPropagation()}>
-                            <div className="modal-header">
-                                <h3 className="modal-title">Pay Out</h3>
-                                <button className="modal-close" onClick={() => setShowRecordPaymentModal(false)}>×</button>
+                        <div className="modal-body">
+                            <div className="product-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ display: 'flex', gap: '20px' }}>
+                                    <div className="product-image-preview" style={{ flex: '0 0 150px' }}>
+                                        {viewingProduct.image ? (
+                                            <img src={viewingProduct.image} alt={viewingProduct.name} style={{ width: '100%', borderRadius: '8px', border: '1px solid #ddd' }} />
+                                        ) : (
+                                            <div className="product-image-placeholder" style={{ width: '100%', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', border: '1px solid #ddd', borderRadius: '8px', background: '#f5f5f5' }}>📦</div>
+                                        )}
+                                        <div style={{ marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>{formatDate(viewingProduct.date)}</div>
+                                    </div>
+                                    <div className="product-info-details" style={{ flex: 1 }}>
+                                        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
+                                            <div>Total Sales: <b>₹{viewingProduct.stats.price.toLocaleString()}</b></div>
+                                            <div>Commission: <b>₹{viewingProduct.stats.commission.toLocaleString()}</b></div>
+                                            <div className="text-success">Total Paid: <b>₹{viewingProduct.stats.paid.toLocaleString()}</b></div>
+                                            <div className="text-error">Total Balance: <b>₹{viewingProduct.stats.balance.toLocaleString()}</b></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h4 style={{ margin: '0 0 10px 0' }}>Variant Details</h4>
+                                <div className="table-wrapper">
+                                    <table className="history-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Variety</th><th>Qty</th><th>Sold Qty</th><th>Sales</th><th>Comm.</th><th>Net Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {viewingProduct.variants.map((v, idx) => (
+                                                <tr key={idx}>
+                                                    <td>{v.variety}</td>
+                                                    <td>{v.quantity} {v.unit}</td>
+                                                    <td>{v.sellQuantity || 0} {v.unit}</td>
+                                                    <td>₹{(v.stats?.price || 0).toLocaleString()}</td>
+                                                    <td>₹{(v.stats?.commission || 0).toLocaleString()}</td>
+                                                    <td className="text-success" style={{ fontWeight: 'bold' }}>₹{(v.stats?.net || 0).toLocaleString()}</td>
+                                                </tr>
+                                            ))}
+                                            {viewingProduct.variants.length === 0 && (
+                                                <tr><td colSpan="6" className="text-center">No variants found</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <form onSubmit={handleRecordPayment}>
-                                <div className="modal-body">
-                                    {paymentConfig?.type === 'product' && (
+                        </div>
+                        <div className="modal-footer">
+                            {viewingProduct.stats.balance > 0 && (
+                                <button className="btn btn-primary" onClick={() => openProductPaymentModal(viewingProduct)}>Pay Total Balance</button>
+                            )}
+                            <button className="btn btn-secondary" onClick={() => setShowProductViewModal(false)}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Payment Modal ── */}
+            {showRecordPaymentModal && selectedSeller && (
+                <div className="modal-overlay" onClick={() => setShowRecordPaymentModal(false)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Pay Out</h3>
+                            <button className="modal-close" onClick={() => setShowRecordPaymentModal(false)}>×</button>
+                        </div>
+                        <form onSubmit={handleRecordPayment}>
+                            <div className="modal-body">
+                                {paymentConfig?.type === 'product' && (
+                                    <>
                                         <div className="data-row" style={{ marginBottom: '1rem' }}>
                                             <span className="data-label">Product Name</span>
                                             <span className="data-value">{paymentConfig.targetName}</span>
                                         </div>
-                                    )}
-
-                                    {paymentConfig?.type === 'product' && (
                                         <div className="data-row" style={{ marginBottom: '1rem' }}>
                                             <span className="data-label">Pending Balance</span>
                                             <span className="data-value text-error">₹{paymentConfig?.maxAmount?.toLocaleString() || 0}</span>
                                         </div>
-                                    )}
-
-                                    <div className="form-group">
-                                        <label className="form-label">Payment Date</label>
-                                        <input
-                                            type="date"
-                                            value={paymentDate}
-                                            onChange={(e) => setPaymentDate(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Payment Method</label>
-                                        <select
-                                            className="form-control"
-                                            value={paymentMethod}
-                                            onChange={(e) => setPaymentMethod(e.target.value)}
-                                        >
-                                            <option value="Cash">Cash</option>
-                                            <option value="Gpay">Gpay</option>
-                                            <option value="UPI">UPI</option>
-                                            <option value="Check">Check</option>
-                                        </select>
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Description</label>
-                                        <input
-                                            type="text"
-                                            value={paymentNote}
-                                            onChange={(e) => setPaymentNote(e.target.value)}
-                                            placeholder="e.g. Note"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Amount (₹)</label>
-                                        <input
-                                            type="number"
-                                            value={paymentAmount}
-                                            onChange={(e) => setPaymentAmount(e.target.value)}
-                                            max={paymentConfig?.type === 'product' ? paymentConfig.maxAmount : undefined}
-                                            min="1"
-                                            placeholder="Enter amount"
-                                            required
-                                            autoFocus
-                                        />
-                                    </div>
+                                    </>
+                                )}
+                                <div className="form-group">
+                                    <label className="form-label">Payment Date</label>
+                                    <input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} required />
                                 </div>
-                                <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowRecordPaymentModal(false)}>
-                                        Cancel
-                                    </button>
-                                    <button type="submit" className="btn btn-primary">
-                                        Save Payment
-                                    </button>
+                                <div className="form-group">
+                                    <label className="form-label">Payment Method</label>
+                                    <select className="form-control" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                                        <option value="Cash">Cash</option>
+                                        <option value="Gpay">Gpay</option>
+                                        <option value="UPI">UPI</option>
+                                        <option value="Check">Check</option>
+                                    </select>
                                 </div>
-                            </form>
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* Add Seller Modal */}
-            {
-                showAddModal && (
-                    <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-                        <div className="modal" onClick={(e) => e.stopPropagation()}>
-                            <div className="modal-header">
-                                <h3 className="modal-title">Add New Seller</h3>
-                                <button className="modal-close" onClick={() => setShowAddModal(false)}><X /></button>
+                                <div className="form-group">
+                                    <label className="form-label">Description</label>
+                                    <input type="text" value={paymentNote} onChange={(e) => setPaymentNote(e.target.value)} placeholder="e.g. Note" />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Amount (₹)</label>
+                                    <input
+                                        type="number"
+                                        value={paymentAmount}
+                                        onChange={(e) => setPaymentAmount(e.target.value)}
+                                        max={paymentConfig?.type === 'product' ? paymentConfig.maxAmount : undefined}
+                                        min="1"
+                                        placeholder="Enter amount"
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
                             </div>
-                            <form onSubmit={handleAddSeller}>
-                                <div className="modal-body">
-                                    <div className="form-group">
-                                        <label className="form-label">Name</label>
-                                        <input
-                                            type="text"
-                                            value={newSeller.name}
-                                            onChange={(e) => setNewSeller({ ...newSeller, name: e.target.value })}
-                                            placeholder="Full Name"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Contact Number</label>
-                                        <input
-                                            type="tel"
-                                            value={newSeller.contact}
-                                            onChange={(e) => setNewSeller({ ...newSeller, contact: e.target.value })}
-                                            placeholder="Mobile Number"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Mail Id (Email)</label>
-                                        <input
-                                            type="email"
-                                            value={newSeller.email}
-                                            onChange={(e) => setNewSeller({ ...newSeller, email: e.target.value })}
-                                            placeholder="example@mail.com"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="form-label">Address</label>
-                                        <textarea
-                                            value={newSeller.address}
-                                            onChange={(e) => setNewSeller({ ...newSeller, address: e.target.value })}
-                                            rows="3"
-                                            placeholder="Full address (Village, District...)"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>
-                                        Cancel
-                                    </button>
-                                    <button type="submit" className="btn btn-primary">
-                                        Add Seller
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowRecordPaymentModal(false)}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={isPaymentSaving}>
+                                    {isPaymentSaving ? <><Loader size={14} className="spin" /> Saving...</> : 'Save Payment'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                )
-            }
+                </div>
+            )}
+
+            {/* ── Add Seller Modal ── */}
+            {showAddModal && (
+                <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Add New Seller</h3>
+                            <button className="modal-close" onClick={() => setShowAddModal(false)}><X /></button>
+                        </div>
+                        <form onSubmit={handleAddSeller}>
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label className="form-label">Name *</label>
+                                    <input
+                                        type="text"
+                                        value={newSeller.name}
+                                        onChange={(e) => setNewSeller({ ...newSeller, name: e.target.value })}
+                                        placeholder="Full Name"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Contact Number *</label>
+                                    <input
+                                        type="tel"
+                                        value={newSeller.contact}
+                                        onChange={(e) => setNewSeller({ ...newSeller, contact: e.target.value })}
+                                        placeholder="Mobile Number"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Mail Id (Email)</label>
+                                    <input
+                                        type="email"
+                                        value={newSeller.email}
+                                        onChange={(e) => setNewSeller({ ...newSeller, email: e.target.value })}
+                                        placeholder="example@mail.com"
+                                    />
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    <div className="form-group">
+                                        <label className="form-label">State</label>
+                                        <SearchableSelect
+                                            name="state"
+                                            value={newSeller.state}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setNewSeller(prev => ({ ...prev, state: val, city: '' }));
+                                                fetchCities(val);
+                                            }}
+                                            placeholder={loadingStates ? 'Loading...' : 'Select State'}
+                                            options={states.map(s => ({ label: s.name, value: s.name }))}
+                                            disabled={loadingStates}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">City</label>
+                                        <SearchableSelect
+                                            name="city"
+                                            value={newSeller.city}
+                                            onChange={(e) => setNewSeller(prev => ({ ...prev, city: e.target.value }))}
+                                            placeholder={loadingCities ? 'Loading cities...' : !newSeller.state ? 'Select state first' : 'Select City'}
+                                            options={cities.map(c => ({ label: c.name, value: c.name }))}
+                                            disabled={!newSeller.state || loadingCities}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Address</label>
+                                    <textarea
+                                        value={newSeller.address}
+                                        onChange={(e) => setNewSeller({ ...newSeller, address: e.target.value })}
+                                        rows="2"
+                                        placeholder="Street / Village / District details"
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={isSaving}>
+                                    {isSaving ? <><Loader size={14} className="spin" /> Adding...</> : 'Add Seller'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

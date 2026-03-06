@@ -64,6 +64,27 @@
     font-size: 0.8rem !important;
 }
 
+/* Read-only state – field looks locked */
+.cr-global-input--readonly {
+    cursor: default !important;
+    opacity: 0.75;
+    background-color: var(--bg-tertiary) !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Neutral "Edit" button */
+.cr-edit-btn {
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-secondary) !important;
+    background: var(--bg-secondary) !important;
+    transition: background 0.2s, color 0.2s;
+}
+.cr-edit-btn:hover {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
 
 /* ─────────────────────────────────────────────────────────────────
    2. STAT CARDS  – coloured accent variants
