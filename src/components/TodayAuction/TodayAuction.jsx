@@ -8,6 +8,7 @@ import * as productApi from '../../api/vendorApi';
 import { getCommission } from '../../api/commissionApi';
 import { getSellers } from '../../api/sellerApi';
 import * as auctionApi from '../../api/auctionApi';
+import * as buyerApi from '../../api/buyerApi';
 
 const SearchableSelect = ({ options, value, onChange, placeholder, required, label, className = "", style = {} }) => {
     const [searchTerm, setSearchTerm] = useState(value || '');
@@ -318,7 +319,7 @@ function TodayAuction() {
                     setSellers(sellerResponse.data.filter(s => s.status === 'active'));
                 }
                 
-                const buyerResponse = await auctionApi.getBuyers(vendorId);
+                const buyerResponse = await buyerApi.getBuyers(vendorId);
                 if (buyerResponse.success) {
                     setBuyers(buyerResponse.data.filter(b => b.status === 'active'));
                 }

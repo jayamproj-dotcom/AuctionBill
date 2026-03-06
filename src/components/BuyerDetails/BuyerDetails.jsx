@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
+import { getTransactions, getAuctionProducts } from '../../api/auctionApi';
 import { 
     getBuyers, addBuyer, updateBuyer, deleteBuyer, 
-    getTransactions, getBuyerPayments, addBuyerPayment,
-    getAuctionProducts
-} from '../../api/auctionApi';
+    getBuyerPayments, addBuyerPayment
+} from '../../api/buyerApi';
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './BuyerDetails.css';
