@@ -1039,6 +1039,18 @@ function TodayAuction() {
                                         <>
                                             {/* ── Pricing Mode Radio Buttons ── */}
                                             <div className="form-group">
+                                                 <SearchableSelect
+                                                label="Buyer"
+                                                options={buyers}
+                                                value={saleData.buyerName}
+                                                onChange={(buyer) => setSaleData({
+                                                    ...saleData,
+                                                    buyerId: buyer._id || buyer.id,
+                                                    buyerName: buyer.name
+                                                })}
+                                                placeholder="Type to search buyer..."
+                                                required
+                                            />
                                                 <label className="form-label">Pricing Mode</label>
                                                 <div className="price-mode-radios">
                                                     <label className={`price-mode-option${saleData.priceMode === 'perQty' ? ' active' : ''}`}>
@@ -1118,25 +1130,10 @@ function TodayAuction() {
                                                     min="0"
                                                     required
                                                 />
-                                                {saleData.priceMode === 'perQty' && saleData.finalPrice && saleData.qtyToSell && (
-                                                    <small className="form-hint">
-                                                        Total = ₹{(parseFloat(saleData.finalPrice) * parseFloat(saleData.qtyToSell)).toLocaleString()}
-                                                    </small>
-                                                )}
+                                                
                                             </div>
 
-                                            <SearchableSelect
-                                                label="Buyer"
-                                                options={buyers}
-                                                value={saleData.buyerName}
-                                                onChange={(buyer) => setSaleData({
-                                                    ...saleData,
-                                                    buyerId: buyer._id || buyer.id,
-                                                    buyerName: buyer.name
-                                                })}
-                                                placeholder="Type to search buyer..."
-                                                required
-                                            />
+                                           
 
                                             {/* ── Live Calc Summary ── */}
                                             {saleData.finalPrice && saleData.qtyToSell && (() => {
