@@ -1007,6 +1007,19 @@ function TodayAuction() {
                                 
 
                                 <div className="form-group">
+                                     <SearchableSelect
+                                                label="Buyer"
+                                                options={buyers}
+                                                value={saleData.buyerName}
+                                                onChange={(buyer) => setSaleData({
+                                                    ...saleData,
+                                                    buyerId: buyer._id || buyer.id,
+                                                    buyerName: buyer.name
+                                                })}
+                                                placeholder="Type to search buyer..."
+                                                required
+                                            />
+                                            
                                     <label className="form-label">Select Variant</label>
                                     <select
                                         value={saleData.variantId}
@@ -1039,18 +1052,7 @@ function TodayAuction() {
                                         <>
                                             {/* ── Pricing Mode Radio Buttons ── */}
                                             <div className="form-group">
-                                                 <SearchableSelect
-                                                label="Buyer"
-                                                options={buyers}
-                                                value={saleData.buyerName}
-                                                onChange={(buyer) => setSaleData({
-                                                    ...saleData,
-                                                    buyerId: buyer._id || buyer.id,
-                                                    buyerName: buyer.name
-                                                })}
-                                                placeholder="Type to search buyer..."
-                                                required
-                                            />
+                                                
                                                 <label className="form-label">Pricing Mode</label>
                                                 <div className="price-mode-radios">
                                                     <label className={`price-mode-option${saleData.priceMode === 'perQty' ? ' active' : ''}`}>
