@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
-import { getTransactions, getAuctionProducts } from '../../api/auctionApi';
 import { 
-    getBuyers, addBuyer, updateBuyer, deleteBuyer, 
-    getBuyerPayments, addBuyerPayment
+    getBuyers, getBuyerSummary, addBuyer, updateBuyer, deleteBuyer, 
+    addBuyerPayment
 } from '../../api/buyerApi';
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
@@ -17,9 +16,6 @@ function BuyerDetails() {
     const vendorIdFromRedux = useSelector((state) => state.vendorAuth?.vendorId);
     const vendorId = vendorIdFromRedux || sessionStorage.getItem('vendorId');
     const [buyers, setBuyers] = useState([]);
-    const [allTransactions, setAllTransactions] = useState([]);
-    const [allPayments, setAllPayments] = useState([]);
-    const [allAuctionProducts, setAllAuctionProducts] = useState([]);
     const [selectedBuyer, setSelectedBuyer] = useState(null);
     const [ledger, setLedger] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -59,17 +55,21 @@ const [paymentNote, setPaymentNote] = useState('');
     const [showTransactionModal, setShowTransactionModal] = useState(false);
 
     const handleViewTransaction = (transaction) => {
-        const product = allAuctionProducts.find(p => p._id === transaction.productId);
+        // Product data is now populated by the backend in transaction.productId
+        const product = transaction.productId;
 
         if (product) {
-             const variant = (product.variants || []).find(v => v._id === transaction.variantId);
-
+             const variant = (product.variants || []).find(v => v._id === transaction.variantId || v.id === transaction.variantId);
+             
              setViewingTransaction({
                  ...transaction,
                  productImage: product.image,
                  productName: product.name,
                  productDate: product.date,
-                 variantDetails: variant
+                 variantDetails: variant,
+                 // Extra shorthand for modal display if needed
+                 price: transaction.rate,
+                 quantity: transaction.quantity
              });
              setShowTransactionModal(true);
         }
@@ -111,50 +111,13 @@ const [paymentNote, setPaymentNote] = useState('');
     const loadBuyers = async () => {
         if (!vendorId) return;
         try {
-            const [buyersRes, transRes, paymentsRes, productsRes] = await Promise.all([
-                getBuyers(vendorId),
-                getTransactions(vendorId),
-                getBuyerPayments(vendorId),
-                getAuctionProducts(vendorId)
-            ]);
-
-            const buyersData = buyersRes.data || [];
-            const transData = transRes.data || [];
-            const paymentsData = paymentsRes.data || [];
-            const productsData = productsRes.data || [];
-
-            setAllTransactions(transData);
-            setAllPayments(paymentsData);
-            setAllAuctionProducts(productsData);
-
-            const buyersWithStats = buyersData.map(buyer => {
-                const buyerTransactions = transData.filter(t => t.buyerId === buyer._id);
-                const buyerPayments = paymentsData.filter(p => p.buyerId === buyer._id);
-
-                const totalPurchases = buyerTransactions.reduce((sum, t) => sum + (t.finalAmount || 0), 0);
-                const totalPaid = buyerPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
-                const balance = totalPurchases - totalPaid;
-
-                return {
-                    ...buyer,
-                    totalPurchases,
-                    totalItems: buyerTransactions.length,
-                    totalPaid,
-                    balance,
-                    transactions: buyerTransactions,
-                    payments: buyerPayments
-                };
-            });
-
-            setBuyers(buyersWithStats);
+            const response = await getBuyers(vendorId);
+            const buyersData = response.data || [];
+            setBuyers(buyersData);
             
-            // If a buyer is currently selected, update their data
+            // If a buyer is currently selected, refresh their summary
             if (selectedBuyer) {
-                const updatedSelectedBuyer = buyersWithStats.find(b => b._id === (selectedBuyer._id || selectedBuyer.id));
-                if (updatedSelectedBuyer) {
-                    setSelectedBuyer(updatedSelectedBuyer);
-                    calculateLedger(updatedSelectedBuyer, productsData);
-                }
+                handleViewBuyer(selectedBuyer);
             }
         } catch (error) {
             console.error("Error loading buyers:", error);
@@ -162,43 +125,23 @@ const [paymentNote, setPaymentNote] = useState('');
         }
     };
 
-    const calculateLedger = (buyer, products) => {
-        let entries = [];
-        
-        (buyer.transactions || []).forEach(t => {
-            const product = products.find(p => p._id === t.productId);
-            entries.push({
-                date: t.date,
-                description: `Purchase - ${product ? product.name : 'Unknown'}`,
-                debit: t.finalAmount,
-                credit: 0
-            });
-        });
-
-        (buyer.payments || []).forEach(p => {
-            entries.push({
-                date: p.date,
-                description: p.note || 'Payment',
-                debit: 0,
-                credit: p.amount
-            });
-        });
-
-        entries.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        let balance = 0;
-        const finalLedger = entries.map(entry => {
-            balance += (entry.debit || 0);
-            balance -= (entry.credit || 0);
-            return { ...entry, balance };
-        });
-
-        setLedger(finalLedger.reverse()); // Show newest first
-    };
-
-    const handleViewBuyer = (buyer) => {
-        setSelectedBuyer(buyer);
-        calculateLedger(buyer, allAuctionProducts);
+    const handleViewBuyer = async (buyer) => {
+        const bid = buyer._id || buyer.id;
+        try {
+            const response = await getBuyerSummary(bid);
+            if (response.success) {
+                const summaryData = response.data;
+                setSelectedBuyer({
+                    ...summaryData.buyer,
+                    transactions: summaryData.transactions || [],
+                    payments: summaryData.payments || []
+                });
+                setLedger(summaryData.ledger || []);
+            }
+        } catch (error) {
+            console.error("Error fetching buyer summary:", error);
+            toast.error("Failed to load buyer details");
+        }
     };
 
     const handleBackToBuyers = () => {
@@ -631,91 +574,27 @@ const [paymentNote, setPaymentNote] = useState('');
                                     <tbody>
                                         {selectedBuyer.transactions.length === 0 ? (
                                             <tr>
-                                                <td colSpan="5" className="empty-td">No purchases yet</td>
+                                                <td colSpan="4" className="empty-td">No purchases yet</td>
                                             </tr>
                                         ) : (
-                                            (() => {
-                                                // Payment Calculation Logic: Specific > FIFO
-                                                
-                                                // 1. Separate Specific vs General Payments
-                                                const specificPayments = {}; // { transactionId: totalAmount }
-                                                let generalPaymentPool = 0;
-
-                                                (selectedBuyer.payments || []).forEach(p => {
-                                                    // Check if payment mimics "SALE-<timestamp>" pattern created in TodayAuction
-                                                    // format: SALE-<transactionId>
-                                                    if (p.reference && p.reference.startsWith('SALE-')) {
-                                                        const transId = p.reference.split('SALE-')[1]; // This is a string
-                                                        // We need to match this with transaction.id which is likely a number
-                                                        // Let's store it as string key
-                                                        if (transId) {
-                                                            specificPayments[transId] = (specificPayments[transId] || 0) + parseFloat(p.amount);
-                                                        } else {
-                                                             generalPaymentPool += parseFloat(p.amount);
-                                                        }
-                                                    } else {
-                                                        generalPaymentPool += parseFloat(p.amount);
-                                                    }
-                                                });
-
-
-                                                // 2. Clone and Sort transactions Oldest => Newest for FIFO calculation of remaining pool
-                                                const sortedForCalc = [...selectedBuyer.transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-                                                // 3. Calculate paid/balance per transaction
-                                                const calculatedTransactions = sortedForCalc.map(t => {
-                                                    const billAmount = t.finalAmount;
-                                                    
-                                                    // A. Apply Specific Payments first
-                                                    const specificPaid = specificPayments[String(t.id)] || 0;
-                                                    
-                                                    // B. Apply General Pool to remainder
-                                                    const remainingBill = Math.max(0, billAmount - specificPaid);
-                                                    const fifoPaid = Math.min(remainingBill, generalPaymentPool);
-                                                    
-                                                    // C. Update Pool
-                                                    generalPaymentPool = Math.max(0, generalPaymentPool - fifoPaid);
-
-                                                    const totalPaidForThis = specificPaid + fifoPaid;
-                                                    const balance = billAmount - totalPaidForThis;
-
-                                                    return {
-                                                        ...t,
-                                                        calculatedPaid: totalPaidForThis,
-                                                        calculatedBalance: balance
-                                                    };
-                                                });
-
-                                                // 4. Sort Newest => Oldest for Display
-                                                calculatedTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                                                return calculatedTransactions.map(t => {
-                                                    const product = allAuctionProducts.find(p => p._id === t.productId);
-                                                    return (
-                                                        <tr key={t._id || t.id}>
-                                                            <td>{formatDate(t.date)}</td>
-                                                            <td className="bold-product">{product ? product.name : 'Unknown'}</td>
-                                                            <td>₹{(t.finalAmount || 0).toLocaleString()}</td>
-                                                            {/* <td className="text-success">₹{(t.calculatedPaid || 0).toLocaleString()}</td>
-                                                            <td className={`text-error ${(t.calculatedBalance || 0) > 0 ? 'font-bold' : ''}`}>
-                                                                ₹{(t.calculatedBalance || 0).toLocaleString()}
-                                                            </td> */}
-                                                            <td>
-                                                                <div style={{ display: 'flex', gap: '5px' }}>
-                                                                    <button
-                                                                        className="btn btn-sm btn-info"
-                                                                        onClick={() => handleViewTransaction(t)}
-                                                                        title="View Details"
-                                                                    >
-                                                                        <Eye size={16} />
-                                                                    </button>
-                                                                    
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                });
-                                            })()
+                                            selectedBuyer.transactions.map(t => (
+                                                <tr key={t._id || t.id}>
+                                                    <td>{formatDate(t.date)}</td>
+                                                    <td className="bold-product">{t.productId?.name || 'Unknown'}</td>
+                                                    <td>₹{(t.finalAmount || 0).toLocaleString()}</td>
+                                                    <td>
+                                                        <div style={{ display: 'flex', gap: '5px' }}>
+                                                            <button
+                                                                className="btn btn-sm btn-info"
+                                                                onClick={() => handleViewTransaction(t)}
+                                                                title="View Details"
+                                                            >
+                                                                <Eye size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
                                         )}
                                     </tbody>
                                     {/* <tfoot>
@@ -900,10 +779,9 @@ const [paymentNote, setPaymentNote] = useState('');
                                         <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
                                             <div>Product: <b>{viewingTransaction.productName}</b></div>
                                             <div>Date: <b>{formatDate(viewingTransaction.date)}</b></div>
-                                            <div>Total Bill: <b>₹{viewingTransaction.finalAmount?.toLocaleString()}</b></div>
-                                            {/* Note: calculatedPaid/Balance are contextual to the FIFO loop, so they might not be directly available on the 'viewingTransaction' unless we passed the calculated object. The handler passed 't' which IS the calculated object from the render map! */}
-                                            <div className="text-success">Paid: <b>₹{viewingTransaction.calculatedPaid?.toLocaleString()}</b></div>
-                                            <div className="text-error">Balance: <b>₹{viewingTransaction.calculatedBalance?.toLocaleString()}</b></div>
+                                            <div>Bill Amount: <b>₹{viewingTransaction.finalAmount?.toLocaleString()}</b></div>
+                                            {/* <div className="text-success">Paid: <b>₹{viewingTransaction.calculatedPaid?.toLocaleString()}</b></div>
+                                            <div className="text-error">Balance: <b>₹{viewingTransaction.calculatedBalance?.toLocaleString()}</b></div> */}
                                         </div>
                                     </div>
                                 </div>

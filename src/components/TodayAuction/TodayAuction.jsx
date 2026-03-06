@@ -1005,6 +1005,18 @@ function TodayAuction() {
                         <form onSubmit={handleSellProduct}>
                             <div className="modal-body">
                                 
+                                 <SearchableSelect
+                                                label="Buyer"
+                                                options={buyers}
+                                                value={saleData.buyerName}
+                                                onChange={(buyer) => setSaleData({
+                                                    ...saleData,
+                                                    buyerId: buyer._id || buyer.id,
+                                                    buyerName: buyer.name
+                                                })}
+                                                placeholder="Type to search buyer..."
+                                                required
+                                            />
 
                                 <div className="form-group">
                                      <SearchableSelect
@@ -1135,8 +1147,6 @@ function TodayAuction() {
                                                 
                                             </div>
 
-                                           
-
                                             {/* ── Live Calc Summary ── */}
                                             {saleData.finalPrice && saleData.qtyToSell && (() => {
                                                 const qty   = parseFloat(saleData.qtyToSell) || 0;
@@ -1165,6 +1175,8 @@ function TodayAuction() {
                                         </>
                                     );
                                 })()}
+
+
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowSellModal(false)}>

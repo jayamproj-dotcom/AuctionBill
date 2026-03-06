@@ -11,6 +11,16 @@ export const getBuyers = async (vendorId) => {
     }
 };
 
+export const getBuyerSummary = async (buyerId) => {
+    try {
+        const response = await api.get(`/buyer/summary/${buyerId}`);
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) throw error.response.data;
+        throw error;
+    }
+};
+
 export const addBuyer = async (data) => {
     try {
         const response = await api.post('/buyer/add', data);
