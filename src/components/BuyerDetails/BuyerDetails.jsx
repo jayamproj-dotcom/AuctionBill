@@ -232,13 +232,11 @@ const [paymentNote, setPaymentNote] = useState('');
 
     const handleAddBuyer = async (e) => {
         e.preventDefault();
+        const errors = validateBuyerForm(newBuyer);
+        if (Object.keys(errors).length > 0) { setBuyerFormErrors(errors); return; }
+        setBuyerFormErrors({});
         try {
-            await addBuyer({
-                vendorId,
-                ...newBuyer,
-                status: 'active'
-            });
-
+            await addBuyer({ vendorId, ...newBuyer, status: 'active' });
             setNewBuyer({ name: '', contact: '', address: '', state: '', city: '', email: '' });
             setCities([]);
             setShowAddModal(false);
@@ -247,6 +245,21 @@ const [paymentNote, setPaymentNote] = useState('');
         } catch (error) {
             toast.error(error.message || "Failed to add buyer");
         }
+    };
+
+    // ── Validation helper ────────────────────────────────
+    const [buyerFormErrors, setBuyerFormErrors] = useState({});
+    const validateBuyerForm = (data) => {
+        const errors = {};
+        if (!data.name?.trim())
+            errors.name = 'Name is required';
+        if (!data.contact?.trim())
+            errors.contact = 'Contact number is required';
+        else if (!/^\d{10}$/.test(data.contact.trim()))
+            errors.contact = 'Contact must be exactly 10 digits';
+        if (data.email?.trim() && !/^[^@]+@gmail\.com$/i.test(data.email.trim()))
+            errors.email = 'Email must end with @gmail.com';
+        return errors;
     };
 
     const openEditBuyerModal = (buyer) => {
@@ -272,6 +285,9 @@ const [paymentNote, setPaymentNote] = useState('');
     const handleEditBuyer = async (e) => {
         e.preventDefault();
         if (!editingBuyer) return;
+        const errors = validateBuyerForm(editingBuyer);
+        if (Object.keys(errors).length > 0) { setBuyerFormErrors(errors); return; }
+        setBuyerFormErrors({});
         try {
             await updateBuyer(editingBuyer._id || editingBuyer.id, {
                 name:    editingBuyer.name,
@@ -607,8 +623,8 @@ const [paymentNote, setPaymentNote] = useState('');
                                             <th>Date</th>
                                             <th>Product</th>
                                             <th>Bill Amount</th>
-                                            <th>Paid</th>
-                                            <th>Balance</th>
+                                            {/* <th>Paid</th>
+                                            <th>Balance</th> */}
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -680,10 +696,10 @@ const [paymentNote, setPaymentNote] = useState('');
                                                             <td>{formatDate(t.date)}</td>
                                                             <td className="bold-product">{product ? product.name : 'Unknown'}</td>
                                                             <td>₹{(t.finalAmount || 0).toLocaleString()}</td>
-                                                            <td className="text-success">₹{(t.calculatedPaid || 0).toLocaleString()}</td>
+                                                            {/* <td className="text-success">₹{(t.calculatedPaid || 0).toLocaleString()}</td>
                                                             <td className={`text-error ${(t.calculatedBalance || 0) > 0 ? 'font-bold' : ''}`}>
                                                                 ₹{(t.calculatedBalance || 0).toLocaleString()}
-                                                            </td>
+                                                            </td> */}
                                                             <td>
                                                                 <div style={{ display: 'flex', gap: '5px' }}>
                                                                     <button
@@ -693,15 +709,7 @@ const [paymentNote, setPaymentNote] = useState('');
                                                                     >
                                                                         <Eye size={16} />
                                                                     </button>
-                                                                    {t.calculatedBalance > 0 && (
-                                                                        <button
-                                                                            className="btn btn-sm btn-primary"
-                                                                            onClick={() => handlePayTransaction(t)}
-                                                                            title="Pay Balance"
-                                                                        >
-                                                                            Pay
-                                                                        </button>
-                                                                    )}
+                                                                    
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -947,42 +955,47 @@ const [paymentNote, setPaymentNote] = useState('');
 
             {/* Add Buyer Modal */}
             {showAddModal && (
-                <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+                <div className="modal-overlay" onClick={() => { setShowAddModal(false); setBuyerFormErrors({}); }}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Add New Buyer</h3>
-                            <button className="modal-close" onClick={() => setShowAddModal(false)}><X /></button>
+                            <button className="modal-close" onClick={() => { setShowAddModal(false); setBuyerFormErrors({}); }}><X /></button>
                         </div>
                         <form onSubmit={handleAddBuyer}>
                             <div className="modal-body">
                                 <div className="form-group">
-                                    <label className="form-label">Name</label>
+                                    <label className="form-label">Name *</label>
                                     <input
                                         type="text"
                                         value={newBuyer.name}
-                                        onChange={(e) => setNewBuyer({ ...newBuyer, name: e.target.value })}
+                                        onChange={(e) => { setNewBuyer({ ...newBuyer, name: e.target.value }); setBuyerFormErrors(p => ({ ...p, name: '' })); }}
                                         placeholder="Full Name"
-                                        required
+                                        className={buyerFormErrors.name ? 'input-error' : ''}
                                     />
+                                    {buyerFormErrors.name && <small className="field-error">{buyerFormErrors.name}</small>}
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Phone Number</label>
+                                    <label className="form-label">Phone Number *</label>
                                     <input
                                         type="tel"
                                         value={newBuyer.contact}
-                                        onChange={(e) => setNewBuyer({ ...newBuyer, contact: e.target.value })}
-                                        placeholder="Mobile Number"
-                                        required
+                                        onChange={(e) => { setNewBuyer({ ...newBuyer, contact: e.target.value }); setBuyerFormErrors(p => ({ ...p, contact: '' })); }}
+                                        placeholder="10-digit Mobile Number"
+                                        maxLength={10}
+                                        className={buyerFormErrors.contact ? 'input-error' : ''}
                                     />
+                                    {buyerFormErrors.contact && <small className="field-error">{buyerFormErrors.contact}</small>}
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Mail Id (Email)</label>
+                                    <label className="form-label">Mail Id (Email) <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>(optional)</span></label>
                                     <input
-                                        type="email"
+                                        type="text"
                                         value={newBuyer.email}
-                                        onChange={(e) => setNewBuyer({ ...newBuyer, email: e.target.value })}
-                                        placeholder="example@mail.com"
+                                        onChange={(e) => { setNewBuyer({ ...newBuyer, email: e.target.value }); setBuyerFormErrors(p => ({ ...p, email: '' })); }}
+                                        placeholder="example@gmail.com"
+                                        className={buyerFormErrors.email ? 'input-error' : ''}
                                     />
+                                    {buyerFormErrors.email && <small className="field-error">{buyerFormErrors.email}</small>}
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                                     <div className="form-group">
@@ -1037,11 +1050,11 @@ const [paymentNote, setPaymentNote] = useState('');
 
             {/* ── Edit Buyer Modal ── */}
             {showEditBuyerModal && editingBuyer && (
-                <div className="modal-overlay" onClick={() => setShowEditBuyerModal(false)}>
+                <div className="modal-overlay" onClick={() => { setShowEditBuyerModal(false); setBuyerFormErrors({}); }}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Edit Buyer</h3>
-                            <button className="modal-close" onClick={() => setShowEditBuyerModal(false)}><X /></button>
+                            <button className="modal-close" onClick={() => { setShowEditBuyerModal(false); setBuyerFormErrors({}); }}><X /></button>
                         </div>
                         <form onSubmit={handleEditBuyer}>
                             <div className="modal-body">
@@ -1050,29 +1063,34 @@ const [paymentNote, setPaymentNote] = useState('');
                                     <input
                                         type="text"
                                         value={editingBuyer.name}
-                                        onChange={(e) => setEditingBuyer({ ...editingBuyer, name: e.target.value })}
+                                        onChange={(e) => { setEditingBuyer({ ...editingBuyer, name: e.target.value }); setBuyerFormErrors(p => ({ ...p, name: '' })); }}
                                         placeholder="Full Name"
-                                        required
+                                        className={buyerFormErrors.name ? 'input-error' : ''}
                                     />
+                                    {buyerFormErrors.name && <small className="field-error">{buyerFormErrors.name}</small>}
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Contact Number *</label>
                                     <input
                                         type="tel"
                                         value={editingBuyer.contact}
-                                        onChange={(e) => setEditingBuyer({ ...editingBuyer, contact: e.target.value })}
-                                        placeholder="Mobile Number"
-                                        required
+                                        onChange={(e) => { setEditingBuyer({ ...editingBuyer, contact: e.target.value }); setBuyerFormErrors(p => ({ ...p, contact: '' })); }}
+                                        placeholder="10-digit Mobile Number"
+                                        maxLength={10}
+                                        className={buyerFormErrors.contact ? 'input-error' : ''}
                                     />
+                                    {buyerFormErrors.contact && <small className="field-error">{buyerFormErrors.contact}</small>}
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Email</label>
+                                    <label className="form-label">Email <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>(optional)</span></label>
                                     <input
-                                        type="email"
+                                        type="text"
                                         value={editingBuyer.email || ''}
-                                        onChange={(e) => setEditingBuyer({ ...editingBuyer, email: e.target.value })}
-                                        placeholder="example@mail.com"
+                                        onChange={(e) => { setEditingBuyer({ ...editingBuyer, email: e.target.value }); setBuyerFormErrors(p => ({ ...p, email: '' })); }}
+                                        placeholder="example@gmail.com"
+                                        className={buyerFormErrors.email ? 'input-error' : ''}
                                     />
+                                    {buyerFormErrors.email && <small className="field-error">{buyerFormErrors.email}</small>}
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                                     <div className="form-group">
