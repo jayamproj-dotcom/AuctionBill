@@ -1,60 +1,72 @@
 import { useState, useEffect } from 'react';
-import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
+import { useSelector } from 'react-redux';
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './PendingProducts.css';
 import '../TodayAuction/TodayAuction.css'; // Reusing base card styles
 import { Undo2, ListFilterPlus, Search } from 'lucide-react';
+import { toast } from 'react-toastify';
+import * as auctionApi from '../../api/auctionApi';
+import { getSellers } from '../../api/sellerApi';
 
 function PendingProducts() {
     const [pendingProducts, setPendingProducts] = useState([]);
     const [today, setToday] = useState('');
     const [sellers, setSellers] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    
+    // Vendor ID from Redux or Session Storage
+    const vendorId = useSelector((state) => state.vendorAuth.vendorId) || sessionStorage.getItem('vendorId');
 
     useEffect(() => {
         const todayStr = new Date().toISOString().split('T')[0];
         setToday(todayStr);
-        loadPendingProducts(todayStr);
-    }, []);
+        if (vendorId) {
+            loadInitialData(todayStr);
+        }
+    }, [vendorId]);
 
-    const loadPendingProducts = (currentDate) => {
-        const data = getAuctionData();
-        if (data && data.products) {
-            setSellers(data.sellers || []);
-            const filtered = data.products.filter(p => {
-                if (p.status !== 'available') return false;
-                if (p.isActive === false) return false;
+    const loadInitialData = async (currentDate) => {
+        try {
+            const sellersRes = await getSellers(vendorId);
+            if (sellersRes.success) {
+                setSellers(sellersRes.data);
+            }
+            await loadPendingProducts(currentDate);
+        } catch (error) {
+            console.error("Failed to load initial data", error);
+        }
+    };
 
-                // Determine product date
-                const pDate = p.date || new Date(p.id).toISOString().split('T')[0];
-
-                // Show only if date is less than today
-                if (pDate >= currentDate) return false;
-
-                // Check if any variant is unsold
-                if (p.variants) {
-                    const productTransactions = (data.transactions || []).filter(t => t.productId === p.id);
-
-                    // We need to check if ANY variant has remaining stock
-                    return p.variants.some(v => {
-                        const variantTransactions = productTransactions.filter(t => t.variantId === v.id);
-                        const sold = variantTransactions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
-                        return (v.quantity - sold) > 0;
+    const loadPendingProducts = async (currentDate) => {
+        if (!vendorId) return;
+        try {
+            const productRes = await auctionApi.getPendingProducts(vendorId, currentDate);
+            if (productRes.success) {
+                // Enrich variants with sold stats for display (if missing) 
+                // The backend maintains sellQuantity so we can calculate remaining easily.
+                const mappedProducts = productRes.data.map(p => {
+                    const enrichedVariants = (p.variants || []).map(v => {
+                        return { ...v, remaining: (v.quantity || 0) - (v.sellQuantity || 0) };
                     });
-                }
-                return false;
-            }).map(p => {
-                // Enrich variants with sold stats for display
-                const productTransactions = (data.transactions || []).filter(t => t.productId === p.id);
-                const enrichedVariants = (p.variants || []).map(v => {
-                    const variantTransactions = productTransactions.filter(t => t.variantId === v.id);
-                    const sold = variantTransactions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
-                    return { ...v, soldQuantity: sold, remaining: v.quantity - sold };
-                });
-                return { ...p, variants: enrichedVariants };
-            });
-            setPendingProducts(filtered);
+                    // Filter out products where all variants are fully sold
+                    const hasRemaining = enrichedVariants.some(v => v.remaining > 0);
+                    return { ...p, variants: enrichedVariants, hasRemaining };
+                }).filter(p => p.hasRemaining);
+                
+                setPendingProducts(mappedProducts);
+            }
+        } catch (error) {
+            console.error("Failed to load pending products API", error);
+        }
+    };
+    
+    const getQualityLabel = (quality) => {
+        switch (quality) {
+            case 'quality1': return 'Quality 1';
+            case 'quality2': return 'Quality 2';
+            case 'quality3': return 'Quality 3';
+            default: return quality || 'N/A';
         }
     };
 
@@ -69,16 +81,17 @@ function PendingProducts() {
         setIsReturnConfirmOpen(true);
     };
 
-    const confirmReturnProduct = () => {
+    const confirmReturnProduct = async () => {
         if (productToReturn) {
-            const data = getAuctionData();
-            // Find product by id directly. Note: data.products is an array.
-            const index = data.products.findIndex(p => p.id === productToReturn.id);
-            if (index !== -1) {
-                // Mark as returned (removing it from active lists)
-                data.products[index].status = 'returned';
-                saveAuctionData(data);
+            try {
+                // Not supported currently in API to completely mark as "returned", 
+                // but one approach is changing status or disabling. Let's toggle isActive for now.
+                await auctionApi.toggleProductStatus(productToReturn._id || productToReturn.id);
+                toast.success("Product returned/disabled successfully");
                 loadPendingProducts(today); // Refresh list
+            } catch (error) {
+                toast.error(error?.message || "Failed to return product");
+            } finally {
                 setIsReturnConfirmOpen(false);
                 setProductToReturn(null);
             }
@@ -90,18 +103,18 @@ function PendingProducts() {
         setIsMoveToTodayConfirmOpen(true);
     };
 
-    const confirmMoveToToday = () => {
+    const confirmMoveToToday = async () => {
         if (productToMove) {
-            const data = getAuctionData();
-            const index = data.products.findIndex(p => p.id === productToMove.id);
-            if (index !== -1) {
-                // Update date to today
-                data.products[index].date = today;
-                saveAuctionData(data);
+            try {
+                await auctionApi.updateAuctionProduct(productToMove._id || productToMove.id, { date: today });
+                toast.success("Product moved to Today successfully");
                 loadPendingProducts(today);
+            } catch (error) {
+                toast.error(error?.message || "Failed to move product");
+            } finally {
+                setIsMoveToTodayConfirmOpen(false);
+                setProductToMove(null);
             }
-            setIsMoveToTodayConfirmOpen(false);
-            setProductToMove(null);
         }
     };
 
@@ -184,7 +197,7 @@ function PendingProducts() {
                                         .filter(product => {
                                             if (!searchQuery) return true;
                                             const query = searchQuery.toLowerCase();
-                                            const seller = sellers.find(s => s.id === product.sellerId);
+                                            const seller = sellers.find(s => (s._id || s.id) === product.sellerId);
                                             const sellerName = seller ? seller.name.toLowerCase() : '';
                                             const productName = product.name.toLowerCase();
                                             const hasMatchingVariant = product.variants && product.variants.some(v => v.variety.toLowerCase().includes(query));
@@ -192,7 +205,7 @@ function PendingProducts() {
                                             return sellerName.includes(query) || productName.includes(query) || hasMatchingVariant;
                                         })
                                         .map(product => (
-                                            <tr key={product.id} className="pending-product-card custom-tr">
+                                            <tr key={product._id || product.id} className="pending-product-card custom-tr">
                                                 <td className="custom-td">
                                                     <div className="font-semibold text-primary table-product-name">
                                                         {product.name}
@@ -201,23 +214,23 @@ function PendingProducts() {
                                                 </td>
                                                 <td className="custom-td">
                                                     <div style={{ marginBottom: '4px' }}>
-                                                        <strong>{sellers.find(s => s.id === product.sellerId)?.name || 'Unknown'}</strong>
+                                                        <strong>{sellers.find(s => (s._id || s.id) === product.sellerId)?.name || 'Unknown'}</strong>
                                                     </div>
                                                     <div className="text-muted table-product-subtext">
-                                                        Created: {formatDate(product.date || product.id)}
+                                                        Created: {formatDate(product.date || product.createdAt)}
                                                     </div>
                                                 </td>
                                                 <td className="custom-td custom-td-variants">
                                                     <div className="product-variants">
                                                         {product.variants && product.variants.map(v => (
-                                                            <div key={v.id} className="variant-card">
+                                                            <div key={v._id || v.id} className="variant-card">
                                                                 <div className="variant-card-header">
                                                                     <span>{v.variety}</span>
-                                                                    <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'} badge-sm`}>{v.quality}</span>
+                                                                    <span className={`badge ${v.quality === 'quality1' ? 'badge-success' : v.quality === 'quality2' ? 'badge-warning' : 'badge-error'} badge-sm`}>{getQualityLabel(v.quality)}</span>
                                                                 </div>
                                                                 <div className="variant-card-metrics">
                                                                     <span>{v.remaining} {v.unit}</span>
-                                                                    <span className="text-amber font-semibold">{v.commission}% Comm</span>
+                                                                    {product.commissionPercent > 0 && <span className="text-amber font-semibold">{product.commissionPercent}% Comm</span>}
                                                                 </div>
                                                             </div>
                                                         ))}

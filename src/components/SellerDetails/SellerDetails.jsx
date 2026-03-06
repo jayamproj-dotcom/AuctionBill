@@ -37,9 +37,24 @@ function SellerDetails() {
     // ── Add Seller modal ──────────────────────────────────
     const [showAddModal, setShowAddModal] = useState(false);
     const [isSaving, setIsSaving]         = useState(false);
+    const [formErrors, setFormErrors]     = useState({});
     const [newSeller, setNewSeller]       = useState({
         name: '', contact: '', address: '', state: '', city: '', email: '',
     });
+
+    // ── Validation helper ────────────────────────────────
+    const validateSellerForm = (data) => {
+        const errors = {};
+        if (!data.name?.trim())
+            errors.name = 'Name is required';
+        if (!data.contact?.trim())
+            errors.contact = 'Contact number is required';
+        else if (!/^\d{10}$/.test(data.contact.trim()))
+            errors.contact = 'Contact must be exactly 10 digits';
+        if (data.email?.trim() && !/^[^@]+@gmail\.com$/i.test(data.email.trim()))
+            errors.email = 'Email must end with @gmail.com';
+        return errors;
+    };
 
     // ── Edit Seller modal ─────────────────────────────────
     const [showEditModal, setShowEditModal] = useState(false);
@@ -159,12 +174,12 @@ function SellerDetails() {
     const handleAddSeller = async (e) => {
         e.preventDefault();
         if (!currentVendorId) { toast.error('Vendor not authenticated'); return; }
+        const errors = validateSellerForm(newSeller);
+        if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
+        setFormErrors({});
         setIsSaving(true);
         try {
-            const payload = {
-                ...newSeller,
-                vendorId: currentVendorId,
-            };
+            const payload = { ...newSeller, vendorId: currentVendorId };
             await createSeller(payload);
             toast.success('Seller added successfully!');
             setNewSeller({ name: '', contact: '', address: '', state: '', city: '', email: '' });
@@ -204,6 +219,9 @@ function SellerDetails() {
     const handleEditSeller = async (e) => {
         e.preventDefault();
         if (!editingSeller) return;
+        const errors = validateSellerForm(editingSeller);
+        if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
+        setFormErrors({});
         setIsSaving(true);
         try {
             await updateSeller(editingSeller._id || editingSeller.id, {
@@ -217,7 +235,6 @@ function SellerDetails() {
             toast.success('Seller updated successfully!');
             setShowEditModal(false);
             setEditingSeller(null);
-            // If we were viewing the seller, refresh it
             if (selectedSeller && (selectedSeller._id || selectedSeller.id) === (editingSeller._id || editingSeller.id)) {
                 setSelectedSeller(prev => ({ ...prev, ...editingSeller }));
             }
@@ -485,12 +502,7 @@ function SellerDetails() {
                                                         {[seller.city, seller.state].filter(Boolean).join(', ') || seller.address || 'N/A'}
                                                     </span>
                                                 </div>
-                                                <div className="data-row">
-                                                    <span className="data-label">Vendor ID</span>
-                                                    <span className="data-value" style={{ fontFamily: 'monospace', fontSize: '0.78rem', opacity: 0.7 }}>
-                                                        {seller.vendorId || currentVendorId}
-                                                    </span>
-                                                </div>
+                                                
                                                 <div className="data-row">
                                                     <span className="data-label">Login Access</span>
                                                     <span className={`data-value badge ${seller.status === 'inactive' ? 'badge-error' : 'badge-success'}`}>
@@ -649,11 +661,11 @@ function SellerDetails() {
 
             {/* ── Edit Seller Modal ── */}
             {showEditModal && editingSeller && (
-                <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+                <div className="modal-overlay" onClick={() => { setShowEditModal(false); setFormErrors({}); }}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Edit Seller</h3>
-                            <button className="modal-close" onClick={() => setShowEditModal(false)}><X /></button>
+                            <button className="modal-close" onClick={() => { setShowEditModal(false); setFormErrors({}); }}><X /></button>
                         </div>
                         <form onSubmit={handleEditSeller}>
                             <div className="modal-body">
@@ -662,29 +674,34 @@ function SellerDetails() {
                                     <input
                                         type="text"
                                         value={editingSeller.name}
-                                        onChange={(e) => setEditingSeller({ ...editingSeller, name: e.target.value })}
+                                        onChange={(e) => { setEditingSeller({ ...editingSeller, name: e.target.value }); setFormErrors(p => ({ ...p, name: '' })); }}
                                         placeholder="Full Name"
-                                        required
+                                        className={formErrors.name ? 'input-error' : ''}
                                     />
+                                    {formErrors.name && <small className="field-error">{formErrors.name}</small>}
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Contact Number *</label>
                                     <input
                                         type="tel"
                                         value={editingSeller.contact}
-                                        onChange={(e) => setEditingSeller({ ...editingSeller, contact: e.target.value })}
-                                        placeholder="Mobile Number"
-                                        required
+                                        onChange={(e) => { setEditingSeller({ ...editingSeller, contact: e.target.value }); setFormErrors(p => ({ ...p, contact: '' })); }}
+                                        placeholder="10-digit Mobile Number"
+                                        maxLength={10}
+                                        className={formErrors.contact ? 'input-error' : ''}
                                     />
+                                    {formErrors.contact && <small className="field-error">{formErrors.contact}</small>}
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Mail Id (Email)</label>
+                                    <label className="form-label">Mail Id (Email) <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>(optional)</span></label>
                                     <input
-                                        type="email"
+                                        type="text"
                                         value={editingSeller.email || ''}
-                                        onChange={(e) => setEditingSeller({ ...editingSeller, email: e.target.value })}
-                                        placeholder="example@mail.com"
+                                        onChange={(e) => { setEditingSeller({ ...editingSeller, email: e.target.value }); setFormErrors(p => ({ ...p, email: '' })); }}
+                                        placeholder="example@gmail.com"
+                                        className={formErrors.email ? 'input-error' : ''}
                                     />
+                                    {formErrors.email && <small className="field-error">{formErrors.email}</small>}
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                                     <div className="form-group">
@@ -874,11 +891,11 @@ function SellerDetails() {
 
             {/* ── Add Seller Modal ── */}
             {showAddModal && (
-                <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+                <div className="modal-overlay" onClick={() => { setShowAddModal(false); setFormErrors({}); }}>
                     <div className="modal" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Add New Seller</h3>
-                            <button className="modal-close" onClick={() => setShowAddModal(false)}><X /></button>
+                            <button className="modal-close" onClick={() => { setShowAddModal(false); setFormErrors({}); }}><X /></button>
                         </div>
                         <form onSubmit={handleAddSeller}>
                             <div className="modal-body">
@@ -887,29 +904,34 @@ function SellerDetails() {
                                     <input
                                         type="text"
                                         value={newSeller.name}
-                                        onChange={(e) => setNewSeller({ ...newSeller, name: e.target.value })}
+                                        onChange={(e) => { setNewSeller({ ...newSeller, name: e.target.value }); setFormErrors(p => ({ ...p, name: '' })); }}
                                         placeholder="Full Name"
-                                        required
+                                        className={formErrors.name ? 'input-error' : ''}
                                     />
+                                    {formErrors.name && <small className="field-error">{formErrors.name}</small>}
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Contact Number *</label>
                                     <input
                                         type="tel"
                                         value={newSeller.contact}
-                                        onChange={(e) => setNewSeller({ ...newSeller, contact: e.target.value })}
-                                        placeholder="Mobile Number"
-                                        required
+                                        onChange={(e) => { setNewSeller({ ...newSeller, contact: e.target.value }); setFormErrors(p => ({ ...p, contact: '' })); }}
+                                        placeholder="10-digit Mobile Number"
+                                        maxLength={10}
+                                        className={formErrors.contact ? 'input-error' : ''}
                                     />
+                                    {formErrors.contact && <small className="field-error">{formErrors.contact}</small>}
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Mail Id (Email)</label>
+                                    <label className="form-label">Mail Id (Email) <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>(optional)</span></label>
                                     <input
-                                        type="email"
+                                        type="text"
                                         value={newSeller.email}
-                                        onChange={(e) => setNewSeller({ ...newSeller, email: e.target.value })}
-                                        placeholder="example@mail.com"
+                                        onChange={(e) => { setNewSeller({ ...newSeller, email: e.target.value }); setFormErrors(p => ({ ...p, email: '' })); }}
+                                        placeholder="example@gmail.com"
+                                        className={formErrors.email ? 'input-error' : ''}
                                     />
+                                    {formErrors.email && <small className="field-error">{formErrors.email}</small>}
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                                     <div className="form-group">

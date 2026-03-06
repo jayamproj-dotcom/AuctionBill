@@ -153,6 +153,7 @@ function TodayAuction() {
         qtyToSell: '',
         paymentStatus: 'Paid',
         amountPaid: '',
+        priceMode: 'perQty',   // 'perQty' | 'wholeProduct'
     });
 
     const resetVariantData = () => {
@@ -402,7 +403,7 @@ function TodayAuction() {
         const variant = product.variants.find(v => (v._id || v.id) == saleData.variantId);
         if (!variant) return;
 
-        const sellQty = parseFloat(saleData.qtyToSell) || 0;
+        const sellQty   = parseFloat(saleData.qtyToSell) || 0;
         const available = variant.quantity - (variant.sellQuantity || 0);
 
         if (sellQty > available) {
@@ -410,33 +411,42 @@ function TodayAuction() {
             return;
         }
 
-        // Calculate amounts
-        const finalPrice = parseFloat(saleData.finalPrice) || 0;
-        const totalAmount = finalPrice;
-        const totalCommission = (totalAmount * (product.commissionPercent || 0)) / 100;
+        // ── Price mode calculation ────────────────────────
+        let finalAmount, ratePerUnit;
+        if (saleData.priceMode === 'perQty') {
+            // User entered price per unit (per kg / per piece)
+            ratePerUnit = parseFloat(saleData.finalPrice) || 0;
+            finalAmount = ratePerUnit * sellQty;
+        } else {
+            // User entered the whole / total amount directly
+            finalAmount = parseFloat(saleData.finalPrice) || 0;
+            ratePerUnit = sellQty > 0 ? finalAmount / sellQty : 0;
+        }
+
+        const totalCommission = (finalAmount * (product.commissionPercent || 0)) / 100;
 
         try {
             const transactionData = {
-                vendorId: vendorId,
-                sellerId: product.sellerId,
-                buyerId: saleData.buyerId,
-                productId: product._id || product.id,
-                variantId: variant._id || variant.id,
-                date: new Date().toISOString().split('T')[0],
-                quantity: sellQty,
-                rate: finalPrice / sellQty,
-                finalAmount: totalAmount,
+                vendorId:          vendorId,
+                sellerId:          product.sellerId,
+                buyerId:           saleData.buyerId,
+                productId:         product._id || product.id,
+                variantId:         variant._id || variant.id,
+                date:              new Date().toISOString().split('T')[0],
+                quantity:          sellQty,
+                rate:              ratePerUnit,
+                finalAmount:       finalAmount,
                 commissionPercent: product.commissionPercent || 0,
-                commissionAmount: totalCommission,
-                netAmount: totalAmount - totalCommission,
-                paymentStatus: saleData.paymentStatus,
-                amountPaid: parseFloat(saleData.amountPaid) || 0
+                commissionAmount:  totalCommission,
+                netAmount:         finalAmount - totalCommission,
+                paymentStatus:     saleData.paymentStatus,
+                amountPaid:        parseFloat(saleData.amountPaid) || 0
             };
 
             const response = await auctionApi.recordSale(transactionData);
 
             if (response.success) {
-                setSaleData({ buyerId: '', buyerName: '', variantId: '', finalPrice: '', qtyToSell: '', paymentStatus: 'Paid', amountPaid: '' });
+                setSaleData({ buyerId: '', buyerName: '', variantId: '', finalPrice: '', qtyToSell: '', paymentStatus: 'Paid', amountPaid: '', priceMode: 'perQty' });
                 setShowSellModal(false);
                 setSelectedProduct(null);
                 loadData();
@@ -457,6 +467,7 @@ function TodayAuction() {
             qtyToSell: '',
             paymentStatus: 'Paid',
             amountPaid: '',
+            priceMode: 'perQty',
         });
         setShowSellModal(true);
     };
@@ -994,6 +1005,18 @@ function TodayAuction() {
                         <form onSubmit={handleSellProduct}>
                             <div className="modal-body">
                                 
+                                 <SearchableSelect
+                                                label="Buyer"
+                                                options={buyers}
+                                                value={saleData.buyerName}
+                                                onChange={(buyer) => setSaleData({
+                                                    ...saleData,
+                                                    buyerId: buyer._id || buyer.id,
+                                                    buyerName: buyer.name
+                                                })}
+                                                placeholder="Type to search buyer..."
+                                                required
+                                            />
 
                                 <div className="form-group">
                                     <label className="form-label">Select Variant</label>
@@ -1026,6 +1049,39 @@ function TodayAuction() {
 
                                     return (
                                         <>
+                                            {/* ── Pricing Mode Radio Buttons ── */}
+                                            <div className="form-group">
+                                                <label className="form-label">Pricing Mode</label>
+                                                <div className="price-mode-radios">
+                                                    <label className={`price-mode-option${saleData.priceMode === 'perQty' ? ' active' : ''}`}>
+                                                        <input
+                                                            type="radio"
+                                                            name="priceMode"
+                                                            value="perQty"
+                                                            checked={saleData.priceMode === 'perQty'}
+                                                            onChange={() => setSaleData(prev => ({ ...prev, priceMode: 'perQty', finalPrice: '' }))}
+                                                        />
+                                                        <span className="price-mode-label">
+                                                            <strong>Per {v.unit}</strong>
+                                                            <small>Enter rate per {v.unit}</small>
+                                                        </span>
+                                                    </label>
+                                                    <label className={`price-mode-option${saleData.priceMode === 'wholeProduct' ? ' active' : ''}`}>
+                                                        <input
+                                                            type="radio"
+                                                            name="priceMode"
+                                                            value="wholeProduct"
+                                                            checked={saleData.priceMode === 'wholeProduct'}
+                                                            onChange={() => setSaleData(prev => ({ ...prev, priceMode: 'wholeProduct', finalPrice: '' }))}
+                                                        />
+                                                        <span className="price-mode-label">
+                                                            <strong>Whole Amount</strong>
+                                                            <small>Enter total for all qty</small>
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
                                             <div className="form-group">
                                                 <label className="form-label">Quantity to Sell ({v.unit})</label>
                                                 <input
@@ -1055,72 +1111,62 @@ function TodayAuction() {
                                                     Remaining: {(available - (parseFloat(saleData.qtyToSell) || 0)).toFixed(2)} {v.unit}
                                                 </small>
                                             </div>
+
                                             <div className="form-group">
-                                                <label className="form-label">Final Price (₹)</label>
+                                                <label className="form-label">
+                                                    {saleData.priceMode === 'perQty'
+                                                        ? `Rate per ${v.unit} (₹)`
+                                                        : 'Total Amount (₹)'}
+                                                </label>
                                                 <input
                                                     type="number"
                                                     value={saleData.finalPrice}
                                                     onChange={(e) => setSaleData({ ...saleData, finalPrice: Math.max(0, e.target.value) })}
-                                                    placeholder="Selling Price"
+                                                    placeholder={
+                                                        saleData.priceMode === 'perQty'
+                                                            ? `Price per ${v.unit}`
+                                                            : `Total for ${saleData.qtyToSell || '?'} ${v.unit}`
+                                                    }
                                                     min="0"
                                                     required
                                                 />
-                                            </div>
-                                            {/* <div className="form-grid qty-input-group">
-                                                <div className="form-group">
-                                                    <label className="form-label">Payment Status</label>
-                                                    <select
-                                                        value={saleData.paymentStatus}
-                                                        onChange={(e) => setSaleData({ ...saleData, paymentStatus: e.target.value })}
-                                                        required
-                                                    >
-                                                        <option value="Paid">Paid</option>
-                                                        <option value="Part Paid">Part Paid</option>
-                                                        <option value="Pending">Pending</option>
-                                                    </select>
-                                                </div>
-                                                {saleData.paymentStatus === 'Part Paid' && (
-                                                    <div className="form-group">
-                                                        <label className="form-label">Amount Paid (₹)</label>
-                                                        <input
-                                                            type="number"
-                                                            value={saleData.amountPaid}
-                                                            onChange={(e) => setSaleData({ ...saleData, amountPaid: Math.max(0, Math.min(saleData.finalPrice, e.target.value)) })}
-                                                            max={saleData.finalPrice}
-                                                            min="0"
-                                                            placeholder="Received amount"
-                                                            required
-                                                        />
-                                                    </div>
+                                                {saleData.priceMode === 'perQty' && saleData.finalPrice && saleData.qtyToSell && (
+                                                    <small className="form-hint">
+                                                        Total = ₹{(parseFloat(saleData.finalPrice) * parseFloat(saleData.qtyToSell)).toLocaleString()}
+                                                    </small>
                                                 )}
-                                            </div> */}
-                                            <SearchableSelect
-                                    label="Buyer"
-                                    options={buyers}
-                                    value={saleData.buyerName}
-                                    onChange={(buyer) => setSaleData({
-                                        ...saleData,
-                                        buyerId: buyer._id || buyer.id,
-                                        buyerName: buyer.name
-                                    })}
-                                    placeholder="Type to search buyer..."
-                                    required
-                                />
-                                            <div className="card calc-card">
-                                                <p className="calc-row">
-                                                    <strong>Commission ({selectedProduct.commissionPercent}%):</strong>{' '}
-                                                    <span className="text-amber">
-                                                        ₹{((parseFloat(saleData.finalPrice) || 0) * (selectedProduct.commissionPercent || 0) / 100).toLocaleString()}
-                                                    </span>
-                                                </p>
-                                                <p className="calc-row-last">
-                                                    <strong>Seller Receives:</strong>{' '}
-                                                    ₹{((parseFloat(saleData.finalPrice) || 0) * (100 - (selectedProduct.commissionPercent || 0)) / 100).toLocaleString()}
-                                                </p>
                                             </div>
+
+                                            {/* ── Live Calc Summary ── */}
+                                            {saleData.finalPrice && saleData.qtyToSell && (() => {
+                                                const qty   = parseFloat(saleData.qtyToSell) || 0;
+                                                const price = parseFloat(saleData.finalPrice) || 0;
+                                                const total = saleData.priceMode === 'perQty' ? price * qty : price;
+                                                const rate  = saleData.priceMode === 'perQty' ? price : (qty > 0 ? price / qty : 0);
+                                                const comm  = (total * (selectedProduct.commissionPercent || 0)) / 100;
+                                                const net   = total - comm;
+                                                return (
+                                                    <div className="card calc-card">
+                                                        {saleData.priceMode === 'wholeProduct' && (
+                                                            <p className="calc-row">
+                                                                <strong>Rate per {v.unit}:</strong>{' '}
+                                                                ₹{rate.toFixed(2)}
+                                                            </p>
+                                                        )}
+                                                        <p className="calc-row">
+                                                            <strong>Total Amount:</strong>{' '}
+                                                            ₹{total.toLocaleString()}
+                                                        </p>
+                                                       
+                                                
+                                                    </div>
+                                                );
+                                            })()}
                                         </>
                                     );
                                 })()}
+
+
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowSellModal(false)}>

@@ -11,6 +11,16 @@ export const getAuctionProducts = async (vendorId, filters = {}) => {
     }
 };
 
+export const getPendingProducts = async (vendorId, beforeDate) => {
+    try {
+        const response = await api.get(`/auction/products/pending/${vendorId}`, { params: { beforeDate } });
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) throw error.response.data;
+        throw error;
+    }
+};
+
 export const addAuctionProduct = async (data) => {
     try {
         const response = await api.post('/auction/products/add', data);
