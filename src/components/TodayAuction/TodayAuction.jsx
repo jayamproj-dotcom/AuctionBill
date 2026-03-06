@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './TodayAuction.css';
 import { toast } from 'react-toastify';
-import { Plus, Trash2, Edit2, X, Eye, EyeOff, PackageSearch, Search } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Eye, EyeOff, PackageSearch, Search, Check } from 'lucide-react';
 import * as productApi from '../../api/vendorApi';
+import { getCommission } from '../../api/commissionApi';
 
 const SearchableSelect = ({ options, value, onChange, placeholder, required, label, className = "", style = {} }) => {
     const [searchTerm, setSearchTerm] = useState(value || '');
@@ -110,9 +112,8 @@ function TodayAuction() {
     const [searchQuery, setSearchQuery] = useState('');
     const [masterProducts, setMasterProducts] = useState([]);
     
-    // Vendor ID to fetch masterProducts
-    const vendor = JSON.parse(localStorage.getItem('vendor')) || {};
-    const vendorId = vendor.id || vendor._id;
+    // Vendor ID from Redux or Session Storage
+    const vendorId = useSelector((state) => state.vendorAuth.vendorId) || sessionStorage.getItem('vendorId');
 
 
     const [newProduct, setNewProduct] = useState({
@@ -126,7 +127,7 @@ function TodayAuction() {
 
     const [variantData, setVariantData] = useState({
         variety: '',
-        quality: 'Good',
+        quality: 'quality1',
         quantity: '',
         sellQuantity: 0,
         unit: 'kg',
@@ -137,6 +138,10 @@ function TodayAuction() {
     });
 
     const [imagePreview, setImagePreview] = useState(null);
+    const [defaultCommission, setDefaultCommission] = useState('');
+    const [editingGlobalComm, setEditingGlobalComm] = useState(false);
+    const [editingVariantRowComm, setEditingVariantRowComm] = useState(false);
+    const [editingCommVariantId, setEditingCommVariantId] = useState(null);
 
     const [saleData, setSaleData] = useState({
         buyerId: '',
@@ -151,10 +156,10 @@ function TodayAuction() {
     const resetVariantData = () => {
         setVariantData({
             variety: '',
-            quality: 'Good',
+            quality: 'quality1',
             quantity: '',
             unit: 'kg',
-            commission: '',
+            commission: defaultCommission,
             commissionAmountForSellQuantity: 0,
             priceAmountForSellQuantity: 0,
         });
@@ -222,9 +227,7 @@ function TodayAuction() {
         const newVariant = {
             id: Date.now(),
             ...variantData,
-            commissionPercent: parseFloat(variantData.commission) || 0, // Using commissionPercent
             quantity: parseFloat(variantData.quantity),
-            // sellQuantity, balance, etc removed
         };
 
         setNewProduct({
@@ -236,7 +239,6 @@ function TodayAuction() {
 
         resetVariantData();
     };
-
 
     const handleDeleteVariant = (id) => {
         setNewProduct({
@@ -272,6 +274,7 @@ function TodayAuction() {
             varieties: product.varieties || '',
             sellerName: seller ? seller.name : ''
         });
+        setDefaultCommission(product.commissionPercent || '');
         setImagePreview(product.image);
         setShowEditProduct(true);
     };
@@ -284,6 +287,7 @@ function TodayAuction() {
         if (index !== -1) {
             data.products[index] = {
                 ...editingProduct,
+                commissionPercent: parseFloat(defaultCommission) || 0,
                 // Ensure variants are preserved or updated if we add editing logic later
                 variants: editingProduct.variants,
                 // price, quantity, etc. are now in variants or removed
@@ -298,15 +302,24 @@ function TodayAuction() {
 
     useEffect(() => {
         loadData();
-        const fetchMasterProducts = async () => {
+        const fetchInitialData = async () => {
             try {
-                const data = await productApi.getProducts({ vendorId });
-                setMasterProducts(data);
+                const masterData = await productApi.getProducts({ vendorId });
+                setMasterProducts(masterData);
+
+                if (vendorId) {
+                    const commData = await getCommission(vendorId);
+                    if (commData && commData.success) {
+                        const val = commData.data;
+                        setDefaultCommission(val);
+                        setVariantData(prev => ({ ...prev, commission: val }));
+                    }
+                }
             } catch (error) {
-                console.error("Failed to fetch master products", error);
+                console.error("Failed to fetch initial data", error);
             }
         };
-        fetchMasterProducts();
+        fetchInitialData();
     }, [vendorId]);
 
     const loadData = () => {
@@ -369,6 +382,7 @@ function TodayAuction() {
             date: newProduct.date || new Date().toISOString().split('T')[0],
             status: 'available',
             isActive: true,
+            commissionPercent: parseFloat(defaultCommission) || 0,
             variants: newProduct.variants,
             image: newProduct.image
         };
@@ -411,7 +425,7 @@ function TodayAuction() {
         // Calculate amounts
         const finalPrice = parseFloat(saleData.finalPrice) || 0;
         const totalAmount = finalPrice;
-        const totalCommission = (totalAmount * variant.commissionPercent) / 100; // Assuming commissionPercent is in variant
+        const totalCommission = (totalAmount * (product.commissionPercent || 0)) / 100;
 
         // Create Transaction Record (Pure Sales)
         const transaction = {
@@ -428,7 +442,7 @@ function TodayAuction() {
             rate: finalPrice / sellQty, // Calculate rate per unit
             finalAmount: totalAmount,
 
-            commissionPercent: variant.commissionPercent,
+            commissionPercent: product.commissionPercent || 0,
             commissionAmount: totalCommission,
             netAmount: totalAmount - totalCommission
         };
@@ -488,6 +502,14 @@ function TodayAuction() {
         return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
+    const getQualityLabel = (quality) => {
+        switch (quality) {
+            case 'quality1': return 'Quality 1';
+            case 'quality2': return 'Quality 2';
+            case 'quality3': return 'Quality 3';
+            default: return quality;
+        }
+    };
 
 
     return (
@@ -596,11 +618,14 @@ function TodayAuction() {
                                                                 <div key={v.id} className="variant-card">
                                                                     <div className="variant-card-header">
                                                                         <span>{capitalizeFirst(v.variety)}</span>
-                                                                        <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'} badge-sm`}>{v.quality}</span>
+                                                                        <span className={`badge ${v.quality === 'quality1' ? 'badge-success' : v.quality === 'quality2' ? 'badge-warning' : 'badge-error'} badge-sm`}>{getQualityLabel(v.quality)}</span>
                                                                     </div>
                                                                     <div className="variant-card-metrics">
-                                                                        <span>{remaining} {v.unit}</span>
-                                                                        <span className="text-amber font-semibold">{v.commission}% Comm</span>
+                                                                        <div className="variant-qty">
+                                                                             <span>Remaining:</span>
+                                                                             <strong>{remaining}</strong>
+                                                                             <span>{v.unit}</span>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             )
@@ -706,8 +731,38 @@ function TodayAuction() {
                                     required
                                 />
 
-                                <div className="form-group">
-                                    <label className="form-label">Variants</label>
+                                <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                        <label className="form-label" style={{ marginBottom: 0 }}>Variants</label>
+                                        <div className="global-comm-wrapper">
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Product Commission:</span>
+                                            {editingGlobalComm ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <input
+                                                        type="number"
+                                                        value={defaultCommission}
+                                                        onChange={(e) => {
+                                                            setDefaultCommission(e.target.value);
+                                                            setVariantData(prev => ({ ...prev, commission: e.target.value }));
+                                                        }}
+                                                        className="variant-comm-input"
+                                                        style={{ width: '60px', padding: '2px 8px' }}
+                                                        autoFocus
+                                                    />
+                                                    <button type="button" className="icon-btn edit" onClick={() => setEditingGlobalComm(false)}>
+                                                        <Check size={14} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <strong style={{ color: 'var(--primary-color)' }}>{defaultCommission}%</strong>
+                                                    <button type="button" className="icon-btn edit" onClick={() => setEditingGlobalComm(true)}>
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                     <div className="variant-row">
                                         <SearchableSelect
                                             options={
@@ -729,9 +784,9 @@ function TodayAuction() {
                                                 setVariantData({ ...variantData, quality: e.target.value })
                                             }
                                         >
-                                            <option value="quality1">quality1</option>
-                                            <option value="quality2">quality2</option>
-                                            <option value="quality3">quality3</option>
+                                            <option value="quality1">Quality 1</option>
+                                            <option value="quality2">Quality 2</option>
+                                            <option value="quality3">Quality 3</option>
                                         </select>
 
                                         <input
@@ -760,15 +815,6 @@ function TodayAuction() {
                                             )}
                                         </select>
 
-                                        {/* <input
-                                            type="number"
-                                            placeholder="Comm %"
-                                            min={0}
-                                            value={variantData.commission}
-                                            onChange={(e) =>
-                                                setVariantData({ ...variantData, commission: e.target.value })
-                                            }
-                                        /> */}
 
                                         <button type="button" className="btn btn-primary add-variant-btn" onClick={handleAddVariant}>
                                             Add
@@ -786,7 +832,6 @@ function TodayAuction() {
                                                     <th className="variant-table-th">Quality</th>
                                                     <th className="variant-table-th">Qty</th>
                                                     <th className="variant-table-th">Unit</th>
-                                                    <th className="variant-table-th">Comm %</th>
                                                     <th className="variant-table-th">Action</th>
                                                 </tr>
                                             </thead>
@@ -797,7 +842,6 @@ function TodayAuction() {
                                                         <td className="variant-table-td">{v.quality}</td>
                                                         <td className="variant-table-td">{v.quantity}</td>
                                                         <td className="variant-table-td">{v.unit}</td>
-                                                        <td className="variant-table-td">{v.commission}%</td>
                                                         <td className="variant-table-td">
                                                             <button
                                                                 type="button"
@@ -858,11 +902,11 @@ function TodayAuction() {
                             <button className="modal-close" onClick={() => {
                                 setShowEditProduct(false);
                                 setImagePreview(null);
-                            }}>×</button>
+                            }}><X/></button>
                         </div>
                         <form onSubmit={handleEditProduct}>
                             <div className="modal-body">
-                                <div className="form-group">
+                                {/* <div className="form-group">
                                     <label className="form-label">Auction Date</label>
                                     <input
                                         type="date"
@@ -871,7 +915,7 @@ function TodayAuction() {
                                         required
                                         disabled
                                     />
-                                </div>
+                                </div> */}
 
                                 <SearchableSelect
                                     label="Product Name"
@@ -896,18 +940,46 @@ function TodayAuction() {
                                     required
                                 />
 
-                                {editingProduct.variants && editingProduct.variants.length > 0 && (
-                                    <div className="form-group">
-                                        <label className="form-label">Variants (Read-only)</label>
-                                        <div className="table-responsive-variants">
-                                            <table className="variant-table">
-                                                <thead>
+                                <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                        <label className="form-label" style={{ marginBottom: 0 }}>Variants (Read-only)</label>
+                                        <div className="global-comm-wrapper">
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Product Commission:</span>
+                                            {editingGlobalComm ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <input
+                                                        type="number"
+                                                        value={defaultCommission}
+                                                        onChange={(e) => {
+                                                            setDefaultCommission(e.target.value);
+                                                            setVariantData(prev => ({ ...prev, commission: e.target.value }));
+                                                        }}
+                                                        className="variant-comm-input"
+                                                        style={{ width: '60px', padding: '2px 8px' }}
+                                                        autoFocus
+                                                    />
+                                                    <button type="button" className="icon-btn edit" onClick={() => setEditingGlobalComm(false)}>
+                                                        <Check size={14} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <strong style={{ color: 'var(--primary-color)' }}>{defaultCommission}%</strong>
+                                                    <button type="button" className="icon-btn edit" onClick={() => setEditingGlobalComm(true)}>
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="table-responsive-variants">
+                                        <table className="variant-table">
+                                            <thead>
                                                     <tr className="variant-table-tr-header">
                                                         <th className="variant-table-th">Variety</th>
                                                         <th className="variant-table-th">Quality</th>
                                                         <th className="variant-table-th">Qty</th>
                                                         <th className="variant-table-th">Unit</th>
-                                                        <th className="variant-table-th">Comm %</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -917,14 +989,12 @@ function TodayAuction() {
                                                             <td className="variant-table-td">{v.quality}</td>
                                                             <td className="variant-table-td">{v.quantity}</td>
                                                             <td className="variant-table-td">{v.unit}</td>
-                                                            <td className="variant-table-td">{v.commission}%</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
-                                            </table>
-                                        </div>
+                                        </table>
                                     </div>
-                                )}
+                                </div>
                                 <div className="form-group">
                                     <label className="form-label">Product Image</label>
                                     <input
@@ -989,7 +1059,7 @@ function TodayAuction() {
                                             const remaining = v.quantity - sold;
                                             return (
                                                 <option key={v.id} value={v.id} disabled={remaining <= 0}>
-                                                    {capitalizeFirst(v.variety)} - {v.quality} - {remaining} / {v.quantity} {v.unit} ({v.commission}%)
+                                                    {capitalizeFirst(v.variety)} - {getQualityLabel(v.quality)} - {remaining} / {v.quantity} {v.unit}
                                                 </option>
                                             )
                                         })}
@@ -1086,14 +1156,14 @@ function TodayAuction() {
                                 />
                                             <div className="card calc-card">
                                                 <p className="calc-row">
-                                                    <strong>Commission ({v.commission}%):</strong>{' '}
+                                                    <strong>Commission ({selectedProduct.commissionPercent}%):</strong>{' '}
                                                     <span className="text-amber">
-                                                        ₹{((parseFloat(saleData.finalPrice) || 0) * v.commission / 100).toLocaleString()}
+                                                        ₹{((parseFloat(saleData.finalPrice) || 0) * (selectedProduct.commissionPercent || 0) / 100).toLocaleString()}
                                                     </span>
                                                 </p>
                                                 <p className="calc-row-last">
                                                     <strong>Seller Receives:</strong>{' '}
-                                                    ₹{((parseFloat(saleData.finalPrice) || 0) * (100 - v.commission) / 100).toLocaleString()}
+                                                    ₹{((parseFloat(saleData.finalPrice) || 0) * (100 - (selectedProduct.commissionPercent || 0)) / 100).toLocaleString()}
                                                 </p>
                                             </div>
                                         </>
