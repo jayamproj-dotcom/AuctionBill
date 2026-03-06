@@ -481,18 +481,7 @@ function SellerDetails() {
                         <div className="card profile-container" style={{ marginBottom: '2rem' }}>
                             <div className="profile-layout">
                                 <div className="profile-info">
-                                    <div className="data-row">
-                                        <span className="data-label">Seller ID</span>
-                                        <span className="data-value" style={{ fontFamily: 'monospace', fontSize: '0.78rem', opacity: 0.7 }}>
-                                            {selectedSeller._id || selectedSeller.id}
-                                        </span>
-                                    </div>
-                                    <div className="data-row">
-                                        <span className="data-label">Vendor ID</span>
-                                        <span className="data-value" style={{ fontFamily: 'monospace', fontSize: '0.78rem', opacity: 0.7 }}>
-                                            {selectedSeller.vendorId || currentVendorId}
-                                        </span>
-                                    </div>
+                                  
                                     <div className="data-row">
                                         <span className="data-label">Contact</span>
                                         <span className="data-value">{selectedSeller.contact}</span>
