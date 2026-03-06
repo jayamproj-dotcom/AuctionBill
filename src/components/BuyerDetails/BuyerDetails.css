@@ -225,3 +225,22 @@
         width: 100%;
     }
 }
+
+/* ── Form Validation ── */
+.input-error {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15) !important;
+}
+
+.input-error:focus {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+.field-error {
+    display: block;
+    color: #ef4444;
+    font-size: 0.75rem;
+    margin-top: 4px;
+    font-weight: 500;
+}
