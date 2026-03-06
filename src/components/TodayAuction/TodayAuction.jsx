@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { getAuctionData, saveAuctionData } from '../../utils/localStorage';
+import { useSelector } from 'react-redux';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './TodayAuction.css';
 import { toast } from 'react-toastify';
-import { Plus, Trash2, Edit2, X, Eye, EyeOff, PackageSearch, Search } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Eye, EyeOff, PackageSearch, Search, Check } from 'lucide-react';
 import * as productApi from '../../api/vendorApi';
+import { getCommission } from '../../api/commissionApi';
+import { getSellers } from '../../api/sellerApi';
+import * as auctionApi from '../../api/auctionApi';
 
 const SearchableSelect = ({ options, value, onChange, placeholder, required, label, className = "", style = {} }) => {
     const [searchTerm, setSearchTerm] = useState(value || '');
@@ -38,7 +41,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, required, lab
         if (match) {
             if (match.name !== value) onChange(match);
         } else {
-            onChange({ id: '', name: '' });
+            onChange({ _id: '', id: '', name: '' });
             setSearchTerm('');
         }
     };
@@ -59,7 +62,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, required, lab
                 onChange={(e) => {
                     setSearchTerm(e.target.value);
                     setIsOpen(true);
-                    if (e.target.value === '') onChange({ id: '', name: '' });
+                    if (e.target.value === '') onChange({ _id: '', id: '', name: '' });
                 }}
                 onFocus={() => setIsOpen(true)}
                 onKeyDown={(e) => {
@@ -79,7 +82,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, required, lab
                     {options.filter(opt => opt.name.toLowerCase().includes(searchTerm.toLowerCase())).length > 0 ? (
                         options.filter(opt => opt.name.toLowerCase().includes(searchTerm.toLowerCase())).map(opt => (
                             <li
-                                key={opt.id}
+                                key={opt._id || opt.id}
                                 onMouseDown={(e) => {
                                     e.preventDefault(); // crucial to prevent focus loss before click completes
                                     handleSelect(opt);
@@ -110,9 +113,8 @@ function TodayAuction() {
     const [searchQuery, setSearchQuery] = useState('');
     const [masterProducts, setMasterProducts] = useState([]);
     
-    // Vendor ID to fetch masterProducts
-    const vendor = JSON.parse(localStorage.getItem('vendor')) || {};
-    const vendorId = vendor.id || vendor._id;
+    // Vendor ID from Redux or Session Storage
+    const vendorId = useSelector((state) => state.vendorAuth.vendorId) || sessionStorage.getItem('vendorId');
 
 
     const [newProduct, setNewProduct] = useState({
@@ -126,7 +128,7 @@ function TodayAuction() {
 
     const [variantData, setVariantData] = useState({
         variety: '',
-        quality: 'Good',
+        quality: 'quality1',
         quantity: '',
         sellQuantity: 0,
         unit: 'kg',
@@ -137,6 +139,10 @@ function TodayAuction() {
     });
 
     const [imagePreview, setImagePreview] = useState(null);
+    const [defaultCommission, setDefaultCommission] = useState('');
+    const [editingGlobalComm, setEditingGlobalComm] = useState(false);
+    const [editingVariantRowComm, setEditingVariantRowComm] = useState(false);
+    const [editingCommVariantId, setEditingCommVariantId] = useState(null);
 
     const [saleData, setSaleData] = useState({
         buyerId: '',
@@ -151,10 +157,10 @@ function TodayAuction() {
     const resetVariantData = () => {
         setVariantData({
             variety: '',
-            quality: 'Good',
+            quality: 'quality1',
             quantity: '',
             unit: 'kg',
-            commission: '',
+            commission: defaultCommission,
             commissionAmountForSellQuantity: 0,
             priceAmountForSellQuantity: 0,
         });
@@ -201,15 +207,12 @@ function TodayAuction() {
         }
     };
 
-    const toggleProductStatus = (id) => {
-        const data = getAuctionData();
-        const index = data.products.findIndex(p => p.id === id);
-        if (index !== -1) {
-            // Toggle isActive. If undefined, assume true -> switch to false.
-            const currentStatus = data.products[index].isActive !== false;
-            data.products[index].isActive = !currentStatus;
-            saveAuctionData(data);
+    const toggleProductStatus = async (id) => {
+        try {
+            await auctionApi.toggleProductStatus(id);
             loadData();
+        } catch (error) {
+            toast.error(error.message || "Failed to toggle status");
         }
     };
 
@@ -222,9 +225,7 @@ function TodayAuction() {
         const newVariant = {
             id: Date.now(),
             ...variantData,
-            commissionPercent: parseFloat(variantData.commission) || 0, // Using commissionPercent
             quantity: parseFloat(variantData.quantity),
-            // sellQuantity, balance, etc removed
         };
 
         setNewProduct({
@@ -237,7 +238,6 @@ function TodayAuction() {
         resetVariantData();
     };
 
-
     const handleDeleteVariant = (id) => {
         setNewProduct({
             ...newProduct,
@@ -248,99 +248,109 @@ function TodayAuction() {
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState(null);
 
-    const handleDeleteClick = (id) => {
-        setProductToDelete(id);
+    const handleDeleteClick = (product) => {
+        setProductToDelete(product._id || product.id);
         setIsDeleteConfirmOpen(true);
     };
 
-    const confirmDeleteProduct = () => {
+    const confirmDeleteProduct = async () => {
         if (productToDelete) {
-            const data = getAuctionData();
-            data.products = data.products.filter(p => p.id !== productToDelete);
-            saveAuctionData(data);
-            loadData();
-            setIsDeleteConfirmOpen(false);
-            setProductToDelete(null);
+            try {
+                await auctionApi.deleteAuctionProduct(productToDelete);
+                loadData();
+                setIsDeleteConfirmOpen(false);
+                setProductToDelete(null);
+                toast.success("Product deleted successfully");
+            } catch (error) {
+                toast.error(error.message || "Failed to delete product");
+            }
         }
     };
 
     const openEditModal = (product) => {
         // Find seller name from ID
-        const seller = sellers.find(s => s.id === product.sellerId);
+        const seller = sellers.find(s => (s._id || s.id) === product.sellerId);
         setEditingProduct({
             ...product,
             varieties: product.varieties || '',
             sellerName: seller ? seller.name : ''
         });
+        setDefaultCommission(product.commissionPercent || '');
         setImagePreview(product.image);
         setShowEditProduct(true);
     };
 
-    const handleEditProduct = (e) => {
+    const handleEditProduct = async (e) => {
         e.preventDefault();
-        const data = getAuctionData();
-        const index = data.products.findIndex(p => p.id === editingProduct.id);
-
-        if (index !== -1) {
-            data.products[index] = {
+        try {
+            const updateData = {
                 ...editingProduct,
-                // Ensure variants are preserved or updated if we add editing logic later
-                variants: editingProduct.variants,
-                // price, quantity, etc. are now in variants or removed
+                commissionPercent: parseFloat(defaultCommission) || 0,
             };
-            saveAuctionData(data);
+            await auctionApi.updateAuctionProduct(editingProduct._id || editingProduct.id, updateData);
             setShowEditProduct(false);
             setEditingProduct(null);
             setImagePreview(null);
             loadData();
+            toast.success("Product updated successfully");
+        } catch (error) {
+            toast.error(error.message || "Failed to update product");
         }
     };
 
     useEffect(() => {
-        loadData();
-        const fetchMasterProducts = async () => {
+        const fetchInitialData = async () => {
+            if (!vendorId) return;
             try {
-                const data = await productApi.getProducts({ vendorId });
-                setMasterProducts(data);
+                const masterData = await productApi.getProducts({ vendorId });
+                setMasterProducts(masterData);
+
+                const commData = await getCommission(vendorId);
+                if (commData && commData.success) {
+                    const val = commData.data;
+                    setDefaultCommission(val);
+                    setVariantData(prev => ({ ...prev, commission: val }));
+                }
+
+                // Fetch sellers and buyers from API
+                const sellerResponse = await getSellers(vendorId);
+                if (sellerResponse.success) {
+                    setSellers(sellerResponse.data.filter(s => s.status === 'active'));
+                }
+                
+                const buyerResponse = await auctionApi.getBuyers(vendorId);
+                if (buyerResponse.success) {
+                    setBuyers(buyerResponse.data.filter(b => b.status === 'active'));
+                }
+                
+                loadData();
             } catch (error) {
-                console.error("Failed to fetch master products", error);
+                console.error("Failed to fetch initial data", error);
             }
         };
-        fetchMasterProducts();
+        fetchInitialData();
     }, [vendorId]);
 
-    const loadData = () => {
-        const data = getAuctionData();
-        const today = new Date().toISOString().split('T')[0];
-
-        // Enrich products with calculated sold stats from transactions
-        const productsWithStats = data.products.map(p => {
-            const productTransactions = (data.transactions || []).filter(t => t.productId === p.id);
-
-            const variantsWithStats = (p.variants || []).map(v => {
-                const variantTransactions = productTransactions.filter(t => t.variantId === v.id);
-                const sold = variantTransactions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
-                return { ...v, sellQuantity: sold };
-            });
-
-            // Determine status dynamically
-            const isSoldOut = variantsWithStats.length > 0 && variantsWithStats.every(v => v.sellQuantity >= v.quantity);
-            const status = isSoldOut ? 'soldout' : p.status;
-
-            return { ...p, variants: variantsWithStats, status };
-        });
-
-        // Load all available products. Sort by ID (desc) to show newest first.
-        const sortedProducts = productsWithStats
-            .filter(p => (p.status === 'available' || p.status === 'soldout') && p.date === today)
-            .sort((a, b) => b.id - a.id);
-
-        setProducts(sortedProducts);
-        setSellers(data.sellers.filter(s => s.status === 'active'));
-        setBuyers(data.buyers.filter(b => b.status === 'active'));
+    const loadData = async () => {
+        if (!vendorId) return;
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const productResponse = await auctionApi.getAuctionProducts(vendorId, today);
+            
+            if (productResponse.success) {
+                const mappedProducts = productResponse.data.map(p => {
+                    const isSoldOut = p.variants && p.variants.length > 0 && 
+                        p.variants.every(v => (v.sellQuantity || 0) >= (v.quantity || 0));
+                    return { ...p, status: isSoldOut ? 'soldout' : p.status };
+                });
+                setProducts(mappedProducts);
+            }
+        } catch (error) {
+            console.error("Failed to load auction data", error);
+        }
     };
 
-    const handleAddProduct = (e) => {
+    const handleAddProduct = async (e) => {
         e.preventDefault();
 
         if (!newProduct.name) {
@@ -358,50 +368,41 @@ function TodayAuction() {
             return;
         }
 
-        const data = getAuctionData();
+        try {
+            const productData = {
+                vendorId: vendorId,
+                sellerId: newProduct.sellerId,
+                name: newProduct.name,
+                date: newProduct.date || new Date().toISOString().split('T')[0],
+                commissionPercent: parseFloat(defaultCommission) || 0,
+                variants: newProduct.variants.map(({ id, ...rest }) => rest), // Remove local 'id'
+                image: newProduct.image
+            };
 
-        let id = data.products.length + 1;
+            const response = await auctionApi.addAuctionProduct(productData);
 
-        const product = {
-            id: id,
-            name: newProduct.name,
-            sellerId: newProduct.sellerId,
-            date: newProduct.date || new Date().toISOString().split('T')[0],
-            status: 'available',
-            isActive: true,
-            variants: newProduct.variants,
-            image: newProduct.image
-        };
-
-        data.products.push(product);
-        saveAuctionData(data);
-
-        toast.success("Product added successfully");
-
-        resetProductForm();
-        setShowAddProduct(false);
-        loadData();
+            if (response.success) {
+                toast.success("Product added successfully");
+                resetProductForm();
+                setShowAddProduct(false);
+                loadData();
+            }
+        } catch (error) {
+            toast.error(error.message || "Failed to add product");
+        }
     };
 
 
-    const handleSellProduct = (e) => {
+    const handleSellProduct = async (e) => {
         e.preventDefault();
-        const data = getAuctionData();
-
+        
         // Find the variant to validate stock
-        const productIndex = data.products.findIndex(p => p.id === selectedProduct.id);
-        const product = data.products[productIndex];
-        const variantIndex = product.variants.findIndex(v => v.id == saleData.variantId);
-        if (variantIndex === -1) return;
-
-        const variant = product.variants[variantIndex];
-
-        // Calculate current sold quantity from transactions
-        const existingTransactions = (data.transactions || []).filter(t => t.variantId === variant.id);
-        const currentSold = existingTransactions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
+        const product = products.find(p => p._id === selectedProduct._id || p.id === selectedProduct.id);
+        const variant = product.variants.find(v => (v._id || v.id) == saleData.variantId);
+        if (!variant) return;
 
         const sellQty = parseFloat(saleData.qtyToSell) || 0;
-        const available = variant.quantity - currentSold;
+        const available = variant.quantity - (variant.sellQuantity || 0);
 
         if (sellQty > available) {
             toast.error(`Cannot sell more than available quantity (${available})`);
@@ -411,61 +412,38 @@ function TodayAuction() {
         // Calculate amounts
         const finalPrice = parseFloat(saleData.finalPrice) || 0;
         const totalAmount = finalPrice;
-        const totalCommission = (totalAmount * variant.commissionPercent) / 100; // Assuming commissionPercent is in variant
+        const totalCommission = (totalAmount * (product.commissionPercent || 0)) / 100;
 
-        // Create Transaction Record (Pure Sales)
-        const transaction = {
-            id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
-
-            sellerId: product.sellerId,
-            buyerId: saleData.buyerId,
-
-            productId: product.id,
-            variantId: variant.id,
-
-            quantity: sellQty,
-            rate: finalPrice / sellQty, // Calculate rate per unit
-            finalAmount: totalAmount,
-
-            commissionPercent: variant.commissionPercent,
-            commissionAmount: totalCommission,
-            netAmount: totalAmount - totalCommission
-        };
-
-        if (!data.transactions) data.transactions = [];
-        data.transactions.push(transaction);
-
-        // Record Payment if applicable
-        let paymentAmount = 0;
-        if (saleData.paymentStatus === 'Paid') {
-            paymentAmount = totalAmount;
-        } else if (saleData.paymentStatus === 'Part Paid') {
-            paymentAmount = parseFloat(saleData.amountPaid) || 0;
-        }
-
-        if (paymentAmount > 0) {
-            const payment = {
-                id: Date.now() + 1, // Ensure unique ID (offset from transaction)
+        try {
+            const transactionData = {
+                vendorId: vendorId,
+                sellerId: product.sellerId,
                 buyerId: saleData.buyerId,
+                productId: product._id || product.id,
+                variantId: variant._id || variant.id,
                 date: new Date().toISOString().split('T')[0],
-                amount: paymentAmount,
-                method: 'Cash', // Default to Cash for now
-                note: `Payment for ${product.name} (${variant.variety})`,
-                reference: `SALE-${transaction.id}`
+                quantity: sellQty,
+                rate: finalPrice / sellQty,
+                finalAmount: totalAmount,
+                commissionPercent: product.commissionPercent || 0,
+                commissionAmount: totalCommission,
+                netAmount: totalAmount - totalCommission,
+                paymentStatus: saleData.paymentStatus,
+                amountPaid: parseFloat(saleData.amountPaid) || 0
             };
 
-            if (!data.buyerPayments) data.buyerPayments = [];
-            data.buyerPayments.push(payment);
+            const response = await auctionApi.recordSale(transactionData);
+
+            if (response.success) {
+                setSaleData({ buyerId: '', buyerName: '', variantId: '', finalPrice: '', qtyToSell: '', paymentStatus: 'Paid', amountPaid: '' });
+                setShowSellModal(false);
+                setSelectedProduct(null);
+                loadData();
+                toast.success("Sale recorded successfully");
+            }
+        } catch (error) {
+            toast.error(error.message || "Failed to record sale");
         }
-
-        saveAuctionData(data);
-
-        setSaleData({ buyerId: '', buyerName: '', variantId: '', finalPrice: '', qtyToSell: '', paymentStatus: 'Paid', amountPaid: '' });
-        setShowSellModal(false);
-        setSelectedProduct(null);
-        loadData(); // This will recalculate sold stats and update UI
-        toast.success("Sale recorded successfully");
     };
 
     const openSellModal = (product) => {
@@ -488,6 +466,14 @@ function TodayAuction() {
         return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
+    const getQualityLabel = (quality) => {
+        switch (quality) {
+            case 'quality1': return 'Quality 1';
+            case 'quality2': return 'Quality 2';
+            case 'quality3': return 'Quality 3';
+            default: return quality;
+        }
+    };
 
 
     return (
@@ -555,7 +541,6 @@ function TodayAuction() {
                                     <tr>
                                         <th className="custom-th">Product Details</th>
                                         <th className="custom-th">Seller</th>
-                                        <th className="custom-th">Variants (Qty & Comm)</th>
                                         <th className="custom-th">Status</th>
                                         <th className="custom-th custom-th-center">Actions</th>
                                     </tr>
@@ -565,7 +550,7 @@ function TodayAuction() {
                                         .filter(product => {
                                             if (!searchQuery) return true;
                                             const query = searchQuery.toLowerCase();
-                                            const seller = sellers.find(s => s.id === product.sellerId);
+                                            const seller = sellers.find(s => (s._id || s.id) === product.sellerId);
                                             const sellerName = seller ? seller.name.toLowerCase() : '';
                                             const productName = product.name.toLowerCase();
                                             const hasMatchingVariant = product.variants && product.variants.some(v => v.variety.toLowerCase().includes(query));
@@ -573,39 +558,30 @@ function TodayAuction() {
                                             return sellerName.includes(query) || productName.includes(query) || hasMatchingVariant;
                                         })
                                         .map(product => (
-                                            <tr key={product.id} className={`${product.isActive === false ? 'product-disabled' : ''} custom-tr`}>
+                                            <tr key={product._id || product.id} className={`${product.isActive === false ? 'product-disabled' : ''} custom-tr`}>
                                                 <td className="custom-td">
                                                     <div className="font-semibold text-primary table-product-name">
                                                         {capitalizeFirst(product.name)}
                                                     </div>
-                                                    {product.varieties && (
-                                                        <div className="text-muted table-product-subtext">
-                                                            {capitalizeFirst(product.varieties)}
+                                                    {product.variants && product.variants.length > 0 && (
+                                                        <div className="product-variants-inline">
+                                                            {product.variants.map(v => {
+                                                                const remaining = (v.quantity || 0) - (v.sellQuantity || 0);
+                                                                return (
+                                                                    <div key={v._id || v.id} className="variant-inline-chip">
+                                                                        <span className="variant-inline-name">{capitalizeFirst(v.variety)}</span>
+                                                                        <span className={`badge badge-sm ${v.quality === 'quality1' ? 'badge-success' : v.quality === 'quality2' ? 'badge-warning' : 'badge-error'}`}>
+                                                                            {getQualityLabel(v.quality)}
+                                                                        </span>
+                                                                        <span className="variant-inline-qty">{remaining} {v.unit}</span>
+                                                                    </div>
+                                                                );
+                                                            })}
                                                         </div>
                                                     )}
                                                 </td>
                                                 <td className="custom-td">
-                                                    <strong>{sellers.find(s => s.id === product.sellerId)?.name}</strong>
-                                                </td>
-                                                <td className="custom-td custom-td-variants">
-                                                    <div className="product-variants">
-                                                        {product.variants && product.variants.map(v => {
-                                                            const sold = v.sellQuantity || 0;
-                                                            const remaining = v.quantity - sold;
-                                                            return (
-                                                                <div key={v.id} className="variant-card">
-                                                                    <div className="variant-card-header">
-                                                                        <span>{capitalizeFirst(v.variety)}</span>
-                                                                        <span className={`badge ${v.quality === 'Excellent' ? 'badge-success' : v.quality === 'Good' ? 'badge-warning' : 'badge-error'} badge-sm`}>{v.quality}</span>
-                                                                    </div>
-                                                                    <div className="variant-card-metrics">
-                                                                        <span>{remaining} {v.unit}</span>
-                                                                        <span className="text-amber font-semibold">{v.commission}% Comm</span>
-                                                                    </div>
-                                                                </div>
-                                                            )
-                                                        })}
-                                                    </div>
+                                                    <strong>{sellers.find(s => (s._id || s.id) === product.sellerId)?.name}</strong>
                                                 </td>
                                                 <td className="custom-td">
                                                     {product.status === 'soldout' ? (
@@ -626,13 +602,13 @@ function TodayAuction() {
                                                             Sell
                                                         </button>
                                                         <div className="action-icon-row">
-                                                            <button className="icon-btn action-icon-small" onClick={() => toggleProductStatus(product.id)} title={product.isActive === false ? "Enable" : "Disable"}>
+                                                            <button className="icon-btn action-icon-small" onClick={() => toggleProductStatus(product._id || product.id)} title={product.isActive === false ? "Enable" : "Disable"}>
                                                                 {product.isActive === false ? <Eye size={16} /> : <EyeOff size={16} />}
                                                             </button>
                                                             <button className="icon-btn edit action-icon-small" onClick={() => openEditModal(product)} title="Edit">
                                                                 <Edit2 size={16} />
                                                             </button>
-                                                            <button className="icon-btn delete action-icon-small" onClick={() => handleDeleteClick(product.id)} title="Delete">
+                                                            <button className="icon-btn delete action-icon-small" onClick={() => handleDeleteClick(product)} title="Delete">
                                                                 <Trash2 size={16} />
                                                             </button>
                                                         </div>
@@ -674,7 +650,7 @@ function TodayAuction() {
                                     onChange={(seller) =>
                                         setNewProduct({
                                             ...newProduct,
-                                            sellerId: seller.id,
+                                            sellerId: seller._id || seller.id,
                                             sellerName: seller.name
                                         })
                                     }
@@ -706,8 +682,38 @@ function TodayAuction() {
                                     required
                                 />
 
-                                <div className="form-group">
-                                    <label className="form-label">Variants</label>
+                                <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                        <label className="form-label" style={{ marginBottom: 0 }}>Variants</label>
+                                        <div className="global-comm-wrapper">
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Product Commission:</span>
+                                            {editingGlobalComm ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <input
+                                                        type="number"
+                                                        value={defaultCommission}
+                                                        onChange={(e) => {
+                                                            setDefaultCommission(e.target.value);
+                                                            setVariantData(prev => ({ ...prev, commission: e.target.value }));
+                                                        }}
+                                                        className="variant-comm-input"
+                                                        style={{ width: '60px', padding: '2px 8px' }}
+                                                        autoFocus
+                                                    />
+                                                    <button type="button" className="icon-btn edit" onClick={() => setEditingGlobalComm(false)}>
+                                                        <Check size={14} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <strong style={{ color: 'var(--primary-color)' }}>{defaultCommission}%</strong>
+                                                    <button type="button" className="icon-btn edit" onClick={() => setEditingGlobalComm(true)}>
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                     <div className="variant-row">
                                         <SearchableSelect
                                             options={
@@ -729,9 +735,9 @@ function TodayAuction() {
                                                 setVariantData({ ...variantData, quality: e.target.value })
                                             }
                                         >
-                                            <option value="quality1">quality1</option>
-                                            <option value="quality2">quality2</option>
-                                            <option value="quality3">quality3</option>
+                                            <option value="quality1">Quality 1</option>
+                                            <option value="quality2">Quality 2</option>
+                                            <option value="quality3">Quality 3</option>
                                         </select>
 
                                         <input
@@ -760,15 +766,6 @@ function TodayAuction() {
                                             )}
                                         </select>
 
-                                        {/* <input
-                                            type="number"
-                                            placeholder="Comm %"
-                                            min={0}
-                                            value={variantData.commission}
-                                            onChange={(e) =>
-                                                setVariantData({ ...variantData, commission: e.target.value })
-                                            }
-                                        /> */}
 
                                         <button type="button" className="btn btn-primary add-variant-btn" onClick={handleAddVariant}>
                                             Add
@@ -786,7 +783,6 @@ function TodayAuction() {
                                                     <th className="variant-table-th">Quality</th>
                                                     <th className="variant-table-th">Qty</th>
                                                     <th className="variant-table-th">Unit</th>
-                                                    <th className="variant-table-th">Comm %</th>
                                                     <th className="variant-table-th">Action</th>
                                                 </tr>
                                             </thead>
@@ -797,7 +793,6 @@ function TodayAuction() {
                                                         <td className="variant-table-td">{v.quality}</td>
                                                         <td className="variant-table-td">{v.quantity}</td>
                                                         <td className="variant-table-td">{v.unit}</td>
-                                                        <td className="variant-table-td">{v.commission}%</td>
                                                         <td className="variant-table-td">
                                                             <button
                                                                 type="button"
@@ -858,11 +853,11 @@ function TodayAuction() {
                             <button className="modal-close" onClick={() => {
                                 setShowEditProduct(false);
                                 setImagePreview(null);
-                            }}>×</button>
+                            }}><X/></button>
                         </div>
                         <form onSubmit={handleEditProduct}>
                             <div className="modal-body">
-                                <div className="form-group">
+                                {/* <div className="form-group">
                                     <label className="form-label">Auction Date</label>
                                     <input
                                         type="date"
@@ -871,7 +866,7 @@ function TodayAuction() {
                                         required
                                         disabled
                                     />
-                                </div>
+                                </div> */}
 
                                 <SearchableSelect
                                     label="Product Name"
@@ -889,42 +884,68 @@ function TodayAuction() {
                                     value={editingProduct.sellerName}
                                     onChange={(seller) => setEditingProduct({
                                         ...editingProduct,
-                                        sellerId: seller.id,
+                                        sellerId: seller._id || seller.id,
                                         sellerName: seller.name
                                     })}
                                     placeholder="Type to search seller..."
                                     required
                                 />
 
-                                {editingProduct.variants && editingProduct.variants.length > 0 && (
-                                    <div className="form-group">
-                                        <label className="form-label">Variants (Read-only)</label>
-                                        <div className="table-responsive-variants">
-                                            <table className="variant-table">
-                                                <thead>
+                                <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                        <label className="form-label" style={{ marginBottom: 0 }}>Variants (Read-only)</label>
+                                        <div className="global-comm-wrapper">
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Product Commission:</span>
+                                            {editingGlobalComm ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <input
+                                                        type="number"
+                                                        value={defaultCommission}
+                                                        onChange={(e) => {
+                                                            setDefaultCommission(e.target.value);
+                                                            setVariantData(prev => ({ ...prev, commission: e.target.value }));
+                                                        }}
+                                                        className="variant-comm-input"
+                                                        style={{ width: '60px', padding: '2px 8px' }}
+                                                        autoFocus
+                                                    />
+                                                    <button type="button" className="icon-btn edit" onClick={() => setEditingGlobalComm(false)}>
+                                                        <Check size={14} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <strong style={{ color: 'var(--primary-color)' }}>{defaultCommission}%</strong>
+                                                    <button type="button" className="icon-btn edit" onClick={() => setEditingGlobalComm(true)}>
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="table-responsive-variants">
+                                        <table className="variant-table">
+                                            <thead>
                                                     <tr className="variant-table-tr-header">
                                                         <th className="variant-table-th">Variety</th>
                                                         <th className="variant-table-th">Quality</th>
                                                         <th className="variant-table-th">Qty</th>
                                                         <th className="variant-table-th">Unit</th>
-                                                        <th className="variant-table-th">Comm %</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {editingProduct.variants.map(v => (
-                                                        <tr key={v.id} className="variant-table-tr">
+                                                        <tr key={v._id || v.id} className="variant-table-tr">
                                                             <td className="variant-table-td">{v.variety}</td>
                                                             <td className="variant-table-td">{v.quality}</td>
                                                             <td className="variant-table-td">{v.quantity}</td>
                                                             <td className="variant-table-td">{v.unit}</td>
-                                                            <td className="variant-table-td">{v.commission}%</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
-                                            </table>
-                                        </div>
+                                        </table>
                                     </div>
-                                )}
+                                </div>
                                 <div className="form-group">
                                     <label className="form-label">Product Image</label>
                                     <input
@@ -988,8 +1009,8 @@ function TodayAuction() {
                                             const sold = v.sellQuantity || 0;
                                             const remaining = v.quantity - sold;
                                             return (
-                                                <option key={v.id} value={v.id} disabled={remaining <= 0}>
-                                                    {capitalizeFirst(v.variety)} - {v.quality} - {remaining} / {v.quantity} {v.unit} ({v.commission}%)
+                                                <option key={v._id || v.id} value={v._id || v.id} disabled={remaining <= 0}>
+                                                    {capitalizeFirst(v.variety)} - {getQualityLabel(v.quality)} - {remaining} / {v.quantity} {v.unit}
                                                 </option>
                                             )
                                         })}
@@ -997,7 +1018,7 @@ function TodayAuction() {
                                 </div>
 
                                 {saleData.variantId && (() => {
-                                    const v = selectedProduct.variants.find(val => val.id == saleData.variantId);
+                                    const v = selectedProduct.variants.find(val => (val._id || val.id) == saleData.variantId);
                                     if (!v) return null;
                                     const sold = v.sellQuantity || 0;
                                     const available = v.quantity - sold;
@@ -1078,7 +1099,7 @@ function TodayAuction() {
                                     value={saleData.buyerName}
                                     onChange={(buyer) => setSaleData({
                                         ...saleData,
-                                        buyerId: buyer.id,
+                                        buyerId: buyer._id || buyer.id,
                                         buyerName: buyer.name
                                     })}
                                     placeholder="Type to search buyer..."
@@ -1086,14 +1107,14 @@ function TodayAuction() {
                                 />
                                             <div className="card calc-card">
                                                 <p className="calc-row">
-                                                    <strong>Commission ({v.commission}%):</strong>{' '}
+                                                    <strong>Commission ({selectedProduct.commissionPercent}%):</strong>{' '}
                                                     <span className="text-amber">
-                                                        ₹{((parseFloat(saleData.finalPrice) || 0) * v.commission / 100).toLocaleString()}
+                                                        ₹{((parseFloat(saleData.finalPrice) || 0) * (selectedProduct.commissionPercent || 0) / 100).toLocaleString()}
                                                     </span>
                                                 </p>
                                                 <p className="calc-row-last">
                                                     <strong>Seller Receives:</strong>{' '}
-                                                    ₹{((parseFloat(saleData.finalPrice) || 0) * (100 - v.commission) / 100).toLocaleString()}
+                                                    ₹{((parseFloat(saleData.finalPrice) || 0) * (100 - (selectedProduct.commissionPercent || 0)) / 100).toLocaleString()}
                                                 </p>
                                             </div>
                                         </>
@@ -1116,13 +1137,13 @@ function TodayAuction() {
             {/* Datalists for Autocomplete */}
             <datalist id="seller-list">
                 {sellers.map(seller => (
-                    <option key={seller.id} value={seller.name} />
+                    <option key={seller._id || seller.id} value={seller.name} />
                 ))}
             </datalist>
 
             <datalist id="buyer-list">
                 {buyers.map(buyer => (
-                    <option key={buyer.id} value={buyer.name} />
+                    <option key={buyer._id || buyer.id} value={buyer.name} />
                 ))}
             </datalist>
         </>

@@ -4,12 +4,13 @@ import { useSelector } from 'react-redux';
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './SellerDetails.css';
-import { Plus, Trash2, X, Eye, Search, Loader } from 'lucide-react';
+import { Plus, Trash2, X, Eye, Search, Loader, Pencil } from 'lucide-react';
 import SearchableSelect from '../Common/SearchableSelect';
 import { toast } from 'react-toastify';
 import {
     getSellers,
     createSeller,
+    updateSeller,
     deleteSeller,
     toggleSellerStatus,
     recordSellerPayment,
@@ -36,6 +37,12 @@ function SellerDetails() {
     const [newSeller, setNewSeller]       = useState({
         name: '', contact: '', address: '', state: '', city: '', email: '',
     });
+
+    // ── Edit Seller modal ─────────────────────────────────
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingSeller, setEditingSeller] = useState(null);
+    const [editCities, setEditCities]       = useState([]);
+    const [loadingEditCities, setLoadingEditCities] = useState(false);
 
     // ── State / City (countriesnow) ───────────────────────
     const [states, setStates]             = useState([]);
@@ -190,6 +197,57 @@ function SellerDetails() {
             loadSellers();
         } catch (err) {
             toast.error(err?.message || 'Failed to add seller');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // ─────────────────────────────────────────────────────
+    //  Edit Seller
+    // ─────────────────────────────────────────────────────
+    const openEditModal = (seller) => {
+        setEditingSeller({ ...seller });
+        setEditCities([]);
+        if (seller.state) fetchEditCities(seller.state);
+        setShowEditModal(true);
+    };
+
+    const fetchEditCities = async (stateName) => {
+        if (!stateName) { setEditCities([]); return; }
+        setLoadingEditCities(true);
+        try {
+            const { data } = await axios.post('https://countriesnow.space/api/v0.1/countries/state/cities', { country: 'India', state: stateName });
+            setEditCities(data.error ? [] : data.data.map(c => ({ name: c })));
+        } catch (err) {
+            console.error('Error fetching edit cities:', err);
+        } finally {
+            setLoadingEditCities(false);
+        }
+    };
+
+    const handleEditSeller = async (e) => {
+        e.preventDefault();
+        if (!editingSeller) return;
+        setIsSaving(true);
+        try {
+            await updateSeller(editingSeller._id || editingSeller.id, {
+                name:    editingSeller.name,
+                contact: editingSeller.contact,
+                email:   editingSeller.email,
+                state:   editingSeller.state,
+                city:    editingSeller.city,
+                address: editingSeller.address,
+            });
+            toast.success('Seller updated successfully!');
+            setShowEditModal(false);
+            setEditingSeller(null);
+            // If we were viewing the seller, refresh it
+            if (selectedSeller && (selectedSeller._id || selectedSeller.id) === (editingSeller._id || editingSeller.id)) {
+                setSelectedSeller(prev => ({ ...prev, ...editingSeller }));
+            }
+            loadSellers();
+        } catch (err) {
+            toast.error(err?.message || 'Failed to update seller');
         } finally {
             setIsSaving(false);
         }
@@ -442,13 +500,22 @@ function SellerDetails() {
                                                     <div className="data-card-title">{seller.name}</div>
                                                     <div className="data-card-subtitle">{seller.contact}</div>
                                                 </div>
-                                                <button
-                                                    className="icon-btn delete"
-                                                    onClick={(e) => { e.stopPropagation(); handleDeleteClick(seller); }}
-                                                    title="Delete Seller"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
+                                                <div style={{ display: 'flex', gap: '6px' }} onClick={e => e.stopPropagation()}>
+                                                    <button
+                                                        className="icon-btn edit"
+                                                        onClick={() => openEditModal(seller)}
+                                                        title="Edit Seller"
+                                                    >
+                                                        <Pencil size={16} />
+                                                    </button>
+                                                    <button
+                                                        className="icon-btn delete"
+                                                        onClick={() => handleDeleteClick(seller)}
+                                                        title="Delete Seller"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="data-card-body">
                                                 <div className="data-row">
@@ -515,7 +582,10 @@ function SellerDetails() {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+                            <button className="btn btn-secondary" onClick={() => openEditModal(selectedSeller)}>
+                                <Pencil size={15} style={{ marginRight: '5px' }} /> Edit
+                            </button>
                             <button className="btn btn-primary" onClick={openGlobalPaymentModal}>
                                 <Plus size={16} style={{ marginRight: '5px' }} /> Pay Out
                             </button>
@@ -635,6 +705,94 @@ function SellerDetails() {
                     </div>
                 )}
             </div>
+
+            {/* ── Edit Seller Modal ── */}
+            {showEditModal && editingSeller && (
+                <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Edit Seller</h3>
+                            <button className="modal-close" onClick={() => setShowEditModal(false)}><X /></button>
+                        </div>
+                        <form onSubmit={handleEditSeller}>
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label className="form-label">Name *</label>
+                                    <input
+                                        type="text"
+                                        value={editingSeller.name}
+                                        onChange={(e) => setEditingSeller({ ...editingSeller, name: e.target.value })}
+                                        placeholder="Full Name"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Contact Number *</label>
+                                    <input
+                                        type="tel"
+                                        value={editingSeller.contact}
+                                        onChange={(e) => setEditingSeller({ ...editingSeller, contact: e.target.value })}
+                                        placeholder="Mobile Number"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Mail Id (Email)</label>
+                                    <input
+                                        type="email"
+                                        value={editingSeller.email || ''}
+                                        onChange={(e) => setEditingSeller({ ...editingSeller, email: e.target.value })}
+                                        placeholder="example@mail.com"
+                                    />
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    <div className="form-group">
+                                        <label className="form-label">State</label>
+                                        <SearchableSelect
+                                            name="state"
+                                            value={editingSeller.state || ''}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setEditingSeller(prev => ({ ...prev, state: val, city: '' }));
+                                                fetchEditCities(val);
+                                            }}
+                                            placeholder={loadingStates ? 'Loading...' : 'Select State'}
+                                            options={states.map(s => ({ label: s.name, value: s.name }))}
+                                            disabled={loadingStates}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">City</label>
+                                        <SearchableSelect
+                                            name="city"
+                                            value={editingSeller.city || ''}
+                                            onChange={(e) => setEditingSeller(prev => ({ ...prev, city: e.target.value }))}
+                                            placeholder={loadingEditCities ? 'Loading cities...' : !editingSeller.state ? 'Select state first' : 'Select City'}
+                                            options={editCities.map(c => ({ label: c.name, value: c.name }))}
+                                            disabled={!editingSeller.state || loadingEditCities}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Address</label>
+                                    <textarea
+                                        value={editingSeller.address || ''}
+                                        onChange={(e) => setEditingSeller({ ...editingSeller, address: e.target.value })}
+                                        rows="2"
+                                        placeholder="Street / Village / District details"
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={isSaving}>
+                                    {isSaving ? <><Loader size={14} className="spin" /> Saving...</> : 'Save Changes'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* ── Product View Modal ── */}
             {showProductViewModal && viewingProduct && (

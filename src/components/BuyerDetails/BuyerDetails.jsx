@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { getAuctionData, saveAuctionData, getBuyerLedger } from '../../utils/localStorage';
+import { useSelector } from 'react-redux';
+import { 
+    getBuyers, addBuyer, updateBuyer, deleteBuyer, 
+    getTransactions, getBuyerPayments, addBuyerPayment,
+    getAuctionProducts
+} from '../../api/auctionApi';
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './BuyerDetails.css';
@@ -9,8 +14,12 @@ import SearchableSelect from '../Common/SearchableSelect';
 import { toast } from 'react-toastify';
 
 function BuyerDetails() {
+    const vendorIdFromRedux = useSelector((state) => state.vendorAuth?.vendorId);
+    const vendorId = vendorIdFromRedux || sessionStorage.getItem('vendorId');
     const [buyers, setBuyers] = useState([]);
-    const [transactions, setTransactions] = useState([]);
+    const [allTransactions, setAllTransactions] = useState([]);
+    const [allPayments, setAllPayments] = useState([]);
+    const [allAuctionProducts, setAllAuctionProducts] = useState([]);
     const [selectedBuyer, setSelectedBuyer] = useState(null);
     const [ledger, setLedger] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -21,8 +30,13 @@ function BuyerDetails() {
         state: '',
         city: '',
         email: '',
-        buyerType: 'Retailer'
     });
+
+    // ── Edit Buyer modal ─────────────────────────────────
+    const [showEditBuyerModal, setShowEditBuyerModal] = useState(false);
+    const [editingBuyer, setEditingBuyer]             = useState(null);
+    const [editBuyerCities, setEditBuyerCities]       = useState([]);
+    const [loadingEditBuyerCities, setLoadingEditBuyerCities] = useState(false);
 
     // State / City for Add Buyer form
     const [states, setStates] = useState([]);
@@ -45,29 +59,10 @@ const [paymentNote, setPaymentNote] = useState('');
     const [showTransactionModal, setShowTransactionModal] = useState(false);
 
     const handleViewTransaction = (transaction) => {
-        // Hydrate transaction with full product details
-        const data = getAuctionData();
-        const product = data.products.find(p => p.id === transaction.productId);
+        const product = allAuctionProducts.find(p => p._id === transaction.productId);
 
         if (product) {
-             // We need to show WHICH variants were bought in this transaction.
-             // The transaction object (from 'transactions' array in localStorage) typically stores:
-             // - productId
-             // - variantId
-             // - quantity
-             // - price
-             // - weight
-             // etc.
-
-             // However, 'transactions' in our loadBuyers() scope are flattened.
-             // Let's see how they are stored.
-             // A transaction is usually 1 record per variant sold? Or 1 record per "cart checkout"?
-             // Looking at typical structure: transactions = [{ id, buyerId, sellerId, productId, variantId, quantity, finalAmount, ... }]
-
-             // If the transaction represents a single line item (one variant), we show that.
-             // If we want to show "Product Details" broadly, we can fallback to the product info.
-
-             const variant = (product.variants || []).find(v => v.id === transaction.variantId);
+             const variant = (product.variants || []).find(v => v._id === transaction.variantId);
 
              setViewingTransaction({
                  ...transaction,
@@ -81,9 +76,11 @@ const [paymentNote, setPaymentNote] = useState('');
     };
 
     useEffect(() => {
-        loadBuyers();
-        fetchStates();
-    }, []);
+        if (vendorId) {
+            loadBuyers();
+            fetchStates();
+        }
+    }, [vendorId]);
 
     const fetchStates = async () => {
         setLoadingStates(true);
@@ -111,129 +108,189 @@ const [paymentNote, setPaymentNote] = useState('');
         }
     };
 
-    const loadBuyers = () => {
-        const data = getAuctionData();
-        if (data && data.buyers) {
-            // Sort transactions by date desc, then id desc. Enrich with product details.
-            const sortedTransactions = (data.transactions || []).map(t => {
-                const product = data.products.find(p => p.id === t.productId);
-                return {
-                    ...t,
-                    productName: product ? product.name : 'Unknown Product',
-                    finalAmount: t.finalAmount || 0
-                };
-            }).sort((a, b) => {
-                const dateDiff = new Date(b.date) - new Date(a.date);
-                if (dateDiff !== 0) return dateDiff;
-                return b.id - a.id;
-            });
-            setTransactions(sortedTransactions);
+    const loadBuyers = async () => {
+        if (!vendorId) return;
+        try {
+            const [buyersRes, transRes, paymentsRes, productsRes] = await Promise.all([
+                getBuyers(vendorId),
+                getTransactions(vendorId),
+                getBuyerPayments(vendorId),
+                getAuctionProducts(vendorId)
+            ]);
 
-            const allPayments = data.buyerPayments || [];
+            const buyersData = buyersRes.data || [];
+            const transData = transRes.data || [];
+            const paymentsData = paymentsRes.data || [];
+            const productsData = productsRes.data || [];
 
-            // Calculate total purchases and payments for each buyer
-            const buyersWithStats = data.buyers.map(buyer => {
-                const buyerTransactions = sortedTransactions.filter(t => t.buyerId === buyer.id);
-                const buyerPayments = allPayments.filter(p => p.buyerId === buyer.id);
+            setAllTransactions(transData);
+            setAllPayments(paymentsData);
+            setAllAuctionProducts(productsData);
 
-                const totalPurchases = buyerTransactions.reduce((sum, t) => sum + t.finalAmount, 0);
-                const totalPaid = buyerPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+            const buyersWithStats = buyersData.map(buyer => {
+                const buyerTransactions = transData.filter(t => t.buyerId === buyer._id);
+                const buyerPayments = paymentsData.filter(p => p.buyerId === buyer._id);
+
+                const totalPurchases = buyerTransactions.reduce((sum, t) => sum + (t.finalAmount || 0), 0);
+                const totalPaid = buyerPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
                 const balance = totalPurchases - totalPaid;
-                const totalItems = buyerTransactions.length;
 
                 return {
                     ...buyer,
                     totalPurchases,
-                    totalItems,
+                    totalItems: buyerTransactions.length,
                     totalPaid,
                     balance,
                     transactions: buyerTransactions,
                     payments: buyerPayments
                 };
             });
+
             setBuyers(buyersWithStats);
-            return buyersWithStats;
+            
+            // If a buyer is currently selected, update their data
+            if (selectedBuyer) {
+                const updatedSelectedBuyer = buyersWithStats.find(b => b._id === (selectedBuyer._id || selectedBuyer.id));
+                if (updatedSelectedBuyer) {
+                    setSelectedBuyer(updatedSelectedBuyer);
+                    calculateLedger(updatedSelectedBuyer, productsData);
+                }
+            }
+        } catch (error) {
+            console.error("Error loading buyers:", error);
+            toast.error("Failed to load buyers");
         }
-        return [];
+    };
+
+    const calculateLedger = (buyer, products) => {
+        let entries = [];
+        
+        (buyer.transactions || []).forEach(t => {
+            const product = products.find(p => p._id === t.productId);
+            entries.push({
+                date: t.date,
+                description: `Purchase - ${product ? product.name : 'Unknown'}`,
+                debit: t.finalAmount,
+                credit: 0
+            });
+        });
+
+        (buyer.payments || []).forEach(p => {
+            entries.push({
+                date: p.date,
+                description: p.note || 'Payment',
+                debit: 0,
+                credit: p.amount
+            });
+        });
+
+        entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        let balance = 0;
+        const finalLedger = entries.map(entry => {
+            balance += (entry.debit || 0);
+            balance -= (entry.credit || 0);
+            return { ...entry, balance };
+        });
+
+        setLedger(finalLedger.reverse()); // Show newest first
     };
 
     const handleViewBuyer = (buyer) => {
-        // Re-fetch fresh data to ensure we have latest payments/transactions
-        const freshBuyers = loadBuyers();
-        const freshBuyer = freshBuyers.find(b => b.id === buyer.id);
-
-        if (freshBuyer) {
-            freshBuyer.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-            setSelectedBuyer(freshBuyer);
-            setLedger(getBuyerLedger(freshBuyer.id));
-        }
+        setSelectedBuyer(buyer);
+        calculateLedger(buyer, allAuctionProducts);
     };
 
     const handleBackToBuyers = () => {
         setSelectedBuyer(null);
     };
 
-    const handleToggleStatus = (id) => {
-        const data = getAuctionData();
-        const index = data.buyers.findIndex(b => b.id === id);
-        if (index !== -1) {
-            data.buyers[index].status = data.buyers[index].status === 'inactive' ? 'active' : 'inactive';
-            saveAuctionData(data);
+    const handleToggleStatus = async (id) => {
+        const buyer = buyers.find(b => b._id === id);
+        if (!buyer) return;
+        try {
+            const newStatus = buyer.status === 'inactive' ? 'active' : 'inactive';
+            await updateBuyer(id, { status: newStatus });
+            toast.success(`Buyer ${newStatus === 'active' ? 'enabled' : 'disabled'}`);
             loadBuyers();
-            // Update selected buyer if modal is open
-            if (selectedBuyer && selectedBuyer.id === id) {
-                setSelectedBuyer({ ...selectedBuyer, status: data.buyers[index].status });
-            }
+        } catch (error) {
+            toast.error("Failed to update status");
         }
     };
 
-    const handleToggleBuyerType = (id) => {
-        const data = getAuctionData();
-        const index = data.buyers.findIndex(b => b.id === id);
-        if (index !== -1) {
-            const currentType = data.buyers[index].buyerType || 'Retailer';
-            data.buyers[index].buyerType = currentType === 'Retailer' ? 'Wholesale' : 'Retailer';
-            saveAuctionData(data);
-            loadBuyers();
-            // Update selected buyer if modal is open
-            if (selectedBuyer && selectedBuyer.id === id) {
-                setSelectedBuyer({ ...selectedBuyer, buyerType: data.buyers[index].buyerType });
-            }
-        }
-    };
-
-    const handleResetPassword = (id) => {
+    const handleResetPassword = async (id) => {
         const newPassword = prompt('Enter new password:');
         if (newPassword) {
-            const data = getAuctionData();
-            const index = data.buyers.findIndex(b => b.id === id);
-            if (index !== -1) {
-                data.buyers[index].password = newPassword;
-                saveAuctionData(data);
-                alert('Password reset successfully!');
+            try {
+                await updateBuyer(id, { password: newPassword });
+                toast.success('Password reset successfully!');
+            } catch (error) {
+                toast.error("Failed to reset password");
             }
         }
     };
 
-    const handleAddBuyer = (e) => {
+    const handleAddBuyer = async (e) => {
         e.preventDefault();
-        const data = getAuctionData();
+        try {
+            await addBuyer({
+                vendorId,
+                ...newBuyer,
+                status: 'active'
+            });
 
-        const buyer = {
-            id: Date.now(),
-            ...newBuyer,
-            totalPurchases: 0,
-            status: 'active',
-            password: '123' // Default password
-        };
+            setNewBuyer({ name: '', contact: '', address: '', state: '', city: '', email: '' });
+            setCities([]);
+            setShowAddModal(false);
+            toast.success("Buyer added successfully");
+            loadBuyers();
+        } catch (error) {
+            toast.error(error.message || "Failed to add buyer");
+        }
+    };
 
-        data.buyers.push(buyer);
-        saveAuctionData(data);
+    const openEditBuyerModal = (buyer) => {
+        setEditingBuyer({ ...buyer });
+        setEditBuyerCities([]);
+        if (buyer.state) fetchEditBuyerCities(buyer.state);
+        setShowEditBuyerModal(true);
+    };
 
-        setNewBuyer({ name: '', contact: '', address: '', state: '', city: '', email: '', buyerType: 'Retailer' });
-        setCities([]);
-        setShowAddModal(false);
-        loadBuyers();
+    const fetchEditBuyerCities = async (stateName) => {
+        if (!stateName) { setEditBuyerCities([]); return; }
+        setLoadingEditBuyerCities(true);
+        try {
+            const { data } = await axios.post('https://countriesnow.space/api/v0.1/countries/state/cities', { country: 'India', state: stateName });
+            setEditBuyerCities(data.error ? [] : data.data.map(c => ({ name: c })));
+        } catch (err) {
+            console.error('Error fetching edit cities:', err);
+        } finally {
+            setLoadingEditBuyerCities(false);
+        }
+    };
+
+    const handleEditBuyer = async (e) => {
+        e.preventDefault();
+        if (!editingBuyer) return;
+        try {
+            await updateBuyer(editingBuyer._id || editingBuyer.id, {
+                name:    editingBuyer.name,
+                contact: editingBuyer.contact,
+                email:   editingBuyer.email,
+                state:   editingBuyer.state,
+                city:    editingBuyer.city,
+                address: editingBuyer.address,
+            });
+            toast.success('Buyer updated successfully!');
+            setShowEditBuyerModal(false);
+            setEditingBuyer(null);
+            if (selectedBuyer && (selectedBuyer._id || selectedBuyer.id) === (editingBuyer._id || editingBuyer.id)) {
+                setSelectedBuyer(prev => ({ ...prev, ...editingBuyer }));
+            }
+            loadBuyers();
+        } catch (err) {
+            toast.error(err?.message || 'Failed to update buyer');
+        }
     };
 
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -244,18 +301,21 @@ const [paymentNote, setPaymentNote] = useState('');
         setIsDeleteConfirmOpen(true);
     };
 
-    const confirmDeleteBuyer = () => {
+    const confirmDeleteBuyer = async () => {
         if (buyerToDelete) {
-            const data = getAuctionData();
-            data.buyers = data.buyers.filter(b => b.id !== buyerToDelete);
-            saveAuctionData(data);
-            loadBuyers();
-            setIsDeleteConfirmOpen(false);
-            setBuyerToDelete(null);
+            try {
+                await deleteBuyer(buyerToDelete);
+                toast.success("Buyer deleted successfully");
+                loadBuyers();
+                setIsDeleteConfirmOpen(false);
+                setBuyerToDelete(null);
+            } catch (error) {
+                toast.error("Failed to delete buyer");
+            }
         }
     };
 
-    const handleRecordPayment = (e) => {
+    const handleRecordPayment = async (e) => {
         e.preventDefault();
         const amount = parseFloat(paymentAmount);
 
@@ -264,41 +324,27 @@ const [paymentNote, setPaymentNote] = useState('');
             return;
         }
 
-        const data = getAuctionData();
+        try {
+            await addBuyerPayment({
+                vendorId,
+                buyerId: selectedBuyer._id || selectedBuyer.id,
+                date: paymentDate,
+                amount: amount,
+                method: paymentMethod,
+                note: paymentNote || 'Global Payment',
+                reference: paymentConfig?.type === 'specific' 
+                    ? `SALE-${paymentConfig.transactionId}` 
+                    : `PAY-${Date.now()}`
+            });
 
-        const newPayment = {
-            id: Date.now(),
-            buyerId: selectedBuyer.id,
-            date: paymentDate,
-            amount: amount,
-            method: paymentMethod,
-            note: paymentNote || 'Global Payment',
-            reference: paymentConfig?.type === 'specific' 
-                ? `SALE-${paymentConfig.transactionId}` 
-                : `PAY-${Date.now()}`
-        };
-
-        if (!data.buyerPayments) {
-            data.buyerPayments = [];
+            loadBuyers();
+            setShowRecordPaymentModal(false);
+            setPaymentAmount('');
+            setPaymentNote('');
+            toast.success(`Payment of ₹${amount.toLocaleString()} recorded successfully.`);
+        } catch (error) {
+            toast.error("Failed to record payment");
         }
-        data.buyerPayments.push(newPayment);
-
-        saveAuctionData(data);
-
-        // Refresh data using loadBuyers and update selectedBuyer
-        const updatedBuyers = loadBuyers();
-        const updatedBuyer = updatedBuyers.find(b => b.id === selectedBuyer.id);
-
-        if (updatedBuyer) {
-            updatedBuyer.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-            setSelectedBuyer(updatedBuyer);
-            setLedger(getBuyerLedger(updatedBuyer.id));
-        }
-
-        setShowRecordPaymentModal(false);
-        setPaymentAmount('');
-        setPaymentNote('');
-        toast.success(`Payment of ₹${amount.toLocaleString()} recorded successfully.`);
     };
 
     const openPaymentModal = () => {
@@ -316,15 +362,15 @@ const [paymentNote, setPaymentNote] = useState('');
 
     const handlePayTransaction = (transaction) => {
         setPaymentConfig({
-            targetName: `${transaction.productName} (${formatDate(transaction.date)})`,
+            targetName: `${transaction.productName || 'Sale'} (${formatDate(transaction.date)})`,
             maxAmount: transaction.calculatedBalance,
-            transactionId: transaction.id,
+            transactionId: transaction._id || transaction.id,
             type: 'specific'
         });
         setPaymentAmount(transaction.calculatedBalance);
         setPaymentDate(new Date().toISOString().split('T')[0]);
         setPaymentMethod('Cash');
-        setPaymentNote(`Payment for ${transaction.productName}`);
+        setPaymentNote(`Payment for transaction`);
         setShowRecordPaymentModal(true);
     };
 
@@ -401,22 +447,29 @@ const [paymentNote, setPaymentNote] = useState('');
                                 </div>
                             ) : (
                                 buyers
-                                    .filter(buyer => buyer.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                                    .filter(buyer => (buyer.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
                                     .map(buyer => (
-                                        <div key={buyer.id} className="data-card buyer-clickable-card" onClick={() => handleViewBuyer(buyer)}>
+                                        <div key={buyer._id || buyer.id} className="data-card buyer-clickable-card" onClick={() => handleViewBuyer(buyer)}>
                                             <div className="data-card-header">
                                                 <div>
                                                     <div className="data-card-title">{buyer.name}</div>
                                                     <div className="data-card-subtitle">{buyer.contact}</div>
                                                 </div>
-                                                <button className="icon-btn delete" onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteClick(buyer.id);
-                                                }} title="Delete Buyer">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                                <div className="badge badge-warning buyer-type-badge-abs">
-                                                    {buyer.buyerType || 'Retailer'}
+                                                <div style={{ display: 'flex', gap: '6px' }} onClick={e => e.stopPropagation()}>
+                                                    <button
+                                                        className="icon-btn edit"
+                                                        onClick={() => openEditBuyerModal(buyer)}
+                                                        title="Edit Buyer"
+                                                    >
+                                                        <Pencil size={16} />
+                                                    </button>
+                                                    <button
+                                                        className="icon-btn delete"
+                                                        onClick={() => handleDeleteClick(buyer._id || buyer.id)}
+                                                        title="Delete Buyer"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
                                                 </div>
                                             </div>
 
@@ -480,21 +533,9 @@ const [paymentNote, setPaymentNote] = useState('');
                                         <span className="data-value">{selectedBuyer.address || 'N/A'}</span>
                                     </div>
                                     <div className="data-row">
-                                        <span className="data-label">Type</span>
-                                        <span
-                                            onClick={() => handleToggleBuyerType(selectedBuyer.id)}
-                                            className="data-value badge badge-warning"
-                                            title="Click to toggle buyer type"
-                                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
-                                        >
-                                            {selectedBuyer.buyerType || 'Retailer'}
-                                            <Pencil size={12} />
-                                        </span>
-                                    </div>
-                                    <div className="data-row">
                                         <span className="data-label">Login Access</span>
                                         <span
-                                            onClick={() => handleToggleStatus(selectedBuyer.id)}
+                                            onClick={() => handleToggleStatus(selectedBuyer._id || selectedBuyer.id)}
                                             className={`cursor-pointer badge btn ${selectedBuyer.status === 'inactive' ? 'btn-success' : 'btn-error'} buyer-status-toggle-btn`}
                                         >
                                             {selectedBuyer.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
@@ -512,7 +553,10 @@ const [paymentNote, setPaymentNote] = useState('');
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                            <button className="btn btn-secondary" onClick={() => openEditBuyerModal(selectedBuyer)}>
+                                <Pencil size={15} style={{ marginRight: '5px' }} /> Edit
+                            </button>
                             <button
                                 className="btn btn-primary"
                                 onClick={openPaymentModal}
@@ -629,37 +673,40 @@ const [paymentNote, setPaymentNote] = useState('');
                                                 // 4. Sort Newest => Oldest for Display
                                                 calculatedTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-                                                return calculatedTransactions.map(t => (
-                                                    <tr key={t.id}>
-                                                        <td>{formatDate(t.date)}</td>
-                                                        <td className="bold-product">{t.productName}</td>
-                                                        <td>₹{t.finalAmount.toLocaleString()}</td>
-                                                        <td className="text-success">₹{t.calculatedPaid.toLocaleString()}</td>
-                                                        <td className={`text-error ${t.calculatedBalance > 0 ? 'font-bold' : ''}`}>
-                                                            ₹{t.calculatedBalance.toLocaleString()}
-                                                        </td>
-                                                        <td>
-                                                            <div style={{ display: 'flex', gap: '5px' }}>
-                                                                <button
-                                                                    className="btn btn-sm btn-info"
-                                                                    onClick={() => handleViewTransaction(t)}
-                                                                    title="View Details"
-                                                                >
-                                                                    <Eye size={16} />
-                                                                </button>
-                                                                {t.calculatedBalance > 0 && (
+                                                return calculatedTransactions.map(t => {
+                                                    const product = allAuctionProducts.find(p => p._id === t.productId);
+                                                    return (
+                                                        <tr key={t._id || t.id}>
+                                                            <td>{formatDate(t.date)}</td>
+                                                            <td className="bold-product">{product ? product.name : 'Unknown'}</td>
+                                                            <td>₹{(t.finalAmount || 0).toLocaleString()}</td>
+                                                            <td className="text-success">₹{(t.calculatedPaid || 0).toLocaleString()}</td>
+                                                            <td className={`text-error ${(t.calculatedBalance || 0) > 0 ? 'font-bold' : ''}`}>
+                                                                ₹{(t.calculatedBalance || 0).toLocaleString()}
+                                                            </td>
+                                                            <td>
+                                                                <div style={{ display: 'flex', gap: '5px' }}>
                                                                     <button
-                                                                        className="btn btn-sm btn-primary"
-                                                                        onClick={() => handlePayTransaction(t)}
-                                                                        title="Pay Balance"
+                                                                        className="btn btn-sm btn-info"
+                                                                        onClick={() => handleViewTransaction(t)}
+                                                                        title="View Details"
                                                                     >
-                                                                        Pay
+                                                                        <Eye size={16} />
                                                                     </button>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ));
+                                                                    {t.calculatedBalance > 0 && (
+                                                                        <button
+                                                                            className="btn btn-sm btn-primary"
+                                                                            onClick={() => handlePayTransaction(t)}
+                                                                            title="Pay Balance"
+                                                                        >
+                                                                            Pay
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                });
                                             })()
                                         )}
                                     </tbody>
@@ -982,6 +1029,92 @@ const [paymentNote, setPaymentNote] = useState('');
                                 <button type="submit" className="btn btn-primary">
                                     Add Buyer
                                 </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Edit Buyer Modal ── */}
+            {showEditBuyerModal && editingBuyer && (
+                <div className="modal-overlay" onClick={() => setShowEditBuyerModal(false)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Edit Buyer</h3>
+                            <button className="modal-close" onClick={() => setShowEditBuyerModal(false)}><X /></button>
+                        </div>
+                        <form onSubmit={handleEditBuyer}>
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label className="form-label">Name *</label>
+                                    <input
+                                        type="text"
+                                        value={editingBuyer.name}
+                                        onChange={(e) => setEditingBuyer({ ...editingBuyer, name: e.target.value })}
+                                        placeholder="Full Name"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Contact Number *</label>
+                                    <input
+                                        type="tel"
+                                        value={editingBuyer.contact}
+                                        onChange={(e) => setEditingBuyer({ ...editingBuyer, contact: e.target.value })}
+                                        placeholder="Mobile Number"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Email</label>
+                                    <input
+                                        type="email"
+                                        value={editingBuyer.email || ''}
+                                        onChange={(e) => setEditingBuyer({ ...editingBuyer, email: e.target.value })}
+                                        placeholder="example@mail.com"
+                                    />
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    <div className="form-group">
+                                        <label className="form-label">State</label>
+                                        <SearchableSelect
+                                            name="state"
+                                            value={editingBuyer.state || ''}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setEditingBuyer(prev => ({ ...prev, state: val, city: '' }));
+                                                fetchEditBuyerCities(val);
+                                            }}
+                                            placeholder={loadingStates ? 'Loading...' : 'Select State'}
+                                            options={states.map(s => ({ label: s.name, value: s.name }))}
+                                            disabled={loadingStates}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">City</label>
+                                        <SearchableSelect
+                                            name="city"
+                                            value={editingBuyer.city || ''}
+                                            onChange={(e) => setEditingBuyer(prev => ({ ...prev, city: e.target.value }))}
+                                            placeholder={loadingEditBuyerCities ? 'Loading cities...' : !editingBuyer.state ? 'Select state first' : 'Select City'}
+                                            options={editBuyerCities.map(c => ({ label: c.name, value: c.name }))}
+                                            disabled={!editingBuyer.state || loadingEditBuyerCities}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Address</label>
+                                    <textarea
+                                        value={editingBuyer.address || ''}
+                                        onChange={(e) => setEditingBuyer({ ...editingBuyer, address: e.target.value })}
+                                        rows="2"
+                                        placeholder="Street / Shop / Office details"
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowEditBuyerModal(false)}>Cancel</button>
+                                <button type="submit" className="btn btn-primary">Save Changes</button>
                             </div>
                         </form>
                     </div>

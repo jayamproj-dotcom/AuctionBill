@@ -57,74 +57,14 @@ export const initialData = {
             status: 'available',
             isActive: true,
             date: '2026-02-14',
+            commissionPercent: 5,
             variants: [
                 {
                     id: 101,
                     variety: 'Standard',
                     quality: 'Good',
                     quantity: 100,
-                    unit: 'kg',
-                    commissionPercent: 5
-                }
-            ]
-        },
-
-        {
-            id: 2,
-            name: 'Madurai Jasmine Flowers',
-            sellerId: 2,
-            sellerName: 'Murugan',
-            status: 'available',
-            isActive: true,
-            date: '2026-02-14',
-            variants: [
-                {
-                    id: 201,
-                    variety: 'Fresh Morning',
-                    quality: 'Good',
-                    quantity: 50,
-                    unit: 'kg',
-                    commissionPercent: 8
-                }
-            ]
-        },
-
-        {
-            id: 3,
-            name: 'Erode Turmeric Powder',
-            sellerId: 1,
-            sellerName: 'Ramesh Kumar',
-            status: 'available',
-            isActive: true,
-            date: '2026-02-14',
-            variants: [
-                {
-                    id: 301,
-                    variety: 'Premium',
-                    quality: 'Good',
-                    quantity: 75,
-                    unit: 'kg',
-                    commissionPercent: 6
-                }
-            ]
-        },
-
-        {
-            id: 4,
-            name: 'Coimbatore Coconut',
-            sellerId: 2,
-            sellerName: 'Murugan',
-            status: 'available',
-            isActive: true,
-            date: '2026-02-14',
-            variants: [
-                {
-                    id: 401,
-                    variety: 'Medium Size',
-                    quality: 'Good',
-                    quantity: 500,
-                    unit: 'qty',
-                    commissionPercent: 4
+                    unit: 'kg',   
                 }
             ]
         }
