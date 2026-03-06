@@ -1,9 +1,9 @@
 import api from './api';
 
 // AUCTION PRODUCTS
-export const getAuctionProducts = async (vendorId, date) => {
+export const getAuctionProducts = async (vendorId, filters = {}) => {
     try {
-        const response = await api.get(`/auction/products/list/${vendorId}`, { params: { date } });
+        const response = await api.get(`/auction/products/list/${vendorId}`, { params: filters });
         return response.data;
     } catch (error) {
         if (error.response && error.response.data) throw error.response.data;
@@ -72,9 +72,9 @@ export const recordSale = async (data) => {
     }
 };
 
-export const getTransactions = async (vendorId, date) => {
+export const getTransactions = async (vendorId, filters = {}) => {
     try {
-        const response = await api.get(`/auction/transactions/list/${vendorId}`, { params: { date } });
+        const response = await api.get(`/auction/transactions/list/${vendorId}`, { params: filters });
         return response.data;
     } catch (error) {
         if (error.response && error.response.data) throw error.response.data;
