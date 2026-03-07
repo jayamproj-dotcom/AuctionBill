@@ -10,7 +10,7 @@ import { getSellers } from '../../api/sellerApi';
 import * as auctionApi from '../../api/auctionApi';
 import * as buyerApi from '../../api/buyerApi';
 
-const SearchableSelect = ({ options, value, onChange, placeholder, required, label, className = "", style = {} }) => {
+const SearchableSelect = ({ options, value, onChange, placeholder, required, label, className = "", style = {}, allowCustom = false }) => {
     const [searchTerm, setSearchTerm] = useState(value || '');
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef(null);
@@ -41,6 +41,8 @@ const SearchableSelect = ({ options, value, onChange, placeholder, required, lab
         const match = options.find(o => o.name.toLowerCase() === searchTerm.toLowerCase());
         if (match) {
             if (match.name !== value) onChange(match);
+        } else if (allowCustom && searchTerm.trim() !== '') {
+            onChange({ _id: '', id: '', name: searchTerm.trim() });
         } else {
             onChange({ _id: '', id: '', name: '' });
             setSearchTerm('');
@@ -426,10 +428,26 @@ function TodayAuction() {
         const totalCommission = (finalAmount * (product.commissionPercent || 0)) / 100;
 
         try {
+            let actualBuyerId = saleData.buyerId;
+
+            if (!actualBuyerId && saleData.buyerName) {
+                // Check if buyer exists by name
+                const existing = buyers.find(b => b.name.toLowerCase() === saleData.buyerName.toLowerCase());
+                if (existing) {
+                    actualBuyerId = existing._id || existing.id;
+                }
+            }
+
+            if (!actualBuyerId && !saleData.buyerName) {
+                toast.error("Please provide a buyer.");
+                return;
+            }
+
             const transactionData = {
                 vendorId:          vendorId,
                 sellerId:          product.sellerId,
-                buyerId:           saleData.buyerId,
+                buyerId:           actualBuyerId || undefined,
+                buyerName:         !actualBuyerId ? saleData.buyerName : undefined,
                 productId:         product._id || product.id,
                 variantId:         variant._id || variant.id,
                 date:              new Date().toISOString().split('T')[0],
@@ -1017,8 +1035,9 @@ function TodayAuction() {
                                                     buyerId: buyer._id || buyer.id,
                                                     buyerName: buyer.name
                                                 })}
-                                                placeholder="Type to search buyer..."
+                                                placeholder="Type to search or enter a new buyer..."
                                                 required
+                                                allowCustom={true}
                                             />
                                             
                                     <label className="form-label">Select Variant</label>

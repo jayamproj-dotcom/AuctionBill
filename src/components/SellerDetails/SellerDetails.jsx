@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './SellerDetails.css';
-import { Plus, Trash2, X, Eye, Search, Loader, Pencil } from 'lucide-react';
+import { Plus, Trash2, X, Eye, Search, Loader, Pencil, Download } from 'lucide-react';
 import SearchableSelect from '../Common/SearchableSelect';
 import { toast } from 'react-toastify';
 import {
@@ -85,6 +85,7 @@ function SellerDetails() {
     // ── Product view modal ────────────────────────────────
     const [viewingProduct, setViewingProduct]           = useState(null);
     const [showProductViewModal, setShowProductViewModal] = useState(false);
+    const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
 
     // ─────────────────────────────────────────────────────
     //  Init
@@ -379,6 +380,9 @@ function SellerDetails() {
 
 
 
+    const filteredProducts = selectedSeller?.products?.filter(p => !filterDate || (p.date && new Date(p.date).toISOString().split('T')[0] === filterDate)) || [];
+    const filteredLedger = ledger?.filter(entry => !filterDate || (entry.date && new Date(entry.date).toISOString().split('T')[0] === filterDate)) || [];
+
     // ─────────────────────────────────────────────────────
     //  Render
     // ─────────────────────────────────────────────────────
@@ -555,13 +559,27 @@ function SellerDetails() {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
-                            <button className="btn btn-secondary" onClick={() => openEditModal(selectedSeller)}>
-                                <Pencil size={15} style={{ marginRight: '5px' }} /> Edit
-                            </button>
-                            <button className="btn btn-primary" onClick={openGlobalPaymentModal}>
-                                <Plus size={16} style={{ marginRight: '5px' }} /> Pay Out
-                            </button>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <button className="btn btn-secondary" onClick={() => openEditModal(selectedSeller)}>
+                                    <Pencil size={15} style={{ marginRight: '5px' }} /> Edit
+                                </button>
+                                <button className="btn btn-primary" onClick={openGlobalPaymentModal}>
+                                    <Plus size={16} style={{ marginRight: '5px' }} /> Pay Out
+                                </button>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <input 
+                                    type="date" 
+                                    className="form-control"
+                                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                                    value={filterDate}
+                                    onChange={(e) => setFilterDate(e.target.value)}
+                                />
+                                <button className="btn btn-secondary" title="Download">
+                                    <Download size={18} />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Tabs */}
@@ -589,10 +607,10 @@ function SellerDetails() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {(!selectedSeller.products || selectedSeller.products.length === 0) ? (
-                                            <tr><td colSpan="6" className="empty-td">No items submitted yet</td></tr>
+                                        {filteredProducts.length === 0 ? (
+                                            <tr><td colSpan="6" className="empty-td">No items submitted for this date</td></tr>
                                         ) : (
-                                            selectedSeller.products.map(p => (
+                                            filteredProducts.map(p => (
                                                 <tr key={p.id}>
                                                     <td>{formatDate(p.date)}</td>
                                                     <td className="product-name-bold">{p.name}</td>
@@ -635,16 +653,16 @@ function SellerDetails() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {ledger.length === 0 ? (
-                                                <tr><td colSpan="5" className="empty-td">No transactions found</td></tr>
+                                            {filteredLedger.length === 0 ? (
+                                                <tr><td colSpan="5" className="empty-td">No transactions found for this date</td></tr>
                                             ) : (
-                                                ledger.map((entry, idx) => (
+                                                filteredLedger.map((entry, idx) => (
                                                     <tr key={idx}>
                                                         <td>{formatDate(entry.date)}</td>
                                                         <td>{entry.description}</td>
                                                         <td className="text-success">{entry.credit > 0 ? `₹${entry.credit.toLocaleString()}` : '-'}</td>
                                                         <td className="text-error">{entry.debit > 0 ? `₹${entry.debit.toLocaleString()}` : '-'}</td>
-                                                        <td style={{ fontWeight: 'bold' }} className={entry.balance < 0 ? 'text-success' : ''}>
+                                                        <td style={{ fontWeight: 'bold', color: 'black' }}>
                                                             {entry.balance < 0 ? `Advance ₹${Math.abs(entry.balance).toLocaleString()}` : `₹${entry.balance.toLocaleString()}`}
                                                         </td>
                                                     </tr>

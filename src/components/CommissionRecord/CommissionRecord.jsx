@@ -179,7 +179,7 @@ function CommissionRecord() {
               </div>
               <div>
                 <div className="stat-value">{summaryStats.count}</div>
-                <div className="stat-label">Transactions</div>
+                <div className="stat-label">no of commissions</div>
               </div>
             </div>
           </div>

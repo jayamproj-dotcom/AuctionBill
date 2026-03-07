@@ -105,7 +105,7 @@ function Dashboard() {
                 productName: product ? product.name : 'Unknown Product',
                 variantName: variant ? variant.variety : '',
                 sellerName: seller ? seller.name : 'Unknown Seller',
-                buyerName: buyer ? buyer.name : 'Unknown Buyer',
+                buyerName: buyer ? buyer.name : (t.buyerName || 'Unknown Buyer'),
                 // Map old fields if needed or just use new ones in UI
                 finalAmount: t.finalAmount || 0,
                 commissionAmount: t.commissionAmount || 0

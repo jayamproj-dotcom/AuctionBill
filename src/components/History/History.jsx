@@ -31,7 +31,7 @@ const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')
                     ...t,
                     productName: product ? product.name : 'Unknown Product',
                     sellerName: seller ? seller.name : 'Unknown Seller',
-                    buyerName: buyer ? buyer.name : 'Unknown Buyer',
+                    buyerName: buyer ? buyer.name : (t.buyerName || 'Unknown Buyer'),
                     finalAmount: t.finalAmount || 0,
                     commissionAmount: t.commissionAmount || 0,
                     netAmount: t.netAmount || 0,

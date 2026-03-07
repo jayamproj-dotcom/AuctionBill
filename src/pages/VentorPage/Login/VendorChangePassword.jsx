@@ -2,6 +2,7 @@ import { useState } from "react";
 import { changePassword } from "../../../api/vendorApi";
 import { Eye, EyeOff, Loader, Lock, ShieldCheck } from "lucide-react";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 import "./VendorChangePassword.css";
 
 const VendorChangePassword = () => {
@@ -11,6 +12,7 @@ const VendorChangePassword = () => {
         new: false,
         confirm: false
     });
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         currentPassword: "",
@@ -25,6 +27,7 @@ const VendorChangePassword = () => {
     const togglePasswordVisibility = (field) => {
         setShowPassword({ ...showPassword, [field]: !showPassword[field] });
     };
+    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -63,6 +66,20 @@ const VendorChangePassword = () => {
         } finally {
             setIsLoading(false);
         }
+        e.preventDefault();
+  setIsLoading(true);
+
+  try {
+    const res = await updatePassword(); // your API call
+
+    if (res.success) {
+      navigate("/vendor/dashboard"); // redirect page
+    }
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setIsLoading(false);
+  }
     };
 
     return (

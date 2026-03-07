@@ -8,7 +8,7 @@ import {
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './BuyerDetails.css';
-import { Plus, Pencil, Trash2, X, ShoppingCart, Search, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, ShoppingCart, Search, Eye, Download } from 'lucide-react';
 import SearchableSelect from '../Common/SearchableSelect';    
 import { toast } from 'react-toastify';
 
@@ -47,27 +47,24 @@ function BuyerDetails() {
     const [paymentAmount, setPaymentAmount] = useState('');
     const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
     const [paymentMethod, setPaymentMethod] = useState('Cash');
-const [paymentNote, setPaymentNote] = useState('');
+    const [paymentNote, setPaymentNote] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
     // Transaction View Modal State
     const [viewingTransaction, setViewingTransaction] = useState(null);
     const [showTransactionModal, setShowTransactionModal] = useState(false);
+    const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
 
     const handleViewTransaction = (transaction) => {
-        // Product data is now populated by the backend in transaction.productId
         const product = transaction.productId;
-
         if (product) {
              const variant = (product.variants || []).find(v => v._id === transaction.variantId || v.id === transaction.variantId);
-             
              setViewingTransaction({
                  ...transaction,
                  productImage: product.image,
                  productName: product.name,
                  productDate: product.date,
                  variantDetails: variant,
-                 // Extra shorthand for modal display if needed
                  price: transaction.rate,
                  quantity: transaction.quantity
              });
@@ -114,8 +111,6 @@ const [paymentNote, setPaymentNote] = useState('');
             const response = await getBuyers(vendorId);
             const buyersData = response.data || [];
             setBuyers(buyersData);
-            
-            // If a buyer is currently selected, refresh their summary
             if (selectedBuyer) {
                 handleViewBuyer(selectedBuyer);
             }
@@ -161,18 +156,6 @@ const [paymentNote, setPaymentNote] = useState('');
         }
     };
 
-    const handleResetPassword = async (id) => {
-        const newPassword = prompt('Enter new password:');
-        if (newPassword) {
-            try {
-                await updateBuyer(id, { password: newPassword });
-                toast.success('Password reset successfully!');
-            } catch (error) {
-                toast.error("Failed to reset password");
-            }
-        }
-    };
-
     const handleAddBuyer = async (e) => {
         e.preventDefault();
         const errors = validateBuyerForm(newBuyer);
@@ -190,7 +173,6 @@ const [paymentNote, setPaymentNote] = useState('');
         }
     };
 
-    // ── Validation helper ────────────────────────────────
     const [buyerFormErrors, setBuyerFormErrors] = useState({});
     const validateBuyerForm = (data) => {
         const errors = {};
@@ -277,12 +259,10 @@ const [paymentNote, setPaymentNote] = useState('');
     const handleRecordPayment = async (e) => {
         e.preventDefault();
         const amount = parseFloat(paymentAmount);
-
         if (isNaN(amount) || amount <= 0) {
             alert("Please enter a valid amount.");
             return;
         }
-
         try {
             await addBuyerPayment({
                 vendorId,
@@ -295,7 +275,6 @@ const [paymentNote, setPaymentNote] = useState('');
                     ? `SALE-${paymentConfig.transactionId}` 
                     : `PAY-${Date.now()}`
             });
-
             loadBuyers();
             setShowRecordPaymentModal(false);
             setPaymentAmount('');
@@ -318,6 +297,9 @@ const [paymentNote, setPaymentNote] = useState('');
         setPaymentNote('');
         setShowRecordPaymentModal(true);
     };
+
+    const filteredTransactions = selectedBuyer?.transactions?.filter(t => !filterDate || (t.date && new Date(t.date).toISOString().split('T')[0] === filterDate)) || [];
+    const filteredLedger = ledger?.filter(entry => !filterDate || (entry.date && new Date(entry.date).toISOString().split('T')[0] === filterDate)) || [];
 
     const handlePayTransaction = (transaction) => {
         setPaymentConfig({
@@ -445,20 +427,6 @@ const [paymentNote, setPaymentNote] = useState('');
                                                         {buyer.status === 'inactive' ? 'Disabled' : 'Enabled'}
                                                     </span>
                                                 </div>
-                                                {/* <div className="data-row">
-                                                    <span className="data-label">Items Purchased</span>
-                                                    <span className="data-value">{buyer.totalItems || 0}</span>
-                                                </div>
-                                                <div className="data-row">
-                                                    <span className="data-label">Total Purchases</span>
-                                                    <span className="data-value text-amber">₹{(buyer.totalPurchases || 0).toLocaleString()}</span>
-                                                </div>
-                                                <div className="data-row">
-                                                    <span className="data-label">Balance</span>
-                                                    <span className={`data-value ${buyer.balance > 0 ? 'text-error' : 'text-success'}`}>
-                                                        ₹{(buyer.balance || 0).toLocaleString()}
-                                                    </span>
-                                                </div> */}
                                             </div>
                                         </div>
                                     ))
@@ -501,52 +469,40 @@ const [paymentNote, setPaymentNote] = useState('');
                                         </span>
                                     </div>
                                 </div>
-                                {/* <div className="buyer-profile-actions">
-                                    <button
-                                        className={`btn ${selectedBuyer.status === 'inactive' ? 'btn-success' : 'btn-error'} status-toggle-btn`}
-                                        onClick={() => handleToggleStatus(selectedBuyer.id)}
-                                    >
-                                        {selectedBuyer.status === 'inactive' ? 'Enable Login' : 'Disable Login'}
-                                    </button>
-                                </div> */}
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                            <button className="btn btn-secondary" onClick={() => openEditBuyerModal(selectedBuyer)}>
-                                <Pencil size={15} style={{ marginRight: '5px' }} /> Edit
-                            </button>
-                            <button
-                                className="btn btn-primary"
-                                onClick={openPaymentModal}
-                                // disabled={selectedBuyer.balance <= 0}
-                            >
-                                <Plus size={16} style={{ marginRight: '5px' }} /> Pay In
-                            </button>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <button className="btn btn-secondary" onClick={() => openEditBuyerModal(selectedBuyer)}>
+                                    <Pencil size={15} style={{ marginRight: '5px' }} /> Edit
+                                </button>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={openPaymentModal}
+                                >
+                                    <Plus size={16} style={{ marginRight: '5px' }} /> Pay In
+                                </button>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <input 
+                                    type="date" 
+                                    className="form-control"
+                                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                                    value={filterDate}
+                                    onChange={(e) => setFilterDate(e.target.value)}
+                                />
+                                <button className="btn btn-secondary" title="Download">
+                                    <Download size={18} />
+                                </button>
+                            </div>
                         </div>
-
-                        {/* Stats Row */}
-                        {/* <div className="stats-row" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-                            <div className="card stat-card" style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-                                <span className="data-label" style={{ marginBottom: '0.5rem' }}>Total Purchase Volume</span>
-                                <span className="data-value text-amber" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>₹{selectedBuyer.totalPurchases.toLocaleString()}</span>
-                            </div>
-                            <div className="card stat-card" style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-                                <span className="data-label" style={{ marginBottom: '0.5rem' }}>Total Paid</span>
-                                <span className="data-value text-success" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>₹{selectedBuyer.totalPaid.toLocaleString()}</span>
-                            </div>
-                            <div className="card stat-card" style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-                                <span className="data-label" style={{ marginBottom: '0.5rem' }}>Outstanding Balance</span>
-                                <span className="data-value text-error" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>₹{selectedBuyer.balance.toLocaleString()}</span>
-                            </div>
-                        </div> */}
 
                         <div className="buyer-history-tabs">
                             <button
                                 className={`buyer-tab-button ${activeTab === 'purchases' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('purchases')}
                             >
-                                {/* Purchase History ({selectedBuyer.transactions.length}) */}
                                 Buying Products
                             </button>
                             <button
@@ -554,7 +510,6 @@ const [paymentNote, setPaymentNote] = useState('');
                                 onClick={() => setActiveTab('payments')}
                             >
                                 Payment History
-                                {/* Payment History ({selectedBuyer.payments ? selectedBuyer.payments.length : 0}) */}
                             </button>
                         </div>
 
@@ -566,18 +521,16 @@ const [paymentNote, setPaymentNote] = useState('');
                                             <th>Date</th>
                                             <th>Product</th>
                                             <th>Bill Amount</th>
-                                            {/* <th>Paid</th>
-                                            <th>Balance</th> */}
                                             <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {selectedBuyer.transactions.length === 0 ? (
+                                        {filteredTransactions.length === 0 ? (
                                             <tr>
-                                                <td colSpan="4" className="empty-td">No purchases yet</td>
+                                                <td colSpan="4" className="empty-td">No purchases found for this date</td>
                                             </tr>
                                         ) : (
-                                            selectedBuyer.transactions.map(t => (
+                                            filteredTransactions.map(t => (
                                                 <tr key={t._id || t.id}>
                                                     <td>{formatDate(t.date)}</td>
                                                     <td className="bold-product">{t.productId?.name || 'Unknown'}</td>
@@ -597,14 +550,6 @@ const [paymentNote, setPaymentNote] = useState('');
                                             ))
                                         )}
                                     </tbody>
-                                    {/* <tfoot>
-                                        <tr>
-                                            <td colSpan="2" style={{ textAlign: 'right', fontWeight: 'bold' }}>Totals:</td>
-                                            <td className="text-amber" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.totalPurchases.toLocaleString()}</td>
-                                            <td className="text-success" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.totalPaid.toLocaleString()}</td>
-                                            <td className="text-error" style={{ fontWeight: 'bold' }}>₹{selectedBuyer.balance.toLocaleString()}</td>
-                                        </tr>
-                                    </tfoot> */}
                                 </table>
                             </div>
                         ) : (
@@ -620,18 +565,18 @@ const [paymentNote, setPaymentNote] = useState('');
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {ledger.length === 0 ? (
+                                        {filteredLedger.length === 0 ? (
                                             <tr>
-                                                <td colSpan="5" className="empty-td">No transactions found</td>
+                                                <td colSpan="5" className="empty-td">No transactions found for this date</td>
                                             </tr>
                                         ) : (
-                                            ledger.map((entry, index) => (
+                                            [...filteredLedger].reverse().map((entry, index) => (
                                                 <tr key={index}>
                                                     <td>{formatDate(entry.date)}</td>
                                                     <td>{entry.description}</td>
                                                     <td className="text-amber">{entry.debit > 0 ? `₹${entry.debit.toLocaleString()}` : '-'}</td>
                                                     <td className="text-success">{entry.credit > 0 ? `₹${entry.credit.toLocaleString()}` : '-'}</td>
-                                                    <td style={{ fontWeight: 'bold' }} className={entry.balance > 0 ? 'text-error' : 'text-success'}>
+                                                    <td style={{ fontWeight: 'bold', color: 'black' }}>
                                                         {entry.balance < 0
                                                             ? `Adv: ₹${Math.abs(entry.balance).toLocaleString()}`
                                                             : `₹${entry.balance.toLocaleString()}`
@@ -666,7 +611,6 @@ const [paymentNote, setPaymentNote] = useState('');
                                     <span className="data-label">Outstanding Balance</span>
                                     <span className="data-value text-error">₹{selectedBuyer.balance.toLocaleString()}</span>
                                 </div>
-
                                 <div className="form-group">
                                     <label className="form-label">Payment Date</label>
                                     <input
@@ -710,8 +654,6 @@ const [paymentNote, setPaymentNote] = useState('');
                                         autoFocus
                                     />
                                 </div>
-                                
-                                
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowRecordPaymentModal(false)}>
@@ -726,11 +668,7 @@ const [paymentNote, setPaymentNote] = useState('');
                 </div>
             )}
 
-
-
-            
-
-            {/* Transaction View Modal (Similar to SellerDetails Product View) */}
+            {/* Transaction View Modal */}
             {showTransactionModal && viewingTransaction && (
                 <div className="modal-overlay" style={{ zIndex: 999 }} onClick={() => setShowTransactionModal(false)}>
                     <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
@@ -746,26 +684,12 @@ const [paymentNote, setPaymentNote] = useState('');
                                             <img
                                                 src={viewingTransaction.productImage}
                                                 alt={viewingTransaction.productName}
-                                                style={{
-                                                    width: '100%',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid #ddd'
-                                                }}
+                                                style={{ width: '100%', borderRadius: '8px', border: '1px solid #ddd' }}
                                             />
                                         ) : (
                                             <div
                                                 className="product-image-placeholder"
-                                                style={{
-                                                    width: '100%',
-                                                    height: '120px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: '40px',
-                                                    border: '1px solid #ddd',
-                                                    borderRadius: '8px',
-                                                    background: '#f5f5f5'
-                                                }}
+                                                style={{ width: '100%', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', border: '1px solid #ddd', borderRadius: '8px', background: '#f5f5f5' }}
                                             >
                                                 📦
                                             </div>
@@ -776,18 +700,14 @@ const [paymentNote, setPaymentNote] = useState('');
                                             </div>
                                         )}
                                     </div>
-
                                     <div className="product-info-details" style={{ flex: 1 }}>
                                         <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
                                             <div>Product: <b>{viewingTransaction.productName}</b></div>
                                             <div>Date: <b>{formatDate(viewingTransaction.date)}</b></div>
                                             <div>Bill Amount: <b>₹{viewingTransaction.finalAmount?.toLocaleString()}</b></div>
-                                            {/* <div className="text-success">Paid: <b>₹{viewingTransaction.calculatedPaid?.toLocaleString()}</b></div>
-                                            <div className="text-error">Balance: <b>₹{viewingTransaction.calculatedBalance?.toLocaleString()}</b></div> */}
                                         </div>
                                     </div>
                                 </div>
-
                                 <h4 style={{ margin: '0 0 10px 0' }}>Item Details</h4>
                                 <div className="table-wrapper">
                                     <table className="buyer-history-table">
@@ -811,7 +731,6 @@ const [paymentNote, setPaymentNote] = useState('');
                                                 <tr>
                                                     <td colSpan="4">
                                                         {viewingTransaction.details ? (
-                                                            // Fallback if data structure is different
                                                             <span>{viewingTransaction.details}</span>
                                                         ) : (
                                                             <span>Variant details not found (Legacy Record)</span>
@@ -830,8 +749,6 @@ const [paymentNote, setPaymentNote] = useState('');
                     </div>
                 </div>
             )}
-
-
 
             {/* Add Buyer Modal */}
             {showAddModal && (
@@ -1020,7 +937,6 @@ const [paymentNote, setPaymentNote] = useState('');
             )}
         </>
     );
-
 }
 
 export default BuyerDetails;
