@@ -58,6 +58,7 @@ const VendorChangePassword = () => {
                     newPassword: "",
                     confirmPassword: ""
                 });
+                navigate("/vendor/dashboard");
             } else {
                 toast.error(res.message || "Failed to change password.");
             }

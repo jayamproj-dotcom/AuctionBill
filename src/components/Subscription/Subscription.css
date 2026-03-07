@@ -43,6 +43,36 @@
     border-left: 4px solid var(--primary-amber);
 }
 
+.sb-pending-alert {
+    background: rgba(245, 158, 11, 0.05);
+    border: 1px dashed var(--primary-amber);
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+
+.sb-pending-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.sb-pending-icon {
+    color: var(--primary-amber);
+    flex-shrink: 0;
+}
+
+.sb-pending-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--primary-amber-dark);
+    margin-bottom: 0.15rem;
+}
+
+.sb-pending-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
 /* Top row: name left, badge+price right */
 .sb-plan-top {
     display: flex;
@@ -379,6 +409,14 @@
     justify-content: center;
     font-size: 0.82rem;
     padding: 0.55rem 0.75rem;
+}
+
+.sb-upgrade-btn.disabled {
+    background-color: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-muted) !important;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 
