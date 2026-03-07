@@ -9,7 +9,7 @@ import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './BuyerDetails.css';
 import { Plus, Pencil, Trash2, X, ShoppingCart, Search, Eye } from 'lucide-react';
-import SearchableSelect from '../Common/SearchableSelect';
+import SearchableSelect from '../Common/SearchableSelect';    
 import { toast } from 'react-toastify';
 
 function BuyerDetails() {
@@ -519,7 +519,7 @@ const [paymentNote, setPaymentNote] = useState('');
                             <button
                                 className="btn btn-primary"
                                 onClick={openPaymentModal}
-                                disabled={selectedBuyer.balance <= 0}
+                                // disabled={selectedBuyer.balance <= 0}
                             >
                                 <Plus size={16} style={{ marginRight: '5px' }} /> Pay In
                             </button>
@@ -677,15 +677,12 @@ const [paymentNote, setPaymentNote] = useState('');
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Amount (₹)</label>
+                                    <label className="form-label">Description</label>
                                     <input
-                                        type="number"
-                                        value={paymentAmount}
-                                        onChange={(e) => setPaymentAmount(e.target.value)}
-                                        min="1"
-                                        placeholder="Enter amount"
-                                        required
-                                        autoFocus
+                                        type="text"
+                                        value={paymentNote}
+                                        onChange={(e) => setPaymentNote(e.target.value)}
+                                        placeholder="e.g. Received via..."
                                     />
                                 </div>
                                 <div className="form-group">
@@ -702,14 +699,19 @@ const [paymentNote, setPaymentNote] = useState('');
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Note</label>
+                                    <label className="form-label">Amount (₹)</label>
                                     <input
-                                        type="text"
-                                        value={paymentNote}
-                                        onChange={(e) => setPaymentNote(e.target.value)}
-                                        placeholder="e.g. Received via..."
+                                        type="number"
+                                        value={paymentAmount}
+                                        onChange={(e) => setPaymentAmount(e.target.value)}
+                                        min="1"
+                                        placeholder="Enter amount"
+                                        required
+                                        autoFocus
                                     />
                                 </div>
+                                
+                                
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowRecordPaymentModal(false)}>
