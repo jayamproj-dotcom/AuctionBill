@@ -264,7 +264,7 @@ function Dashboard() {
                             <div className="stat-header">
                                 <div className="stat-icon db-stat-icon-amber"><HandCoins size={20} /></div>
                                 <div>
-                                    <div className="stat-value">₹{(stats.totalCommission / 1000).toFixed(1)}K</div>
+                                    <div className="stat-value">₹{(stats.totalCommission ).toFixed(1)}</div>
                                     <div className="stat-label">Commission</div>
                                 </div>
                             </div>
