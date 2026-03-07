@@ -23,3 +23,15 @@ export const updateCommission = async (vendorId, value) => {
         throw error;
     }
 };
+
+export const getCommissionRecords = async (vendorId, params = {}) => {
+    try {
+        const response = await api.get(`/commission/records/${vendorId}`, { params });
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw error.response.data;
+        }
+        throw error;
+    }
+};

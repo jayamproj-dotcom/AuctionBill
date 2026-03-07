@@ -852,6 +852,10 @@ function SellerDetails() {
                                     <input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} required />
                                 </div>
                                 <div className="form-group">
+                                    <label className="form-label">Description</label>
+                                    <input type="text" value={paymentNote} onChange={(e) => setPaymentNote(e.target.value)} placeholder="e.g. Note" />
+                                </div>
+                                 <div className="form-group">
                                     <label className="form-label">Payment Method</label>
                                     <select className="form-control" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                                         <option value="Cash">Cash</option>
@@ -859,10 +863,6 @@ function SellerDetails() {
                                         <option value="UPI">UPI</option>
                                         <option value="Check">Check</option>
                                     </select>
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Description</label>
-                                    <input type="text" value={paymentNote} onChange={(e) => setPaymentNote(e.target.value)} placeholder="e.g. Note" />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Amount (₹)</label>
