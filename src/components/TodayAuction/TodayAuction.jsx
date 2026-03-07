@@ -734,20 +734,38 @@ function TodayAuction() {
                           <div className="action-stack">
                             <button
                               className="btn btn-success action-btn-wide"
-                              onClick={() => openSellModal(product)}
-                              disabled={
-                                product.isActive === false ||
-                                product.status === "soldout"
-                              }
+                              onClick={() => {
+                                if (product.isActive === false) {
+                                  toast.warning(
+                                    "This product is currently disabled",
+                                  );
+                                  return;
+                                }
+                                if (product.status === "soldout") {
+                                  toast.info(
+                                    "This product is completely sold out for today",
+                                  );
+                                  return;
+                                }
+                                openSellModal(product);
+                              }}
                             >
                               Sell
                             </button>
                             <div className="action-icon-row">
                               <button
                                 className="icon-btn action-icon-small"
-                                onClick={() =>
-                                  toggleProductStatus(product._id || product.id)
-                                }
+                                onClick={() => {
+                                  if (product.status === "soldout") {
+                                    toast.info(
+                                      "Cannot change status of a sold out product",
+                                    );
+                                    return;
+                                  }
+                                  toggleProductStatus(
+                                    product._id || product.id,
+                                  );
+                                }}
                                 title={
                                   product.isActive === false
                                     ? "Enable"
@@ -762,14 +780,36 @@ function TodayAuction() {
                               </button>
                               <button
                                 className="icon-btn edit action-icon-small"
-                                onClick={() => openEditModal(product)}
+                                onClick={() => {
+                                  if (product.status === "soldout") {
+                                    toast.info(
+                                      "Cannot edit a sold out product",
+                                    );
+                                    return;
+                                  }
+                                  if (product.isActive === false) {
+                                    toast.warning(
+                                      "Please enable the product before editing",
+                                    );
+                                    return;
+                                  }
+                                  openEditModal(product);
+                                }}
                                 title="Edit"
                               >
                                 <Edit2 size={16} />
                               </button>
                               <button
                                 className="icon-btn delete action-icon-small"
-                                onClick={() => handleDeleteClick(product)}
+                                onClick={() => {
+                                  if (product.status === "soldout") {
+                                    toast.info(
+                                      "Cannot delete a sold out product",
+                                    );
+                                    return;
+                                  }
+                                  handleDeleteClick(product);
+                                }}
                                 title="Delete"
                               >
                                 <Trash2 size={16} />
@@ -1262,24 +1302,6 @@ function TodayAuction() {
                       </tbody>
                     </table>
                   </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Product Image</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, "edit")}
-                    className="image-upload-input"
-                  />
-                  {imagePreview && (
-                    <div className="image-preview-container">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="image-preview"
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
               <div className="modal-footer">
