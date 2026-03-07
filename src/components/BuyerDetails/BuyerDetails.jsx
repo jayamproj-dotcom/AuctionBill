@@ -679,30 +679,10 @@ function BuyerDetails() {
                         <div className="modal-body">
                             <div className="product-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 <div style={{ display: 'flex', gap: '20px' }}>
-                                    <div className="product-image-preview" style={{ flex: '0 0 150px' }}>
-                                        {viewingTransaction.productImage ? (
-                                            <img
-                                                src={viewingTransaction.productImage}
-                                                alt={viewingTransaction.productName}
-                                                style={{ width: '100%', borderRadius: '8px', border: '1px solid #ddd' }}
-                                            />
-                                        ) : (
-                                            <div
-                                                className="product-image-placeholder"
-                                                style={{ width: '100%', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', border: '1px solid #ddd', borderRadius: '8px', background: '#f5f5f5' }}
-                                            >
-                                                📦
-                                            </div>
-                                        )}
-                                        {viewingTransaction.productDate && (
-                                            <div style={{ marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>
-                                                {formatDate(viewingTransaction.productDate)}
-                                            </div>
-                                        )}
-                                    </div>
+                                   
                                     <div className="product-info-details" style={{ flex: 1 }}>
                                         <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
-                                            <div>Product: <b>{viewingTransaction.productName}</b></div>
+                                            <div>Product Name: <b>{viewingTransaction.productName}</b></div>
                                             <div>Date: <b>{formatDate(viewingTransaction.date)}</b></div>
                                             <div>Bill Amount: <b>₹{viewingTransaction.finalAmount?.toLocaleString()}</b></div>
                                         </div>
