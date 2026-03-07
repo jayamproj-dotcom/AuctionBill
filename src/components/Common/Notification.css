@@ -16,8 +16,8 @@
 
 .notification-count {
   position: absolute;
-  top: -6px;
-  right: -6px;
+  top: 17px;
+  right: 17px;
   background-color: #ef4444;
   color: white;
   min-width: 18px;
@@ -95,6 +95,29 @@
     font-weight: 600;
     color: #334155;
     margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mark-read-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    opacity: 0;
+}
+
+.notification-item:hover .mark-read-btn {
+    opacity: 1;
+}
+
+.mark-read-btn:hover {
+    color: #10b981;
+    background-color: #ecfdf5;
 }
 
 .notification-message {
