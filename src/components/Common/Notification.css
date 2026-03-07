@@ -4,14 +4,29 @@
   cursor: pointer;
 }
 
+.notification-icon-container .icon-btn {
+  height: 38px;
+  width: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px; /* matching filter dropdown */
+}
+
 .notification-count {
   position: absolute;
-  top: 17px;
-  right: 17px;
+  top: -6px;
+  right: -6px;
   background-color: #ef4444;
   color: white;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 99px;
-  padding: 2px 6px;
+  padding: 0 4px;
   font-size: 10px;
   font-weight: bold;
   border: 2px solid white;

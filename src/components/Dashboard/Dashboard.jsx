@@ -252,7 +252,7 @@ function Dashboard() {
                             <div className="stat-header">
                                 <div className="stat-icon db-stat-icon-purple"><BadgeIndianRupee size={20} /></div>
                                 <div>
-                                    <div className="stat-value">₹{(stats.totalSales / 1000).toFixed(0)}K</div>
+                                    <div className="stat-value">₹{(stats.totalSales ).toFixed(0)}</div>
                                     <div className="stat-label">Sales</div>
                                 </div>
                             </div>
@@ -357,9 +357,7 @@ function Dashboard() {
                                     </div>
                                 </div>
 
-                                <div className="data-card-footer">
-                                    <button className="btn btn-sm btn-outline">View Details</button>
-                                </div>
+                               
                             </div>
                         ))
                     )}
