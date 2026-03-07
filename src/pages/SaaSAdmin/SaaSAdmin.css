@@ -494,6 +494,49 @@
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
+.saas-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.saas-input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+.saas-input-with-icon {
+    padding-left: 36px;
+}
+
+.saas-input-with-toggle {
+    padding-left: 36px;
+    padding-right: 36px;
+}
+
+.saas-password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.saas-password-toggle:hover {
+    color: #4b5563;
+}
+
 /* Global Override for SaaS Admin to breakout of mobile-app container */
 body.saas-admin-active #root {
   max-width: 100% !important;

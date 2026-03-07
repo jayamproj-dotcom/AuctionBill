@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import './Manage.css';
-import { User, Mail, Phone, MapPin, Save, Camera, Loader } from 'lucide-react';
+import { User, Mail, MapPin, Phone, Save, Camera, Loader, } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateVendorProfileData } from '../../redux/slices/vendorAuthSlice';
 import { updateVendorProfile } from '../../api/vendorApi';
@@ -261,30 +261,36 @@ formData.append('state', profile.state);
                             </div>
                         </div>
                         <div className="form-group manage-form-group">
-    <label className="manage-label">City</label>
-    <input
-        type="text"
-        name="city"
-        value={profile.city}
-        onChange={handleChange}
-        disabled={!isEditing}
-        className={`saas-input manage-input ${!isEditing ? 'manage-input-disabled' : 'manage-input-enabled'}`}
-        placeholder="Enter city"
-    />
-</div>
+                            <label className="manage-label">City</label>
+                            <div className="input-icon-wrapper">
+                                <MapPin size={18} className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="city"
+                                    value={profile.city}
+                                    onChange={handleChange}
+                                    disabled={!isEditing}
+                                    className={`saas-input manage-input ${!isEditing ? 'manage-input-disabled' : 'manage-input-enabled'}`}
+                                    placeholder="Enter city"
+                                />
+                            </div>
+                        </div>
 
-<div className="form-group manage-form-group">
-    <label className="manage-label">State</label>
-    <input
-        type="text"
-        name="state"
-        value={profile.state}
-        onChange={handleChange}
-        disabled={!isEditing}
-        className={`saas-input manage-input ${!isEditing ? 'manage-input-disabled' : 'manage-input-enabled'}`}
-        placeholder="Enter state"
-    />
-</div>
+                        <div className="form-group manage-form-group">
+                            <label className="manage-label">State</label>
+                            <div className="input-icon-wrapper">
+                                <MapPin size={18} className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="state"
+                                    value={profile.state}
+                                    onChange={handleChange}
+                                    disabled={!isEditing}
+                                    className={`saas-input manage-input ${!isEditing ? 'manage-input-disabled' : 'manage-input-enabled'}`}
+                                    placeholder="Enter state"
+                                />
+                            </div>
+                        </div>
 
                         <div className="form-group manage-form-group">
                             <label className="manage-label">Address</label>

@@ -125,3 +125,50 @@
         flex: 1;
     }
 }
+
+/* Dashboard Stat Cards */
+.db-stat-card {
+    border-left: 3px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+}
+
+.db-stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.db-stat-indigo { border-left-color: #6366f1; }
+.db-stat-icon-indigo {
+    background: rgba(99, 102, 241, 0.12) !important;
+    color: #6366f1 !important;
+}
+
+.db-stat-blue { border-left-color: #3b82f6; }
+.db-stat-icon-blue {
+    background: rgba(59, 130, 246, 0.12) !important;
+    color: #3b82f6 !important;
+}
+
+.db-stat-green { border-left-color: #10b981; }
+.db-stat-icon-green {
+    background: rgba(16, 185, 129, 0.12) !important;
+    color: #10b981 !important;
+}
+
+.db-stat-red { border-left-color: #ef4444; }
+.db-stat-icon-red {
+    background: rgba(239, 68, 68, 0.12) !important;
+    color: #ef4444 !important;
+}
+
+.db-stat-amber { border-left-color: #f59e0b; }
+.db-stat-icon-amber {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #f59e0b !important;
+}
+
+.db-stat-purple { border-left-color: #a855f7; }
+.db-stat-icon-purple {
+    background: rgba(168, 85, 247, 0.12) !important;
+    color: #a855f7 !important;
+}
