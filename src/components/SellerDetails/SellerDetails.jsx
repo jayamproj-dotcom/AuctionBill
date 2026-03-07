@@ -775,7 +775,7 @@ function SellerDetails() {
                 <div className="modal-overlay" style={{ zIndex: 999 }} onClick={() => setShowProductViewModal(false)}>
                     <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 className="modal-title">Product Details ({viewingProduct.name})</h3>
+                            <h3 className="modal-title">Product Details </h3>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 {viewingProduct.stats.balance > 0 && (
                                     <div className="badge badge-error">Total Due: ₹{viewingProduct.stats.balance}</div>
@@ -786,19 +786,13 @@ function SellerDetails() {
                         <div className="modal-body">
                             <div className="product-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 <div style={{ display: 'flex', gap: '20px' }}>
-                                    <div className="product-image-preview" style={{ flex: '0 0 150px' }}>
-                                        {viewingProduct.image ? (
-                                            <img src={viewingProduct.image} alt={viewingProduct.name} style={{ width: '100%', borderRadius: '8px', border: '1px solid #ddd' }} />
-                                        ) : (
-                                            <div className="product-image-placeholder" style={{ width: '100%', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', border: '1px solid #ddd', borderRadius: '8px', background: '#f5f5f5' }}>📦</div>
-                                        )}
-                                        <div style={{ marginTop: '10px', textAlign: 'center', fontWeight: 'bold' }}>{formatDate(viewingProduct.date)}</div>
-                                    </div>
+                                 
                                     <div className="product-info-details" style={{ flex: 1 }}>
                                         <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
+                                            <div>Product Name: <b>{viewingProduct.name}</b></div>
                                             <div>Total Sales: <b>₹{(viewingProduct.stats?.price || 0).toLocaleString()}</b></div>
                                             <div>Commission: <b>₹{(viewingProduct.stats?.commission || 0).toLocaleString()}</b></div>
-                                            <div style={{ color: '#2563eb' }}>Total Amount: <b>₹{(viewingProduct.stats?.net || 0).toLocaleString()}</b></div>
+                                            <div>Total To Amount: <b>₹{(viewingProduct.stats?.net || 0).toLocaleString()}</b></div>
                                             {/* <div className="text-success">Total Paid: <b>₹{(viewingProduct.stats?.paid || 0).toLocaleString()}</b></div>
                                             <div className="text-error">Total Balance: <b>₹{(viewingProduct.stats?.balance || 0).toLocaleString()}</b></div> */}
 
@@ -853,15 +847,26 @@ function SellerDetails() {
                         </div>
                         <form onSubmit={handleRecordPayment}>
                             <div className="modal-body">
-                                {paymentConfig?.type === 'product' && (
+                                {paymentConfig?.type === 'product' ? (
                                     <>
-                                        <div className="data-row" style={{ marginBottom: '1rem' }}>
+                                        <div className="data-row payment-modal-row">
                                             <span className="data-label">Product Name</span>
                                             <span className="data-value">{paymentConfig.targetName}</span>
                                         </div>
-                                        <div className="data-row" style={{ marginBottom: '1rem' }}>
+                                        <div className="data-row payment-modal-row">
                                             <span className="data-label">Pending Balance</span>
                                             <span className="data-value text-error">₹{paymentConfig?.maxAmount?.toLocaleString() || 0}</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="data-row payment-modal-row">
+                                            <span className="data-label">Seller Name</span>
+                                            <span className="data-value">{selectedSeller.name}</span>
+                                        </div>
+                                        <div className="data-row payment-modal-row">
+                                            <span className="data-label">Pay Amount To</span>
+                                            <span className="data-value text-error">₹{selectedSeller.balance?.toLocaleString() || 0}</span>
                                         </div>
                                     </>
                                 )}
