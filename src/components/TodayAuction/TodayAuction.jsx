@@ -1005,18 +1005,7 @@ function TodayAuction() {
                         <form onSubmit={handleSellProduct}>
                             <div className="modal-body">
                                 
-                                 <SearchableSelect
-                                                label="Buyer"
-                                                options={buyers}
-                                                value={saleData.buyerName}
-                                                onChange={(buyer) => setSaleData({
-                                                    ...saleData,
-                                                    buyerId: buyer._id || buyer.id,
-                                                    buyerName: buyer.name
-                                                })}
-                                                placeholder="Type to search buyer..."
-                                                required
-                                            />
+                                 
 
                                 <div className="form-group">
                                      <SearchableSelect

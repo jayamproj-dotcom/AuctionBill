@@ -5,28 +5,69 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateVendorProfileData } from '../../redux/slices/vendorAuthSlice';
 import { updateVendorProfile } from '../../api/vendorApi';
 import { toast } from 'react-toastify';
-import userPlaceholder from '../../assets/images/user.png';
-import { resolveImageUrl } from '../../utils/imageUtils';
+import { getVendorProfile } from '../../api/vendorApi';
 
 function Manage() {
     const dispatch = useDispatch();
     const {
-        vendorUserName,
-        vendorUserEmail,
-        vendorUserPhoto,
-        vendorUserPhone,
-        vendorUserAddress,
-        vendorId
-    } = useSelector((state) => state.vendorAuth);
+    vendorUserName,
+    vendorUserEmail,
+    vendorUserPhoto,
+    vendorUserPhone,
+    vendorUserAddress,
+    vendorUserCity,
+    vendorUserState,
+    vendorId
+} = useSelector((state) => state.vendorAuth);
+useEffect(() => {
+    const fetchVendorProfile = async () => {
+        try {
+            const res = await getVendorProfile(vendorId);
 
-    const [profile, setProfile] = useState({
-        name: vendorUserName || '',
-        email: vendorUserEmail || '',
-        phone: vendorUserPhone || '',
-        address: vendorUserAddress || '',
-        photo: vendorUserPhoto || '',
-        password: ''
-    });
+            if (res.status) {
+                const vendor = res.vendor;
+
+                setProfile({
+                    name: vendor.name || '',
+                    email: vendor.email || '',
+                    phone: vendor.phone || '',
+                    address: vendor.address || '',
+                    city: vendor.city || '',
+                    state: vendor.state || '',
+                    photo: vendor.profilePic || '',
+                    password: ''
+                });
+
+                dispatch(updateVendorProfileData({
+                    name: vendor.name,
+                    photo: vendor.profilePic,
+                    phone: vendor.phone,
+                    address: vendor.address,
+                    city: vendor.city,
+                    state: vendor.state
+                }));
+            }
+        } catch (error) {
+            console.error("Profile fetch error:", error);
+            toast.error("Failed to load profile");
+        }
+    };
+
+    if (vendorId) {
+        fetchVendorProfile();
+    }
+}, [vendorId, dispatch]);
+
+ const [profile, setProfile] = useState({
+    name: vendorUserName || '',
+    email: vendorUserEmail || '',
+    phone: vendorUserPhone || '',
+    address: vendorUserAddress || '',
+    city: vendorUserCity || '',
+    state: vendorUserState || '',
+    photo: vendorUserPhoto || '',
+    password: ''
+});;
 
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -34,15 +75,17 @@ function Manage() {
 
     // Sync local state with redux when redux store changes
     useEffect(() => {
-        setProfile(prev => ({
-            ...prev,
-            name: vendorUserName || '',
-            email: vendorUserEmail || '',
-            phone: vendorUserPhone || '',
-            address: vendorUserAddress || '',
-            photo: vendorUserPhoto || ''
-        }));
-    }, [vendorUserName, vendorUserEmail, vendorUserPhoto, vendorUserPhone, vendorUserAddress]);
+    setProfile({
+        name: vendorUserName || '',
+        email: vendorUserEmail || '',
+        phone: vendorUserPhone || '',
+        address: vendorUserAddress || '',
+        city: vendorUserCity || '',
+        state: vendorUserState || '',
+        photo: vendorUserPhoto || '',
+        password: ''
+    });
+}, [vendorUserName, vendorUserEmail, vendorUserPhoto, vendorUserPhone, vendorUserAddress, vendorUserCity, vendorUserState]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -63,6 +106,8 @@ function Manage() {
             const formData = new FormData();
             formData.append('name', profile.name);
             formData.append('phone', profile.phone);
+            formData.append('city', profile.city);
+formData.append('state', profile.state);
             formData.append('address', profile.address);
 
             if (profile.password) {
@@ -76,11 +121,13 @@ function Manage() {
 
             if (res.status) {
                 dispatch(updateVendorProfileData({
-                    name: res.vendor?.name || profile.name,
-                    photo: res.vendor?.profilePic || profile.photo,
-                    phone: res.vendor?.phone || profile.phone,
-                    address: res.vendor?.address || profile.address
-                }));
+    name: res.vendor?.name || profile.name,
+    photo: res.vendor?.profilePic || profile.photo,
+    phone: res.vendor?.phone || profile.phone,
+    address: res.vendor?.address || profile.address,
+    city: res.vendor?.city || profile.city,
+    state: res.vendor?.state || profile.state
+}));
                 toast.success('Profile updated successfully!');
                 setIsEditing(false);
                 setProfilePicFile(null);
@@ -95,20 +142,22 @@ function Manage() {
         }
     };
 
-    const handleCancel = () => {
-        setIsEditing(false);
-        setProfilePicFile(null);
-        // Reset to Redux state
-        setProfile(prev => ({
-            ...prev,
-            name: vendorUserName || '',
-            email: vendorUserEmail || '',
-            phone: vendorUserPhone || '',
-            address: vendorUserAddress || '',
-            photo: vendorUserPhoto || '',
-            password: ''
-        }));
-    };
+   const handleCancel = () => {
+    setIsEditing(false);
+    setProfilePicFile(null);
+
+    // Reset profile from Redux
+    setProfile({
+        name: vendorUserName || '',
+        email: vendorUserEmail || '',
+        phone: vendorUserPhone || '',
+        address: vendorUserAddress || '',
+        city: vendorUserCity || '',
+        state: vendorUserState || '',
+        photo: vendorUserPhoto || '',
+        password: ''
+    });
+};
 
     return (
         <div className="manage-container fade-in">
@@ -211,6 +260,31 @@ function Manage() {
                                 />
                             </div>
                         </div>
+                        <div className="form-group manage-form-group">
+    <label className="manage-label">City</label>
+    <input
+        type="text"
+        name="city"
+        value={profile.city}
+        onChange={handleChange}
+        disabled={!isEditing}
+        className={`saas-input manage-input ${!isEditing ? 'manage-input-disabled' : 'manage-input-enabled'}`}
+        placeholder="Enter city"
+    />
+</div>
+
+<div className="form-group manage-form-group">
+    <label className="manage-label">State</label>
+    <input
+        type="text"
+        name="state"
+        value={profile.state}
+        onChange={handleChange}
+        disabled={!isEditing}
+        className={`saas-input manage-input ${!isEditing ? 'manage-input-disabled' : 'manage-input-enabled'}`}
+        placeholder="Enter state"
+    />
+</div>
 
                         <div className="form-group manage-form-group">
                             <label className="manage-label">Address</label>

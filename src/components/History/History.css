@@ -1,11 +1,13 @@
 /* History.css */
 
-.filter-card-margin {
-    margin-top: 1rem;
-}
 
 .clear-filters-btn {
     margin-top: 0.5rem;
+}
+
+
+.filter-card-margin {
+    margin-top: 1rem;
 }
 
 .section-header-margin {
@@ -21,6 +23,9 @@
 .font-bold {
     font-weight: 700;
 }
+
+
+
 /* Search Box Styles */
 .search-icon-container {
     position: relative;

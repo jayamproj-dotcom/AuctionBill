@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react';
 import { getAuctionData } from '../../utils/localStorage';
 import { formatDate } from '../../utils/dateUtils';
 import './History.css';
-import { ArrowRightLeft, Download, ShoppingCart, HandCoins, Package, Search } from 'lucide-react';
+import { ArrowRightLeft, Download, ShoppingCart, HandCoins, Package, Search, Filter, Calendar } from 'lucide-react';
 
 
 function History() {
     const [transactions, setTransactions] = useState([]);
     const [filteredTransactions, setFilteredTransactions] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [dateFilter, setDateFilter] = useState('');
+   const [dateFilter, setDateFilter] = useState('all');
+const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
 
     useEffect(() => {
         loadTransactions();
@@ -41,6 +42,42 @@ function History() {
             setTransactions(enriched.sort((a, b) => new Date(b.date) - new Date(a.date)));
         }
     };
+    const getDateRange = (filter) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const next = (d) => new Date(d.getTime() + 24 * 60 * 60 * 1000);
+
+    switch (filter) {
+        case 'today':
+            return { start: today, end: next(today) };
+
+        case 'yesterday':
+            const y = new Date(today);
+            y.setDate(y.getDate() - 1);
+            return { start: y, end: today };
+
+        case 'week':
+            const w = new Date(today);
+            w.setDate(w.getDate() - 7);
+            return { start: w, end: next(today) };
+
+        case 'month':
+            const m = new Date(today);
+            m.setDate(1);
+            return { start: m, end: next(today) };
+
+        case 'year':
+            return { start: new Date(today.getFullYear(), 0, 1), end: next(today) };
+
+        case 'custom':
+            const c = new Date(customDate);
+            c.setHours(0,0,0,0);
+            return { start: c, end: next(c) };
+
+        default:
+            return null;
+    }
+};
 
     const filterTransactions = () => {
         let filtered = [...transactions];
@@ -53,9 +90,16 @@ function History() {
             );
         }
 
-        if (dateFilter) {
-            filtered = filtered.filter(t => t.date === dateFilter);
-        }
+        if (dateFilter !== 'all') {
+    const range = getDateRange(dateFilter);
+
+    if (range) {
+        filtered = filtered.filter(t => {
+            const d = new Date(t.date);
+            return d >= range.start && d < range.end;
+        });
+    }
+}
 
         setFilteredTransactions(filtered);
     };
@@ -132,39 +176,58 @@ function History() {
                 </div>
 
                 {/* Filters */}
-                <div className="card fade-in filter-card-margin">
-                    <div className="form-grid">
-                        <div className="form-group">
-                            <label className="form-label">Search</label>
-                            <div className="search-icon-container">
-                                <input
-                                    type="text"
-                                    placeholder="Product, seller, buyer..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="search-input-wrapper"
-                                />
-                                <Search size={18} className="search-icon-absolute" />
-                            </div>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Date</label>
-                            <input
-                                type="date"
-                                value={dateFilter}
-                                onChange={(e) => setDateFilter(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    {(searchTerm || dateFilter) && (
-                        <button
-                            className="btn btn-secondary btn-sm clear-filters-btn"
-                            onClick={() => { setSearchTerm(''); setDateFilter(''); }}
-                        >
-                            Clear Filters
-                        </button>
-                    )}
+                {/* Filters */}
+<div className="card fade-in cr-filter-card">
+    <div className="cr-filter-row">
+
+        {/* Search */}
+        <div className="cr-search-wrap">
+            <Search size={15} className="cr-search-icon" />
+            <input
+                type="text"
+                className="cr-search-input"
+                placeholder="Search product, seller, buyer…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
+        </div>
+
+        {/* Filter controls */}
+        <div className="cr-controls">
+
+            <div className="cr-select-wrap">
+                <Filter size={13} className="cr-select-icon" />
+                <select
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="cr-select"
+                >
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="yesterday">Yesterday</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="year">This Year</option>
+                    <option value="custom">📅 Custom Date</option>
+                </select>
+            </div>
+
+            {dateFilter === 'custom' && (
+                <div className="cr-date-wrap fade-in">
+                    <Calendar size={13} className="cr-date-icon" />
+                    <input
+                        type="date"
+                        value={customDate}
+                        onChange={(e) => setCustomDate(e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
+                        className="cr-date-input"
+                    />
                 </div>
+            )}
+
+        </div>
+    </div>
+</div>
 
                 {/* Transaction Cards */}
                 <div className="section-header section-header-margin">

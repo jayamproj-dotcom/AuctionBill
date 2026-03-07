@@ -191,15 +191,7 @@ function CommissionRecord() {
                         </div>
                     </div>
 
-                    <div className="stat-card cr-stat-card cr-stat-green">
-                        <div className="stat-header">
-                            <div className="stat-icon cr-stat-icon-green"><TrendingUp size={20} /></div>
-                            <div>
-                                <div className="stat-value">₹{getAvgCommission().toLocaleString()}</div>
-                                <div className="stat-label">Avg / Transaction</div>
-                            </div>
-                        </div>
-                    </div>
+                    
                 </div>
 
                 {/* ── Filters Card ───────────────────────────────── */}
