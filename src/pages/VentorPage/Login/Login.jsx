@@ -5,7 +5,7 @@ import { setVendorAuthData } from "../../../redux/slices/vendorAuthSlice";
 import { vendorLogin } from "../../../api/vendorApi";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
-import { Eye, EyeOff, Loader } from "lucide-react";
+import { Eye, EyeOff, Loader,Lock,User } from "lucide-react";
 import "./Login.css";
 
 
@@ -113,18 +113,22 @@ const VendorLogin = () => {
         <form onSubmit={handleManualLogin} className="login-form">
           <div className="form-group">
             <label>Email Address</label>
-            <input
-              type="text"
-              name="identifier"
-              value={credentials.identifier}
-              onChange={handleChange}
-              placeholder="Enter email address"
-            />
+            <div className="input-container">
+              <User size={18} className="input-icon" />
+              <input
+                type="text"
+                name="identifier"
+                value={credentials.identifier}
+                onChange={handleChange}
+                placeholder="Enter email address"
+              />
+            </div>
           </div>
 
           <div className="form-group">
             <label>Password</label>
             <div className="password-input-wrapper">
+               <Lock size={18} className="saas-input-icon" />
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"

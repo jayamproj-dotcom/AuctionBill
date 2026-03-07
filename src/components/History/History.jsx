@@ -134,9 +134,9 @@ const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')
             <div className="content-body">
                 {/* Summary Cards */}
                 <div className="stats-grid fade-in">
-                    <div className="stat-card">
+                    <div className="stat-card hs-stat-card hs-stat-blue">
                         <div className="stat-header">
-                            <div className="stat-icon"><ArrowRightLeft /></div>
+                            <div className="stat-icon hs-stat-icon-blue"><ArrowRightLeft size={20} /></div>
                             <div>
                                 <div className="stat-value">{filteredTransactions.length}</div>
                                 <div className="stat-label">Transactions</div>
@@ -144,9 +144,9 @@ const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')
                         </div>
                     </div>
 
-                    <div className="stat-card">
+                    <div className="stat-card hs-stat-card hs-stat-green">
                         <div className="stat-header">
-                            <div className="stat-icon"><ShoppingCart /></div>
+                            <div className="stat-icon hs-stat-icon-green"><ShoppingCart size={20} /></div>
                             <div>
                                 <div className="stat-value">₹{(stats.total / 1000).toFixed(0)}K</div>
                                 <div className="stat-label">Total Sales</div>
@@ -154,9 +154,9 @@ const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')
                         </div>
                     </div>
 
-                    <div className="stat-card">
+                    <div className="stat-card hs-stat-card hs-stat-amber">
                         <div className="stat-header">
-                            <div className="stat-icon"><HandCoins /></div>
+                            <div className="stat-icon hs-stat-icon-amber"><HandCoins size={20} /></div>
                             <div>
                                 <div className="stat-value">₹{(stats.commission / 1000).toFixed(1)}K</div>
                                 <div className="stat-label">Commission</div>

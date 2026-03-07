@@ -47,3 +47,32 @@
     transform: translateY(-50%);
     color: #9ca3af;
 }
+
+/* History Stat Cards */
+.hs-stat-card {
+    border-left: 3px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+}
+
+.hs-stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.hs-stat-blue { border-left-color: #3b82f6; }
+.hs-stat-icon-blue {
+    background: rgba(59, 130, 246, 0.12) !important;
+    color: #3b82f6 !important;
+}
+
+.hs-stat-green { border-left-color: #10b981; }
+.hs-stat-icon-green {
+    background: rgba(16, 185, 129, 0.12) !important;
+    color: #10b981 !important;
+}
+
+.hs-stat-amber { border-left-color: #f59e0b; }
+.hs-stat-icon-amber {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #f59e0b !important;
+}

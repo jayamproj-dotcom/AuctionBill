@@ -223,94 +223,70 @@ function Dashboard() {
                         </div>
                     </div> */}
 
-                    <Link to="/vendor/seller-details">
-                        <div className="stat-card">
+                    <Link to="/vendor/seller-details" style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+                        <div className="stat-card db-stat-card db-stat-blue">
                             <div className="stat-header">
-                                <div className="stat-icon"><Users /></div>
+                                <div className="stat-icon db-stat-icon-blue"><Users size={20} /></div>
                                 <div>
                                     <div className="stat-value">{stats.totalSellers}</div>
                                     <div className="stat-label">Sellers</div>
                                 </div>
                             </div>
-                            <div className="stat-change positive">
-                                <span>↑</span>
-                                <span>12% this month</span>
-                            </div>
                         </div>
                     </Link>
 
-                    <Link to="/vendor/buyer-details">
-                        <div className="stat-card">
+                    <Link to="/vendor/buyer-details" style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+                        <div className="stat-card db-stat-card db-stat-indigo">
                             <div className="stat-header">
-                                <div className="stat-icon"><UsersRound /></div>
+                                <div className="stat-icon db-stat-icon-indigo"><UsersRound size={20} /></div>
                                 <div>
                                     <div className="stat-value">{stats.totalBuyers}</div>
                                     <div className="stat-label">Buyers</div>
                                 </div>
                             </div>
-                            <div className="stat-change positive">
-                                <span>↑</span>
-                                <span>8% this month</span>
-                            </div>
                         </div>
                     </Link>
 
-                    <div className="stat-card">
+                    <div className="stat-card db-stat-card db-stat-green">
                         <div className="stat-header">
-                            <div className="stat-icon"><ArrowDownLeft className="text-success" /></div>
+                            <div className="stat-icon db-stat-icon-green"><ArrowDownLeft size={20} /></div>
                             <div>
                                 <div className="stat-value">₹{stats.totalPayIn.toLocaleString()}</div>
                                 <div className="stat-label">Pay In</div>
                             </div>
                         </div>
-                        <div className="stat-change positive">
-                            <span>↑</span>
-                            <span>{getFilterLabel()}</span>
-                        </div>
                     </div>
 
-                    <div className="stat-card">
+                    <div className="stat-card db-stat-card db-stat-red">
                         <div className="stat-header">
-                            <div className="stat-icon"><ArrowUpRight className="text-danger" /></div>
+                            <div className="stat-icon db-stat-icon-red"><ArrowUpRight size={20} /></div>
                             <div>
                                 <div className="stat-value">₹{stats.totalPayOut.toLocaleString()}</div>
                                 <div className="stat-label">Pay Out</div>
                             </div>
                         </div>
-                        <div className="stat-change positive">
-                            <span>↑</span>
-                            <span>{getFilterLabel()}</span>
-                        </div>
                     </div>
 
-                    <Link to="/vendor/history">
-                        <div className="stat-card">
+                    <Link to="/vendor/history" style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+                        <div className="stat-card db-stat-card db-stat-purple">
                             <div className="stat-header">
-                                <div className="stat-icon"><BadgeIndianRupee /></div>
+                                <div className="stat-icon db-stat-icon-purple"><BadgeIndianRupee size={20} /></div>
                                 <div>
                                     <div className="stat-value">₹{(stats.totalSales / 1000).toFixed(0)}K</div>
                                     <div className="stat-label">Sales</div>
                                 </div>
                             </div>
-                            <div className="stat-change positive">
-                                <span>↑</span>
-                                <span>{getFilterLabel()}</span>
-                            </div>
                         </div>
                     </Link>
 
-                    <Link to="/vendor/commission">
-                        <div className="stat-card">
+                    <Link to="/vendor/commission" style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+                        <div className="stat-card db-stat-card db-stat-amber">
                             <div className="stat-header">
-                                <div className="stat-icon"><HandCoins /></div>
+                                <div className="stat-icon db-stat-icon-amber"><HandCoins size={20} /></div>
                                 <div>
                                     <div className="stat-value">₹{(stats.totalCommission / 1000).toFixed(1)}K</div>
                                     <div className="stat-label">Commission</div>
                                 </div>
-                            </div>
-                            <div className="stat-change positive">
-                                <span>↑</span>
-                                <span>{getFilterLabel()}</span>
                             </div>
                         </div>
                     </Link>
