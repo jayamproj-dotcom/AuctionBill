@@ -200,6 +200,7 @@ function TodayAuction() {
     paymentStatus: "Paid",
     amountPaid: "",
     priceMode: "perQty", // 'perQty' | 'wholeProduct'
+    buyerType: "regular", // 'regular' | 'temporary'
   });
 
   const resetVariantData = () => {
@@ -495,7 +496,8 @@ function TodayAuction() {
       const transactionData = {
         vendorId: vendorId,
         sellerId: product.sellerId,
-        buyerId: saleData.buyerId,
+        buyerId: saleData.buyerId || undefined,
+        buyerName: saleData.buyerName,
         productId: product._id || product.id,
         variantId: variant._id || variant.id,
         date: new Date().toISOString().split("T")[0],
@@ -521,6 +523,7 @@ function TodayAuction() {
           paymentStatus: "Paid",
           amountPaid: "",
           priceMode: "perQty",
+          buyerType: "regular",
         });
         setShowSellModal(false);
         setSelectedProduct(null);
@@ -543,6 +546,7 @@ function TodayAuction() {
       paymentStatus: "Paid",
       amountPaid: "",
       priceMode: "perQty",
+      buyerType: "regular",
     });
     setShowSellModal(true);
   };
@@ -1315,23 +1319,104 @@ function TodayAuction() {
             </div>
             <form onSubmit={handleSellProduct}>
               <div className="modal-body">
+                {/* ── Buyer Type Selection ── */}
                 <div className="form-group">
-                  <SearchableSelect
-                    label="Buyer"
-                    options={buyers}
-                    value={saleData.buyerName}
-                    onChange={(buyer) =>
-                      setSaleData({
-                        ...saleData,
-                        buyerId: buyer._id || buyer.id,
-                        buyerName: buyer.name,
-                      })
-                    }
-                    placeholder="Type to search buyer..."
-                    required
-                  />
+                  <label className="form-label">Buyer Type</label>
+                  <div className="price-mode-radios">
+                    <label
+                      className={`price-mode-option${saleData.buyerType === "regular" ? " active" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name="buyerType"
+                        value="regular"
+                        checked={saleData.buyerType === "regular"}
+                        onChange={() =>
+                          setSaleData((prev) => ({
+                            ...prev,
+                            buyerType: "regular",
+                            buyerId: "",
+                            buyerName: "",
+                          }))
+                        }
+                      />
+                      <span className="price-mode-label">
+                        <strong>Regular Buyer</strong>
+                        <small>Existing registered buyer</small>
+                      </span>
+                    </label>
+                    <label
+                      className={`price-mode-option${saleData.buyerType === "temporary" ? " active" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name="buyerType"
+                        value="temporary"
+                        checked={saleData.buyerType === "temporary"}
+                        onChange={() =>
+                          setSaleData((prev) => ({
+                            ...prev,
+                            buyerType: "temporary",
+                            buyerId: "",
+                            buyerName: "",
+                          }))
+                        }
+                      />
+                      <span className="price-mode-label">
+                        <strong>Temporary Buyer</strong>
+                        <small>One-time/New buyer</small>
+                      </span>
+                    </label>
+                  </div>
+                </div>
 
-                  <label className="form-label">Select Variant</label>
+                <div className="form-group">
+                  {saleData.buyerType === "regular" ? (
+                    <SearchableSelect
+                      label="Buyer Name"
+                      options={buyers}
+                      value={saleData.buyerName}
+                      onChange={(buyer) =>
+                        setSaleData({
+                          ...saleData,
+                          buyerId: buyer._id || buyer.id,
+                          buyerName: buyer.name,
+                        })
+                      }
+                      placeholder="Type to search regular buyer..."
+                      required
+                    />
+                  ) : (
+                    <>
+                      <label className="form-label">Buyer Name</label>
+                      <input
+                        type="text"
+                        value={saleData.buyerName}
+                        onChange={(e) =>
+                          setSaleData({
+                            ...saleData,
+                            buyerName: e.target.value,
+                            buyerId: "",
+                          })
+                        }
+                        placeholder="Enter temporary buyer name..."
+                        required
+                        className="form-input"
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          border: "1px solid var(--border-color)",
+                          backgroundColor: "var(--bg-secondary)",
+                          color: "var(--text-primary)",
+                        }}
+                      />
+                    </>
+                  )}
+
+                  <label className="form-label" style={{ marginTop: "1rem" }}>
+                    Select Variant
+                  </label>
                   <select
                     value={saleData.variantId}
                     onChange={(e) =>
