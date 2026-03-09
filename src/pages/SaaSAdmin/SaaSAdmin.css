@@ -1386,6 +1386,17 @@ body.saas-admin-active {
   border: 3px solid #e0e7ff;
 }
 
+.saas-settings-profile-photo-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 15px auto;
+  display: block;
+  cursor: pointer;
+  border: 3px solid #e0e7ff;
+}
+
 .saas-settings-camera-icon {
   position: absolute;
   bottom: 0;
@@ -1421,7 +1432,8 @@ body.saas-admin-active {
 
 .saasSearchWrapperWide {
   flex: 1;
-  min-width: 300px;
+  min-width: 0;
+  width: 100%;
   position: relative;
 }
 
@@ -2413,4 +2425,885 @@ body.saas-admin-active {
   padding: 0;
   font-size: 14px;
   text-decoration: none;
+}
+
+/* ===================================================
+   MISSING UTILITY CLASSES
+   =================================================== */
+
+/* Gap utilities */
+.saas-gap-10px { gap: 10px; }
+.saas-gap-15px { gap: 15px; }
+
+/* Margin utilities */
+.saas-mb-20 { margin-bottom: 20px; }
+.saas-mt-15 { margin-top: 15px; }
+.saas-mt-20 { margin-top: 20px; }
+
+/* Padding utilities */
+.saas-p-20 { padding: 20px; }
+.saas-py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+
+/* Display utilities */
+.saas-hidden { display: none !important; }
+.saas-inline-block { display: inline-block; }
+
+/* Text utilities */
+.saas-text-xs { font-size: 0.75rem; }
+.saas-text-warning { color: var(--saas-warning); }
+
+/* Fade-in animation */
+.fade-in {
+  animation: saas-fadeIn 0.3s ease-in-out;
+}
+
+@keyframes saas-fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Form group */
+.saas-form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+/* Full width inside grid (for form fields that span both columns) */
+.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Loading States */
+.saas-loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--saas-text-muted);
+  font-size: 0.875rem;
+}
+
+.saas-loading-padded {
+  padding: 2rem;
+}
+
+/* Button variants: secondary and danger */
+.btn-secondary {
+  background-color: #f1f5f9;
+  color: var(--saas-text-main);
+  border-color: var(--saas-border);
+}
+.btn-secondary:hover {
+  background-color: #e2e8f0;
+}
+
+.btn-danger {
+  background-color: var(--saas-danger);
+  color: white;
+  border-color: var(--saas-danger);
+}
+.btn-danger:hover {
+  background-color: #dc2626;
+}
+
+/* Icon buttons used in tables */
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--saas-border);
+  background-color: white;
+  color: var(--saas-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.icon-btn:hover {
+  background-color: #f1f5f9;
+  color: var(--saas-primary);
+  border-color: var(--saas-primary);
+}
+.icon-btn.delete {
+  color: var(--saas-danger);
+}
+.icon-btn.delete:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: var(--saas-danger);
+  color: #dc2626;
+}
+
+/* Action buttons wrapper */
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Header title text */
+.saas-header-title-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--saas-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===================================================
+   RESPONSIVE — TABLET (max-width: 768px)
+   =================================================== */
+@media (max-width: 768px) {
+  .saas-notification-dropdown {
+    width: min(360px, calc(100vw - 1.5rem));
+    right: -0.5rem;
+  }
+
+  .saas-header-title-text {
+    font-size: 1rem;
+    max-width: 200px;
+  }
+
+  /* Stack top controls vertically */
+  .subAdminTopControls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .subAdminTopControls .saas-flex {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .subAdminTopControls .saas-flex .saas-btn {
+    flex: 1;
+    min-width: 100px;
+    justify-content: center;
+  }
+
+  /* Stat cards: 2 columns on tablet */
+  .saas-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Grid responsive on tablet */
+  .saas-grid-responsive {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+}
+
+/* ===================================================
+   RESPONSIVE — MOBILE (max-width: 480px)
+   =================================================== */
+@media (max-width: 480px) {
+  /* Layout */
+  .saas-content {
+    padding: 0.75rem;
+  }
+  .saas-header {
+    padding: 0 0.6rem;
+  }
+  .saas-header-title-text {
+    font-size: 0.9rem;
+    max-width: 140px;
+  }
+  .saas-header-right-content {
+    gap: 0.5rem;
+  }
+
+  /* Notification dropdown: constrain to viewport */
+  .saas-notification-dropdown {
+    width: calc(100vw - 1rem);
+    right: -0.6rem;
+    border-radius: 0.75rem;
+  }
+
+  /* Profile dropdown */
+  .saas-profile-dropdown {
+    width: 175px;
+  }
+
+  /* Stat cards: single column */
+  .saas-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .saas-stat-card {
+    padding: 1rem;
+  }
+  .saas-stat-value {
+    font-size: 1.4rem;
+  }
+
+  /* Top controls: stack fully */
+  .subAdminTopControls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+  }
+  .subAdminTopControls .saas-flex {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 6px;
+  }
+  .subAdminTopControls .saas-flex .saas-btn {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  /* Tables */
+  .saas-table th,
+  .saas-table td {
+    padding: 0.6rem 0.5rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  /* Modals */
+  .saas-modal-overlay {
+    padding: 0.5rem;
+  }
+  .saas-modal {
+    max-height: 95vh;
+    border-radius: 0.75rem;
+  }
+  .saas-modal-header {
+    padding: 1rem;
+  }
+  .saas-modal-content {
+    padding: 1rem;
+  }
+  .saas-modal-footer {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .saas-modal-footer .saas-btn {
+    width: 100%;
+  }
+
+  /* Inner grid: single column */
+  .inner-grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Container centered (Change Password / Profile pages) */
+  .saas-container-centered {
+    padding: 1.25rem;
+    max-width: 100%;
+  }
+
+  /* Profile container */
+  .saas-profile-container {
+    max-width: 100%;
+  }
+  .saas-profile-header-wrap {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Login card */
+  .saas-login-container {
+    padding: 1rem;
+  }
+  .saas-login-card {
+    padding: 1.75rem 1.25rem;
+    border-radius: 1rem;
+  }
+  .saas-login-header {
+    margin-bottom: 1.75rem;
+  }
+  .saas-login-form {
+    gap: 1.1rem;
+  }
+
+  /* Card header */
+  .subAdminCard {
+    padding: 1rem;
+  }
+  .saas-text-2xl {
+    font-size: 1.25rem;
+  }
+
+  /* Filter popover */
+  .saas-filter-popover {
+    width: calc(100vw - 2rem);
+    right: 0;
+    left: auto;
+    top: auto !important;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  /* Permission toggles */
+  .permissionToggleWrapper {
+    font-size: 12px;
+    min-width: 0;
+  }
+
+  /* Grid for subscription cards */
+  .saas-grid-responsive {
+    grid-template-columns: 1fr;
+  }
+
+  /* Buttons general */
+  .saas-btn {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.82rem;
+  }
+
+  /* Sidebar width on small */
+  .saas-sidebar {
+    width: 260px;
+    left: -260px;
+  }
+  .saas-sidebar.open {
+    left: 0;
+  }
+}
+
+/* ===================================================
+   RESPONSIVE — SMALL MOBILE (max-width: 360px)
+   =================================================== */
+@media (max-width: 360px) {
+  .saas-content {
+    padding: 0.5rem;
+  }
+  .saas-header {
+    padding: 0 0.5rem;
+    height: 56px;
+  }
+  .saas-header-title-text {
+    font-size: 0.85rem;
+    max-width: 110px;
+  }
+  .saas-header-right-content {
+    gap: 0.4rem;
+  }
+  .saas-mobile-toggle {
+    padding: 0.35rem;
+  }
+
+  /* Notification dropdown */
+  .saas-notification-dropdown {
+    width: calc(100vw - 0.75rem);
+    right: -0.5rem;
+  }
+  .notification-dropdown-header {
+    padding: 0.75rem 1rem;
+  }
+  .notification-item {
+    padding: 0.75rem;
+  }
+
+  /* Tables */
+  .saas-table th,
+  .saas-table td {
+    padding: 0.5rem 0.4rem;
+    font-size: 0.72rem;
+  }
+
+  /* Stats */
+  .saas-stat-card {
+    padding: 0.875rem;
+  }
+  .saas-stat-value {
+    font-size: 1.25rem;
+  }
+  .saas-stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  /* Card headers */
+  .saas-card-header {
+    padding: 0.75rem;
+  }
+  .subAdminCard {
+    padding: 0.875rem;
+  }
+  .saas-text-2xl {
+    font-size: 1.1rem;
+  }
+
+  /* Modals */
+  .saas-modal-header {
+    padding: 0.875rem;
+  }
+  .saas-modal-content {
+    padding: 0.875rem;
+  }
+  .saas-modal-footer {
+    padding: 0.875rem;
+  }
+
+  /* Login */
+  .saas-login-container {
+    padding: 0.75rem;
+  }
+  .saas-login-card {
+    padding: 1.25rem 1rem;
+    border-radius: 0.875rem;
+  }
+  .saas-login-header {
+    margin-bottom: 1.5rem;
+  }
+  .saas-login-form {
+    gap: 1rem;
+  }
+  .saas-logo-large {
+    font-size: 1.6rem;
+  }
+
+  /* Container centered */
+  .saas-container-centered {
+    padding: 1rem;
+  }
+
+  /* Profile */
+  .saas-profile-container {
+    max-width: 100%;
+  }
+  .saas-profile-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .saas-profile-actions .saas-btn {
+    width: 100%;
+  }
+
+  /* Permission toggles */
+  .permissionToggleWrapper {
+    font-size: 11px;
+    gap: 0.4rem;
+  }
+  .saasStatusToggleTrack {
+    flex-shrink: 0;
+  }
+
+  /* Buttons */
+  .saas-btn {
+    padding: 0.4rem 0.65rem;
+    font-size: 0.78rem;
+  }
+  .saas-btn-wide {
+    height: 44px;
+    font-size: 0.9rem;
+  }
+
+  /* Inputs */
+  .saas-input,
+  .saas-select,
+  .saas-textarea {
+    font-size: 0.82rem;
+    padding: 0.55rem 0.75rem;
+  }
+  .saas-label {
+    font-size: 0.82rem;
+  }
+
+  /* Sidebar */
+  .saas-sidebar {
+    width: 250px;
+    left: -250px;
+  }
+  .saas-logo {
+    font-size: 1.2rem;
+  }
+  .saas-nav-item {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  /* Avatar in header */
+  .saas-header-avatar,
+  .saas-header-avatar-fallback {
+    width: 28px;
+    height: 28px;
+    font-size: 0.65rem;
+  }
+
+  /* Filter popover */
+  .saas-filter-popover {
+    width: calc(100vw - 1rem);
+    padding: 1rem;
+  }
+}
+
+/* ===================================================
+   RESPONSIVE — EXTRA SMALL (max-width: 320px)
+   =================================================== */
+@media (max-width: 320px) {
+  /* Layout */
+  .saas-content {
+    padding: 0.4rem;
+  }
+  .saas-header {
+    padding: 0 0.35rem;
+    height: 52px;
+  }
+  .saas-header-title-text {
+    font-size: 0.78rem;
+    max-width: 85px;
+  }
+  .saas-header-right-content {
+    gap: 0.3rem;
+  }
+  .saas-mobile-toggle {
+    padding: 0.3rem;
+    font-size: 1rem;
+  }
+
+  /* Notification */
+  .saas-notification-dropdown {
+    width: calc(100vw - 0.5rem);
+    right: -0.25rem;
+    border-radius: 0.5rem;
+  }
+  .notification-dropdown-header {
+    padding: 0.625rem 0.75rem;
+  }
+  .notification-dropdown-title {
+    font-size: 0.875rem;
+  }
+  .notification-item {
+    padding: 0.625rem;
+  }
+  .notif-title {
+    font-size: 0.8rem;
+  }
+  .notif-email,
+  .notif-msg {
+    font-size: 0.7rem;
+  }
+  .notif-actions {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .notif-btn {
+    font-size: 0.72rem;
+    padding: 0.45rem;
+  }
+
+  /* Profile dropdown */
+  .saas-profile-dropdown {
+    width: 158px;
+  }
+  .saas-dropdown-item {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  .saas-dropdown-item-text {
+    font-size: 12px;
+  }
+  .saas-dropdown-header {
+    padding: 10px 12px;
+  }
+
+  /* Stats */
+  .saas-stats-grid {
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .saas-stat-card {
+    padding: 0.75rem;
+  }
+  .saas-stat-value {
+    font-size: 1.1rem;
+  }
+  .saas-stat-label {
+    font-size: 0.75rem;
+  }
+  .saas-stat-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+  .saas-stat-header {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Tables */
+  .saas-table th,
+  .saas-table td {
+    padding: 0.4rem 0.3rem;
+    font-size: 0.68rem;
+    white-space: nowrap;
+  }
+
+  /* Cards */
+  .saas-card {
+    border-radius: 0.625rem;
+  }
+  .saas-card-header {
+    padding: 0.625rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .subAdminCard {
+    padding: 0.625rem;
+  }
+  .saas-text-2xl {
+    font-size: 1rem;
+  }
+  .saas-text-xl {
+    font-size: 1.1rem;
+  }
+  .saas-text-lg {
+    font-size: 1rem;
+  }
+  .saas-text-sm {
+    font-size: 0.78rem;
+  }
+
+  /* Modals */
+  .saas-modal-overlay {
+    padding: 0.25rem;
+  }
+  .saas-modal {
+    border-radius: 0.5rem;
+    max-height: 98vh;
+  }
+  .saas-modal-header {
+    padding: 0.75rem;
+  }
+  .saas-modal-header h3 {
+    font-size: 1rem;
+  }
+  .saas-modal-content {
+    padding: 0.625rem;
+  }
+  .saas-modal-footer {
+    padding: 0.625rem;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .saas-modal-footer .saas-btn {
+    width: 100%;
+  }
+
+  /* Login */
+  .saas-login-container {
+    padding: 0.5rem;
+  }
+  .saas-login-card {
+    padding: 1rem 0.75rem;
+    border-radius: 0.75rem;
+  }
+  .saas-login-header {
+    margin-bottom: 1.25rem;
+  }
+  .saas-login-form {
+    gap: 0.875rem;
+  }
+  .saas-logo-large {
+    font-size: 1.35rem;
+  }
+  .saas-subtitle {
+    font-size: 0.78rem;
+  }
+  .saas-login-btn {
+    padding: 0.7rem;
+    font-size: 0.875rem;
+  }
+  .saas-login-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+
+  /* Container centered (Change Password) */
+  .saas-container-centered {
+    padding: 0.75rem;
+    max-width: 100%;
+  }
+  .saas-btn-wide {
+    height: 40px;
+    font-size: 0.82rem;
+  }
+
+  /* Profile page */
+  .saas-profile-container {
+    max-width: 100%;
+  }
+  .saas-profile-name {
+    font-size: 1rem;
+  }
+  .saas-profile-email {
+    font-size: 0.78rem;
+  }
+  .saas-profile-actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .saas-profile-actions .saas-btn {
+    width: 100%;
+  }
+
+  /* Inputs & selects */
+  .saas-input,
+  .saas-select,
+  .saas-textarea {
+    font-size: 0.78rem;
+    padding: 0.5rem 0.65rem;
+  }
+  .saas-input-padded {
+    padding-left: 36px;
+    padding-right: 36px;
+    height: 40px;
+  }
+  .saas-label {
+    font-size: 0.78rem;
+    margin-bottom: 0.35rem;
+  }
+  .saas-label-form {
+    font-size: 13px;
+  }
+
+  /* Form groups */
+  .saas-form-group,
+  .form-group {
+    margin-bottom: 0.875rem;
+  }
+
+  /* Badges */
+  .saas-badge {
+    font-size: 0.62rem;
+    padding: 0.15rem 0.35rem;
+  }
+
+  /* Buttons */
+  .saas-btn {
+    padding: 0.38rem 0.55rem;
+    font-size: 0.75rem;
+    gap: 0.35rem;
+  }
+  .saas-btn.btn-sm {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.68rem;
+  }
+
+  /* Icon buttons */
+  .icon-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  /* Sidebar */
+  .saas-sidebar {
+    width: 240px;
+    left: -240px;
+  }
+  .saas-sidebar.open {
+    left: 0;
+  }
+  .saas-sidebar-header {
+    padding: 1rem;
+  }
+  .saas-logo {
+    font-size: 1.1rem;
+  }
+  .saas-nav {
+    padding: 1rem 0.5rem;
+  }
+  .saas-nav-item {
+    padding: 0.55rem 0.65rem;
+    font-size: 0.82rem;
+    gap: 0.6rem;
+  }
+  .saas-sidebar-footer {
+    padding: 0.75rem;
+  }
+
+  /* Avatar */
+  .saas-header-avatar,
+  .saas-header-avatar-fallback {
+    width: 26px;
+    height: 26px;
+    font-size: 0.6rem;
+  }
+
+  /* Sub-admin permission toggles */
+  .permissionToggleWrapper {
+    font-size: 10px;
+    min-width: 0;
+    gap: 0.3rem;
+  }
+  .saasStatusToggleTrack {
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+  .saasStatusToggleThumb {
+    width: 18px;
+    height: 18px;
+  }
+  .saasStatusToggleThumb.active {
+    left: 20px;
+  }
+  .saasStatusLabel {
+    font-size: 11px;
+  }
+
+  /* Subscription plan cards */
+  .saas-grid-responsive {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .saas-card-footer-actions {
+    padding: 0.75rem;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .saas-card-footer-actions .saas-btn {
+    width: 100%;
+  }
+  .saas-plan-price {
+    font-size: 1.25rem;
+  }
+
+  /* Filter popover */
+  .saas-filter-popover {
+    width: calc(100vw - 0.75rem);
+    padding: 0.75rem;
+    right: 0;
+    left: auto;
+    border-radius: 0.625rem;
+  }
+
+  /* Top controls button row */
+  .subAdminTopControls .saas-flex {
+    gap: 5px;
+  }
+  .subAdminTopControls .saas-flex .saas-btn {
+    font-size: 0.72rem;
+    padding: 0.38rem 0.5rem;
+  }
+
+  /* Duration group in subscription modal */
+  .saas-duration-number {
+    width: 60px;
+    padding: 0.5rem 0.5rem !important;
+  }
+
+  /* Modern toggle (subscription modal) */
+  .saas-modern-toggle {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+  .saas-modern-toggle-title {
+    font-size: 0.82rem;
+  }
+  .saas-modern-toggle-desc {
+    font-size: 0.72rem;
+  }
 }

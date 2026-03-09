@@ -28,7 +28,6 @@ const SearchableSelect = ({
   required,
   label,
   className = "",
-  style = {},
 }) => {
   const [searchTerm, setSearchTerm] = useState(value || "");
   const [isOpen, setIsOpen] = useState(false);
@@ -78,8 +77,7 @@ const SearchableSelect = ({
   return (
     <div
       ref={containerRef}
-      className={`form-group form-group-relative ${className}`}
-      style={{ zIndex: isOpen ? 9999 : 1, ...style }}
+      className={`form-group form-group-relative ${isOpen ? 'searchable-select-z-open' : ''} ${className}`}
     >
       {label && <label className="form-label">{label}</label>}
       <input
@@ -912,35 +910,17 @@ function TodayAuction() {
                   required
                 />
 
-                <div className="form-group" style={{ marginTop: "1.5rem" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <label className="form-label" style={{ marginBottom: 0 }}>
+                <div className="form-group form-group-mt-15">
+                  <div className="variants-header-row">
+                    <label className="form-label form-label-no-mb">
                       Variants
                     </label>
                     <div className="global-comm-wrapper">
-                      <span
-                        style={{
-                          fontSize: "0.85rem",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
+                      <span className="global-comm-text">
                         Product Commission:
                       </span>
                       {editingGlobalComm ? (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
+                        <div className="global-comm-edit-row">
                           <input
                             type="number"
                             value={defaultCommission}
@@ -951,8 +931,7 @@ function TodayAuction() {
                                 commission: e.target.value,
                               }));
                             }}
-                            className="variant-comm-input"
-                            style={{ width: "60px", padding: "2px 8px" }}
+                            className="variant-comm-input variant-comm-input-inline"
                             autoFocus
                           />
                           <button
@@ -964,14 +943,8 @@ function TodayAuction() {
                           </button>
                         </div>
                       ) : (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          <strong style={{ color: "var(--primary-color)" }}>
+                        <div className="global-comm-edit-row">
+                          <strong className="text-primary-color">
                             {defaultCommission}%
                           </strong>
                           <button
@@ -1005,7 +978,7 @@ function TodayAuction() {
                         }));
                       }}
                       placeholder="Variety"
-                      style={{ margin: 0, flex: 1, minWidth: "130px" }}
+                      className="variant-searchable-select"
                     />
 
                     <select
@@ -1207,35 +1180,17 @@ function TodayAuction() {
                   required
                 />
 
-                <div className="form-group" style={{ marginTop: "1.5rem" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <label className="form-label" style={{ marginBottom: 0 }}>
+                <div className="form-group form-group-mt-15">
+                  <div className="variants-header-row">
+                    <label className="form-label form-label-no-mb">
                       Variants (Read-only)
                     </label>
                     <div className="global-comm-wrapper">
-                      <span
-                        style={{
-                          fontSize: "0.85rem",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
+                      <span className="global-comm-text">
                         Product Commission:
                       </span>
                       {editingGlobalComm ? (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
+                        <div className="global-comm-edit-row">
                           <input
                             type="number"
                             value={defaultCommission}
@@ -1246,8 +1201,7 @@ function TodayAuction() {
                                 commission: e.target.value,
                               }));
                             }}
-                            className="variant-comm-input"
-                            style={{ width: "60px", padding: "2px 8px" }}
+                            className="variant-comm-input variant-comm-input-inline"
                             autoFocus
                           />
                           <button
@@ -1259,14 +1213,8 @@ function TodayAuction() {
                           </button>
                         </div>
                       ) : (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          <strong style={{ color: "var(--primary-color)" }}>
+                        <div className="global-comm-edit-row">
+                          <strong className="text-primary-color">
                             {defaultCommission}%
                           </strong>
                           <button
@@ -1423,20 +1371,12 @@ function TodayAuction() {
                         }
                         placeholder="Enter temporary buyer name..."
                         required
-                        className="form-input"
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid var(--border-color)",
-                          backgroundColor: "var(--bg-secondary)",
-                          color: "var(--text-primary)",
-                        }}
+                        className="form-input temp-buyer-input"
                       />
                     </>
                   )}
 
-                  <label className="form-label" style={{ marginTop: "1rem" }}>
+                  <label className="form-label form-label-mt">
                     Select Variant
                   </label>
                   <select

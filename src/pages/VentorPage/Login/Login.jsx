@@ -100,7 +100,7 @@ const VendorLogin = () => {
 
   return (
     <div className="login-page">
-      <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1000 }}>
+      <div className="login-top-right">
 
       </div>
       <div className="login-card">
@@ -147,7 +147,7 @@ const VendorLogin = () => {
           </div>
 
           <div className="login-options">
-            <Link to="/forgot-password" style={{ fontSize: '14px', color: '#1677ff', textDecoration: 'none', float: 'right', marginBottom: '10px' }}>
+            <Link to="/forgot-password" className="forgot-pwd-link">
               Forgot Password?
             </Link>
           </div>
@@ -156,7 +156,7 @@ const VendorLogin = () => {
 
 
           <button type="submit" className="btn btn-primary login-btn" disabled={isLoading}>
-            {isLoading ? <><Loader className="saas-spinner" size={18} style={{ marginRight: '8px', animation: 'spin 1s linear infinite' }} /> Signing In...</> : "Login"}
+            {isLoading ? <><Loader className="saas-spinner login-spinner" size={18} /> Signing In...</> : "Login"}
           </button>
         </form>
 
@@ -178,8 +178,8 @@ const VendorLogin = () => {
         </div> */}
 
         <div className="login-footer">
-          <p className="signup-link-text" style={{ textAlign: 'center', marginTop: '1.5rem', color: '#666', fontSize: '14px' }}>
-            Don't have an account? <Link to="/signup" style={{ color: '#1677ff', fontWeight: 600, textDecoration: 'none' }}>Request Access</Link>
+          <p className="signup-link-text">
+            Don't have an account? <Link to="/signup" className="signup-link">Request Access</Link>
           </p>
         </div>
       </div>

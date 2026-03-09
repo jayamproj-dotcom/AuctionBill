@@ -217,7 +217,7 @@ function Dashboard() {
 
           <Link
             to="/vendor/seller-details"
-            style={{ textDecoration: "none", display: "block", height: "100%" }}
+            className="db-stat-link"
           >
             <div className="stat-card db-stat-card db-stat-blue">
               <div className="stat-header">
@@ -234,7 +234,7 @@ function Dashboard() {
 
           <Link
             to="/vendor/buyer-details"
-            style={{ textDecoration: "none", display: "block", height: "100%" }}
+            className="db-stat-link"
           >
             <div className="stat-card db-stat-card db-stat-indigo">
               <div className="stat-header">
@@ -279,7 +279,7 @@ function Dashboard() {
 
           <Link
             to="/vendor/history"
-            style={{ textDecoration: "none", display: "block", height: "100%" }}
+            className="db-stat-link"
           >
             <div className="stat-card db-stat-card db-stat-purple">
               <div className="stat-header">
@@ -296,7 +296,7 @@ function Dashboard() {
             </div>
           </Link>
 
-                    <Link to="/vendor/commission" style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+                    <Link to="/vendor/commission" className="db-stat-link">
                         <div className="stat-card db-stat-card db-stat-amber">
                             <div className="stat-header">
                                 <div className="stat-icon db-stat-icon-amber"><HandCoins size={20} /></div>
@@ -351,7 +351,7 @@ function Dashboard() {
         <div className="card-list fade-in">
           {loading ? (
             <div className="empty-state">
-              <div className="sb-spinner" style={{ margin: "0 auto" }}></div>
+              <div className="sb-spinner sb-spinner-center"></div>
               <p>Loading stats...</p>
             </div>
           ) : filteredTransactions.length === 0 ? (

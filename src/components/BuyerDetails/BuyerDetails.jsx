@@ -8,7 +8,7 @@ import {
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './BuyerDetails.css';
-import { Plus, Pencil, Trash2, X, ShoppingCart, Search, Eye, Download } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, ShoppingCart, Search, Eye, Download, Filter, Calendar } from 'lucide-react';
 import SearchableSelect from '../Common/SearchableSelect';    
 import { toast } from 'react-toastify';
 
@@ -53,7 +53,8 @@ function BuyerDetails() {
     // Transaction View Modal State
     const [viewingTransaction, setViewingTransaction] = useState(null);
     const [showTransactionModal, setShowTransactionModal] = useState(false);
-    const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+    const [dateFilter, setDateFilter] = useState('today');
+    const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
 
     const handleViewTransaction = (transaction) => {
         const product = transaction.productId;
@@ -298,8 +299,49 @@ function BuyerDetails() {
         setShowRecordPaymentModal(true);
     };
 
-    const filteredTransactions = selectedBuyer?.transactions?.filter(t => !filterDate || (t.date && new Date(t.date).toISOString().split('T')[0] === filterDate)) || [];
-    const filteredLedger = ledger?.filter(entry => !filterDate || (entry.date && new Date(entry.date).toISOString().split('T')[0] === filterDate)) || [];
+    const getDateRange = (filter) => {
+        if (filter === 'all') return null;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        switch (filter) {
+            case 'today':
+                return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            case 'yesterday':
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                return { start: yesterday, end: today };
+            case 'week':
+                const weekStart = new Date(today);
+                weekStart.setDate(weekStart.getDate() - 7);
+                return { start: weekStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            case 'month':
+                const monthStart = new Date(today);
+                monthStart.setDate(1);
+                return { start: monthStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            case 'year':
+                const yearStart = new Date(today.getFullYear(), 0, 1);
+                return { start: yearStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            case 'custom':
+                if (!customDate) return null;
+                const custom = new Date(customDate);
+                custom.setHours(0, 0, 0, 0);
+                return { start: custom, end: new Date(custom.getTime() + 24 * 60 * 60 * 1000) };
+            default:
+                return null;
+        }
+    };
+
+    const isDateInRange = (dateString, range) => {
+        if (!range) return true;
+        if (!dateString) return false;
+        const d = new Date(dateString);
+        return d >= range.start && d < range.end;
+    };
+
+    const currentRange = getDateRange(dateFilter);
+    const filteredTransactions = selectedBuyer?.transactions?.filter(t => isDateInRange(t.date, currentRange)) || [];
+    const filteredLedger = ledger?.filter(entry => isDateInRange(entry.date, currentRange)) || [];
 
     const handlePayTransaction = (transaction) => {
         setPaymentConfig({
@@ -347,7 +389,7 @@ function BuyerDetails() {
                 <div className="breadcrumb">
                     <span>Home</span>
                     <span className="breadcrumb-separator">/</span>
-                    <span onClick={selectedBuyer ? handleBackToBuyers : undefined} style={{ cursor: selectedBuyer ? 'pointer' : 'default', textDecoration: selectedBuyer ? 'underline' : 'none' }}>
+                    <span onClick={selectedBuyer ? handleBackToBuyers : undefined} className={selectedBuyer ? 'buyer-back-link' : 'buyer-back-link-static'}>
                         Buyers
                     </span>
                     {selectedBuyer && (
@@ -367,16 +409,15 @@ function BuyerDetails() {
 
                         <div className="card fade-in buyer-search-card">
                             <div className="form-group buyer-search-form-group">
-                                <div style={{ position: 'relative' }}>
+                                <div className="search-input-wrap">
                                     <input
                                         type="text"
                                         placeholder="Search buyer by name..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="buyer-search-input"
-                                        style={{ paddingRight: '40px', width: '100%' }}
+                                        className="buyer-search-input search-input-padded"
                                     />
-                                    <Search size={20} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                    <Search size={20} className="search-icon-pos" />
                                 </div>
                             </div>
                         </div>
@@ -396,7 +437,7 @@ function BuyerDetails() {
                                                     <div className="data-card-title">{buyer.name}</div>
                                                     <div className="data-card-subtitle">{buyer.contact}</div>
                                                 </div>
-                                                <div style={{ display: 'flex', gap: '6px' }} onClick={e => e.stopPropagation()}>
+                                                <div className="buyer-card-actions" onClick={e => e.stopPropagation()}>
                                                     <button
                                                         className="icon-btn edit"
                                                         onClick={() => openEditBuyerModal(buyer)}
@@ -436,7 +477,7 @@ function BuyerDetails() {
                 ) : (
                     /* Detailed View */
                     <div className="fade-in">
-                        <div className="card buyer-profile-container" style={{ marginBottom: '2rem' }}>
+                        <div className="card buyer-profile-container buyer-profile-mb">
                             <div className="buyer-profile-layout">
                                 <div className="buyer-profile-info">
                                     <div className="data-row">
@@ -472,26 +513,50 @@ function BuyerDetails() {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div className="buyer-profile-actions-row">
+                            <div className="buyer-btn-group">
                                 <button className="btn btn-secondary" onClick={() => openEditBuyerModal(selectedBuyer)}>
-                                    <Pencil size={15} style={{ marginRight: '5px' }} /> Edit
+                                    <Pencil size={15} className="btn-icon-mr" /> Edit
                                 </button>
                                 <button
                                     className="btn btn-primary"
                                     onClick={openPaymentModal}
                                 >
-                                    <Plus size={16} style={{ marginRight: '5px' }} /> Pay In
+                                    <Plus size={16} className="btn-icon-mr" /> Pay In
                                 </button>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <input 
-                                    type="date" 
-                                    className="form-control"
-                                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-                                    value={filterDate}
-                                    onChange={(e) => setFilterDate(e.target.value)}
-                                />
+                            <div className="buyer-btn-group">
+                                <div className="dashboard-filter-container">
+                                  <div className="filter-dropdown-wrapper">
+                                    <Filter className="filter-icon" size={16} />
+                                    <select
+                                      value={dateFilter}
+                                      onChange={(e) => setDateFilter(e.target.value)}
+                                      className="dashboard-filter-select"
+                                    >
+                                      <option value="all">All</option>
+                                      <option value="today">Today</option>
+                                      <option value="yesterday">Yesterday</option>
+                                      <option value="week">This Week</option>
+                                      <option value="month">This Month</option>
+                                      <option value="year">This Year</option>
+                                      <option value="custom">Custom Date</option>
+                                    </select>
+                                  </div>
+
+                                  {dateFilter === "custom" && (
+                                    <div className="custom-date-wrapper fade-in">
+                                      <Calendar className="calendar-icon" size={16} />
+                                      <input
+                                        type="date"
+                                        value={customDate}
+                                        onChange={(e) => setCustomDate(e.target.value)}
+                                        max={new Date().toISOString().split("T")[0]}
+                                        className="dashboard-date-input"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
                                 <button className="btn btn-secondary" title="Download">
                                     <Download size={18} />
                                 </button>
@@ -536,7 +601,7 @@ function BuyerDetails() {
                                                     <td className="bold-product">{t.productId?.name || 'Unknown'}</td>
                                                     <td>₹{(t.finalAmount || 0).toLocaleString()}</td>
                                                     <td>
-                                                        <div style={{ display: 'flex', gap: '5px' }}>
+                                                        <div className="buyer-card-actions-inline">
                                                             <button
                                                                 className="btn btn-sm btn-info"
                                                                 onClick={() => handleViewTransaction(t)}
@@ -576,7 +641,7 @@ function BuyerDetails() {
                                                     <td>{entry.description}</td>
                                                     <td className="text-amber">{entry.debit > 0 ? `₹${entry.debit.toLocaleString()}` : '-'}</td>
                                                     <td className="text-success">{entry.credit > 0 ? `₹${entry.credit.toLocaleString()}` : '-'}</td>
-                                                    <td style={{ fontWeight: 'bold', color: 'black' }}>
+                                                    <td className="table-total-bold">
                                                         {entry.balance < 0
                                                             ? `Adv: ₹${Math.abs(entry.balance).toLocaleString()}`
                                                             : `₹${entry.balance.toLocaleString()}`
@@ -670,25 +735,24 @@ function BuyerDetails() {
 
             {/* Transaction View Modal */}
             {showTransactionModal && viewingTransaction && (
-                <div className="modal-overlay" style={{ zIndex: 999 }} onClick={() => setShowTransactionModal(false)}>
+                <div className="modal-overlay transaction-modal-overlay" onClick={() => setShowTransactionModal(false)}>
                     <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Purchase Details</h3>
                             <button className="modal-close" onClick={() => setShowTransactionModal(false)}><X /></button>
                         </div>
                         <div className="modal-body">
-                            <div className="product-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                <div style={{ display: 'flex', gap: '20px' }}>
-                                   
-                                    <div className="product-info-details" style={{ flex: 1 }}>
-                                        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
+                            <div className="product-view-container">
+                                <div className="product-view-row">
+                                    <div className="product-info-details">
+                                        <div className="product-view-stats-grid stats-grid">
                                             <div>Product Name: <b>{viewingTransaction.productName}</b></div>
                                             <div>Date: <b>{formatDate(viewingTransaction.date)}</b></div>
                                             <div>Bill Amount: <b>₹{viewingTransaction.finalAmount?.toLocaleString()}</b></div>
                                         </div>
                                     </div>
                                 </div>
-                                <h4 style={{ margin: '0 0 10px 0' }}>Item Details</h4>
+                                <h4 className="product-view-variant-header">Item Details</h4>
                                 <div className="table-wrapper">
                                     <table className="buyer-history-table">
                                         <thead>
@@ -764,7 +828,7 @@ function BuyerDetails() {
                                     {buyerFormErrors.contact && <small className="field-error">{buyerFormErrors.contact}</small>}
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Mail Id (Email) <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>(optional)</span></label>
+                                    <label className="form-label">Mail Id (Email) <span className="optional-label">(optional)</span></label>
                                     <input
                                         type="text"
                                         value={newBuyer.email}
@@ -774,7 +838,7 @@ function BuyerDetails() {
                                     />
                                     {buyerFormErrors.email && <small className="field-error">{buyerFormErrors.email}</small>}
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                <div className="form-grid-2">
                                     <div className="form-group">
                                         <label className="form-label">State</label>
                                         <SearchableSelect
@@ -788,6 +852,7 @@ function BuyerDetails() {
                                             placeholder={loadingStates ? 'Loading...' : 'Select State'}
                                             options={states.map(s => ({ label: s.name, value: s.name }))}
                                             disabled={loadingStates}
+                                            required
                                         />
                                     </div>
                                     <div className="form-group">
@@ -799,6 +864,8 @@ function BuyerDetails() {
                                             placeholder={loadingCities ? 'Loading cities...' : !newBuyer.state ? 'Select state first' : 'Select City'}
                                             options={cities.map(c => ({ label: c.name, value: c.name }))}
                                             disabled={!newBuyer.state || loadingCities}
+                                            required
+                                            
                                         />
                                     </div>
                                 </div>
@@ -859,7 +926,7 @@ function BuyerDetails() {
                                     {buyerFormErrors.contact && <small className="field-error">{buyerFormErrors.contact}</small>}
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Email <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>(optional)</span></label>
+                                    <label className="form-label">Email <span className="optional-label">(optional)</span></label>
                                     <input
                                         type="text"
                                         value={editingBuyer.email || ''}
@@ -869,7 +936,7 @@ function BuyerDetails() {
                                     />
                                     {buyerFormErrors.email && <small className="field-error">{buyerFormErrors.email}</small>}
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                <div className="form-grid-2">
                                     <div className="form-group">
                                         <label className="form-label">State</label>
                                         <SearchableSelect

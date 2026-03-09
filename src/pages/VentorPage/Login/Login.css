@@ -108,6 +108,7 @@
   justify-content: center;
   align-items: center;
   background-color: #f9fafb;
+  position: relative;
 }
 
 .login-card {
@@ -150,6 +151,39 @@
   padding-top: 1.5rem;
   font-size: 0.85rem;
   color: #6b7280;
+}
+
+.forgot-pwd-link {
+  font-size: 14px;
+  color: #1677ff;
+  text-decoration: none;
+  float: right;
+  margin-bottom: 10px;
+}
+
+.login-spinner {
+  margin-right: 8px;
+  animation: spin 1s linear infinite;
+}
+
+.signup-link-text {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: #666;
+  font-size: 14px;
+}
+
+.signup-link {
+  color: #1677ff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.login-top-right {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
 }
 
 .saas-link {

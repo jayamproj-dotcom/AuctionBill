@@ -122,12 +122,14 @@ const VendorLayout = () => {
           ☰
         </button>
 
+
         <div className="header-logo">
           <img src={logo} alt="Logo" />
           <h2>Auction Billing</h2>
         </div>
 
-        <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <div className="header-actions">
+          <Notification />
 
           <div className="header-profile-container" ref={profileRef}>
             <div className="header-profile" onClick={toggleProfile}>
@@ -179,7 +181,7 @@ const VendorLayout = () => {
             )}
           </div>
 
-          <Notification />
+          
         </div>
       </div>
       

@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import './SellerDetails.css';
-import { Plus, Trash2, X, Eye, Search, Loader, Pencil, Download } from 'lucide-react';
+import { Plus, Trash2, X, Eye, Search, Loader, Pencil, Download, Filter, Calendar } from 'lucide-react';
 import SearchableSelect from '../Common/SearchableSelect';
 import { toast } from 'react-toastify';
 import {
@@ -85,7 +85,8 @@ function SellerDetails() {
     // ── Product view modal ────────────────────────────────
     const [viewingProduct, setViewingProduct]           = useState(null);
     const [showProductViewModal, setShowProductViewModal] = useState(false);
-    const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+    const [dateFilter, setDateFilter] = useState('today');
+    const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
 
     // ─────────────────────────────────────────────────────
     //  Init
@@ -380,8 +381,49 @@ function SellerDetails() {
 
 
 
-    const filteredProducts = selectedSeller?.products?.filter(p => !filterDate || (p.date && new Date(p.date).toISOString().split('T')[0] === filterDate)) || [];
-    const filteredLedger = ledger?.filter(entry => !filterDate || (entry.date && new Date(entry.date).toISOString().split('T')[0] === filterDate)) || [];
+    const getDateRange = (filter) => {
+        if (filter === 'all') return null;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        switch (filter) {
+            case 'today':
+                return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            case 'yesterday':
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                return { start: yesterday, end: today };
+            case 'week':
+                const weekStart = new Date(today);
+                weekStart.setDate(weekStart.getDate() - 7);
+                return { start: weekStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            case 'month':
+                const monthStart = new Date(today);
+                monthStart.setDate(1);
+                return { start: monthStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            case 'year':
+                const yearStart = new Date(today.getFullYear(), 0, 1);
+                return { start: yearStart, end: new Date(today.getTime() + 24 * 60 * 60 * 1000) };
+            case 'custom':
+                if (!customDate) return null;
+                const custom = new Date(customDate);
+                custom.setHours(0, 0, 0, 0);
+                return { start: custom, end: new Date(custom.getTime() + 24 * 60 * 60 * 1000) };
+            default:
+                return null;
+        }
+    };
+
+    const isDateInRange = (dateString, range) => {
+        if (!range) return true;
+        if (!dateString) return false;
+        const d = new Date(dateString);
+        return d >= range.start && d < range.end;
+    };
+
+    const currentRange = getDateRange(dateFilter);
+    const filteredProducts = selectedSeller?.products?.filter(p => isDateInRange(p.date, currentRange)) || [];
+    const filteredLedger = ledger?.filter(entry => isDateInRange(entry.date, currentRange)) || [];
 
     // ─────────────────────────────────────────────────────
     //  Render
@@ -423,7 +465,7 @@ function SellerDetails() {
                     <span className="breadcrumb-separator">/</span>
                     <span
                         onClick={selectedSeller ? handleBackToSellers : undefined}
-                        style={{ cursor: selectedSeller ? 'pointer' : 'default', textDecoration: selectedSeller ? 'underline' : 'none' }}
+                        className={selectedSeller ? 'seller-back-link' : 'seller-back-link-static'}
                     >
                         Sellers
                     </span>
@@ -446,16 +488,15 @@ function SellerDetails() {
                         {/* Search */}
                         <div className="card fade-in search-card">
                             <div className="form-group search-form-group">
-                                <div style={{ position: 'relative' }}>
+                                <div className="search-input-wrap">
                                     <input
                                         type="text"
                                         placeholder="Search seller by name..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="search-input"
-                                        style={{ paddingRight: '40px', width: '100%' }}
+                                        className="search-input search-input-padded"
                                     />
-                                    <Search size={20} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                    <Search size={20} className="search-icon-pos" />
                                 </div>
                             </div>
                         </div>
@@ -482,7 +523,7 @@ function SellerDetails() {
                                                     <div className="data-card-title">{seller.name}</div>
                                                     <div className="data-card-subtitle">{seller.contact}</div>
                                                 </div>
-                                                <div style={{ display: 'flex', gap: '6px' }} onClick={e => e.stopPropagation()}>
+                                                <div className="seller-card-actions" onClick={e => e.stopPropagation()}>
                                                     <button
                                                         className="icon-btn edit"
                                                         onClick={() => openEditModal(seller)}
@@ -522,7 +563,7 @@ function SellerDetails() {
                 ) : (
                     /* Detail View */
                     <div className="fade-in">
-                        <div className="card profile-container" style={{ marginBottom: '2rem' }}>
+                        <div className="card profile-container seller-profile-mb">
                             <div className="profile-layout">
                                 <div className="profile-info">
                                   
@@ -559,23 +600,47 @@ function SellerDetails() {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div className="seller-profile-actions-row">
+                            <div className="seller-btn-group">
                                 <button className="btn btn-secondary" onClick={() => openEditModal(selectedSeller)}>
-                                    <Pencil size={15} style={{ marginRight: '5px' }} /> Edit
+                                    <Pencil size={15} className="btn-icon-mr" /> Edit
                                 </button>
                                 <button className="btn btn-primary" onClick={openGlobalPaymentModal}>
-                                    <Plus size={16} style={{ marginRight: '5px' }} /> Pay Out
+                                    <Plus size={16} className="btn-icon-mr" /> Pay Out
                                 </button>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <input 
-                                    type="date" 
-                                    className="form-control"
-                                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-                                    value={filterDate}
-                                    onChange={(e) => setFilterDate(e.target.value)}
-                                />
+                            <div className="seller-btn-group">
+                                <div className="dashboard-filter-container">
+                                  <div className="filter-dropdown-wrapper">
+                                    <Filter className="filter-icon" size={16} />
+                                    <select
+                                      value={dateFilter}
+                                      onChange={(e) => setDateFilter(e.target.value)}
+                                      className="dashboard-filter-select"
+                                    >
+                                      <option value="all">All</option>
+                                      <option value="today">Today</option>
+                                      <option value="yesterday">Yesterday</option>
+                                      <option value="week">This Week</option>
+                                      <option value="month">This Month</option>
+                                      <option value="year">This Year</option>
+                                      <option value="custom">Custom Date</option>
+                                    </select>
+                                  </div>
+
+                                  {dateFilter === "custom" && (
+                                    <div className="custom-date-wrapper fade-in">
+                                      <Calendar className="calendar-icon" size={16} />
+                                      <input
+                                        type="date"
+                                        value={customDate}
+                                        onChange={(e) => setCustomDate(e.target.value)}
+                                        max={new Date().toISOString().split("T")[0]}
+                                        className="dashboard-date-input"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
                                 <button className="btn btn-secondary" title="Download">
                                     <Download size={18} />
                                 </button>
@@ -620,7 +685,7 @@ function SellerDetails() {
                                                         ₹{Math.max(0, p.totalBal || 0).toLocaleString()}
                                                     </td> */}
                                                     <td>
-                                                        <div style={{ display: 'flex', gap: '5px' }}>
+                                                        <div className="seller-ledger-actions">
                                                             <button className="btn btn-sm btn-info" onClick={() => handleViewProduct(p.id)} title="View">
                                                                 <Eye size={16} />
                                                             </button>
@@ -662,7 +727,7 @@ function SellerDetails() {
                                                         <td>{entry.description}</td>
                                                         <td className="text-success">{entry.credit > 0 ? `₹${entry.credit.toLocaleString()}` : '-'}</td>
                                                         <td className="text-error">{entry.debit > 0 ? `₹${entry.debit.toLocaleString()}` : '-'}</td>
-                                                        <td style={{ fontWeight: 'bold', color: 'black' }}>
+                                                        <td className="seller-table-total-bold">
                                                             {entry.balance < 0 ? `Advance ₹${Math.abs(entry.balance).toLocaleString()}` : `₹${entry.balance.toLocaleString()}`}
                                                         </td>
                                                     </tr>
@@ -711,7 +776,7 @@ function SellerDetails() {
                                     {formErrors.contact && <small className="field-error">{formErrors.contact}</small>}
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Mail Id (Email) <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>(optional)</span></label>
+                                    <label className="form-label">Mail Id (Email) <span className="seller-optional-label">(optional)</span></label>
                                     <input
                                         type="text"
                                         value={editingSeller.email || ''}
@@ -721,7 +786,7 @@ function SellerDetails() {
                                     />
                                     {formErrors.email && <small className="field-error">{formErrors.email}</small>}
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                <div className="seller-form-grid-2">
                                     <div className="form-group">
                                         <label className="form-label">State</label>
                                         <SearchableSelect
@@ -772,11 +837,11 @@ function SellerDetails() {
 
             {/* ── Product View Modal ── */}
             {showProductViewModal && viewingProduct && (
-                <div className="modal-overlay" style={{ zIndex: 999 }} onClick={() => setShowProductViewModal(false)}>
+                <div className="modal-overlay seller-modal-overlay-z" onClick={() => setShowProductViewModal(false)}>
                     <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3 className="modal-title">Product Details </h3>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div className="seller-btn-group">
                                 {viewingProduct.stats.balance > 0 && (
                                     <div className="badge badge-error">Total Due: ₹{viewingProduct.stats.balance}</div>
                                 )}
@@ -784,11 +849,10 @@ function SellerDetails() {
                             </div>
                         </div>
                         <div className="modal-body">
-                            <div className="product-view-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                <div style={{ display: 'flex', gap: '20px' }}>
-                                 
-                                    <div className="product-info-details" style={{ flex: 1 }}>
-                                        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px' }}>
+                            <div className="product-view-container">
+                                <div className="product-view-row">
+                                    <div className="product-info-details">
+                                        <div className="product-view-stats-grid stats-grid">
                                             <div>Product Name: <b>{viewingProduct.name}</b></div>
                                             <div>Total Sales: <b>₹{(viewingProduct.stats?.price || 0).toLocaleString()}</b></div>
                                             <div>Commission: <b>₹{(viewingProduct.stats?.commission || 0).toLocaleString()}</b></div>
@@ -800,7 +864,7 @@ function SellerDetails() {
 
                                     </div>
                                 </div>
-                                <h4 style={{ margin: '0 0 10px 0' }}>Variant Details</h4>
+                                <h4 className="product-view-variant-header">Variant Details</h4>
                                 <div className="table-wrapper">
                                     <table className="history-table">
                                         <thead>
@@ -816,7 +880,7 @@ function SellerDetails() {
                                                     <td>{v.sellQuantity || 0} {v.unit}</td>
                                                     <td>₹{(v.stats?.price || 0).toLocaleString()}</td>
                                                     <td>₹{(v.stats?.commission || 0).toLocaleString()}</td>
-                                                    <td className="text-success" style={{ fontWeight: 'bold' }}>₹{(v.stats?.net || 0).toLocaleString()}</td>
+                                                    <td className="text-success product-view-net-bold">₹{(v.stats?.net || 0).toLocaleString()}</td>
                                                 </tr>
                                             ))}
                                             {viewingProduct.variants.length === 0 && (
@@ -946,7 +1010,7 @@ function SellerDetails() {
                                     {formErrors.contact && <small className="field-error">{formErrors.contact}</small>}
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Mail Id (Email) <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>(optional)</span></label>
+                                    <label className="form-label">Mail Id (Email) <span className="seller-optional-label">(optional)</span></label>
                                     <input
                                         type="text"
                                         value={newSeller.email}
@@ -956,7 +1020,7 @@ function SellerDetails() {
                                     />
                                     {formErrors.email && <small className="field-error">{formErrors.email}</small>}
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                <div className="seller-form-grid-2">
                                     <div className="form-group">
                                         <label className="form-label">State</label>
                                         <SearchableSelect
@@ -970,6 +1034,7 @@ function SellerDetails() {
                                             placeholder={loadingStates ? 'Loading...' : 'Select State'}
                                             options={states.map(s => ({ label: s.name, value: s.name }))}
                                             disabled={loadingStates}
+                                            required
                                         />
                                     </div>
                                     <div className="form-group">
@@ -981,6 +1046,7 @@ function SellerDetails() {
                                             placeholder={loadingCities ? 'Loading cities...' : !newSeller.state ? 'Select state first' : 'Select City'}
                                             options={cities.map(c => ({ label: c.name, value: c.name }))}
                                             disabled={!newSeller.state || loadingCities}
+                                            required
                                         />
                                     </div>
                                 </div>

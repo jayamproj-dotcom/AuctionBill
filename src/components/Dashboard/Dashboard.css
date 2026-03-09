@@ -1,5 +1,15 @@
 /* Dashboard.css */
 
+.db-stat-link {
+  text-decoration: none;
+  display: block;
+  height: 100%;
+}
+
+.sb-spinner-center {
+  margin: 0 auto;
+}
+
 .dashboard-stats-grid {
     grid-template-columns: repeat(2, 1fr);
 }
@@ -119,7 +129,7 @@
     }
     
     .header-actions {
-        width: 100%;
+   
         justify-content: space-between;
     }
 
