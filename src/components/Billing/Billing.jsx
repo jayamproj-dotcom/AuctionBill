@@ -17,6 +17,7 @@ import { getBuyers } from "../../api/buyerApi";
 import { getBillingData } from "../../api/billingApi";
 import { toast } from "react-toastify";
 import jsPDF from "jspdf";
+import SearchableSelect from "../Common/SearchableSelect";
 import "./Billing.css";
 
 const Billing = () => {
@@ -32,7 +33,7 @@ const Billing = () => {
   const [endDate, setEndDate] = useState(
     new Date().toISOString().split("T")[0],
   );
-  const [dateFilter, setDateFilter] = useState("range"); // today, selected, range
+  const [dateFilter, setDateFilter] = useState("today"); // today, selected, range
 
   const [sellers, setSellers] = useState([]);
   const [buyers, setBuyers] = useState([]);
@@ -128,24 +129,23 @@ const Billing = () => {
       const pageWidth = 80;
       const centerX = pageWidth / 2;
 
-      doc.setFontSize(14);
+      doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.text("AUCTION RECEIPT", centerX, yPos, { align: "center" });
-      yPos += 8;
+      doc.text("AUCTION MARKET", centerX, yPos, { align: "center" });
+      yPos += 5;
 
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.text(vendor.name, centerX, yPos, { align: "center" });
+      doc.text(vendor.name || "Market", centerX, yPos, { align: "center" });
       yPos += 5;
       if (vendor.phone) {
-        doc.text(`Phone: ${vendor.phone}`, centerX, yPos, { align: "center" });
+        doc.text(`Tel: ${vendor.phone}`, centerX, yPos, { align: "center" });
         yPos += 5;
       }
-      if (vendor.address) {
-        doc.text(vendor.address, centerX, yPos, { align: "center" });
-        yPos += 5;
-      }
-      yPos += 5;
+      doc.text("--------------------------------", centerX, yPos, {
+        align: "center",
+      });
+      yPos += 6;
 
       // Date
       const formatDate = (dateInput) => {
@@ -166,31 +166,53 @@ const Billing = () => {
         return `${d}-${m}-${y}`;
       };
 
-      doc.text(`Date: ${formatDate(finalStart)}`, centerX, yPos, { align: "center" });
-      yPos += 5;
-
-      // Target details
+      doc.setFont("helvetica", "bold");
       if (mainOption === "seller" && data.seller) {
-        doc.text(`Seller: ${data.seller.name}`, centerX, yPos, { align: "center" });
+        doc.text(`Seller: ${data.seller.name}`, 5, yPos);
         yPos += 5;
       } else if (mainOption === "buyer" && data.buyer) {
-        doc.text(`Buyer: ${data.buyer.name}`, centerX, yPos, { align: "center" });
+        doc.text(`Buyer: ${data.buyer.name}`, 5, yPos);
         yPos += 5;
       }
+      doc.setFont("helvetica", "normal");
+      doc.text(`Date: ${formatDate(finalStart)}`, 5, yPos);
+      yPos += 6;
 
-      yPos += 5;
+      doc.text("-------------------------------------------", centerX, yPos, {
+        align: "center",
+      });
+      yPos += 6;
 
       // Items header
       doc.setFont("helvetica", "bold");
-      doc.text("ITEMS", centerX, yPos, { align: "center" });
-      yPos += 5;
-      doc.line(5, yPos, 75, yPos);
+      doc.setFontSize(8);
+      if (mainOption === "seller") {
+        doc.text("Item", 5, yPos);
+        doc.text("Qty", 32, yPos);
+        doc.text("Sell", 42, yPos);
+        doc.text("Comm", 55, yPos);
+        doc.text("Price", 75, yPos, { align: "right" });
+      } else {
+        doc.text("Item", 5, yPos);
+        doc.text("Qty", 32, yPos);
+        doc.text("Rate", 55, yPos);
+        doc.text("Price", 75, yPos, { align: "right" });
+      }
+      yPos += 4;
+      doc.text("--------------------------------", centerX, yPos, {
+        align: "center",
+      });
       yPos += 5;
 
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
 
       const records = data.records || [];
+      let totalGross = 0;
+      let totalComm = 0;
+      let totalNet = 0;
+      let totalPaid = 0;
+      let allMethods = new Set();
+
       records.forEach((rec) => {
         if (yPos > 280) {
           doc.addPage();
@@ -206,48 +228,99 @@ const Billing = () => {
           );
           return v
             ? {
-              name: `${v.variety || ""} ${v.quality || ""}`.trim(),
-              unit: v.unit || "",
-            }
+                name: `${v.variety || ""} ${v.quality || ""}`.trim(),
+                unit: v.unit || "",
+              }
             : { name: "N/A", unit: "" };
         };
 
         const vInfo = getVariantInfo(rec);
-        const productName = rec.productId?.name || "N/A";
-        const variant = vInfo.name;
-        const qty = rec.quantity || 0;
-        const rate = rec.rate || 0;
-        const amount = rec.finalAmount || 0;
+        const variantSuffix = vInfo.name !== "N/A" ? `(${vInfo.name})` : "";
+        const productName = truncate(
+          `${rec.productId?.name || "N/A"}${variantSuffix}`,
+          22,
+        );
 
-        // Item line
-        doc.text(`${productName}`, 5, yPos);
-        yPos += 4;
-        if (variant !== "N/A") {
-          doc.text(`Variant: ${variant}`, 5, yPos);
-          yPos += 4;
+        const qty = rec.quantity || 0;
+        const selling = rec.finalAmount || 0;
+        const comm = rec.commissionAmount || 0;
+        const price = rec.netAmount || 0;
+        const paid = rec.paidAmount || 0;
+        if (rec.method && rec.method !== "N/A") {
+          rec.method.split(", ").forEach((m) => allMethods.add(m));
         }
-        doc.text(`Qty: ${qty} ${vInfo.unit} @ Rs.${rate}`, 5, yPos);
-        doc.text(`Rs.${amount}`, 70, yPos, { align: "right" });
+
+        totalGross += selling;
+        totalComm += comm;
+        totalNet += price;
+        totalPaid += paid;
+
+        // Item line - all on one line for better formatting
+        doc.text(`${productName}`, 5, yPos);
+        doc.text(`${qty}${vInfo.unit}`, 32, yPos);
+        if (mainOption === "seller") {
+          doc.text(`${selling}`, 42, yPos);
+          doc.text(`${comm}`, 55, yPos);
+          doc.text(`Rs.${price}`, 76, yPos, { align: "right" });
+        } else {
+          doc.text(`${rec.rate || 0}`, 50, yPos);
+          doc.text(`Rs.${selling}`, 76, yPos, { align: "right" });
+        }
         yPos += 6;
       });
 
       // Total
-      doc.line(5, yPos, 75, yPos);
-      yPos += 5;
+      yPos += 2;
+      doc.text("--------------------------------", centerX, yPos, {
+        align: "center",
+      });
+      yPos += 6;
+
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      const totalValue = data.totalValue || 0;
-      doc.text("TOTAL:", 5, yPos);
-      doc.text(`Rs.${totalValue}`, 70, yPos, { align: "right" });
+      doc.setFontSize(9);
+      if (mainOption === "seller") {
+        doc.text("TOTAL SELL AMOUNT", 5, yPos);
+        doc.text(`Rs.${totalNet}`, 75, yPos, { align: "right" });
+      } else {
+        doc.text("TOTAL PURCHASE", 5, yPos);
+        doc.text(`Rs.${totalGross}`, 75, yPos, { align: "right" });
+      }
+      yPos += 6;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text("Total Paid", 5, yPos);
+      doc.text(`Rs.${totalPaid}`, 75, yPos, { align: "right" });
+      yPos += 6;
+
+      const methodsStr = Array.from(allMethods).join(", ") || "Cash";
+      const totalToCompare = mainOption === "seller" ? totalNet : totalGross;
+      const balanceValue = Math.max(0, totalToCompare - totalPaid);
+
+      doc.text("Balance", 5, yPos);
+      doc.text(`Rs.${balanceValue}`, 75, yPos, {
+        align: "right",
+      });
+      yPos += 5;
+      doc.text("Method", 5, yPos);
+      doc.text(`${methodsStr}`, 75, yPos, { align: "right" });
+      yPos += 5;
+
+      if (data.totalAdvance > 0) {
+        doc.setFont("helvetica", "bold");
+        doc.text("Advance", 5, yPos);
+        doc.text(`Rs.${data.totalAdvance}`, 75, yPos, { align: "right" });
+        yPos += 5;
+        doc.setFont("helvetica", "normal");
+      }
       yPos += 10;
 
       // Footer
-      doc.setFontSize(6);
-      doc.setFont("helvetica", "normal");
-      const dateNow = new Date().toLocaleString();
-      doc.text(`Generated: ${dateNow}`, centerX, yPos, { align: "center" });
-      yPos += 4;
-      doc.text("Thank you for your business!", centerX, yPos, { align: "center" });
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("-----------THANK YOU-----------", centerX, yPos, {
+        align: "center",
+      });
     } else {
       // Original A4 report layout
       // --- Header ---
@@ -339,19 +412,27 @@ const Billing = () => {
           "Date",
           "Product",
           "Variant",
+          "Buyer",
           "Qty",
           "Unit",
           "Rate",
           "Amount",
+          "Paid",
+          "Bal",
+          "Method",
         ],
         buyer_purchase: [
           "Date",
           "Product",
           "Variant",
+          "Seller",
           "Qty",
           "Unit",
           "Rate",
           "Amount",
+          "Paid",
+          "Bal",
+          "Method",
         ],
         history: ["Date", "Product", "Variant", "Seller", "Buyer", "Amount"],
         commission: [
@@ -384,12 +465,15 @@ const Billing = () => {
       doc.setFont("helvetica", "bold");
       let xOffsets = [10, 30, 60, 85, 115, 140, 170]; // Default for 7 cols
       if (activeHeader.length === 5) xOffsets = [10, 35, 85, 120, 160];
-      else if (activeHeader.length === 6) xOffsets = [10, 32, 70, 105, 140, 170];
+      else if (activeHeader.length === 6)
+        xOffsets = [10, 32, 70, 105, 140, 170];
       else if (activeHeader.length === 8)
         xOffsets = [10, 30, 55, 75, 95, 120, 145, 175];
+      else if (activeHeader.length === 11)
+        xOffsets = [8, 20, 42, 60, 80, 92, 102, 118, 140, 160, 180];
 
       activeHeader.forEach((h, i) => {
-        doc.text(h, xOffsets[i], yPos);
+        doc.text(truncate(h, 8), xOffsets[i], yPos);
       });
 
       yPos += 5;
@@ -421,9 +505,9 @@ const Billing = () => {
             );
             return v
               ? {
-                name: `${v.variety || ""} ${v.quality || ""}`.trim(),
-                unit: v.unit || "",
-              }
+                  name: `${v.variety || ""} ${v.quality || ""}`.trim(),
+                  unit: v.unit || "",
+                }
               : { name: "N/A", unit: "" };
           };
 
@@ -434,10 +518,14 @@ const Billing = () => {
               formattedDate,
               rec.productId?.name || "N/A",
               vInfo.name,
+              rec.buyerId?.name || rec.buyerName || "N/A",
               rec.quantity?.toString() || "0",
               vInfo.unit,
               `Rs. ${rec.rate || 0}`,
               `Rs. ${rec.finalAmount || 0}`,
+              `Rs. ${rec.paidAmount || 0}`,
+              `Rs. ${rec.balance || 0}`,
+              rec.method || "N/A",
             ];
           } else if (
             mainOption === "seller" &&
@@ -450,17 +538,27 @@ const Billing = () => {
               `Rs. ${rec.debit || 0}`,
               `Rs. ${rec.balance || 0}`,
             ];
-          } else if (mainOption === "buyer" && subOption === "purchase_history") {
+          } else if (
+            mainOption === "buyer" &&
+            subOption === "purchase_history"
+          ) {
             row = [
               formattedDate,
               rec.productId?.name || "N/A",
               vInfo.name,
+              rec.sellerId?.name || "N/A",
               rec.quantity?.toString() || "0",
               vInfo.unit,
               `Rs. ${rec.rate || 0}`,
               `Rs. ${rec.finalAmount || 0}`,
+              `Rs. ${rec.paidAmount || 0}`,
+              `Rs. ${rec.balance || 0}`,
+              rec.method || "N/A",
             ];
-          } else if (mainOption === "buyer" && subOption === "payments_history") {
+          } else if (
+            mainOption === "buyer" &&
+            subOption === "payments_history"
+          ) {
             row = [
               formattedDate,
               rec.description || "N/A",
@@ -505,7 +603,13 @@ const Billing = () => {
         const totalValue = data.totalValue || 0;
 
         doc.text(totalLabel, xOffsets[0], yPos);
-        doc.text(`Rs. ${totalValue}`, xOffsets[xOffsets.length - 1], yPos);
+
+        // Align total under the Amount column (column index 7 for seller/buyer reports)
+        const amtIdx =
+          mainOption === "seller" || mainOption === "buyer"
+            ? 7
+            : xOffsets.length - 1;
+        doc.text(`Rs. ${totalValue}`, xOffsets[amtIdx], yPos);
       }
 
       // --- Footer ---
@@ -530,7 +634,6 @@ const Billing = () => {
   };
 
   return (
-
     <>
       {/* <div className="billing-container fade-in">
       <div className="billing-header">
@@ -617,20 +720,18 @@ const Billing = () => {
               <h3 className="section-title">
                 Select {mainOption === "seller" ? "Seller" : "Buyer"}
               </h3>
-              <select
-                className="billing-select"
+              <SearchableSelect
+                name="selectedId"
                 value={selectedId}
                 onChange={(e) => setSelectedId(e.target.value)}
-              >
-                <option value="">
-                  Choose {mainOption === "seller" ? "Seller" : "Buyer"}...
-                </option>
-                {(mainOption === "seller" ? sellers : buyers).map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name} ({item.contact})
-                  </option>
-                ))}
-              </select>
+                placeholder={`Choose ${mainOption === "seller" ? "Seller" : "Buyer"}...`}
+                options={(mainOption === "seller" ? sellers : buyers).map(
+                  (item) => ({
+                    label: `${item.name}`,
+                    value: item.id || item._id,
+                  }),
+                )}
+              />
             </div>
           )}
 
@@ -788,7 +889,6 @@ const Billing = () => {
           </div>
         </div>
       </div>
-
     </>
   );
 };
