@@ -794,3 +794,9 @@ a .stat-card:hover {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+@media (max-width: 350px) {
+    .mobile-header h2{
+        display: none;
+    }
+    
+}
