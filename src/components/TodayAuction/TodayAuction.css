@@ -329,7 +329,7 @@
   }
 
   .header-actions {
-    width: 100%;
+   
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -517,7 +517,7 @@
 
 .search-input {
   width: 100%;
-  padding: 10px 15px;
+  padding: 10px 40px 10px 15px;
   border-radius: 8px;
   border: 1px solid var(--border-color);
   background-color: var(--bg-secondary);
