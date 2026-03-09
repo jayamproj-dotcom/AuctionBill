@@ -295,11 +295,24 @@ const SaaSLayout = () => {
                         notifications.map((notif) => (
                           <div key={notif._id} className="notification-item">
                             <div className="notif-content">
-                              <div className="notif-title">
-                                {notif.vendorId?.name || "Unknown Vendor"}
+                              {/* <div className="notif-title">
+                                {notif.userId?.name ||
+                                  notif.senderName ||
+                                  "Unknown Vendor"}
                               </div>
                               <div className="notif-email">
-                                {notif.vendorId?.email}
+                                {notif.userId?.email || ""}
+                              </div> */}
+                              <div
+                                className="notif-subject"
+                                style={{
+                                  fontWeight: "600",
+                                  fontSize: "0.85rem",
+                                  color: "#1e293b",
+                                  marginTop: "4px",
+                                }}
+                              >
+                                {notif.title}
                               </div>
                               <p className="notif-msg">{notif.message}</p>
                               <div className="notif-meta">
@@ -308,7 +321,9 @@ const SaaSLayout = () => {
                                     ? "Plan Upgrade"
                                     : notif.type === "new_registration"
                                       ? "New Registration"
-                                      : "Asset Upgrade"}
+                                      : notif.type === "asset_upgrade"
+                                        ? "Asset Upgrade"
+                                        : "Notification"}
                                 </span>
                                 <span className="notif-time">
                                   {new Date(
