@@ -188,15 +188,15 @@ const Billing = () => {
       doc.setFontSize(8);
       if (mainOption === "seller") {
         doc.text("Item", 5, yPos);
-        doc.text("Qty", 32, yPos);
-        doc.text("Sell", 42, yPos);
+        doc.text("Qty", 37, yPos);
+        doc.text("Sell", 45, yPos);
         doc.text("Comm", 55, yPos);
-        doc.text("Price", 75, yPos, { align: "right" });
+        doc.text("Price", 77, yPos, { align: "right" });
       } else {
         doc.text("Item", 5, yPos);
-        doc.text("Qty", 32, yPos);
-        doc.text("Rate", 55, yPos);
-        doc.text("Price", 75, yPos, { align: "right" });
+        doc.text("Qty", 37, yPos);
+        doc.text("Rate", 50, yPos);
+        doc.text("Price", 77, yPos, { align: "right" });
       }
       yPos += 4;
       doc.text("--------------------------------", centerX, yPos, {
@@ -257,14 +257,14 @@ const Billing = () => {
 
         // Item line - all on one line for better formatting
         doc.text(`${productName}`, 5, yPos);
-        doc.text(`${qty}${vInfo.unit}`, 32, yPos);
+        doc.text(`${qty}${vInfo.unit}`, 37, yPos);
         if (mainOption === "seller") {
-          doc.text(`${selling}`, 42, yPos);
+          doc.text(`${selling}`, 45, yPos);
           doc.text(`${comm}`, 55, yPos);
-          doc.text(`Rs.${price}`, 76, yPos, { align: "right" });
+          doc.text(`Rs.${price}`, 77, yPos, { align: "right" });
         } else {
           doc.text(`${rec.rate || 0}`, 50, yPos);
-          doc.text(`Rs.${selling}`, 76, yPos, { align: "right" });
+          doc.text(`Rs.${selling}`, 77, yPos, { align: "right" });
         }
         yPos += 6;
       });

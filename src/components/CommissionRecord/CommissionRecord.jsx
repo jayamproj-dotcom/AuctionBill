@@ -256,9 +256,10 @@ function CommissionRecord() {
               <table className="data-table custom-data-table commission-table">
                 <thead className="bg-tertiary">
                   <tr>
+                     <th className="custom-th">Date</th>
                     <th className="custom-th">Product</th>
                     <th className="custom-th">Seller</th>
-                    <th className="custom-th">Date</th>
+                 
                     <th className="custom-th cr-num-col">Sale Amount</th>
                     <th className="custom-th cr-center-col">Comm&nbsp;%</th>
                     <th className="custom-th cr-num-col cr-highlight-col">
@@ -273,6 +274,11 @@ function CommissionRecord() {
                       className={`custom-tr ${idx % 2 === 0 ? "cr-row-even" : ""}`}
                     >
                       <td className="custom-td">
+                        <span className="cr-date-badge">
+                          {formatDate(c.latestDate)}
+                        </span>
+                      </td>
+                      <td className="custom-td">
                         <span className="cr-product-name">{c.productName}</span>
                       </td>
 
@@ -280,11 +286,7 @@ function CommissionRecord() {
                         <span className="cr-seller-name">{c.sellerName}</span>
                       </td>
 
-                      <td className="custom-td">
-                        <span className="cr-date-badge">
-                          {formatDate(c.latestDate)}
-                        </span>
-                      </td>
+                      
 
                       <td className="custom-td cr-num-col">
                         <span className="cr-sale-amount">
