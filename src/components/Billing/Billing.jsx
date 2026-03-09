@@ -33,7 +33,7 @@ const Billing = () => {
   const [endDate, setEndDate] = useState(
     new Date().toISOString().split("T")[0],
   );
-  const [dateFilter, setDateFilter] = useState("range"); // today, selected, range
+  const [dateFilter, setDateFilter] = useState("today"); // today, selected, range
 
   const [sellers, setSellers] = useState([]);
   const [buyers, setBuyers] = useState([]);
@@ -105,169 +105,119 @@ const Billing = () => {
 
   const generatePDF = (response) => {
     const { vendor, data, finalStart, finalEnd } = response;
-    const doc = jsPDF();
 
-    // --- Header ---
-    doc.setFontSize(22);
-    doc.setTextColor(40, 44, 52);
-    doc.text("AUCTION BILLING SYSTEM", 105, 20, { align: "center" });
+    const isReceiptFormat =
+      (mainOption === "seller" && subOption === "selling_product") ||
+      (mainOption === "buyer" && subOption === "purchase_history");
 
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text("Generated Invoice / Report", 105, 26, { align: "center" });
-
-    doc.setDrawColor(200);
-    doc.line(10, 32, 200, 32);
-
-    // --- Vendor Details ---
-    doc.setFontSize(14);
-    doc.setTextColor(0);
-    doc.text("VENDOR DETAILS", 10, 42);
-
-    doc.setFontSize(10);
-    doc.text(`Name: ${vendor.name}`, 10, 48);
-    doc.text(`Contact: ${vendor.phone || "N/A"}`, 10, 53);
-    doc.text(
-      `Address: ${vendor.address || "N/A"}, ${vendor.city || ""}, ${vendor.state || ""}`,
-      10,
-      58,
-    );
-
-    // --- Target Details ---
-    let yPos = 75;
-    if (mainOption === "seller" && data.seller) {
-      doc.setFontSize(14);
-      doc.text("SELLER DETAILS", 10, yPos);
-      doc.setFontSize(10);
-      doc.text(`Name: ${data.seller.name}`, 10, yPos + 6);
-      doc.text(`Contact: ${data.seller.contact}`, 10, yPos + 11);
-      doc.text(`Address: ${data.seller.address || "N/A"}`, 10, yPos + 16);
-      yPos += 25;
-    } else if (mainOption === "buyer" && data.buyer) {
-      doc.setFontSize(14);
-      doc.text("BUYER DETAILS", 10, yPos);
-      doc.setFontSize(10);
-      doc.text(`Name: ${data.buyer.name}`, 10, yPos + 6);
-      doc.text(`Contact: ${data.buyer.contact}`, 10, yPos + 11);
-      doc.text(`Address: ${data.buyer.address || "N/A"}`, 10, yPos + 16);
-      yPos += 25;
-    } else {
-      doc.setFontSize(14);
-      doc.text(`${mainOption.toUpperCase()} REPORT`, 10, yPos);
-      yPos += 10;
-    }
-
-    const formatDate = (dateInput) => {
-      if (!dateInput) return "N/A";
-      // Handle YYYY-MM-DD string format directly to avoid timezone issues
-      if (
-        typeof dateInput === "string" &&
-        dateInput.includes("-") &&
-        dateInput.length === 10
-      ) {
-        const [y, m, d] = dateInput.split("-");
-        return `${d}-${m}-${y}`;
-      }
-      const date = new Date(dateInput);
-      if (isNaN(date)) return "N/A";
-      const d = String(date.getDate()).padStart(2, "0");
-      const m = String(date.getMonth() + 1).padStart(2, "0");
-      const y = date.getFullYear();
-      return `${d}-${m}-${y}`;
-    };
-
-    doc.setFontSize(10);
-    doc.text(
-      `Report Period: ${formatDate(finalStart)} to ${formatDate(finalEnd)}`,
-      10,
-      yPos,
-    );
-    yPos += 10;
-
-    // --- Table Data ---
-    const records = data.records || [];
-
-    doc.setDrawColor(220);
-    doc.line(10, yPos, 200, yPos);
-    yPos += 7;
-
-    const headers = {
-      seller_selling: [
-        "Date",
-        "Product",
-        "Variant",
-        "Qty",
-        "Unit",
-        "Rate",
-        "Amount",
-      ],
-      buyer_purchase: [
-        "Date",
-        "Product",
-        "Variant",
-        "Qty",
-        "Unit",
-        "Rate",
-        "Amount",
-      ],
-      history: ["Date", "Product", "Variant", "Seller", "Buyer", "Amount"],
-      commission: [
-        "Date",
-        "Product",
-        "Variant",
-        "Seller",
-        "Sell Amt",
-        "Comm %",
-        "Comm Amt",
-      ],
-      ledger: ["Date", "Description", "Credit", "Debit", "Balance"],
-    };
-
-    let activeHeader = [];
-    if (mainOption === "seller")
-      activeHeader =
-        subOption === "selling_product"
-          ? headers.seller_selling
-          : headers.ledger;
-    else if (mainOption === "buyer")
-      activeHeader =
-        subOption === "purchase_history"
-          ? headers.buyer_purchase
-          : headers.ledger;
-    else if (mainOption === "history") activeHeader = headers.history;
-    else if (mainOption === "commission") activeHeader = headers.commission;
-
-    // Table Header
-    doc.setFont("helvetica", "bold");
-    let xOffsets = [10, 30, 60, 85, 115, 140, 170]; // Default for 7 cols
-    if (activeHeader.length === 5) xOffsets = [10, 35, 85, 120, 160];
-    else if (activeHeader.length === 6) xOffsets = [10, 32, 70, 105, 140, 170];
-    else if (activeHeader.length === 8)
-      xOffsets = [10, 30, 55, 75, 95, 120, 145, 175];
-
-    activeHeader.forEach((h, i) => {
-      doc.text(h, xOffsets[i], yPos);
-    });
-
-    yPos += 5;
-    doc.line(10, yPos, 200, yPos);
-    yPos += 7;
-
-    doc.setFont("helvetica", "normal");
-
-    if (records.length === 0) {
-      doc.text("No records found for the selected period.", 105, yPos + 10, {
-        align: "center",
+    let doc;
+    if (isReceiptFormat) {
+      // Receipt format: narrow width like POS bill
+      doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: [80, 297], // 80mm width, A4 height for potential long receipts
       });
     } else {
-      records.forEach((rec, idx) => {
-        if (yPos > 270) {
-          doc.addPage();
-          yPos = 20;
-        }
+      // Standard A4 report format
+      doc = new jsPDF();
+    }
 
-        let row = [];
-        const formattedDate = formatDate(rec.date);
+    if (isReceiptFormat) {
+      // Receipt-style layout
+      let yPos = 10;
+      const pageWidth = 80;
+      const centerX = pageWidth / 2;
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("AUCTION MARKET", centerX, yPos, { align: "center" });
+      yPos += 5;
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(vendor.name || "Market", centerX, yPos, { align: "center" });
+      yPos += 5;
+      if (vendor.phone) {
+        doc.text(`Tel: ${vendor.phone}`, centerX, yPos, { align: "center" });
+        yPos += 5;
+      }
+      doc.text("--------------------------------", centerX, yPos, {
+        align: "center",
+      });
+      yPos += 6;
+
+      // Date
+      const formatDate = (dateInput) => {
+        if (!dateInput) return "N/A";
+        if (
+          typeof dateInput === "string" &&
+          dateInput.includes("-") &&
+          dateInput.length === 10
+        ) {
+          const [y, m, d] = dateInput.split("-");
+          return `${d}-${m}-${y}`;
+        }
+        const date = new Date(dateInput);
+        if (isNaN(date)) return "N/A";
+        const d = String(date.getDate()).padStart(2, "0");
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const y = date.getFullYear();
+        return `${d}-${m}-${y}`;
+      };
+
+      doc.setFont("helvetica", "bold");
+      if (mainOption === "seller" && data.seller) {
+        doc.text(`Seller: ${data.seller.name}`, 5, yPos);
+        yPos += 5;
+      } else if (mainOption === "buyer" && data.buyer) {
+        doc.text(`Buyer: ${data.buyer.name}`, 5, yPos);
+        yPos += 5;
+      }
+      doc.setFont("helvetica", "normal");
+      doc.text(`Date: ${formatDate(finalStart)}`, 5, yPos);
+      yPos += 6;
+
+      doc.text("-------------------------------------------", centerX, yPos, {
+        align: "center",
+      });
+      yPos += 6;
+
+      // Items header
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      if (mainOption === "seller") {
+        doc.text("Item", 5, yPos);
+        doc.text("Qty", 32, yPos);
+        doc.text("Sell", 42, yPos);
+        doc.text("Comm", 55, yPos);
+        doc.text("Price", 75, yPos, { align: "right" });
+      } else {
+        doc.text("Item", 5, yPos);
+        doc.text("Qty", 32, yPos);
+        doc.text("Rate", 55, yPos);
+        doc.text("Price", 75, yPos, { align: "right" });
+      }
+      yPos += 4;
+      doc.text("--------------------------------", centerX, yPos, {
+        align: "center",
+      });
+      yPos += 5;
+
+      doc.setFont("helvetica", "normal");
+
+      const records = data.records || [];
+      let totalGross = 0;
+      let totalComm = 0;
+      let totalNet = 0;
+      let totalPaid = 0;
+      let allMethods = new Set();
+
+      records.forEach((rec) => {
+        if (yPos > 280) {
+          doc.addPage();
+          yPos = 10;
+        }
 
         const getVariantInfo = (r) => {
           if (!r.productId?.variants || !r.variantId)
@@ -285,96 +235,394 @@ const Billing = () => {
         };
 
         const vInfo = getVariantInfo(rec);
+        const variantSuffix = vInfo.name !== "N/A" ? `(${vInfo.name})` : "";
+        const productName = truncate(
+          `${rec.productId?.name || "N/A"}${variantSuffix}`,
+          22,
+        );
 
-        if (mainOption === "seller" && subOption === "selling_product") {
-          row = [
-            formattedDate,
-            rec.productId?.name || "N/A",
-            vInfo.name,
-            rec.quantity?.toString() || "0",
-            vInfo.unit,
-            `Rs. ${rec.rate || 0}`,
-            `Rs. ${rec.finalAmount || 0}`,
-          ];
-        } else if (
-          mainOption === "seller" &&
-          subOption === "payments_history"
-        ) {
-          row = [
-            formattedDate,
-            rec.description || "N/A",
-            `Rs. ${rec.credit || 0}`,
-            `Rs. ${rec.debit || 0}`,
-            `Rs. ${rec.balance || 0}`,
-          ];
-        } else if (mainOption === "buyer" && subOption === "purchase_history") {
-          row = [
-            formattedDate,
-            rec.productId?.name || "N/A",
-            vInfo.name,
-            rec.quantity?.toString() || "0",
-            vInfo.unit,
-            `Rs. ${rec.rate || 0}`,
-            `Rs. ${rec.finalAmount || 0}`,
-          ];
-        } else if (mainOption === "buyer" && subOption === "payments_history") {
-          row = [
-            formattedDate,
-            rec.description || "N/A",
-            `Rs. ${rec.credit || 0}`,
-            `Rs. ${rec.debit || 0}`,
-            `Rs. ${rec.balance || 0}`,
-          ];
-        } else if (mainOption === "history") {
-          row = [
-            formattedDate,
-            rec.productId?.name || "N/A",
-            vInfo.name,
-            rec.sellerId?.name || "N/A",
-            rec.buyerId?.name || rec.buyerName || "N/A",
-            `Rs. ${rec.finalAmount || 0}`,
-          ];
-        } else if (mainOption === "commission") {
-          row = [
-            formattedDate,
-            rec.productId?.name || "N/A",
-            vInfo.name,
-            rec.sellerId?.name || "N/A",
-            `Rs. ${rec.finalAmount || 0}`,
-            `${rec.commissionPercent || 0}%`,
-            `Rs. ${rec.commissionAmount || 0}`,
-          ];
+        const qty = rec.quantity || 0;
+        const selling = rec.finalAmount || 0;
+        const comm = rec.commissionAmount || 0;
+        const price = rec.netAmount || 0;
+        const paid = rec.paidAmount || 0;
+        if (rec.method && rec.method !== "N/A") {
+          rec.method.split(", ").forEach((m) => allMethods.add(m));
         }
 
-        row.forEach((cell, i) => {
-          doc.text(truncate(cell, 25), xOffsets[i], yPos);
-        });
-        yPos += 8;
+        totalGross += selling;
+        totalComm += comm;
+        totalNet += price;
+        totalPaid += paid;
+
+        // Item line - all on one line for better formatting
+        doc.text(`${productName}`, 5, yPos);
+        doc.text(`${qty}${vInfo.unit}`, 32, yPos);
+        if (mainOption === "seller") {
+          doc.text(`${selling}`, 42, yPos);
+          doc.text(`${comm}`, 55, yPos);
+          doc.text(`Rs.${price}`, 76, yPos, { align: "right" });
+        } else {
+          doc.text(`${rec.rate || 0}`, 50, yPos);
+          doc.text(`Rs.${selling}`, 76, yPos, { align: "right" });
+        }
+        yPos += 6;
       });
 
-      // --- Total Amount Row ---
+      // Total
+      yPos += 2;
+      doc.text("--------------------------------", centerX, yPos, {
+        align: "center",
+      });
+      yPos += 6;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      if (mainOption === "seller") {
+        doc.text("TOTAL SELL AMOUNT", 5, yPos);
+        doc.text(`Rs.${totalNet}`, 75, yPos, { align: "right" });
+      } else {
+        doc.text("TOTAL PURCHASE", 5, yPos);
+        doc.text(`Rs.${totalGross}`, 75, yPos, { align: "right" });
+      }
+      yPos += 6;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text("Total Paid", 5, yPos);
+      doc.text(`Rs.${totalPaid}`, 75, yPos, { align: "right" });
+      yPos += 6;
+
+      const methodsStr = Array.from(allMethods).join(", ") || "Cash";
+      const totalToCompare = mainOption === "seller" ? totalNet : totalGross;
+      const balanceValue = Math.max(0, totalToCompare - totalPaid);
+
+      doc.text("Balance", 5, yPos);
+      doc.text(`Rs.${balanceValue}`, 75, yPos, {
+        align: "right",
+      });
+      yPos += 5;
+      doc.text("Method", 5, yPos);
+      doc.text(`${methodsStr}`, 75, yPos, { align: "right" });
+      yPos += 5;
+
+      if (data.totalAdvance > 0) {
+        doc.setFont("helvetica", "bold");
+        doc.text("Advance", 5, yPos);
+        doc.text(`Rs.${data.totalAdvance}`, 75, yPos, { align: "right" });
+        yPos += 5;
+        doc.setFont("helvetica", "normal");
+      }
+      yPos += 10;
+
+      // Footer
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("-----------THANK YOU-----------", centerX, yPos, {
+        align: "center",
+      });
+    } else {
+      // Original A4 report layout
+      // --- Header ---
+      doc.setFontSize(22);
+      doc.setTextColor(40, 44, 52);
+      doc.text("AUCTION BILLING SYSTEM", 105, 20, { align: "center" });
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text("Generated Invoice / Report", 105, 26, { align: "center" });
+
       doc.setDrawColor(200);
+      doc.line(10, 32, 200, 32);
+
+      // --- Vendor Details ---
+      doc.setFontSize(14);
+      doc.setTextColor(0);
+      doc.text("VENDOR DETAILS", 10, 42);
+
+      doc.setFontSize(10);
+      doc.text(`Name: ${vendor.name}`, 10, 48);
+      doc.text(`Contact: ${vendor.phone || "N/A"}`, 10, 53);
+      doc.text(
+        `Address: ${vendor.address || "N/A"}, ${vendor.city || ""}, ${vendor.state || ""}`,
+        10,
+        58,
+      );
+
+      // --- Target Details ---
+      let yPos = 75;
+      if (mainOption === "seller" && data.seller) {
+        doc.setFontSize(14);
+        doc.text("SELLER DETAILS", 10, yPos);
+        doc.setFontSize(10);
+        doc.text(`Name: ${data.seller.name}`, 10, yPos + 6);
+        doc.text(`Contact: ${data.seller.contact}`, 10, yPos + 11);
+        doc.text(`Address: ${data.seller.address || "N/A"}`, 10, yPos + 16);
+        yPos += 25;
+      } else if (mainOption === "buyer" && data.buyer) {
+        doc.setFontSize(14);
+        doc.text("BUYER DETAILS", 10, yPos);
+        doc.setFontSize(10);
+        doc.text(`Name: ${data.buyer.name}`, 10, yPos + 6);
+        doc.text(`Contact: ${data.buyer.contact}`, 10, yPos + 11);
+        doc.text(`Address: ${data.buyer.address || "N/A"}`, 10, yPos + 16);
+        yPos += 25;
+      } else {
+        doc.setFontSize(14);
+        doc.text(`${mainOption.toUpperCase()} REPORT`, 10, yPos);
+        yPos += 10;
+      }
+
+      const formatDate = (dateInput) => {
+        if (!dateInput) return "N/A";
+        // Handle YYYY-MM-DD string format directly to avoid timezone issues
+        if (
+          typeof dateInput === "string" &&
+          dateInput.includes("-") &&
+          dateInput.length === 10
+        ) {
+          const [y, m, d] = dateInput.split("-");
+          return `${d}-${m}-${y}`;
+        }
+        const date = new Date(dateInput);
+        if (isNaN(date)) return "N/A";
+        const d = String(date.getDate()).padStart(2, "0");
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const y = date.getFullYear();
+        return `${d}-${m}-${y}`;
+      };
+
+      doc.setFontSize(10);
+      doc.text(
+        `Report Period: ${formatDate(finalStart)} to ${formatDate(finalEnd)}`,
+        10,
+        yPos,
+      );
+      yPos += 10;
+
+      // --- Table Data ---
+      const records = data.records || [];
+
+      doc.setDrawColor(220);
       doc.line(10, yPos, 200, yPos);
       yPos += 7;
+
+      const headers = {
+        seller_selling: [
+          "Date",
+          "Product",
+          "Variant",
+          "Buyer",
+          "Qty",
+          "Unit",
+          "Rate",
+          "Amount",
+          "Paid",
+          "Bal",
+          "Method",
+        ],
+        buyer_purchase: [
+          "Date",
+          "Product",
+          "Variant",
+          "Seller",
+          "Qty",
+          "Unit",
+          "Rate",
+          "Amount",
+          "Paid",
+          "Bal",
+          "Method",
+        ],
+        history: ["Date", "Product", "Variant", "Seller", "Buyer", "Amount"],
+        commission: [
+          "Date",
+          "Product",
+          "Variant",
+          "Seller",
+          "Sell Amt",
+          "Comm %",
+          "Comm Amt",
+        ],
+        ledger: ["Date", "Description", "Credit", "Debit", "Balance"],
+      };
+
+      let activeHeader = [];
+      if (mainOption === "seller")
+        activeHeader =
+          subOption === "selling_product"
+            ? headers.seller_selling
+            : headers.ledger;
+      else if (mainOption === "buyer")
+        activeHeader =
+          subOption === "purchase_history"
+            ? headers.buyer_purchase
+            : headers.ledger;
+      else if (mainOption === "history") activeHeader = headers.history;
+      else if (mainOption === "commission") activeHeader = headers.commission;
+
+      // Table Header
       doc.setFont("helvetica", "bold");
+      let xOffsets = [10, 30, 60, 85, 115, 140, 170]; // Default for 7 cols
+      if (activeHeader.length === 5) xOffsets = [10, 35, 85, 120, 160];
+      else if (activeHeader.length === 6)
+        xOffsets = [10, 32, 70, 105, 140, 170];
+      else if (activeHeader.length === 8)
+        xOffsets = [10, 30, 55, 75, 95, 120, 145, 175];
+      else if (activeHeader.length === 11)
+        xOffsets = [8, 20, 42, 60, 80, 92, 102, 118, 140, 160, 180];
 
-      const totalLabel = data.totalLabel || "TOTAL";
-      const totalValue = data.totalValue || 0;
+      activeHeader.forEach((h, i) => {
+        doc.text(truncate(h, 8), xOffsets[i], yPos);
+      });
 
-      doc.text(totalLabel, xOffsets[0], yPos);
-      doc.text(`Rs. ${totalValue}`, xOffsets[xOffsets.length - 1], yPos);
+      yPos += 5;
+      doc.line(10, yPos, 200, yPos);
+      yPos += 7;
+
+      doc.setFont("helvetica", "normal");
+
+      if (records.length === 0) {
+        doc.text("No records found for the selected period.", 105, yPos + 10, {
+          align: "center",
+        });
+      } else {
+        records.forEach((rec, idx) => {
+          if (yPos > 270) {
+            doc.addPage();
+            yPos = 20;
+          }
+
+          let row = [];
+          const formattedDate = formatDate(rec.date);
+
+          const getVariantInfo = (r) => {
+            if (!r.productId?.variants || !r.variantId)
+              return { name: "N/A", unit: "" };
+            const v = r.productId.variants.find(
+              (varnt) =>
+                (varnt._id || varnt.id).toString() === r.variantId.toString(),
+            );
+            return v
+              ? {
+                  name: `${v.variety || ""} ${v.quality || ""}`.trim(),
+                  unit: v.unit || "",
+                }
+              : { name: "N/A", unit: "" };
+          };
+
+          const vInfo = getVariantInfo(rec);
+
+          if (mainOption === "seller" && subOption === "selling_product") {
+            row = [
+              formattedDate,
+              rec.productId?.name || "N/A",
+              vInfo.name,
+              rec.buyerId?.name || rec.buyerName || "N/A",
+              rec.quantity?.toString() || "0",
+              vInfo.unit,
+              `Rs. ${rec.rate || 0}`,
+              `Rs. ${rec.finalAmount || 0}`,
+              `Rs. ${rec.paidAmount || 0}`,
+              `Rs. ${rec.balance || 0}`,
+              rec.method || "N/A",
+            ];
+          } else if (
+            mainOption === "seller" &&
+            subOption === "payments_history"
+          ) {
+            row = [
+              formattedDate,
+              rec.description || "N/A",
+              `Rs. ${rec.credit || 0}`,
+              `Rs. ${rec.debit || 0}`,
+              `Rs. ${rec.balance || 0}`,
+            ];
+          } else if (
+            mainOption === "buyer" &&
+            subOption === "purchase_history"
+          ) {
+            row = [
+              formattedDate,
+              rec.productId?.name || "N/A",
+              vInfo.name,
+              rec.sellerId?.name || "N/A",
+              rec.quantity?.toString() || "0",
+              vInfo.unit,
+              `Rs. ${rec.rate || 0}`,
+              `Rs. ${rec.finalAmount || 0}`,
+              `Rs. ${rec.paidAmount || 0}`,
+              `Rs. ${rec.balance || 0}`,
+              rec.method || "N/A",
+            ];
+          } else if (
+            mainOption === "buyer" &&
+            subOption === "payments_history"
+          ) {
+            row = [
+              formattedDate,
+              rec.description || "N/A",
+              `Rs. ${rec.credit || 0}`,
+              `Rs. ${rec.debit || 0}`,
+              `Rs. ${rec.balance || 0}`,
+            ];
+          } else if (mainOption === "history") {
+            row = [
+              formattedDate,
+              rec.productId?.name || "N/A",
+              vInfo.name,
+              rec.sellerId?.name || "N/A",
+              rec.buyerId?.name || rec.buyerName || "N/A",
+              `Rs. ${rec.finalAmount || 0}`,
+            ];
+          } else if (mainOption === "commission") {
+            row = [
+              formattedDate,
+              rec.productId?.name || "N/A",
+              vInfo.name,
+              rec.sellerId?.name || "N/A",
+              `Rs. ${rec.finalAmount || 0}`,
+              `${rec.commissionPercent || 0}%`,
+              `Rs. ${rec.commissionAmount || 0}`,
+            ];
+          }
+
+          row.forEach((cell, i) => {
+            doc.text(truncate(cell, 25), xOffsets[i], yPos);
+          });
+          yPos += 8;
+        });
+
+        // --- Total Amount Row ---
+        doc.setDrawColor(200);
+        doc.line(10, yPos, 200, yPos);
+        yPos += 7;
+        doc.setFont("helvetica", "bold");
+
+        const totalLabel = data.totalLabel || "TOTAL";
+        const totalValue = data.totalValue || 0;
+
+        doc.text(totalLabel, xOffsets[0], yPos);
+
+        // Align total under the Amount column (column index 7 for seller/buyer reports)
+        const amtIdx =
+          mainOption === "seller" || mainOption === "buyer"
+            ? 7
+            : xOffsets.length - 1;
+        doc.text(`Rs. ${totalValue}`, xOffsets[amtIdx], yPos);
+      }
+
+      // --- Footer ---
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      const dateNow = new Date().toLocaleString();
+      doc.text(
+        `Generated on ${dateNow} | Auction Billing Management System`,
+        105,
+        290,
+        { align: "center" },
+      );
     }
-
-    // --- Footer ---
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    const dateNow = new Date().toLocaleString();
-    doc.text(
-      `Generated on ${dateNow} | Auction Billing Management System`,
-      105,
-      290,
-      { align: "center" },
-    );
 
     doc.save(`Invoice_${mainOption}_${new Date().getTime()}.pdf`);
     toast.success("PDF Downloaded successfully");
@@ -386,9 +634,8 @@ const Billing = () => {
   };
 
   return (
-
     <>
-     {/* <div className="billing-container fade-in">
+      {/* <div className="billing-container fade-in">
       <div className="billing-header">
         <div className="header-icon">
           <FileText size={32} />
@@ -399,7 +646,7 @@ const Billing = () => {
         </div>
       </div> */}
 
-       <div className="content-header">
+      <div className="content-header">
         <div className="header-top">
           <h1>Billing & Invoices</h1>
         </div>
@@ -478,10 +725,12 @@ const Billing = () => {
                 value={selectedId}
                 onChange={(e) => setSelectedId(e.target.value)}
                 placeholder={`Choose ${mainOption === "seller" ? "Seller" : "Buyer"}...`}
-                options={(mainOption === "seller" ? sellers : buyers).map(item => ({
-                  label: `${item.name} `,
-                  value: item.id || item._id
-                }))}
+                options={(mainOption === "seller" ? sellers : buyers).map(
+                  (item) => ({
+                    label: `${item.name}`,
+                    value: item.id || item._id,
+                  }),
+                )}
               />
             </div>
           )}
@@ -640,8 +889,7 @@ const Billing = () => {
           </div>
         </div>
       </div>
-   
-    </> 
+    </>
   );
 };
 
