@@ -244,3 +244,34 @@
     margin-top: 4px;
     font-weight: 500;
 }
+
+/* Radio Group */
+.radio-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+    background: var(--bg-secondary);
+}
+
+.radio-label.checked {
+    border-color: var(--primary);
+    background: var(--bg-tertiary);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.radio-label input {
+    cursor: pointer;
+}
