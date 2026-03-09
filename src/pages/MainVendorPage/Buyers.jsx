@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { ShoppingCart, Phone, Mail } from "lucide-react";
+import { Phone, Mail, Pencil, Trash2 } from "lucide-react";
+import ConfirmationModal from "../../components/Common/ConfirmationModal";
 
 function Buyers() {
   const [selectedBranch, setSelectedBranch] = useState("all");
@@ -18,6 +19,10 @@ function Buyers() {
       email: "frank@example.com",
       phone: "123-456-7895",
       branch: "Branch 1",
+      city: "Bangalore",
+      state: "Karnataka",
+      address: "123 Main St",
+      status: "active",
       purchases: 5,
     },
     {
@@ -26,6 +31,10 @@ function Buyers() {
       email: "grace@example.com",
       phone: "123-456-7896",
       branch: "Branch 1",
+      city: "Mumbai",
+      state: "Maharashtra",
+      address: "456 Marine Drive",
+      status: "inactive",
       purchases: 3,
     },
     {
@@ -34,6 +43,10 @@ function Buyers() {
       email: "henry@example.com",
       phone: "123-456-7897",
       branch: "Branch 2",
+      city: "Chennai",
+      state: "Tamil Nadu",
+      address: "789 Anna Salai",
+      status: "active",
       purchases: 8,
     },
     {
@@ -42,6 +55,10 @@ function Buyers() {
       email: "ivy@example.com",
       phone: "123-456-7898",
       branch: "Branch 2",
+      city: "Pune",
+      state: "Maharashtra",
+      address: "101 FC Road",
+      status: "active",
       purchases: 2,
     },
     {
@@ -50,6 +67,10 @@ function Buyers() {
       email: "jack@example.com",
       phone: "123-456-7899",
       branch: "Branch 3",
+      city: "Hyderabad",
+      state: "Telangana",
+      address: "202 Film Nagar",
+      status: "inactive",
       purchases: 6,
     },
   ];
@@ -62,6 +83,27 @@ function Buyers() {
             buyer.branch ===
             branches.find((b) => b.id === selectedBranch)?.name,
         );
+
+  const [confirmInfo, setConfirmInfo] = useState({ isOpen: false, buyerId: null });
+
+  const handleDeleteBuyer = (id) => {
+    setBuyers(buyers.filter((b) => b.id !== id));
+  };
+
+  const confirmDeleteBuyer = (id) => {
+    setConfirmInfo({ isOpen: true, buyerId: id });
+  };
+
+  const handleConfirmClose = () => {
+    setConfirmInfo({ isOpen: false, buyerId: null });
+  };
+
+  const handleConfirm = () => {
+    if (confirmInfo.buyerId != null) {
+      handleDeleteBuyer(confirmInfo.buyerId);
+    }
+    handleConfirmClose();
+  };
 
   return (
     <div className="buyers">
@@ -100,25 +142,43 @@ function Buyers() {
                   <div className="data-card-title">{buyer.name}</div>
                   <div className="data-card-subtitle">{buyer.branch}</div>
                 </div>
-                <ShoppingCart size={24} />
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <button
+                    className="icon-btn edit"
+                    title="Edit Buyer"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    className="icon-btn delete"
+                    title="Delete Buyer"
+                    onClick={() => confirmDeleteBuyer(buyer.id)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
               <div className="data-card-body">
+           
                 <div className="data-row">
-                  <span className="data-label">
-                    <Mail size={14} /> Email:
+                  <span className="data-label">Location</span>
+                  <span className="data-value">
+                    {[buyer.city, buyer.state]
+                      .filter(Boolean)
+                      .join(", ") || buyer.address || "N/A"}
                   </span>
-                  <span className="data-value">{buyer.email}</span>
                 </div>
                 <div className="data-row">
-                  <span className="data-label">
-                    <Phone size={14} /> Phone:
+                  <span className="data-label">Login Access</span>
+                  <span
+                    className={`data-value badge ${
+                      buyer.status === "inactive" ? "badge-error" : "badge-success"
+                    }`}
+                  >
+                    {buyer.status === "inactive" ? "Disabled" : "Enabled"}
                   </span>
-                  <span className="data-value">{buyer.phone}</span>
                 </div>
-                <div className="data-row">
-                  <span className="data-label">Total Purchases:</span>
-                  <span className="data-value">{buyer.purchases}</span>
-                </div>
+              
               </div>
             </div>
           ))}
@@ -130,6 +190,13 @@ function Buyers() {
             <p>No buyers found for the selected branch.</p>
           </div>
         )}
+        <ConfirmationModal
+          isOpen={confirmInfo.isOpen}
+          onClose={handleConfirmClose}
+          title="Delete Buyer"
+          message="Are you sure you want to delete this buyer?"
+          onConfirm={handleConfirm}
+        />
       </div>
     </div>
   );

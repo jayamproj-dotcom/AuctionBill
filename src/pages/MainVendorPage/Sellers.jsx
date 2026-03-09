@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { User, Phone, Mail } from "lucide-react";
+import { Phone, Mail, Pencil, Trash2 } from "lucide-react";
+import ConfirmationModal from "../../components/Common/ConfirmationModal";
 
 function Sellers() {
   const [selectedBranch, setSelectedBranch] = useState("all");
@@ -18,6 +19,10 @@ function Sellers() {
       email: "alice@example.com",
       phone: "123-456-7890",
       branch: "Branch 1",
+      city: "Bangalore",
+      state: "Karnataka",
+      address: "123 Main St",
+      status: "active",
     },
     {
       id: 2,
@@ -25,6 +30,10 @@ function Sellers() {
       email: "bob@example.com",
       phone: "123-456-7891",
       branch: "Branch 1",
+      city: "Mumbai",
+      state: "Maharashtra",
+      address: "456 Marine Drive",
+      status: "inactive",
     },
     {
       id: 3,
@@ -32,6 +41,10 @@ function Sellers() {
       email: "charlie@example.com",
       phone: "123-456-7892",
       branch: "Branch 2",
+      city: "Chennai",
+      state: "Tamil Nadu",
+      address: "789 Anna Salai",
+      status: "active",
     },
     {
       id: 4,
@@ -39,6 +52,10 @@ function Sellers() {
       email: "diana@example.com",
       phone: "123-456-7893",
       branch: "Branch 2",
+      city: "Hyderabad",
+      state: "Telangana",
+      address: "101 Film Nagar",
+      status: "active",
     },
     {
       id: 5,
@@ -46,6 +63,10 @@ function Sellers() {
       email: "eve@example.com",
       phone: "123-456-7894",
       branch: "Branch 3",
+      city: "Pune",
+      state: "Maharashtra",
+      address: "202 FC Road",
+      status: "inactive",
     },
   ];
 
@@ -57,6 +78,27 @@ function Sellers() {
             seller.branch ===
             branches.find((b) => b.id === selectedBranch)?.name,
         );
+
+  const [confirmInfo, setConfirmInfo] = useState({ isOpen: false, sellerId: null });
+
+  const handleDeleteSeller = (id) => {
+    setSellers(sellers.filter((s) => s.id !== id));
+  };
+
+  const confirmDeleteSeller = (id) => {
+    setConfirmInfo({ isOpen: true, sellerId: id });
+  };
+
+  const handleConfirmClose = () => {
+    setConfirmInfo({ isOpen: false, sellerId: null });
+  };
+
+  const handleConfirm = () => {
+    if (confirmInfo.sellerId != null) {
+      handleDeleteSeller(confirmInfo.sellerId);
+    }
+    handleConfirmClose();
+  };
 
   return (
     <div className="sellers">
@@ -95,20 +137,48 @@ function Sellers() {
                   <div className="data-card-title">{seller.name}</div>
                   <div className="data-card-subtitle">{seller.branch}</div>
                 </div>
-                <User size={24} />
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <button
+                    className="icon-btn edit"
+                    title="Edit Seller"
+                    // onClick={() => handleEditSeller(seller)}
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    className="icon-btn delete"
+                    title="Delete Seller"
+                    onClick={() => confirmDeleteSeller(seller.id)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
               <div className="data-card-body">
-                <div className="data-row">
+                {/* <div className="data-row">
                   <span className="data-label">
-                    <Mail size={14} /> Email:
+                   Email:
                   </span>
                   <span className="data-value">{seller.email}</span>
+                </div> */}
+               
+                <div className="data-row">
+                  <span className="data-label">Location</span>
+                  <span className="data-value">
+                    {[seller.city, seller.state]
+                      .filter(Boolean)
+                      .join(", ") || seller.address || "N/A"}
+                  </span>
                 </div>
                 <div className="data-row">
-                  <span className="data-label">
-                    <Phone size={14} /> Phone:
+                  <span className="data-label">Login Access</span>
+                  <span
+                    className={`data-value badge ${
+                      seller.status === "inactive" ? "badge-error" : "badge-success"
+                    }`}
+                  >
+                    {seller.status === "inactive" ? "Disabled" : "Enabled"}
                   </span>
-                  <span className="data-value">{seller.phone}</span>
                 </div>
               </div>
             </div>
@@ -121,6 +191,13 @@ function Sellers() {
             <p>No sellers found for the selected branch.</p>
           </div>
         )}
+        <ConfirmationModal
+          isOpen={confirmInfo.isOpen}
+          onClose={handleConfirmClose}
+          title="Delete Seller"
+          message="Are you sure you want to delete this seller?"
+          onConfirm={handleConfirm}
+        />
       </div>
     </div>
   );

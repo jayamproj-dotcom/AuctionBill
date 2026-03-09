@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { HandCoins, Calendar } from "lucide-react";
+import { HandCoins } from "lucide-react";
 
 function Commission() {
   const [selectedBranch, setSelectedBranch] = useState("all");
@@ -19,6 +19,9 @@ function Commission() {
       date: "2024-01-15",
       seller: "Alice Johnson",
       buyer: "Frank Miller",
+      productName: "Product A",
+      saleAmount: 25000,
+      commissionPercent: 10,
     },
     {
       id: 2,
@@ -27,6 +30,9 @@ function Commission() {
       date: "2024-01-14",
       seller: "Bob Smith",
       buyer: "Grace Lee",
+      productName: "Product B",
+      saleAmount: 18000,
+      commissionPercent: 10,
     },
     {
       id: 3,
@@ -35,6 +41,9 @@ function Commission() {
       date: "2024-01-13",
       seller: "Charlie Brown",
       buyer: "Henry Davis",
+      productName: "Product C",
+      saleAmount: 32000,
+      commissionPercent: 10,
     },
     {
       id: 4,
@@ -43,6 +52,9 @@ function Commission() {
       date: "2024-01-12",
       seller: "Diana Prince",
       buyer: "Ivy Chen",
+      productName: "Product D",
+      saleAmount: 15000,
+      commissionPercent: 10,
     },
     {
       id: 5,
@@ -51,6 +63,9 @@ function Commission() {
       date: "2024-01-11",
       seller: "Eve Wilson",
       buyer: "Jack Wilson",
+      productName: "Product E",
+      saleAmount: 28000,
+      commissionPercent: 10,
     },
   ];
 
@@ -66,8 +81,7 @@ function Commission() {
     (sum, comm) => sum + comm.amount,
     0,
   );
-
-  return (
+return (
     <div className="commission">
       <div className="content-header">
         <div className="header-top">
@@ -79,7 +93,6 @@ function Commission() {
           <span>Commission</span>
         </div>
       </div>
-
       <div className="content-body">
         <div className="form-group" style={{ marginBottom: "1rem" }}>
           <label className="form-label">Select Branch</label>
@@ -110,40 +123,54 @@ function Commission() {
           </div>
         </div>
 
-        <div className="card-list">
-          {filteredCommissions.map((comm) => (
-            <div key={comm.id} className="data-card">
-              <div className="data-card-header">
-                <div>
-                  <div className="data-card-title">
-                    ₹{comm.amount.toLocaleString()}
-                  </div>
-                  <div className="data-card-subtitle">{comm.branch}</div>
-                </div>
-                <Calendar size={24} />
-              </div>
-              <div className="data-card-body">
-                <div className="data-row">
-                  <span className="data-label">Date:</span>
-                  <span className="data-value">{comm.date}</span>
-                </div>
-                <div className="data-row">
-                  <span className="data-label">Seller:</span>
-                  <span className="data-value">{comm.seller}</span>
-                </div>
-                <div className="data-row">
-                  <span className="data-label">Buyer:</span>
-                  <span className="data-value">{comm.buyer}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="section-header cr-section-header">
+          <h3 className="section-title">Commission Details</h3>
+          <span className="cr-count-chip">{filteredCommissions.length} records</span>
         </div>
 
-        {filteredCommissions.length === 0 && (
+        {filteredCommissions.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">💰</div>
             <p>No commission records found for the selected branch.</p>
+          </div>
+        ) : (
+          <div className="table-responsive bg-card rounded-lg shadow-sm custom-table-wrapper cr-table-wrapper">
+            <table className="data-table custom-data-table commission-table">
+              <thead className="bg-tertiary">
+                <tr>
+                  <th className="custom-th">Date</th>
+                  <th className="custom-th">Product</th>
+                  <th className="custom-th">Seller</th>
+                  <th className="custom-th cr-num-col">Sale Amount</th>
+                  <th className="custom-th cr-center-col">Comm %</th>
+                  <th className="custom-th cr-num-col cr-highlight-col">Earned</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCommissions.map((comm, idx) => (
+                  <tr key={comm.id} className={`custom-tr ${idx % 2 === 0 ? "cr-row-even" : ""}`}>
+                    <td className="custom-td">
+                      <span className="cr-date-badge">{comm.date}</span>
+                    </td>
+                    <td className="custom-td">
+                      <span className="cr-product-name">{comm.productName}</span>
+                    </td>
+                    <td className="custom-td">
+                      <span className="cr-seller-name">{comm.seller}</span>
+                    </td>
+                    <td className="custom-td cr-num-col">
+                      <span className="cr-sale-amount">₹{(comm.saleAmount || 0).toLocaleString()}</span>
+                    </td>
+                    <td className="custom-td cr-center-col">
+                      <span className="badge badge-warning cr-pct-badge">{comm.commissionPercent}%</span>
+                    </td>
+                    <td className="custom-td cr-num-col cr-highlight-col">
+                      <span className="cr-earned">₹{(comm.amount || 0).toLocaleString()}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
