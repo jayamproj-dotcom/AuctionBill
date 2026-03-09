@@ -479,7 +479,7 @@ const Billing = () => {
                 onChange={(e) => setSelectedId(e.target.value)}
                 placeholder={`Choose ${mainOption === "seller" ? "Seller" : "Buyer"}...`}
                 options={(mainOption === "seller" ? sellers : buyers).map(item => ({
-                  label: `${item.name} (${item.contact})`,
+                  label: `${item.name} `,
                   value: item.id || item._id
                 }))}
               />

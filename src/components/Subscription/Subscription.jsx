@@ -275,8 +275,7 @@ const Subscription = () => {
       <div className="content-header">
         <div className="header-top">
           <h1>
-            <CreditCard size={20} className="sb-header-icon" /> Subscription
-            &amp; Billing
+            Subscription &amp; Billing
           </h1>
           <span className="sb-plan-chip">
             <Zap size={12} />

@@ -1353,11 +1353,7 @@ function SellerDetails() {
               <div
                 style={{ display: "flex", alignItems: "center", gap: "10px" }}
               >
-                {viewingProduct.stats.balance > 0 && (
-                  <div className="badge badge-error">
-                    Total Due: ₹{viewingProduct.stats.balance}
-                  </div>
-                )}
+                
                 <button
                   className="modal-close"
                   onClick={() => setShowProductViewModal(false)}
@@ -1440,8 +1436,7 @@ function SellerDetails() {
                         <th>Qty</th>
                         <th>Sold Qty</th>
                         <th>Sales</th>
-                        <th>Paid</th>
-                        <th>Balance</th>
+                       
                       </tr>
                     </thead>
                     <tbody>
@@ -1455,15 +1450,7 @@ function SellerDetails() {
                             {v.sellQuantity || 0} {v.unit}
                           </td>
                           <td>₹{(v.stats?.price || 0).toLocaleString()}</td>
-                          <td className="text-success">
-                            ₹{(v.stats?.paid || 0).toLocaleString()}
-                          </td>
-                          <td
-                            className="text-error"
-                            style={{ fontWeight: "bold" }}
-                          >
-                            ₹{(v.stats?.balance || 0).toLocaleString()}
-                          </td>
+                          
                         </tr>
                       ))}
                       {viewingProduct.variants.length === 0 && (
@@ -1479,14 +1466,7 @@ function SellerDetails() {
               </div>
             </div>
             <div className="modal-footer">
-              {viewingProduct.stats.balance > 0 && (
-                <button
-                  className="btn btn-primary"
-                  onClick={() => openProductPaymentModal(viewingProduct)}
-                >
-                  Pay Total Balance
-                </button>
-              )}
+           
               <button
                 className="btn btn-secondary"
                 onClick={() => setShowProductViewModal(false)}

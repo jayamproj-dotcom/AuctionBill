@@ -1656,11 +1656,7 @@ function BuyerDetails() {
               <div
                 style={{ display: "flex", alignItems: "center", gap: "10px" }}
               >
-                {viewingProduct.stats.balance > 0 && (
-                  <div className="badge badge-error">
-                    Total Due: ₹{viewingProduct.stats.balance.toLocaleString()}
-                  </div>
-                )}
+                
                 <button
                   className="modal-close"
                   onClick={() => setShowProductViewModal(false)}
@@ -1728,8 +1724,7 @@ function BuyerDetails() {
                         <th>Variety</th>
                         <th>Qty Purchased</th>
                         <th>Total Amount</th>
-                        <th>Paid</th>
-                        <th>Balance</th>
+                       
                       </tr>
                     </thead>
                     <tbody>
@@ -1740,15 +1735,8 @@ function BuyerDetails() {
                             {v.purchaseQuantity || 0} {v.unit}
                           </td>
                           <td>₹{(v.stats?.amount || 0).toLocaleString()}</td>
-                          <td className="text-success">
-                            ₹{(v.stats?.paid || 0).toLocaleString()}
-                          </td>
-                          <td
-                            className="text-error"
-                            style={{ fontWeight: "bold" }}
-                          >
-                            ₹{(v.stats?.balance || 0).toLocaleString()}
-                          </td>
+                          
+                         
                         </tr>
                       ))}
                       {viewingProduct.variants.length === 0 && (
@@ -1764,14 +1752,7 @@ function BuyerDetails() {
               </div>
             </div>
             <div className="modal-footer">
-              {viewingProduct.stats.balance > 0 && (
-                <button
-                  className="btn btn-primary"
-                  onClick={() => handlePayProduct(viewingProduct)}
-                >
-                  Pay Total Balance
-                </button>
-              )}
+              
               <button
                 className="btn btn-secondary"
                 onClick={() => setShowProductViewModal(false)}

@@ -356,7 +356,7 @@
   cursor: pointer;
   border: 1px solid transparent;
   gap: 0.5rem;
-
+  position: relative;
 }
 
 .btn-primary {
@@ -1806,20 +1806,21 @@ body.saas-admin-active {
 
 .notification-badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: -8px;
+  right: -8px;
   background-color: #ef4444;
   color: white;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  min-width: 18px;
-  height: 18px;
+  min-width: 20px;
+  height: 20px;
   border-radius: 50%;
-  border: 2px solid #fff;
+  border: 2px solid white;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .has-badge {
@@ -1988,34 +1989,6 @@ body.saas-admin-active {
 
 .empty-icon {
   opacity: 0.3;
-}
-
-
-/* Notifications */
-.saas-notification-container {
-  position: relative;
-}
-
-.notification-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background-color: #ef4444;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.has-badge {
-    border-color: #ef4444 !important;
 }
 
 .saas-notification-dropdown {
