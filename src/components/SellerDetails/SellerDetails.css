@@ -166,239 +166,33 @@
     font-weight: 500;
 }
 
-/* Product View Modal */
-.product-view-container {
+/* Radio Group */
+.radio-group {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.product-view-row {
-    display: flex;
-    gap: 20px;
-}
-
-.product-info-details {
-    flex: 1;
-}
-
-.product-view-stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 20px;
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-}
-
-.product-view-variant-header {
-    margin: 0 0 10px 0;
-}
-
-.product-view-net-bold {
-    font-weight: bold;
-}
-
-.seller-back-link {
-    cursor: pointer;
-    text-decoration: underline;
-}
-
-.seller-back-link-static {
-    cursor: default;
-    text-decoration: none;
-}
-
-.seller-card-actions {
-    display: flex;
-    gap: 6px;
-}
-
-.seller-profile-mb {
-    margin-bottom: 2rem;
-}
-
-.seller-profile-actions-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.seller-btn-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    gap: 1rem;
     flex-wrap: wrap;
 }
 
-.seller-form-control-date {
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-}
-
-.btn-icon-mr {
-    margin-right: 5px;
-}
-
-.seller-modal-overlay-z {
-    z-index: 999;
-}
-
-.seller-ledger-actions {
-    display: flex;
-    gap: 5px;
-}
-
-.seller-table-total-bold {
-    font-weight: bold;
-    color: black;
-}
-
-.seller-optional-label {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-}
-
-.seller-form-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-}
-
-.search-input-wrap {
-    position: relative;
-}
-
-.search-input-padded {
-    padding-right: 40px;
-    width: 100%;
-}
-
-.search-icon-pos {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9ca3af;
-}
-
-/* Dashboard Filter Classes */
-.dashboard-filter-container {
+.radio-label {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.filter-dropdown-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    height: 38px;
-    background-color: #fff;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    padding: 0 0.75rem;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    transition: all 0.2s;
-}
-
-.filter-dropdown-wrapper:hover {
-    border-color: #9ca3af;
-}
-
-.filter-icon {
-    color: #6b7280;
-    margin-right: 0.5rem;
-}
-
-.dashboard-filter-select {
-    border: none;
-    background: transparent;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    outline: none;
     cursor: pointer;
-    appearance: none;
-    padding-right: 1.25rem;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right center;
-    background-repeat: no-repeat;
-    background-size: 1.25rem;
-    min-width: 100px;
-}
-
-.custom-date-wrapper {
-    display: flex;
-    align-items: center;
-    background-color: #fff;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    height: 38px;
-    padding: 0 0.75rem;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-
-.calendar-icon {
-    color: #6b7280;
-    margin-right: 0.5rem;
-}
-
-.dashboard-date-input {
-    border: none;
-    background: transparent;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: all 0.2s;
     font-size: 0.875rem;
-    color: #374151;
-    outline: none;
-    font-family: inherit;
+    background: var(--bg-secondary);
 }
 
-/* Very Small Screen Responsive Fixes */
-@media (max-width: 580px) {
-    .seller-profile-actions-row {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
-    .seller-btn-group {
-        display: flex;
-        flex-direction: row;
-        width: 100%;
-        gap: 10px;
-        flex-wrap: nowrap;
-    }
-    .seller-btn-group > .btn, 
-    .seller-btn-group > .action-btn-fixed {
-        flex: 1;
-        justify-content: center;
-        min-width: 0;
-        white-space: nowrap;
-        padding-left: 0.25rem;
-        padding-right: 0.25rem;
-    }
-    .dashboard-filter-container {
-        display: flex;
-        flex-direction: row;
-        width: 100%;
-        gap: 10px;
-        flex-wrap: nowrap;
-        align-items: center;
-    }
-    .filter-dropdown-wrapper, 
-    .custom-date-wrapper {
-        flex: 1;
-        min-width: 0;
-    }
-    .dashboard-filter-container > .icon-btn {
-        flex-shrink: 0; /* Keep download button from squishing */
-    }
-    .dashboard-filter-select, .dashboard-date-input {
-        width: 100%;
-    }
+.radio-label.checked {
+    border-color: var(--primary);
+    background: var(--bg-tertiary);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.radio-label input {
+    cursor: pointer;
 }
