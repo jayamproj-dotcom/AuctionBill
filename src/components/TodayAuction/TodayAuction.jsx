@@ -1471,15 +1471,18 @@ function TodayAuction() {
                           <label className="form-label">
                             Quantity to Sell ({v.unit})
                           </label>
+
                           <input
                             type="number"
                             value={saleData.qtyToSell}
                             onChange={(e) => {
                               const val = e.target.value;
+
                               if (val === "") {
                                 setSaleData({ ...saleData, qtyToSell: "" });
                               } else {
-                                const numVal = parseFloat(val);
+                                const numVal = Math.round(parseFloat(val)); // round value
+
                                 if (numVal > available) {
                                   toast.error(
                                     `Quantity cannot exceed ${available} ${v.unit}`,
@@ -1489,7 +1492,10 @@ function TodayAuction() {
                                     qtyToSell: available,
                                   });
                                 } else {
-                                  setSaleData({ ...saleData, qtyToSell: val });
+                                  setSaleData({
+                                    ...saleData,
+                                    qtyToSell: numVal,
+                                  });
                                 }
                               }
                             }}
@@ -1499,11 +1505,10 @@ function TodayAuction() {
                             placeholder={`Max: ${available}`}
                             required
                           />
+
                           <small className="form-hint">
                             Remaining:{" "}
-                            {(
-                              available - (parseFloat(saleData.qtyToSell) || 0)
-                            ).toFixed(2)}{" "}
+                            {available - (parseInt(saleData.qtyToSell) || 0)}{" "}
                             {v.unit}
                           </small>
                         </div>
@@ -1514,13 +1519,16 @@ function TodayAuction() {
                               ? `Rate per ${v.unit} (₹)`
                               : "Total Amount (₹)"}
                           </label>
+
                           <input
                             type="number"
                             value={saleData.finalPrice}
                             onChange={(e) =>
                               setSaleData({
                                 ...saleData,
-                                finalPrice: Math.max(0, e.target.value),
+                                finalPrice: Math.round(
+                                  Number(e.target.value) || 0,
+                                ),
                               })
                             }
                             placeholder={
@@ -1529,6 +1537,7 @@ function TodayAuction() {
                                 : `Total for ${saleData.qtyToSell || "?"} ${v.unit}`
                             }
                             min="0"
+                            step="1"
                             required
                           />
                         </div>
@@ -1537,34 +1546,52 @@ function TodayAuction() {
                         {saleData.finalPrice &&
                           saleData.qtyToSell &&
                           (() => {
-                            const qty = parseFloat(saleData.qtyToSell) || 0;
-                            const price = parseFloat(saleData.finalPrice) || 0;
+                            const qty = Math.round(
+                              Number(saleData.qtyToSell) || 0,
+                            );
+                            const price = Math.round(
+                              Number(saleData.finalPrice) || 0,
+                            );
+
                             const total =
                               saleData.priceMode === "perQty"
-                                ? price * qty
+                                ? Math.round(price * qty)
                                 : price;
+
                             const rate =
                               saleData.priceMode === "perQty"
                                 ? price
                                 : qty > 0
-                                  ? price / qty
+                                  ? Math.round(price / qty)
                                   : 0;
-                            const comm =
+
+                            const comm = Math.round(
                               (total *
                                 (selectedProduct.commissionPercent || 0)) /
-                              100;
-                            const net = total - comm;
+                                100,
+                            );
+
+                            const net = Math.round(total - comm);
+
                             return (
                               <div className="card calc-card">
                                 {saleData.priceMode === "wholeProduct" && (
                                   <p className="calc-row">
-                                    <strong>Rate per {v.unit}:</strong> ₹
-                                    {rate.toFixed(2)}
+                                    <strong>Rate per {v.unit}:</strong> ₹{rate}
                                   </p>
                                 )}
+
                                 <p className="calc-row">
                                   <strong>Total Amount:</strong> ₹
                                   {total.toLocaleString()}
+                                </p>
+
+                                <p className="calc-row">
+                                  <strong>Commission:</strong> ₹{comm}
+                                </p>
+
+                                <p className="calc-row">
+                                  <strong>Net Amount:</strong> ₹{net}
                                 </p>
                               </div>
                             );

@@ -763,7 +763,10 @@ function BuyerDetails() {
                 <div className="buyer-profile-info">
                   <div className="data-row" style={{ marginBottom: "0.25rem" }}>
                     <span className="data-label"></span>
-                    <span className="data-value" style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <span
+                      className="data-value"
+                      style={{ display: "flex", justifyContent: "flex-end" }}
+                    >
                       <button
                         className="icon-btn edit"
                         onClick={() => openEditBuyerModal(selectedBuyer)}
@@ -838,7 +841,6 @@ function BuyerDetails() {
                     </span>
                   </div>
                 </div>
-                
               </div>
             </div>
 
@@ -902,7 +904,6 @@ function BuyerDetails() {
                 className="action-buttons"
                 style={{ display: "flex", gap: "10px" }}
               >
-               
                 <button className="btn btn-primary" onClick={openPaymentModal}>
                   <Plus size={16} style={{ marginRight: "5px" }} /> Pay In
                 </button>
@@ -1656,7 +1657,6 @@ function BuyerDetails() {
               <div
                 style={{ display: "flex", alignItems: "center", gap: "10px" }}
               >
-                
                 <button
                   className="modal-close"
                   onClick={() => setShowProductViewModal(false)}
@@ -1724,25 +1724,26 @@ function BuyerDetails() {
                         <th>Variety</th>
                         <th>Qty Purchased</th>
                         <th>Total Amount</th>
-                       
                       </tr>
                     </thead>
                     <tbody>
-                      {viewingProduct.variants.map((v, idx) => (
-                        <tr key={idx}>
-                          <td>{v.variety}</td>
-                          <td>
-                            {v.purchaseQuantity || 0} {v.unit}
-                          </td>
-                          <td>₹{(v.stats?.amount || 0).toLocaleString()}</td>
-                          
-                         
-                        </tr>
-                      ))}
-                      {viewingProduct.variants.length === 0 && (
+                      {viewingProduct.variants
+                        .filter((v) => v.purchaseQuantity > 0)
+                        .map((v, idx) => (
+                          <tr key={idx}>
+                            <td>{v.variety}</td>
+                            <td>
+                              {v.purchaseQuantity || 0} {v.unit}
+                            </td>
+                            <td>₹{(v.stats?.amount || 0).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      {viewingProduct.variants.filter(
+                        (v) => v.purchaseQuantity > 0,
+                      ).length === 0 && (
                         <tr>
-                          <td colSpan="5" className="text-center">
-                            No variants found
+                          <td colSpan="3" className="text-center">
+                            No purchased variants found
                           </td>
                         </tr>
                       )}
@@ -1752,7 +1753,6 @@ function BuyerDetails() {
               </div>
             </div>
             <div className="modal-footer">
-              
               <button
                 className="btn btn-secondary"
                 onClick={() => setShowProductViewModal(false)}
