@@ -10,7 +10,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice";
 import { resolveImageUrl } from "../../utils/imageUtils";
 import { getVendorProfile } from "../../api/vendorApi";
-
+import Notification from "../../components/Common/Notification";
 
 const VendorLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -178,8 +178,11 @@ const VendorLayout = () => {
               </div>
             )}
           </div>
+
+          <Notification />
         </div>
       </div>
+      
 
 
       {/* Sidebar Overlay */}

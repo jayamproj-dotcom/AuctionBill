@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Eye, EyeOff, Loader } from "lucide-react";
+import { User, Eye, EyeOff, Loader,Lock } from "lucide-react";
 import { toast } from 'react-toastify';
 import { jwtDecode } from 'jwt-decode';
 import { useDispatch } from 'react-redux';
@@ -145,6 +145,7 @@ const SaaSLogin = () => {
                     <div className="saas-form-group">
                         <label className="saas-label">Password</label>
                         <div className="saas-input-container">
+                             <Lock size={18} className="saas-input-icon" />
                             <input
                                 type={showPassword ? "text" : "password"}
                                 name="password"

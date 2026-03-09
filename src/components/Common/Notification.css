@@ -4,14 +4,29 @@
   cursor: pointer;
 }
 
+.notification-icon-container .icon-btn {
+  height: 38px;
+  width: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px; /* matching filter dropdown */
+}
+
 .notification-count {
   position: absolute;
   top: 17px;
   right: 17px;
   background-color: #ef4444;
   color: white;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 99px;
-  padding: 2px 6px;
+  padding: 0 4px;
   font-size: 10px;
   font-weight: bold;
   border: 2px solid white;
@@ -80,6 +95,29 @@
     font-weight: 600;
     color: #334155;
     margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mark-read-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    opacity: 0;
+}
+
+.notification-item:hover .mark-read-btn {
+    opacity: 1;
+}
+
+.mark-read-btn:hover {
+    color: #10b981;
+    background-color: #ecfdf5;
 }
 
 .notification-message {
