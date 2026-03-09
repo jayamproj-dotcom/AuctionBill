@@ -385,7 +385,9 @@ const Billing = () => {
   };
 
   return (
-    <div className="billing-container fade-in">
+
+    <>
+     {/* <div className="billing-container fade-in">
       <div className="billing-header">
         <div className="header-icon">
           <FileText size={32} />
@@ -394,9 +396,20 @@ const Billing = () => {
           <h1>Billing & Invoices</h1>
           <p>Generate and export PDF invoices for your records</p>
         </div>
+      </div> */}
+
+       <div className="content-header">
+        <div className="header-top">
+          <h1>Billing & Invoices</h1>
+        </div>
+        <div className="breadcrumb">
+          <span>Home</span>
+          <span className="breadcrumb-separator">/</span>
+          <span>Billing & Invoices</span>
+        </div>
       </div>
 
-      <div className="billing-content">
+      <div className="content-body">
         <div className="billing-card main-config">
           <div className="config-section">
             <h3 className="section-title">Select Category</h3>
@@ -490,7 +503,7 @@ const Billing = () => {
                     checked={subOption === "selling_product"}
                     onChange={(e) => setSubOption(e.target.value)}
                   />
-                  <span>Selling Products</span>
+                  <span className="text-nowrap">Selling Products</span>
                 </label>
                 <label
                   className={`radio-label ${subOption === "payments_history" ? "checked" : ""}`}
@@ -502,7 +515,7 @@ const Billing = () => {
                     checked={subOption === "payments_history"}
                     onChange={(e) => setSubOption(e.target.value)}
                   />
-                  <span>Payments History</span>
+                  <span className="text-nowrap">Payments History</span>
                 </label>
               </div>
             </div>
@@ -522,7 +535,7 @@ const Billing = () => {
                     checked={subOption === "purchase_history"}
                     onChange={(e) => setSubOption(e.target.value)}
                   />
-                  <span>Purchase History</span>
+                  <span className="text-nowrap">Buying Products</span>
                 </label>
                 <label
                   className={`radio-label ${subOption === "payments_history" ? "checked" : ""}`}
@@ -534,7 +547,7 @@ const Billing = () => {
                     checked={subOption === "payments_history"}
                     onChange={(e) => setSubOption(e.target.value)}
                   />
-                  <span>Payments History</span>
+                  <span className="text-nowrap">Payments History</span>
                 </label>
               </div>
             </div>
@@ -553,7 +566,7 @@ const Billing = () => {
                   checked={dateFilter === "today"}
                   onChange={(e) => setDateFilter(e.target.value)}
                 />
-                <span>Today</span>
+                <span className="text-nowrap">Today</span>
               </label>
               <label
                 className={`radio-label ${dateFilter === "selected" ? "checked" : ""}`}
@@ -565,7 +578,7 @@ const Billing = () => {
                   checked={dateFilter === "selected"}
                   onChange={(e) => setDateFilter(e.target.value)}
                 />
-                <span>Selected Date</span>
+                <span className="text-nowrap">Selected Date</span>
               </label>
               <label
                 className={`radio-label ${dateFilter === "range" ? "checked" : ""}`}
@@ -577,7 +590,7 @@ const Billing = () => {
                   checked={dateFilter === "range"}
                   onChange={(e) => setDateFilter(e.target.value)}
                 />
-                <span>Choose Range</span>
+                <span className="text-nowrap">Choose Range</span>
               </label>
             </div>
 
@@ -629,19 +642,9 @@ const Billing = () => {
             </button>
           </div>
         </div>
-
-        <div className="billing-preview-hint">
-          <div className="hint-card">
-            <Printer size={48} className="hint-icon" />
-            <h3>Professional PDF Format</h3>
-            <p>
-              Your exported file will include company branding, vendor data, and
-              detailed transaction tables in a clean, print-friendly layout.
-            </p>
-          </div>
-        </div>
       </div>
-    </div>
+   
+    </> 
   );
 };
 
