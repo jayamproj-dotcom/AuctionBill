@@ -166,7 +166,7 @@ const MainVendorLayout = () => {
                 <div
                   className="dropdown-item"
                   onClick={() => {
-                    navigate("/mainvendor/profile");
+                    navigate("/mainvendor/manage");
                     setProfileOpen(false);
                   }}
                 >

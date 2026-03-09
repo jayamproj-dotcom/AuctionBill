@@ -15,15 +15,7 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.header-icon {
-  background: var(--primary-gradient, linear-gradient(135deg, var(--primary-amber) 0%, var(--primary-amber-dark) 100%));
-  color: white;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+
 
 .header-text h1 {
   font-size: 1.875rem;

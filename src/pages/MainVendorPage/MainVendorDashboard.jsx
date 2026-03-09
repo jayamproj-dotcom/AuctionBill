@@ -47,13 +47,7 @@ function MainVendorDashboard() {
       color: "bg-red-500",
       link: "/mainvendor/history",
     },
-    {
-      title: "Active Auctions",
-      value: "12",
-      icon: <History />,
-      color: "bg-indigo-500",
-      link: "/mainvendor/history",
-    },
+    
   ];
 
   return (
@@ -122,10 +116,7 @@ function MainVendorDashboard() {
                 <span className="data-label">Amount:</span>
                 <span className="data-value">₹5,000</span>
               </div>
-              <div className="data-row">
-                <span className="data-label">Branch:</span>
-                <span className="data-value">Branch 2</span>
-              </div>
+            
             </div>
           </div>
         </div>
