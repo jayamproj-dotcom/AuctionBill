@@ -3,14 +3,16 @@ import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setVendorAuthData } from "../../../redux/slices/vendorAuthSlice";
 import { mainVendorLogin } from "../../../api/mainVendorApi";
+import { vendorLogin } from "../../../api/vendorApi";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
-import { Eye, EyeOff, Loader, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Loader, Lock, Mail, User, Building2 } from "lucide-react";
 import "./Login.css";
 
 const VendorLogin = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [loginType, setLoginType] = useState("main"); // 'main' or 'branch'
   const [error, setError] = useState("");
   const [credentials, setCredentials] = useState({
     identifier: "",
@@ -33,6 +35,12 @@ const VendorLogin = () => {
     setError("");
   };
 
+  const handleTypeChange = (type) => {
+    setLoginType(type);
+    setError("");
+    setCredentials({ identifier: "", password: "" });
+  };
+
   const handleManualLogin = async (e) => {
     e.preventDefault();
     const { identifier, password } = credentials;
@@ -46,13 +54,23 @@ const VendorLogin = () => {
     setError("");
 
     try {
-      const res = await mainVendorLogin({ email: identifier, password });
+      let res;
+      if (loginType === "main") {
+        res = await mainVendorLogin({ email: identifier, password });
+      } else {
+        // For branch, password field actually contains Branch ID
+        res = await vendorLogin({ email: identifier, branchId: password });
+      }
 
       console.log("res", res);
 
       if (res.status && res.token) {
         dispatch(setVendorAuthData(res));
-        navigate("/mainvendor");
+        if (loginType === "main") {
+          navigate("/mainvendor");
+        } else {
+          navigate("/vendor/dashboard"); // Assuming vendor dashboard path
+        }
       } else {
         setError(res.message || "Invalid credentials. Please try again.");
       }
@@ -109,52 +127,88 @@ const VendorLogin = () => {
     <div className="login-page">
       <div className="login-top-right"></div>
       <div className="login-card">
-        <h2>Main Vendor Login</h2>
+        <h2>{loginType === "main" ? "Main Admin Login" : "Branch Login"}</h2>
         <p className="login-subtitle">
-          Sign in to manage your branches and auctions
+          {loginType === "main"
+            ? "Sign in to manage your branches and auctions"
+            : "Sign in to access your branch dashboard"}
         </p>
+
+        {/* Login Type Toggle */}
+        <div className="login-type-toggle">
+          <button
+            className={`type-btn ${loginType === "main" ? "active" : ""}`}
+            onClick={() => handleTypeChange("main")}
+          >
+            <User size={16} />
+            Main Admin
+          </button>
+          <button
+            className={`type-btn ${loginType === "branch" ? "active" : ""}`}
+            onClick={() => handleTypeChange("branch")}
+          >
+            <Building2 size={16} />
+            Branch
+          </button>
+        </div>
 
         {/* Manual Login Form */}
         <form onSubmit={handleManualLogin} className="login-form">
           <div className="form-group">
-            <label>Email Address</label>
+            <label>
+              {loginType === "main" ? "Email Address" : "Branch Email"}
+            </label>
             <div className="input-container">
-              <User size={18} className="input-icon" />
+              <Mail size={18} className="input-icon" />
               <input
                 type="text"
                 name="identifier"
                 value={credentials.identifier}
                 onChange={handleChange}
-                placeholder="Enter email address"
+                placeholder={
+                  loginType === "main"
+                    ? "Enter email address"
+                    : "Enter branch email"
+                }
+                required
               />
             </div>
           </div>
 
           <div className="form-group">
-            <label>Password</label>
+            <label>{loginType === "main" ? "Password" : "Branch ID"}</label>
             <div className="password-input-wrapper">
               <Lock size={18} className="saas-input-icon" />
               <input
-                type={showPassword ? "text" : "password"}
+                type={
+                  loginType === "main" && !showPassword ? "password" : "text"
+                }
                 name="password"
                 value={credentials.password}
                 onChange={handleChange}
-                placeholder="Enter password"
+                placeholder={
+                  loginType === "main" ? "Enter password" : "Enter branch ID"
+                }
+                required
               />
-              <button
-                type="button"
-                className="password-toggle-btn"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+              {loginType === "main" && (
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              )}
             </div>
           </div>
 
           <div className="login-options">
-            <Link to="/forgot-password" className="forgot-pwd-link">
-              Forgot Password?
-            </Link>
+            {loginType === "main" && (
+              <Link to="/forgot-password" className="forgot-pwd-link">
+                Forgot Password?
+              </Link>
+            )}
           </div>
 
           {error && <div className="error-msg">{error}</div>}
