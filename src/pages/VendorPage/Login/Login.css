@@ -196,7 +196,42 @@
   text-decoration: underline;
 }
 
-/* New Styles for Manual Login */
+/* Login Type Toggle Styles */
+.login-type-toggle {
+    display: flex;
+    background: #f3f4f6;
+    padding: 4px;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.type-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.type-btn.active {
+    background: #ffffff;
+    color: #4f46e5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.type-btn svg {
+    flex-shrink: 0;
+}
+
 .login-form {
     display: flex;
     flex-direction: column;
@@ -208,6 +243,8 @@
 .login-form .form-group label {
     font-size: 0.9rem;
     color: var(--text-secondary);
+    display: block;
+    margin-bottom: 6px;
 }
 
 .login-form .form-group input {

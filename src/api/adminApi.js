@@ -201,9 +201,9 @@ export const deleteSubAdmin = async (id) => {
 };
 
 // Vendor APIs
-export const getVendors = async () => {
+export const getVendors = async (params) => {
   try {
-    const response = await api.get("/vendor");
+    const response = await api.get("/vendor", { params });
     return response.data;
   } catch (error) {
     if (error.response && error.response.data) {
