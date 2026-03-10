@@ -786,7 +786,7 @@ const VendorManagement = () => {
 
       <div className="saas-card subAdminTableCard">
         <div className="saas-table-container">
-          <table className="saas-table subAdminTable">
+          <table className="saas-table subAdminTable saas-desktop-only">
             <thead className="subAdminTableHeader">
               <tr>
                 <th>Main Vendor Name</th>
@@ -886,6 +886,87 @@ const VendorManagement = () => {
               ))}
             </tbody>
           </table>
+
+          <div className="saas-mobile-cards-view">
+            {filteredVendors.map((vendor) => (
+              <div 
+                key={vendor._id || vendor.id} 
+                className="saas-mobile-card"
+                onClick={() => handleRowClick(vendor)}
+              >
+                <div className="saas-mobile-card-row">
+                  <span className="saas-mobile-card-label">Name</span>
+                  <div className="saas-mobile-card-value saas-font-bold">
+                    <div className="saas-flex saas-align-center saas-gap-05" style={{justifyContent: 'flex-end'}}>
+                      {vendor.name}
+                      {vendor.requestedPlan && (
+                        <span className="saas-badge badge-warning" style={{fontSize: '10px'}} title="Plan Upgrade Requested">
+                          Upgrade Req.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="saas-mobile-card-row">
+                  <span className="saas-mobile-card-label">Email</span>
+                  <span className="saas-mobile-card-value" style={{wordBreak: 'break-all'}}>{vendor.email}</span>
+                </div>
+                <div className="saas-mobile-card-row">
+                  <span className="saas-mobile-card-label">Location</span>
+                  <span className="saas-mobile-card-value">{vendor.city || 'N/A'}, {vendor.state || 'N/A'}</span>
+                </div>
+                <div className="saas-mobile-card-row">
+                  <span className="saas-mobile-card-label">Phone</span>
+                  <span className="saas-mobile-card-value">
+                    <a 
+                      href={`https://wa.me/91${vendor.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${vendor.name}, This is from AuctionBill Admin side.`)}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="saas-whatsapp-link"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {vendor.phone}
+                    </a>
+                  </span>
+                </div>
+                <div className="saas-mobile-card-row">
+                  <span className="saas-mobile-card-label">Status</span>
+                  <span className="saas-mobile-card-value">
+                    <span className={`saas-badge ${vendor.status === 'Active' ? 'badge-success' :
+                      vendor.status === 'Pending' ? 'badge-warning' : 'badge-danger'
+                      }`}>
+                      {vendor.status}
+                    </span>
+                  </span>
+                </div>
+                {canManageVendors && (
+                  <div className="saas-mobile-card-row" onClick={(e) => e.stopPropagation()}>
+                    <span className="saas-mobile-card-label">Actions</span>
+                    <div className="saas-flex saas-gap-10px">
+                      <button
+                        className="icon-btn edit"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditClick(vendor);
+                        }}
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        className="icon-btn delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(vendor);
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

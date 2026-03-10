@@ -105,17 +105,14 @@ const Purchases = () => {
 
       <div className="saas-card subAdminTableCard">
         <div className="saas-table-container">
-          <table className="saas-table subAdminTable">
+          <table className="saas-table subAdminTable saas-desktop-only-480">
             <thead className="subAdminTableHeader">
               <tr>
                 <th>Main Vendor Name</th>
                 <th>Plan Detail</th>
                 <th>Price</th>
                 <th>Payment</th>
-                <th>Current Status</th>
                 <th>Purchase Date</th>
-                <th>Expiry Date</th>
-                <th>Transaction ID</th>
               </tr>
             </thead>
             <tbody>
@@ -194,13 +191,56 @@ const Purchases = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="8" className="saas-text-center saas-py-4">
+                  <td colSpan="5" className="saas-text-center saas-py-4">
                     No purchases found matching "{searchQuery}"
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+
+          <div className="saas-mobile-cards-view-480">
+            {isLoading ? (
+              <div className="saas-text-center saas-p-20">
+                <Loader className="saas-spinner" size={24} /> Loading...
+              </div>
+            ) : filteredPurchases.length > 0 ? (
+              filteredPurchases.map((purchase) => (
+                <div key={purchase.id} className="saas-mobile-card">
+                  <div className="saas-mobile-card-row">
+                    <span className="saas-mobile-card-label">Vendor</span>
+                    <span className="saas-mobile-card-value saas-font-bold">{purchase.vendorName}</span>
+                  </div>
+                  <div className="saas-mobile-card-row">
+                    <span className="saas-mobile-card-label">Plan</span>
+                    <span className="saas-mobile-card-value saas-font-semibold saas-text-primary">{purchase.plan}</span>
+                  </div>
+                  <div className="saas-mobile-card-row">
+                    <span className="saas-mobile-card-label">Price</span>
+                    <span className="saas-mobile-card-value">{purchase.price}</span>
+                  </div>
+                  <div className="saas-mobile-card-row">
+                    <span className="saas-mobile-card-label">Payment</span>
+                    <span className="saas-mobile-card-value">
+                      <span className={`saas-badge ${purchase.paymentStatus === 'Paid' ? 'badge-success' : 'badge-danger'}`}>
+                        {purchase.paymentStatus}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="saas-mobile-card-row">
+                    <span className="saas-mobile-card-label">Date</span>
+                    <span className="saas-mobile-card-value">
+                      {purchase.startDate ? formatDate(purchase.startDate) : '--'}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="saas-text-center saas-p-20 saas-text-muted">
+                No purchases found
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

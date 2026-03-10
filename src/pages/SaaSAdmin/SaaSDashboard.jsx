@@ -139,7 +139,7 @@ const SaaSDashboard = () => {
           </Link>
         </div>
         <div className="saas-table-container">
-          <table className="saas-table">
+          <table className="saas-table saas-desktop-only">
             <thead>
               <tr>
                 <th>Main Vendor Name</th>
@@ -169,20 +169,45 @@ const SaaSDashboard = () => {
                     </span>
                   </td>
                   <td>{formatDate(vendor.joinedDate || vendor.createdAt)}</td>
-                  {/* <td>
-                    <div className="action-buttons">
-                        <button className="icon-btn edit" title="Manage Vendor">
-                            <Settings size={18} />
-                        </button>
-                         <button className="icon-btn delete" title="Delete Vendor">
-                            <Trash2 size={18} />
-                        </button>
-                    </div>
-                  </td>  */}
                 </tr>
               ))}
             </tbody>
           </table>
+
+          <div className="saas-mobile-cards-view">
+            {recentVendors.map((vendor) => (
+              <div key={vendor._id || vendor.id} className="saas-mobile-card">
+                <div className="saas-mobile-card-row">
+                  <span className="saas-mobile-card-label">Name</span>
+                  <span className="saas-mobile-card-value saas-font-bold">{vendor.name}</span>
+                </div>
+                <div className="saas-mobile-card-row">
+                  <span className="saas-mobile-card-label">Email</span>
+                  <span className="saas-mobile-card-value">{vendor.email}</span>
+                </div>
+                <div className="saas-mobile-card-row">
+                  <span className="saas-mobile-card-label">Plan</span>
+                  <span className="saas-mobile-card-value">
+                    <span className={`saas-badge ${(vendor.plan?.name || vendor.plan || '') === 'Premium' ? 'badge-info' : 'badge-warning'}`}>
+                      {vendor.plan?.name || vendor.plan || 'N/A'}
+                    </span>
+                  </span>
+                </div>
+                <div className="saas-mobile-card-row">
+                  <span className="saas-mobile-card-label">Status</span>
+                  <span className="saas-mobile-card-value">
+                    <span className={`saas-badge ${vendor.status === 'Active' ? 'badge-success' : 'badge-warning'}`}>
+                      {vendor.status}
+                    </span>
+                  </span>
+                </div>
+                <div className="saas-mobile-card-row">
+                  <span className="saas-mobile-card-label">Joined</span>
+                  <span className="saas-mobile-card-value">{formatDate(vendor.joinedDate || vendor.createdAt)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import VendorSidebar from "./VentorSidebar.jsx";
-import "./Ventor.css";
+import VendorSidebar from "./VendorSidebar.jsx";
+import "./Vendor.css";
 import logo from "../../assets/images/logo.png";
 import user from "../../assets/images/user.png";
 import { LogOut, User, KeyRound } from "lucide-react";
