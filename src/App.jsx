@@ -83,8 +83,7 @@ function App() {
             <Route path="seller-details" element={<SellerDetails />} />
             <Route path="buyer-details" element={<BuyerDetails />} />
             <Route path="commission" element={<CommissionRecord />} />
-            
-          
+
             <Route path="billing" element={<Billing />} />
             <Route path="change-password" element={<VendorChangePassword />} />
           </Route>
@@ -108,8 +107,6 @@ function App() {
             <Route path="change-password" element={<SaaSChangePassword />} />
           </Route>
 
-  
-
           {/* Main Vendor Area */}
           <Route path="/mainvendor" element={<MainVendorLayout />}>
             <Route index element={<MainVendorDashboard />} />
@@ -120,7 +117,7 @@ function App() {
             <Route path="commission" element={<Commission />} />
             <Route path="history" element={<MainVendorHistory />} />
             <Route path="subscription" element={<Subscription />} />
-            <Route path="manage" element={<Manage />} />
+            <Route path="manage" element={<Profile />} />
             <Route path="change-password" element={<VendorChangePassword />} />
           </Route>
         </Routes>

@@ -1,15 +1,69 @@
-import React, { useState } from "react";
-import { User, Mail, Phone, MapPin, Save } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { User, Mail, Phone, MapPin, Save, Loader } from "lucide-react";
+import {
+  getMainVendorProfile,
+  updateMainVendorProfile,
+} from "../../api/mainVendorApi";
+import { useSelector, useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+import { updateVendorProfileData } from "../../redux/slices/vendorAuthSlice";
 
 function Profile() {
+  const dispatch = useDispatch();
+  const { vendorId } = useSelector((state) => state.vendorAuth);
+  const fallbackVendorId = sessionStorage.getItem("vendorId");
+  const currentVendorId = vendorId || fallbackVendorId;
+
   const [profile, setProfile] = useState({
-    name: "Main Vendor",
-    email: "mainVendor@example.com",
-    phone: "123-456-7890",
-    address: "123 Main Street",
-    city: "City Name",
-    state: "State Name",
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    state: "",
   });
+
+  const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!currentVendorId) return;
+      try {
+        const res = await getMainVendorProfile(currentVendorId);
+        if (res.status && res.vendor) {
+          const { name, email, phone, address, city, state } = res.vendor;
+          setProfile({
+            name: name || "",
+            email: email || "",
+            phone: phone || "",
+            address: address || "",
+            city: city || "",
+            state: state || "",
+          });
+
+          // Sync with Redux if necessary
+          dispatch(
+            updateVendorProfileData({
+              name,
+              photo: res.vendor.profilePic,
+              phone,
+              address,
+              city,
+              state,
+            }),
+          );
+        }
+      } catch (err) {
+        toast.error("Failed to load profile data");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [currentVendorId, dispatch]);
 
   const handleChange = (e) => {
     setProfile({
@@ -18,11 +72,44 @@ function Profile() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Static - just show alert
-    alert("Profile updated successfully!");
+    if (!currentVendorId) return;
+
+    setIsUpdating(true);
+    try {
+      const res = await updateMainVendorProfile(currentVendorId, profile);
+      if (res.status) {
+        toast.success("Profile updated successfully!");
+        // Update Redux Store
+        dispatch(
+          updateVendorProfileData({
+            name: profile.name,
+            phone: profile.phone,
+            address: profile.address,
+            city: profile.city,
+            state: profile.state,
+          }),
+        );
+      } else {
+        toast.error(res.message || "Failed to update profile");
+      }
+    } catch (err) {
+      toast.error("Error updating profile");
+      console.error(err);
+    } finally {
+      setIsUpdating(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="profile-loading">
+        <Loader className="animate-spin" size={32} />
+        <p>Loading Profile...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="profile">
@@ -76,6 +163,7 @@ function Profile() {
                     value={profile.email}
                     onChange={handleChange}
                     required
+                    disabled
                   />
                 </div>
 
@@ -133,9 +221,20 @@ function Profile() {
               </div>
 
               <div className="data-card-footer">
-                <button type="submit" className="btn btn-primary">
-                  <Save size={16} />
-                  Save Changes
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? (
+                    <>
+                      <Loader className="animate-spin" size={16} /> Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={16} /> Save Changes
+                    </>
+                  )}
                 </button>
               </div>
             </form>

@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 import {
   getSubscriptions,
-  getVendors,
-  updateVendor,
-  getVendorPurchasesById,
+  getMainVendors,
+  updateMainVendor,
+  getMainVendorPurchasesById,
 } from "../../api/adminApi";
 import ConfirmationModal from "../Common/ConfirmationModal";
 
@@ -49,8 +49,8 @@ const Subscription = () => {
       try {
         const [plansRes, vendorsRes, purchasesRes] = await Promise.all([
           getSubscriptions(),
-          getVendors(),
-          getVendorPurchasesById(currentVendorId),
+          getMainVendors(),
+          getMainVendorPurchasesById(currentVendorId),
         ]);
 
         const fetchedPlans = plansRes.subscriptions || [];
@@ -58,7 +58,7 @@ const Subscription = () => {
 
         if (purchasesRes?.purchases) setInvoices(purchasesRes.purchases);
 
-        const vendors = vendorsRes.vendors || [];
+        const vendors = vendorsRes.mainVendors || [];
         const currentVendor = vendors.find((v) => v._id === currentVendorId);
 
         if (currentVendor) {
@@ -139,10 +139,13 @@ const Subscription = () => {
     if (!selectedUpgradePlan) return;
     setIsUpgradeModalOpen(false);
     try {
-      const res = await updateVendor(currentVendorId, {
+      const payload = {
         requestedPlan: selectedUpgradePlan._id,
         upgradeType,
-      });
+      };
+
+      const res = await updateMainVendor(currentVendorId, payload);
+
       if (res.status) {
         setConfirmModal({
           isOpen: true,
@@ -226,12 +229,10 @@ const Subscription = () => {
       <>
         <div className="content-header">
           <div className="header-top">
-            <h1>
-              Subscription &amp; Billing
-            </h1>
+            <h1>Subscription &amp; Billing</h1>
           </div>
           <div className="breadcrumb">
-            <span>Home</span>
+            <span>Main Vendor</span>
             <span className="breadcrumb-separator">/</span>
             <span>Subscription</span>
           </div>
@@ -250,12 +251,10 @@ const Subscription = () => {
       <>
         <div className="content-header">
           <div className="header-top">
-            <h1>
-              Subscription &amp; Billing
-            </h1>
+            <h1>Subscription &amp; Billing</h1>
           </div>
           <div className="breadcrumb">
-            <span>Home</span>
+            <span>Main Vendor</span>
             <span className="breadcrumb-separator">/</span>
             <span>Subscription</span>
           </div>
@@ -274,16 +273,14 @@ const Subscription = () => {
       {/* ── Page Header ──────────────────────────────── */}
       <div className="content-header">
         <div className="header-top">
-          <h1>
-            Subscription &amp; Billing
-          </h1>
+          <h1>Subscription &amp; Billing</h1>
           <span className="sb-plan-chip">
             <Zap size={12} />
             {subscription.plan}
           </span>
         </div>
         <div className="breadcrumb">
-          <span>Home</span>
+          <span>Main Vendor</span>
           <span className="breadcrumb-separator">/</span>
           <span>Subscription</span>
         </div>
