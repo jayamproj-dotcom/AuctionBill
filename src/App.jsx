@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
+import React from "react";
 import VendorLogin from "./pages/VentorPage/Login/Login.jsx";
 import ForgotPassword from "./pages/VentorPage/Login/ForgotPassword.jsx";
 import VendorChangePassword from "./pages/VentorPage/Login/VendorChangePassword.jsx";
@@ -54,7 +55,7 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <BrowserRouter basename={import.meta.env.VITE_BASE_URL}>
+      <BrowserRouter basename={import.meta.env.DEV ? "" : import.meta.env.VITE_BASE_URL}>
         <Routes>
           {/* Vendor Login */}
           <Route path="/" element={<VendorLogin />} />
