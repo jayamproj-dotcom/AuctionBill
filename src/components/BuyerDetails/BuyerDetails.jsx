@@ -897,7 +897,7 @@ function BuyerDetails() {
                 <button className="btn btn-primary" onClick={openPaymentModal}>
                   <Plus size={16} style={{ marginRight: "5px" }} /> Pay In
                 </button>
-                <button
+                {/* <button
                   className="btn btn-secondary"
                   title="Download PDF"
                   onClick={handleDownloadPDF}
@@ -908,7 +908,7 @@ function BuyerDetails() {
                   ) : (
                     <Download size={18} />
                   )}
-                </button>
+                </button> */}
               </div>
             </div>
 

@@ -963,7 +963,7 @@ function SellerDetails() {
                 >
                   <Plus size={16} style={{ marginRight: "5px" }} /> Pay Out
                 </button>
-                <button
+                {/* <button
                   className="btn btn-secondary"
                   title="Download PDF"
                   onClick={handleDownloadPDF}
@@ -974,7 +974,7 @@ function SellerDetails() {
                   ) : (
                     <Download size={18} />
                   )}
-                </button>
+                </button> */}
               </div>
             </div>
 
