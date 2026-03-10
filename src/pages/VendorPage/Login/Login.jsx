@@ -2,24 +2,29 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setVendorAuthData } from "../../../redux/slices/vendorAuthSlice";
-import { vendorLogin } from "../../../api/vendorApi";
+import { mainVendorLogin } from "../../../api/mainVendorApi";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
-import { Eye, EyeOff, Loader,Lock,User } from "lucide-react";
+import { Eye, EyeOff, Loader, Lock, User } from "lucide-react";
 import "./Login.css";
-
 
 const VendorLogin = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [error, setError] = useState("");
-  const [credentials, setCredentials] = useState({ identifier: '', password: '' });
+  const [credentials, setCredentials] = useState({
+    identifier: "",
+    password: "",
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem("vendorLoggedIn") === "true" || localStorage.getItem("vendorLoggedIn") === "true") {
-      navigate("/vendor");
+    if (
+      sessionStorage.getItem("vendorLoggedIn") === "true" ||
+      localStorage.getItem("vendorLoggedIn") === "true"
+    ) {
+      navigate("/mainvendor");
     }
   }, [navigate]);
 
@@ -41,13 +46,13 @@ const VendorLogin = () => {
     setError("");
 
     try {
-      const res = await vendorLogin({ email: identifier, password });
+      const res = await mainVendorLogin({ email: identifier, password });
 
       console.log("res", res);
 
       if (res.status && res.token) {
         dispatch(setVendorAuthData(res));
-        navigate("/vendor");
+        navigate("/mainvendor");
       } else {
         setError(res.message || "Invalid credentials. Please try again.");
       }
@@ -64,18 +69,20 @@ const VendorLogin = () => {
     try {
       const decoded = jwtDecode(credentialResponse.credential);
       const email = decoded.email.toLowerCase();
-      const name = decoded.name || "Vendor";
+      const name = decoded.name || "Main Vendor";
       const picture = decoded.picture || "";
 
-      dispatch(setVendorAuthData({
-        user: {
-          email: email,
-          name: name,
-          profilePic: picture,
-          _id: "google-auth-placeholder"
-        },
-        token: "google-auth-placeholder",
-      }));
+      dispatch(
+        setVendorAuthData({
+          user: {
+            email: email,
+            name: name,
+            profilePic: picture,
+            _id: "google-auth-placeholder",
+          },
+          token: "google-auth-placeholder",
+        }),
+      );
 
       const allowedEmails =
         JSON.parse(localStorage.getItem("vendor_allowed_emails")) || [];
@@ -83,11 +90,11 @@ const VendorLogin = () => {
       if (!allowedEmails.includes(email)) {
         localStorage.setItem(
           "vendor_allowed_emails",
-          JSON.stringify([...allowedEmails, email])
+          JSON.stringify([...allowedEmails, email]),
         );
       }
 
-      navigate("/vendor");
+      navigate("/mainvendor");
     } catch (err) {
       console.error(err);
       setError("Failed to process login token.");
@@ -100,13 +107,11 @@ const VendorLogin = () => {
 
   return (
     <div className="login-page">
-      <div className="login-top-right">
-
-      </div>
+      <div className="login-top-right"></div>
       <div className="login-card">
-        <h2>Vendor Login</h2>
+        <h2>Main Vendor Login</h2>
         <p className="login-subtitle">
-          Sign in to continue to the dashboard
+          Sign in to manage your branches and auctions
         </p>
 
         {/* Manual Login Form */}
@@ -128,7 +133,7 @@ const VendorLogin = () => {
           <div className="form-group">
             <label>Password</label>
             <div className="password-input-wrapper">
-               <Lock size={18} className="saas-input-icon" />
+              <Lock size={18} className="saas-input-icon" />
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
@@ -154,12 +159,21 @@ const VendorLogin = () => {
 
           {error && <div className="error-msg">{error}</div>}
 
-
-          <button type="submit" className="btn btn-primary login-btn" disabled={isLoading}>
-            {isLoading ? <><Loader className="saas-spinner login-spinner" size={18} /> Signing In...</> : "Login"}
+          <button
+            type="submit"
+            className="btn btn-primary login-btn"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader className="saas-spinner login-spinner" size={18} />{" "}
+                Signing In...
+              </>
+            ) : (
+              "Login"
+            )}
           </button>
         </form>
-
 
         {/* <div className="divider">
             <span>OR</span>
@@ -179,7 +193,10 @@ const VendorLogin = () => {
 
         <div className="login-footer">
           <p className="signup-link-text">
-            Don't have an account? <Link to="/signup" className="signup-link">Request Access</Link>
+            Don't have an account?{" "}
+            <Link to="/signup" className="signup-link">
+              Request Main Vendor Access
+            </Link>
           </p>
         </div>
       </div>
