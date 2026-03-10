@@ -297,6 +297,116 @@ a .stat-card:hover {
     color: var(--primary-amber);
 }
 
+
+
+/* Branches table styles (moved from Branches.css) */
+.branches .branch-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+.branches .branch-table th,
+.branches .branch-table td {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+.branches .branch-table th {
+  background-color: var(--bg-secondary);
+  font-weight: 600;
+}
+.branches .branch-table tbody tr:hover {
+  background-color: var(--bg-hover);
+}
+
+/* alternate row shading similar to commission table */
+.branches .branch-table tr:nth-child(even) {
+  background-color: var(--bg-primary);
+}
+
+/* responsive labels for branch table when using custom-data-table */
+@media (max-width: 550px) {
+  .branch-table td.custom-td:nth-of-type(1):before { content: "Branch Name"; }
+  .branch-table td.custom-td:nth-of-type(2):before { content: "Location"; }
+  .branch-table td.custom-td:nth-of-type(3):before { content: "Status"; }
+  .branch-table td.custom-td:nth-of-type(4):before { content: "Actions"; }
+}
+
+/* toggle switch reused from TodayAuction */
+.toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  margin-right: 1.5rem;
+  position: relative;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.toggle-switch:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.slider {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+  background-color: #e5e7eb;
+  border-radius: 34px;
+  transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #d1d5db;
+  margin-right: 12px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 2px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input:checked + .slider {
+  background-color: #10b981;
+  border-color: #059669;
+}
+
+.toggle-switch input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+.toggle-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: color 0.3s;
+  letter-spacing: 0.01em;
+}
+
+.toggle-switch input:checked ~ .toggle-label {
+  color: var(--text-primary);
+}
+
+.toggle-switch:hover .toggle-label {
+  color: var(--primary-color);
+}
+
 .stat-value {
     font-size: 1.5rem;
     font-weight: 700;

@@ -1,27 +1,33 @@
-import React, { useState } from "react";
-import { Plus, Edit, Trash2, MapPin } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import axios from "axios";
+import SearchableSelect from "../../components/Common/SearchableSelect";
+import ConfirmationModal from "../../components/Common/ConfirmationModal";
 
 function Branches() {
   const [branches, setBranches] = useState([
     {
       id: 1,
       name: "Branch 1",
-      location: "Downtown",
-      manager: "John Doe",
+      state: "Karnataka",
+      city: "Bangalore",
+      address: "123 Main St",
       status: "Active",
     },
     {
       id: 2,
       name: "Branch 2",
-      location: "Uptown",
-      manager: "Jane Smith",
+      state: "Maharashtra",
+      city: "Mumbai",
+      address: "456 Marine Drive",
       status: "Active",
     },
     {
       id: 3,
       name: "Branch 3",
-      location: "Suburb",
-      manager: "Bob Johnson",
+      state: "Tamil Nadu",
+      city: "Chennai",
+      address: "789 Anna Salai",
       status: "Inactive",
     },
   ]);
@@ -30,13 +36,22 @@ function Branches() {
   const [editingBranch, setEditingBranch] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
-    location: "",
-    manager: "",
+    state: "",
+    city: "",
+    address: "",
   });
+
+  const [states, setStates] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [loadingStates, setLoadingStates] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+
+  const [confirmInfo, setConfirmInfo] = useState({ isOpen: false, branchId: null });
 
   const handleAdd = () => {
     setEditingBranch(null);
-    setFormData({ name: "", location: "", manager: "" });
+    setFormData({ name: "", state: "", city: "", address: "" });
+    setCities([]);
     setShowModal(true);
   };
 
@@ -44,16 +59,82 @@ function Branches() {
     setEditingBranch(branch);
     setFormData({
       name: branch.name,
-      location: branch.location,
-      manager: branch.manager,
+      state: branch.state || "",
+      city: branch.city || "",
+      address: branch.address || "",
     });
+    // load cities for that state
+    if (branch.state) fetchCities(branch.state);
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this branch?")) {
-      setBranches(branches.filter((b) => b.id !== id));
+  // load states once on mount
+  useEffect(() => {
+    fetchStates();
+  }, []);
+
+  const toggleStatus = (id) => {
+    setBranches(
+      branches.map((b) =>
+        b.id === id
+          ? { ...b, status: b.status === "Active" ? "Inactive" : "Active" }
+          : b,
+      ),
+    );
+  };
+
+  const fetchStates = async () => {
+    setLoadingStates(true);
+    try {
+      const { data } = await axios.post(
+        "https://countriesnow.space/api/v0.1/countries/states",
+        { country: "India" },
+      );
+      if (!data.error) setStates(data.data.states);
+    } catch (err) {
+      console.error("Error fetching states:", err);
+    } finally {
+      setLoadingStates(false);
     }
+  };
+
+  const fetchCities = async (stateName) => {
+    setLoadingCities(true);
+    try {
+      const { data } = await axios.post(
+        "https://countriesnow.space/api/v0.1/countries/state/cities",
+        { country: "India", state: stateName },
+      );
+      if (!data.error) {
+        setCities(data.data.map((city) => ({ name: city })));
+      } else {
+        setCities([]);
+      }
+    } catch (err) {
+      console.error("Error fetching cities:", err);
+      setCities([]);
+    } finally {
+      setLoadingCities(false);
+    }
+  };
+
+  const handleDelete = (id) => {
+    setBranches(branches.filter((b) => b.id !== id));
+  };
+
+  const confirmDelete = (id) => {
+    setConfirmInfo({ isOpen: true, branchId: id });
+  };
+
+  const handleConfirmClose = () => {
+    setConfirmInfo({ isOpen: false, branchId: null });
+  };
+
+  const handleConfirm = () => {
+    if (confirmInfo.branchId != null) {
+      handleDelete(confirmInfo.branchId);
+    }
+    handleConfirmClose();
   };
 
   const handleSubmit = (e) => {
@@ -93,44 +174,57 @@ function Branches() {
       </div>
 
       <div className="content-body">
-        <div className="card-list">
-          {branches.map((branch) => (
-            <div key={branch.id} className="data-card">
-              <div className="data-card-header">
-                <div>
-                  <div className="data-card-title">{branch.name}</div>
-                  <div className="data-card-subtitle">
-                    <MapPin size={14} /> {branch.location}
+        <div className="table-responsive custom-table-wrapper">
+          <table className="data-table custom-data-table branch-table">
+          <thead>
+            <tr>
+              <th className="custom-th">Branch Name</th>
+              <th className="custom-th">State / City / Address</th>
+              <th className="custom-th">Status</th>
+              <th className="custom-th">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {branches.map((branch) => (
+              <tr key={branch.id}>
+                <td className="custom-td">{branch.name}</td>
+                <td className="custom-td">
+                  {branch.state}, {branch.city}
+                  {branch.address && ` - ${branch.address}`}
+                </td>
+                <td className="custom-td">
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={branch.status === "Active"}
+                      onChange={() => toggleStatus(branch.id)}
+                    />
+                    <span className="slider"></span>
+                    <span className="toggle-label">{branch.status}</span>
+                  </label>
+                </td>
+                <td className="custom-td" onClick={(e) => e.stopPropagation()}>
+                  <div className="saas-flex saas-gap-075">
+                    <button
+                      className="icon-btn edit"
+                      onClick={() => handleEdit(branch)}
+                      title="Edit Branch"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      className="icon-btn delete"
+                      onClick={() => confirmDelete(branch.id)}
+                      title="Delete Branch"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-                </div>
-                <span className={`status-badge ${branch.status.toLowerCase()}`}>
-                  {branch.status}
-                </span>
-              </div>
-              <div className="data-card-body">
-                <div className="data-row">
-                  <span className="data-label">Manager:</span>
-                  <span className="data-value">{branch.manager}</span>
-                </div>
-              </div>
-              <div className="data-card-footer">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => handleEdit(branch)}
-                >
-                  <Edit size={14} />
-                  Edit
-                </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => handleDelete(branch.id)}
-                >
-                  <Trash2 size={14} />
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
         </div>
 
         {showModal && (
@@ -162,25 +256,54 @@ function Branches() {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Location</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={formData.location}
-                      onChange={(e) =>
-                        setFormData({ ...formData, location: e.target.value })
-                      }
+                    <label className="form-label">State</label>
+                    <SearchableSelect
+                      name="state"
+                      value={formData.state}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData((prev) => ({
+                          ...prev,
+                          state: val,
+                          city: "",
+                        }));
+                        fetchCities(val);
+                      }}
+                      placeholder={loadingStates ? "Loading..." : "Select state"}
+                      options={states.map((s) => ({
+                        label: s.name,
+                        value: s.name,
+                      }))}
                       required
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Manager</label>
+                    <label className="form-label">City</label>
+                    <SearchableSelect
+                      name="city"
+                      value={formData.city}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, city: e.target.value }))
+                      }
+                      disabled={!formData.state || loadingCities}
+                      placeholder={
+                        loadingCities ? "Loading..." : "Select city"
+                      }
+                      options={cities.map((c) => ({
+                        label: c.name,
+                        value: c.name,
+                      }))}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Address</label>
                     <input
                       type="text"
                       className="form-control"
-                      value={formData.manager}
+                      value={formData.address}
                       onChange={(e) =>
-                        setFormData({ ...formData, manager: e.target.value })
+                        setFormData({ ...formData, address: e.target.value })
                       }
                       required
                     />
@@ -202,6 +325,14 @@ function Branches() {
             </div>
           </div>
         )}
+
+        <ConfirmationModal
+          isOpen={confirmInfo.isOpen}
+          onClose={handleConfirmClose}
+          title="Delete Branch"
+          message="Are you sure you want to delete this branch?"
+          onConfirm={handleConfirm}
+        />
       </div>
     </div>
   );
