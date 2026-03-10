@@ -183,7 +183,7 @@ function PendingProducts() {
                         </div>
                     ) : (
                         <div className="table-responsive bg-card rounded-lg shadow-sm custom-table-wrapper">
-                            <table className="data-table custom-data-table">
+                            <table className="data-table custom-data-table pending-table">
                                 <thead className="bg-tertiary">
                                     <tr>
                                         <th className="custom-th">Product Details</th>

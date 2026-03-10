@@ -227,7 +227,7 @@ const Subscription = () => {
         <div className="content-header">
           <div className="header-top">
             <h1>
-              <CreditCard size={22} /> Subscription &amp; Billing
+              Subscription &amp; Billing
             </h1>
           </div>
           <div className="breadcrumb">
@@ -251,7 +251,7 @@ const Subscription = () => {
         <div className="content-header">
           <div className="header-top">
             <h1>
-              <CreditCard size={22} /> Subscription &amp; Billing
+              Subscription &amp; Billing
             </h1>
           </div>
           <div className="breadcrumb">
