@@ -109,10 +109,13 @@ const Purchases = () => {
             <thead className="subAdminTableHeader">
               <tr>
                 <th>Main Vendor Name</th>
-                <th>Plan Detail</th>
+                <th>Plan</th>
                 <th>Price</th>
                 <th>Payment</th>
+                <th>Status</th>
                 <th>Purchase Date</th>
+                <th>Expiry Date</th>
+                <th>Transaction ID</th>
               </tr>
             </thead>
             <tbody>
@@ -191,7 +194,7 @@ const Purchases = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="5" className="saas-text-center saas-py-4">
+                  <td colSpan="8" className="saas-text-center saas-py-4">
                     No purchases found matching "{searchQuery}"
                   </td>
                 </tr>
@@ -209,20 +212,28 @@ const Purchases = () => {
                 <div key={purchase.id} className="saas-mobile-card">
                   <div className="saas-mobile-card-row">
                     <span className="saas-mobile-card-label">Vendor</span>
-                    <span className="saas-mobile-card-value saas-font-bold">{purchase.vendorName}</span>
+                    <span className="saas-mobile-card-value saas-font-bold">
+                      {purchase.vendorName}
+                    </span>
                   </div>
                   <div className="saas-mobile-card-row">
                     <span className="saas-mobile-card-label">Plan</span>
-                    <span className="saas-mobile-card-value saas-font-semibold saas-text-primary">{purchase.plan}</span>
+                    <span className="saas-mobile-card-value saas-font-semibold saas-text-primary">
+                      {purchase.plan}
+                    </span>
                   </div>
                   <div className="saas-mobile-card-row">
                     <span className="saas-mobile-card-label">Price</span>
-                    <span className="saas-mobile-card-value">{purchase.price}</span>
+                    <span className="saas-mobile-card-value">
+                      {purchase.price}
+                    </span>
                   </div>
                   <div className="saas-mobile-card-row">
                     <span className="saas-mobile-card-label">Payment</span>
                     <span className="saas-mobile-card-value">
-                      <span className={`saas-badge ${purchase.paymentStatus === 'Paid' ? 'badge-success' : 'badge-danger'}`}>
+                      <span
+                        className={`saas-badge ${purchase.paymentStatus === "Paid" ? "badge-success" : "badge-danger"}`}
+                      >
                         {purchase.paymentStatus}
                       </span>
                     </span>
@@ -230,7 +241,9 @@ const Purchases = () => {
                   <div className="saas-mobile-card-row">
                     <span className="saas-mobile-card-label">Date</span>
                     <span className="saas-mobile-card-value">
-                      {purchase.startDate ? formatDate(purchase.startDate) : '--'}
+                      {purchase.startDate
+                        ? formatDate(purchase.startDate)
+                        : "--"}
                     </span>
                   </div>
                 </div>

@@ -261,9 +261,9 @@ export const getVendorPurchases = async () => {
   }
 };
 
-export const getVendorPurchasesById = async (id) => {
+export const getMainVendorPurchasesById = async (id) => {
   try {
-    const response = await api.get(`/vendor/${id}/purchases`);
+    const response = await api.get(`/main-vendor/${id}/purchases`);
     return response.data;
   } catch (error) {
     if (error.response && error.response.data) {

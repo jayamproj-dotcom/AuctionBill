@@ -123,7 +123,7 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
-          to="/mainvendor/profile"
+          to="/mainvendor/manage"
           className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
           onClick={onClose}
         >

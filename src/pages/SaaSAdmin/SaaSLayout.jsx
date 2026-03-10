@@ -215,7 +215,7 @@ const SaaSLayout = () => {
       {/* Sidebar */}
       <aside className={`saas-sidebar ${isSidebarOpen ? "open" : ""}`}>
         <div className="saas-sidebar-header">
-          <div className="saas-logo">SaaS Admin</div>
+          <div className="saas-logo">Main Admin</div>
           <button
             className="saas-close-sidebar"
             onClick={() => setIsSidebarOpen(false)}
