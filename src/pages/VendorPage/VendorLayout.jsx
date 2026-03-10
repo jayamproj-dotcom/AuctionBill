@@ -157,7 +157,7 @@ const VendorLayout = () => {
                   <div className="profile-dropdown-email">{userEmail}</div>
                 </div>
 
-                <div className="dropdown-item" onClick={() => {
+                {/* <div className="dropdown-item" onClick={() => {
                   navigate('/vendor/manage');
                   setProfileOpen(false);
                 }}>
@@ -170,9 +170,9 @@ const VendorLayout = () => {
                 }}>
                   <KeyRound size={16} />
                   <span>Change Password</span>
-                </div>
+                </div> */}
 
-                <div className="dropdown-divider"></div>
+              
                 <div className="dropdown-item text-danger" onClick={handleLogout}>
                   <LogOut size={16} />
                   <span>Logout</span>
