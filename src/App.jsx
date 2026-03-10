@@ -40,7 +40,7 @@ import Sellers from "./pages/MainVendorPage/Sellers.jsx";
 import Buyers from "./pages/MainVendorPage/Buyers.jsx";
 import Commission from "./pages/MainVendorPage/Commission.jsx";
 import MainVendorHistory from "./pages/MainVendorPage/MainVendorHistory.jsx";
-import MainVendorSubscription from "./pages/MainVendorPage/MainVendorSubscription.jsx";
+
 import Profile from "./pages/MainVendorPage/Profile.jsx";
 
 function App() {
@@ -83,8 +83,8 @@ function App() {
             <Route path="seller-details" element={<SellerDetails />} />
             <Route path="buyer-details" element={<BuyerDetails />} />
             <Route path="commission" element={<CommissionRecord />} />
-            <Route path="manage" element={<Manage />} />
-            <Route path="subscription" element={<Subscription />} />
+            
+          
             <Route path="billing" element={<Billing />} />
             <Route path="change-password" element={<VendorChangePassword />} />
           </Route>
@@ -119,8 +119,8 @@ function App() {
             <Route path="buyers" element={<Buyers />} />
             <Route path="commission" element={<Commission />} />
             <Route path="history" element={<MainVendorHistory />} />
-            <Route path="subscription" element={<MainVendorSubscription />} />
-            <Route path="profile" element={<Profile />} />
+            <Route path="subscription" element={<Subscription />} />
+            <Route path="manage" element={<Manage />} />
             <Route path="change-password" element={<VendorChangePassword />} />
           </Route>
         </Routes>

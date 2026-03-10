@@ -148,26 +148,7 @@ const VendorSidebar = ({ isOpen, onClose }) => {
           <span>Billing & Invoices</span>
         </NavLink>
 
-        <NavLink
-          to="/vendor/manage"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <User />
-          </span>
-          <span>Profile</span>
-        </NavLink>
-        <NavLink
-          to="/vendor/subscription"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <Gem />
-          </span>
-          <span>Subscription Plan</span>
-        </NavLink>
+    
 
         <a href="/" className="nav-item text-danger" onClick={handleLogout}>
           <span className="nav-icon">
