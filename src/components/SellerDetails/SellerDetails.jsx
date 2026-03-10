@@ -838,6 +838,19 @@ function SellerDetails() {
             >
               <div className="profile-layout">
                 <div className="profile-info">
+                  <div className="data-row" style={{ marginBottom: "0.25rem" }}>
+                    <span className="data-label"></span>
+                    <span className="data-value" style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button
+                        className="icon-btn edit"
+                        onClick={() => openEditModal(selectedSeller)}
+                        title="Edit Seller"
+                        style={{ width: "28px", height: "28px" }}
+                      >
+                        <Pencil size={14} />
+                      </button>
+                    </span>
+                  </div>
                   <div className="data-row">
                     <span className="data-label">Contact</span>
                     <span className="data-value">{selectedSeller.contact}</span>
@@ -888,6 +901,7 @@ function SellerDetails() {
                     </span>
                   </div>
                 </div>
+                
               </div>
             </div>
 
@@ -951,12 +965,7 @@ function SellerDetails() {
                 className="action-buttons"
                 style={{ display: "flex", gap: "10px" }}
               >
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => openEditModal(selectedSeller)}
-                >
-                  <Pencil size={15} style={{ marginRight: "5px" }} /> Edit
-                </button>
+                
                 <button
                   className="btn btn-primary"
                   onClick={openGlobalPaymentModal}

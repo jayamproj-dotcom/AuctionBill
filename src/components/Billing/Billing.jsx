@@ -17,6 +17,7 @@ import { getBuyers } from "../../api/buyerApi";
 import { getBillingData } from "../../api/billingApi";
 import { toast } from "react-toastify";
 import jsPDF from "jspdf";
+import SearchableSelect from "../Common/SearchableSelect";
 import "./Billing.css";
 
 const Billing = () => {
@@ -472,20 +473,16 @@ const Billing = () => {
               <h3 className="section-title">
                 Select {mainOption === "seller" ? "Seller" : "Buyer"}
               </h3>
-              <select
-                className="billing-select"
+              <SearchableSelect
+                name="selectedId"
                 value={selectedId}
                 onChange={(e) => setSelectedId(e.target.value)}
-              >
-                <option value="">
-                  Choose {mainOption === "seller" ? "Seller" : "Buyer"}...
-                </option>
-                {(mainOption === "seller" ? sellers : buyers).map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name} ({item.contact})
-                  </option>
-                ))}
-              </select>
+                placeholder={`Choose ${mainOption === "seller" ? "Seller" : "Buyer"}...`}
+                options={(mainOption === "seller" ? sellers : buyers).map(item => ({
+                  label: `${item.name} (${item.contact})`,
+                  value: item.id || item._id
+                }))}
+              />
             </div>
           )}
 
