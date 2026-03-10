@@ -1,0 +1,90 @@
+import api from "./api";
+
+// Main Vendor Signup
+export const mainVendorSignup = async (data) => {
+  try {
+    const response = await api.post("/main-vendor/signup", data);
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+// Main Vendor Login
+export const mainVendorLogin = async (data) => {
+  try {
+    const response = await api.post("/main-vendor/login", data);
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const getMainVendorProfile = async (id) => {
+  try {
+    const response = await api.get(`/main-vendor/profile/${id}`);
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const updateMainVendorProfile = async (id, data) => {
+  try {
+    const response = await api.put(`/main-vendor/${id}`, data);
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const mainVendorForgotPassword = async (data) => {
+  try {
+    const response = await api.post("/main-vendor/forgot-password", data);
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const mainVendorResetPassword = async (data) => {
+  try {
+    const response = await api.post("/main-vendor/reset-password", data);
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+// Using common change-password for now if available, otherwise define one
+export const mainVendorChangePassword = async (data) => {
+  try {
+    // Reusing update endpoint if it supports password, but usually a separate one is better
+    // For now, let's assume it's like vendor's reset/change logic
+    const response = await api.post("/main-vendor/change-password", data);
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
