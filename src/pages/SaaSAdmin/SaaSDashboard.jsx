@@ -1,16 +1,23 @@
-import { useState, useEffect } from 'react';
-import './SaaSAdmin.css';
-import { Link } from 'react-router-dom';
-import { Users, Crown, Banknote, Hourglass, Settings, Trash2 } from 'lucide-react';
-import { getVendors, getVendorPurchases } from '../../api/adminApi';
-import { formatDate } from '../../utils/dateUtils';
+import { useState, useEffect } from "react";
+import "./SaaSAdmin.css";
+import { Link } from "react-router-dom";
+import {
+  Users,
+  Crown,
+  Banknote,
+  Hourglass,
+  Settings,
+  Trash2,
+} from "lucide-react";
+import { getMainVendors, getMainVendorPurchases } from "../../api/adminApi";
+import { formatDate } from "../../utils/dateUtils";
 
 const SaaSDashboard = () => {
   const [stats, setStats] = useState({
-    totalVendors: 0,
+    totalMainVendors: 0,
     activeSubscriptions: 0,
     monthlyRevenue: 0,
-    pendingApprovals: 0
+    pendingApprovals: 0,
   });
 
   const [recentVendors, setRecentVendors] = useState([]);
@@ -19,34 +26,42 @@ const SaaSDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         const [vendorsRes, purchasesRes] = await Promise.all([
-          getVendors(),
-          getVendorPurchases()
+          getMainVendors(),
+          getMainVendorPurchases(),
         ]);
-        
+
         let calculatedRevenue = 0;
-        
+
         if (purchasesRes.status && purchasesRes.purchases) {
           const currentMonth = new Date().getMonth();
           const currentYear = new Date().getFullYear();
-          
-          calculatedRevenue = purchasesRes.purchases.reduce((total, purchase) => {
-             const purchaseDate = new Date(purchase.startDate || new Date());
-             if (purchaseDate.getMonth() === currentMonth && purchaseDate.getFullYear() === currentYear) {
-                 return total + (Number(purchase.price) || 0);
-             }
-             return total;
-          }, 0);
+
+          calculatedRevenue = purchasesRes.purchases.reduce(
+            (total, purchase) => {
+              const purchaseDate = new Date(purchase.startDate || new Date());
+              if (
+                purchaseDate.getMonth() === currentMonth &&
+                purchaseDate.getFullYear() === currentYear
+              ) {
+                return total + (Number(purchase.price) || 0);
+              }
+              return total;
+            },
+            0,
+          );
         }
 
-        if (vendorsRes.status && vendorsRes.vendors) {
-          const vendors = vendorsRes.vendors;
+        if (vendorsRes.status) {
+          const vendors = vendorsRes.vendors || vendorsRes.mainVendors || [];
 
-          setStats(prev => ({
+          setStats((prev) => ({
             ...prev,
-            totalVendors: vendors.length,
-            pendingApprovals: vendors.filter(v => v.status === 'Pending').length,
-            activeSubscriptions: vendors.filter(v => v.status === 'Active').length,
-            monthlyRevenue: calculatedRevenue
+            totalMainVendors: vendors.length,
+            pendingApprovals: vendors.filter((v) => v.status === "Pending")
+              .length,
+            activeSubscriptions: vendors.filter((v) => v.status === "Active")
+              .length,
+            monthlyRevenue: calculatedRevenue,
           }));
 
           const sortedVendors = [...vendors].sort((a, b) => {
@@ -68,27 +83,23 @@ const SaaSDashboard = () => {
   return (
     <div className="fade-in">
       <div className="saas-stats-grid">
-        <Link
-          to="/saas/vendors"
-          className="saas-stat-card saas-no-decoration"
-        >
+        <Link to="/saas/vendors" className="saas-stat-card saas-no-decoration">
           <div className="saas-stat-header">
-            <div className="saas-stat-icon icon-blue"><Users size={32} /></div>
+            <div className="saas-stat-icon icon-blue">
+              <Users size={32} />
+            </div>
           </div>
 
-          <div className="saas-stat-value">
-            {stats.totalVendors}
-          </div>
+          <div className="saas-stat-value">{stats.totalMainVendors}</div>
 
-          <div className="saas-stat-label">
-            Total Vendors
-          </div>
+          <div className="saas-stat-label">Total Main Vendors</div>
         </Link>
-
 
         <div className="saas-stat-card">
           <div className="saas-stat-header">
-            <div className="saas-stat-icon icon-green"><Crown size={32} /></div>
+            <div className="saas-stat-icon icon-green">
+              <Crown size={32} />
+            </div>
           </div>
           <div className="saas-stat-value">{stats.activeSubscriptions}</div>
           <div className="saas-stat-label">Active Subscriptions</div>
@@ -96,15 +107,21 @@ const SaaSDashboard = () => {
 
         <div className="saas-stat-card">
           <div className="saas-stat-header">
-            <div className="saas-stat-icon icon-amber"><Banknote size={32} /></div>
+            <div className="saas-stat-icon icon-amber">
+              <Banknote size={32} />
+            </div>
           </div>
-          <div className="saas-stat-value">₹{stats.monthlyRevenue.toLocaleString()}</div>
+          <div className="saas-stat-value">
+            ₹{stats.monthlyRevenue.toLocaleString()}
+          </div>
           <div className="saas-stat-label">Monthly Revenue</div>
         </div>
 
         <div className="saas-stat-card">
           <div className="saas-stat-header">
-            <div className="saas-stat-icon icon-rose"><Hourglass size={32} /></div>
+            <div className="saas-stat-icon icon-rose">
+              <Hourglass size={32} />
+            </div>
           </div>
           <div className="saas-stat-value">{stats.pendingApprovals}</div>
           <div className="saas-stat-label">Pending Approvals</div>
@@ -113,14 +130,19 @@ const SaaSDashboard = () => {
 
       <div className="saas-card">
         <div className="saas-card-header">
-          <h3 className="saas-text-lg saas-font-semibold">Recent Vendor Registrations</h3>
-          <Link to="/saas/vendors"> <button className="saas-btn btn-sm btn-outline">View All</button></Link>
+          <h3 className="saas-text-lg saas-font-semibold">
+            Recent Main Vendor Registrations
+          </h3>
+          <Link to="/saas/vendors">
+            {" "}
+            <button className="saas-btn btn-sm btn-outline">View All</button>
+          </Link>
         </div>
         <div className="saas-table-container">
           <table className="saas-table">
             <thead>
               <tr>
-                <th>Vendor Name</th>
+                <th>Main Vendor Name</th>
                 <th>Email</th>
                 <th>Plan</th>
                 <th>Status</th>
@@ -133,12 +155,16 @@ const SaaSDashboard = () => {
                   <td className="saas-font-medium">{vendor.name}</td>
                   <td>{vendor.email}</td>
                   <td>
-                    <span className={`saas-badge ${(vendor.plan?.name || vendor.plan || '') === 'Premium' ? 'badge-info' : 'badge-warning'}`}>
-                      {vendor.plan?.name || vendor.plan || 'N/A'}
+                    <span
+                      className={`saas-badge ${(vendor.plan?.name || vendor.plan || "") === "Premium" ? "badge-info" : "badge-warning"}`}
+                    >
+                      {vendor.plan?.name || vendor.plan || "N/A"}
                     </span>
                   </td>
                   <td>
-                    <span className={`saas-badge ${vendor.status === 'Active' ? 'badge-success' : 'badge-warning'}`}>
+                    <span
+                      className={`saas-badge ${vendor.status === "Active" ? "badge-success" : "badge-warning"}`}
+                    >
                       {vendor.status}
                     </span>
                   </td>

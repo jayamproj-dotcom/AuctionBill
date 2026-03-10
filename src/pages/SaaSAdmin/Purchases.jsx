@@ -1,29 +1,33 @@
-import { useState, useEffect } from 'react';
-import { Search, Loader } from 'lucide-react';
-import { formatDate } from '../../utils/dateUtils';
-import { getVendorPurchases } from '../../api/adminApi';
-import './SaaSAdmin.css';
+import { useState, useEffect } from "react";
+import { Search, Loader } from "lucide-react";
+import { formatDate } from "../../utils/dateUtils";
+import { getMainVendorPurchases } from "../../api/adminApi";
+import "./SaaSAdmin.css";
 
 const Purchases = () => {
   const [purchases, setPurchases] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
-        const response = await getVendorPurchases();
+        const response = await getMainVendorPurchases();
         if (response.status && response.purchases) {
           const vendorsData = response.purchases.map((purchase) => ({
             id: purchase.id,
-            vendorName: purchase.vendorName,
-            plan: purchase.plan || 'Unknown',
-            price: purchase.price ? `₹${purchase.price.toLocaleString()}` : '₹0',
-            paymentStatus: purchase.paymentStatus || 'Paid',
+            vendorName: purchase.vendorName || purchase.mainVendorName,
+            plan: purchase.plan || "Unknown",
+            price: purchase.price
+              ? `₹${purchase.price.toLocaleString()}`
+              : "₹0",
+            paymentStatus: purchase.paymentStatus || "Paid",
             status: purchase.status,
             expiryDate: purchase.expiryDate,
-            transactionId: purchase.transactionId || `TXN_${purchase.id.slice(-6).toUpperCase()}`,
-            startDate: purchase.startDate
+            transactionId:
+              purchase.transactionId ||
+              `TXN_${purchase.id.slice(-6).toUpperCase()}`,
+            startDate: purchase.startDate,
           }));
           setPurchases(vendorsData);
         }
@@ -38,7 +42,12 @@ const Purchases = () => {
 
   // Helper to check if date is nearing expiry (e.g., within 5 days)
   const isExpiringSoon = (dateString, status) => {
-    if (status === 'Inactive' || status === 'Expired' || status === 'Expiring Soon') return false;
+    if (
+      status === "Inactive" ||
+      status === "Expired" ||
+      status === "Expiring Soon"
+    )
+      return false;
 
     // Simple logic for visual highlighting only, purely illustrative
     // In a real app, combine this with the 'status' field from DB
@@ -51,12 +60,13 @@ const Purchases = () => {
   };
 
   const getStatusBadge = (status, date) => {
-    if (status === 'Inactive' || status === 'Expired') return 'badge-danger';
-    if (status === 'Expiring Soon' || isExpiringSoon(date, status)) return 'badge-warning';
-    return 'badge-success';
+    if (status === "Inactive" || status === "Expired") return "badge-danger";
+    if (status === "Expiring Soon" || isExpiringSoon(date, status))
+      return "badge-warning";
+    return "badge-success";
   };
 
-  const filteredPurchases = purchases.filter(purchase => {
+  const filteredPurchases = purchases.filter((purchase) => {
     const query = searchQuery.toLowerCase();
     return (
       purchase.vendorName.toLowerCase().includes(query) ||
@@ -70,8 +80,12 @@ const Purchases = () => {
   return (
     <div className="fade-in">
       <div className="saas-card saas-mb-15 subAdminCard">
-        <h2 className="saas-text-2xl saas-font-bold subAdminCardTitle">Vendor Purchase History</h2>
-        <p className="saas-text-muted saas-text-sm saas-mb-15">View all vendor subscriptions and purchases</p>
+        <h2 className="saas-text-2xl saas-font-bold subAdminCardTitle">
+          Main Vendor Purchase History
+        </h2>
+        <p className="saas-text-muted saas-text-sm saas-mb-15">
+          View all main vendor subscriptions and purchases
+        </p>
         <div className="saas-flex-between subAdminTopControls">
           <div className="saasSearchWrapperWide">
             <Search size={18} className="saasSearchIconPosition" />
@@ -94,7 +108,7 @@ const Purchases = () => {
           <table className="saas-table subAdminTable">
             <thead className="subAdminTableHeader">
               <tr>
-                <th>Vendor Name</th>
+                <th>Main Vendor Name</th>
                 <th>Plan Detail</th>
                 <th>Price</th>
                 <th>Payment</th>
@@ -108,38 +122,63 @@ const Purchases = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan="8" className="saas-text-center saas-py-4">
-                    <Loader className="saas-spinner saas-inline-block" size={24} /> Loading purchases...
+                    <Loader
+                      className="saas-spinner saas-inline-block"
+                      size={24}
+                    />{" "}
+                    Loading purchases...
                   </td>
                 </tr>
               ) : filteredPurchases.length > 0 ? (
                 filteredPurchases.map((purchase) => {
-                  const expiring = isExpiringSoon(purchase.expiryDate, purchase.status);
+                  const expiring = isExpiringSoon(
+                    purchase.expiryDate,
+                    purchase.status,
+                  );
 
                   return (
                     <tr key={purchase.id}>
-                      <td className="saas-font-medium">{purchase.vendorName}</td>
+                      <td className="saas-font-medium">
+                        {purchase.vendorName}
+                      </td>
                       <td>
-                        <span className="saas-font-semibold saas-text-primary">{purchase.plan}</span>
+                        <span className="saas-font-semibold saas-text-primary">
+                          {purchase.plan}
+                        </span>
                       </td>
                       <td>{purchase.price}</td>
                       <td>
-                        <span className={`saas-badge ${purchase.paymentStatus === 'Paid' ? 'badge-success' : 'badge-danger'}`}>
+                        <span
+                          className={`saas-badge ${purchase.paymentStatus === "Paid" ? "badge-success" : "badge-danger"}`}
+                        >
                           {purchase.paymentStatus}
                         </span>
                       </td>
                       <td>
-                        <span className={`saas-badge ${getStatusBadge(purchase.status, purchase.expiryDate)}`}>
-                          {expiring && purchase.status === 'Active' ? 'Expiring Soon' : purchase.status}
+                        <span
+                          className={`saas-badge ${getStatusBadge(purchase.status, purchase.expiryDate)}`}
+                        >
+                          {expiring && purchase.status === "Active"
+                            ? "Expiring Soon"
+                            : purchase.status}
                         </span>
                       </td>
                       <td>
                         <div className="saas-flex-col">
-                          <span>{purchase.startDate ? formatDate(purchase.startDate) : '--'}</span>
+                          <span>
+                            {purchase.startDate
+                              ? formatDate(purchase.startDate)
+                              : "--"}
+                          </span>
                         </div>
                       </td>
                       <td>
                         <div className="saas-flex-col">
-                          <span>{purchase.expiryDate ? formatDate(purchase.expiryDate) : 'N/A'}</span>
+                          <span>
+                            {purchase.expiryDate
+                              ? formatDate(purchase.expiryDate)
+                              : "N/A"}
+                          </span>
                           {expiring && (
                             <span className="saas-expiry-warning">
                               ⚠️ Renew Soon
