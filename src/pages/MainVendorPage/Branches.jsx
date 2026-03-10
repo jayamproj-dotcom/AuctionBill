@@ -3,14 +3,36 @@ import { Plus, Edit, Trash2, MapPin } from "lucide-react";
 
 function Branches() {
   const [branches, setBranches] = useState([
-    { id: 1, name: "Branch 1", location: "Downtown", manager: "John Doe", status: "Active" },
-    { id: 2, name: "Branch 2", location: "Uptown", manager: "Jane Smith", status: "Active" },
-    { id: 3, name: "Branch 3", location: "Suburb", manager: "Bob Johnson", status: "Inactive" },
+    {
+      id: 1,
+      name: "Branch 1",
+      location: "Downtown",
+      manager: "John Doe",
+      status: "Active",
+    },
+    {
+      id: 2,
+      name: "Branch 2",
+      location: "Uptown",
+      manager: "Jane Smith",
+      status: "Active",
+    },
+    {
+      id: 3,
+      name: "Branch 3",
+      location: "Suburb",
+      manager: "Bob Johnson",
+      status: "Inactive",
+    },
   ]);
 
   const [showModal, setShowModal] = useState(false);
   const [editingBranch, setEditingBranch] = useState(null);
-  const [formData, setFormData] = useState({ name: "", location: "", manager: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    location: "",
+    manager: "",
+  });
 
   const handleAdd = () => {
     setEditingBranch(null);
@@ -20,25 +42,33 @@ function Branches() {
 
   const handleEdit = (branch) => {
     setEditingBranch(branch);
-    setFormData({ name: branch.name, location: branch.location, manager: branch.manager });
+    setFormData({
+      name: branch.name,
+      location: branch.location,
+      manager: branch.manager,
+    });
     setShowModal(true);
   };
 
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this branch?")) {
-      setBranches(branches.filter(b => b.id !== id));
+      setBranches(branches.filter((b) => b.id !== id));
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editingBranch) {
-      setBranches(branches.map(b => b.id === editingBranch.id ? { ...b, ...formData } : b));
+      setBranches(
+        branches.map((b) =>
+          b.id === editingBranch.id ? { ...b, ...formData } : b,
+        ),
+      );
     } else {
       const newBranch = {
         id: Date.now(),
         ...formData,
-        status: "Active"
+        status: "Active",
       };
       setBranches([...branches, newBranch]);
     }
@@ -57,7 +87,7 @@ function Branches() {
         </div>
         <div className="breadcrumb">
           <span>Main Vendor</span>
-          <span className="breadcrumb-separator">></span>
+          <span className="breadcrumb-separator">&gt;</span>
           <span>Branches</span>
         </div>
       </div>
@@ -84,11 +114,17 @@ function Branches() {
                 </div>
               </div>
               <div className="data-card-footer">
-                <button className="btn btn-secondary" onClick={() => handleEdit(branch)}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => handleEdit(branch)}
+                >
                   <Edit size={14} />
                   Edit
                 </button>
-                <button className="btn btn-danger" onClick={() => handleDelete(branch.id)}>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => handleDelete(branch.id)}
+                >
                   <Trash2 size={14} />
                   Delete
                 </button>
@@ -104,7 +140,10 @@ function Branches() {
                 <h3 className="modal-title">
                   {editingBranch ? "Edit Branch" : "Add New Branch"}
                 </h3>
-                <button className="modal-close" onClick={() => setShowModal(false)}>
+                <button
+                  className="modal-close"
+                  onClick={() => setShowModal(false)}
+                >
                   ×
                 </button>
               </div>
@@ -116,7 +155,9 @@ function Branches() {
                       type="text"
                       className="form-control"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       required
                     />
                   </div>
@@ -126,7 +167,9 @@ function Branches() {
                       type="text"
                       className="form-control"
                       value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, location: e.target.value })
+                      }
                       required
                     />
                   </div>
@@ -136,13 +179,19 @@ function Branches() {
                       type="text"
                       className="form-control"
                       value={formData.manager}
-                      onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, manager: e.target.value })
+                      }
                       required
                     />
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowModal(false)}
+                  >
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">

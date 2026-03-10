@@ -8,13 +8,13 @@ function Profile() {
     phone: "123-456-7890",
     address: "123 Main Street",
     city: "City Name",
-    state: "State Name"
+    state: "State Name",
   });
 
   const handleChange = (e) => {
     setProfile({
       ...profile,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -32,7 +32,7 @@ function Profile() {
         </div>
         <div className="breadcrumb">
           <span>Main Vendor</span>
-          <span className="breadcrumb-separator">></span>
+          <span className="breadcrumb-separator">&gt;</span>
           <span>Profile</span>
         </div>
       </div>
@@ -42,7 +42,9 @@ function Profile() {
           <div className="data-card-header">
             <div>
               <div className="data-card-title">Personal Information</div>
-              <div className="data-card-subtitle">Update your profile details</div>
+              <div className="data-card-subtitle">
+                Update your profile details
+              </div>
             </div>
             <User size={24} />
           </div>

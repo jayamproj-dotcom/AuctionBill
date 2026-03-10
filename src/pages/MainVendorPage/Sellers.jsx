@@ -12,16 +12,51 @@ function Sellers() {
   ];
 
   const sellers = [
-    { id: 1, name: "Alice Johnson", email: "alice@example.com", phone: "123-456-7890", branch: "Branch 1" },
-    { id: 2, name: "Bob Smith", email: "bob@example.com", phone: "123-456-7891", branch: "Branch 1" },
-    { id: 3, name: "Charlie Brown", email: "charlie@example.com", phone: "123-456-7892", branch: "Branch 2" },
-    { id: 4, name: "Diana Prince", email: "diana@example.com", phone: "123-456-7893", branch: "Branch 2" },
-    { id: 5, name: "Eve Wilson", email: "eve@example.com", phone: "123-456-7894", branch: "Branch 3" },
+    {
+      id: 1,
+      name: "Alice Johnson",
+      email: "alice@example.com",
+      phone: "123-456-7890",
+      branch: "Branch 1",
+    },
+    {
+      id: 2,
+      name: "Bob Smith",
+      email: "bob@example.com",
+      phone: "123-456-7891",
+      branch: "Branch 1",
+    },
+    {
+      id: 3,
+      name: "Charlie Brown",
+      email: "charlie@example.com",
+      phone: "123-456-7892",
+      branch: "Branch 2",
+    },
+    {
+      id: 4,
+      name: "Diana Prince",
+      email: "diana@example.com",
+      phone: "123-456-7893",
+      branch: "Branch 2",
+    },
+    {
+      id: 5,
+      name: "Eve Wilson",
+      email: "eve@example.com",
+      phone: "123-456-7894",
+      branch: "Branch 3",
+    },
   ];
 
-  const filteredSellers = selectedBranch === "all"
-    ? sellers
-    : sellers.filter(seller => seller.branch === branches.find(b => b.id === selectedBranch)?.name);
+  const filteredSellers =
+    selectedBranch === "all"
+      ? sellers
+      : sellers.filter(
+          (seller) =>
+            seller.branch ===
+            branches.find((b) => b.id === selectedBranch)?.name,
+        );
 
   return (
     <div className="sellers">
@@ -31,7 +66,7 @@ function Sellers() {
         </div>
         <div className="breadcrumb">
           <span>Main Vendor</span>
-          <span className="breadcrumb-separator">></span>
+          <span className="breadcrumb-separator">&gt;</span>
           <span>Sellers</span>
         </div>
       </div>

@@ -12,16 +12,56 @@ function Buyers() {
   ];
 
   const buyers = [
-    { id: 1, name: "Frank Miller", email: "frank@example.com", phone: "123-456-7895", branch: "Branch 1", purchases: 5 },
-    { id: 2, name: "Grace Lee", email: "grace@example.com", phone: "123-456-7896", branch: "Branch 1", purchases: 3 },
-    { id: 3, name: "Henry Davis", email: "henry@example.com", phone: "123-456-7897", branch: "Branch 2", purchases: 8 },
-    { id: 4, name: "Ivy Chen", email: "ivy@example.com", phone: "123-456-7898", branch: "Branch 2", purchases: 2 },
-    { id: 5, name: "Jack Wilson", email: "jack@example.com", phone: "123-456-7899", branch: "Branch 3", purchases: 6 },
+    {
+      id: 1,
+      name: "Frank Miller",
+      email: "frank@example.com",
+      phone: "123-456-7895",
+      branch: "Branch 1",
+      purchases: 5,
+    },
+    {
+      id: 2,
+      name: "Grace Lee",
+      email: "grace@example.com",
+      phone: "123-456-7896",
+      branch: "Branch 1",
+      purchases: 3,
+    },
+    {
+      id: 3,
+      name: "Henry Davis",
+      email: "henry@example.com",
+      phone: "123-456-7897",
+      branch: "Branch 2",
+      purchases: 8,
+    },
+    {
+      id: 4,
+      name: "Ivy Chen",
+      email: "ivy@example.com",
+      phone: "123-456-7898",
+      branch: "Branch 2",
+      purchases: 2,
+    },
+    {
+      id: 5,
+      name: "Jack Wilson",
+      email: "jack@example.com",
+      phone: "123-456-7899",
+      branch: "Branch 3",
+      purchases: 6,
+    },
   ];
 
-  const filteredBuyers = selectedBranch === "all"
-    ? buyers
-    : buyers.filter(buyer => buyer.branch === branches.find(b => b.id === selectedBranch)?.name);
+  const filteredBuyers =
+    selectedBranch === "all"
+      ? buyers
+      : buyers.filter(
+          (buyer) =>
+            buyer.branch ===
+            branches.find((b) => b.id === selectedBranch)?.name,
+        );
 
   return (
     <div className="buyers">
@@ -31,7 +71,7 @@ function Buyers() {
         </div>
         <div className="breadcrumb">
           <span>Main Vendor</span>
-          <span className="breadcrumb-separator">></span>
+          <span className="breadcrumb-separator">&gt;</span>
           <span>Buyers</span>
         </div>
       </div>

@@ -12,18 +12,60 @@ function Commission() {
   ];
 
   const commissions = [
-    { id: 1, branch: "Branch 1", amount: 2500, date: "2024-01-15", seller: "Alice Johnson", buyer: "Frank Miller" },
-    { id: 2, branch: "Branch 1", amount: 1800, date: "2024-01-14", seller: "Bob Smith", buyer: "Grace Lee" },
-    { id: 3, branch: "Branch 2", amount: 3200, date: "2024-01-13", seller: "Charlie Brown", buyer: "Henry Davis" },
-    { id: 4, branch: "Branch 2", amount: 1500, date: "2024-01-12", seller: "Diana Prince", buyer: "Ivy Chen" },
-    { id: 5, branch: "Branch 3", amount: 2800, date: "2024-01-11", seller: "Eve Wilson", buyer: "Jack Wilson" },
+    {
+      id: 1,
+      branch: "Branch 1",
+      amount: 2500,
+      date: "2024-01-15",
+      seller: "Alice Johnson",
+      buyer: "Frank Miller",
+    },
+    {
+      id: 2,
+      branch: "Branch 1",
+      amount: 1800,
+      date: "2024-01-14",
+      seller: "Bob Smith",
+      buyer: "Grace Lee",
+    },
+    {
+      id: 3,
+      branch: "Branch 2",
+      amount: 3200,
+      date: "2024-01-13",
+      seller: "Charlie Brown",
+      buyer: "Henry Davis",
+    },
+    {
+      id: 4,
+      branch: "Branch 2",
+      amount: 1500,
+      date: "2024-01-12",
+      seller: "Diana Prince",
+      buyer: "Ivy Chen",
+    },
+    {
+      id: 5,
+      branch: "Branch 3",
+      amount: 2800,
+      date: "2024-01-11",
+      seller: "Eve Wilson",
+      buyer: "Jack Wilson",
+    },
   ];
 
-  const filteredCommissions = selectedBranch === "all"
-    ? commissions
-    : commissions.filter(comm => comm.branch === branches.find(b => b.id === selectedBranch)?.name);
+  const filteredCommissions =
+    selectedBranch === "all"
+      ? commissions
+      : commissions.filter(
+          (comm) =>
+            comm.branch === branches.find((b) => b.id === selectedBranch)?.name,
+        );
 
-  const totalCommission = filteredCommissions.reduce((sum, comm) => sum + comm.amount, 0);
+  const totalCommission = filteredCommissions.reduce(
+    (sum, comm) => sum + comm.amount,
+    0,
+  );
 
   return (
     <div className="commission">
@@ -33,7 +75,7 @@ function Commission() {
         </div>
         <div className="breadcrumb">
           <span>Main Vendor</span>
-          <span className="breadcrumb-separator">></span>
+          <span className="breadcrumb-separator">&gt;</span>
           <span>Commission</span>
         </div>
       </div>
@@ -60,7 +102,9 @@ function Commission() {
               <div className="stat-icon bg-yellow-500">
                 <HandCoins />
               </div>
-              <div className="stat-value">₹{totalCommission.toLocaleString()}</div>
+              <div className="stat-value">
+                ₹{totalCommission.toLocaleString()}
+              </div>
             </div>
             <div className="stat-label">Total Commission</div>
           </div>
@@ -71,7 +115,9 @@ function Commission() {
             <div key={comm.id} className="data-card">
               <div className="data-card-header">
                 <div>
-                  <div className="data-card-title">₹{comm.amount.toLocaleString()}</div>
+                  <div className="data-card-title">
+                    ₹{comm.amount.toLocaleString()}
+                  </div>
                   <div className="data-card-subtitle">{comm.branch}</div>
                 </div>
                 <Calendar size={24} />
