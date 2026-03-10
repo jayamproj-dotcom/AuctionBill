@@ -184,7 +184,7 @@ function TodayAuction() {
     title: "",
     message: "",
     variant: "info",
-    onConfirm: () => {},
+    onConfirm: () => { },
     showCancel: false,
     confirmText: "OK",
   });
@@ -962,12 +962,12 @@ function TodayAuction() {
                     <SearchableSelect
                       options={
                         newProduct.masterProduct &&
-                        newProduct.masterProduct.varieties &&
-                        newProduct.masterProduct.varieties.length > 0
+                          newProduct.masterProduct.varieties &&
+                          newProduct.masterProduct.varieties.length > 0
                           ? newProduct.masterProduct.varieties.map((v, i) => ({
-                              id: `${i}-${v}`,
-                              name: v,
-                            }))
+                            id: `${i}-${v}`,
+                            name: v,
+                          }))
                           : []
                       }
                       value={variantData.variety || ""}
@@ -1020,8 +1020,8 @@ function TodayAuction() {
                         Select Unit
                       </option>
                       {newProduct.masterProduct &&
-                      newProduct.masterProduct.units &&
-                      newProduct.masterProduct.units.length > 0 ? (
+                        newProduct.masterProduct.units &&
+                        newProduct.masterProduct.units.length > 0 ? (
                         newProduct.masterProduct.units.map((u, i) => (
                           <option key={i} value={u}>
                             {u}
@@ -1568,7 +1568,7 @@ function TodayAuction() {
                             const comm = Math.round(
                               (total *
                                 (selectedProduct.commissionPercent || 0)) /
-                                100,
+                              100,
                             );
 
                             const net = Math.round(total - comm);
