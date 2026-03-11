@@ -125,7 +125,7 @@ const VendorLayout = () => {
 
         <div className="header-logo">
           <img src={logo} alt="Logo" />
-          <h2>Auction Billing</h2>
+          <h2>{userName} Branch</h2>
         </div>
 
         <div className="header-actions">

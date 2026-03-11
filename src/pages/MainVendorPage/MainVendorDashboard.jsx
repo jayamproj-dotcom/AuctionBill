@@ -1,127 +1,358 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Building,
   Users,
-  ShoppingCart,
+  UsersRound,
   HandCoins,
   BadgeIndianRupee,
-  History,
+  Filter,
+  Calendar,
 } from "lucide-react";
+import { formatDate } from "../../utils/dateUtils";
+import { getMainVendorDashboard, getMainVendorBranches } from "../../api/mainVendorApi";
+
+// Reuse standard Dashboard styling for consistency
+import "../../components/Dashboard/Dashboard.css";
 
 function MainVendorDashboard() {
-  // Static data for demonstration
-  const stats = [
-    {
-      title: "Total Branches",
-      value: "5",
-      icon: <Building />,
-      color: "bg-blue-500",
-      link: "/mainvendor/branches",
-    },
-    {
-      title: "Total Sellers",
-      value: "25",
-      icon: <Users />,
-      color: "bg-green-500",
-      link: "/mainvendor/sellers",
-    },
-    {
-      title: "Total Buyers",
-      value: "150",
-      icon: <ShoppingCart />,
-      color: "bg-purple-500",
-      link: "/mainvendor/buyers",
-    },
-    {
-      title: "Total Commission",
-      value: "₹50,000",
-      icon: <HandCoins />,
-      color: "bg-yellow-500",
-      link: "/mainvendor/commission",
-    },
-    {
-      title: "Total Sales",
-      value: "₹2,50,000",
-      icon: <BadgeIndianRupee />,
-      color: "bg-red-500",
-      link: "/mainvendor/history",
-    },
-    
-  ];
+  const [stats, setStats] = useState({
+    totalBranches: 0,
+    totalSellers: 0,
+    totalBuyers: 0,
+    totalSales: 0,
+    totalCommission: 0,
+    todayAuctions: 0,
+  });
+  
+  const [dateFilter, setDateFilter] = useState("today");
+  const [customDate, setCustomDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
+  
+  const [branches, setBranches] = useState([{ id: "all", name: "All Branches" }]);
+  const [selectedBranch, setSelectedBranch] = useState("all");
+
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBranches();
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [dateFilter, customDate, selectedBranch]);
+
+  const fetchBranches = async () => {
+    try {
+      const res = await getMainVendorBranches();
+      if (res.status) {
+        const branchList = res.vendors.map((v) => ({
+          id: v._id,
+          name: v.name,
+        }));
+        setBranches([{ id: "all", name: "All Branches" }, ...branchList]);
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+    }
+  };
+
+  const getDateRange = (filter) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const nextTime = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+
+    switch (filter) {
+      case "today":
+        return { start: today, end: nextTime };
+      case "yesterday":
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return { start: yesterday, end: today };
+      case "week":
+        const weekStart = new Date(today);
+        weekStart.setDate(weekStart.getDate() - 7);
+        return { start: weekStart, end: nextTime };
+      case "month":
+        const monthStart = new Date(today);
+        monthStart.setDate(1);
+        return { start: monthStart, end: nextTime };
+      case "year":
+        const yearStart = new Date(today.getFullYear(), 0, 1);
+        return { start: yearStart, end: nextTime };
+      case "custom":
+        const custom = new Date(customDate);
+        custom.setHours(0, 0, 0, 0);
+        return {
+          start: custom,
+          end: new Date(custom.getTime() + 24 * 60 * 60 * 1000),
+        };
+      default:
+        return { start: today, end: nextTime };
+    }
+  };
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      let params = {};
+      if (selectedBranch !== "all") {
+        params.branchId = selectedBranch;
+      }
+      
+      if (dateFilter === "today") {
+        params.date = new Date().toISOString().split("T")[0];
+      } else if (dateFilter !== "all") {
+        const range = getDateRange(dateFilter);
+        if (range) {
+          params.startDate = range.start.toISOString().split("T")[0];
+          params.endDate = range.end.toISOString().split("T")[0];
+        }
+      }
+
+      const res = await getMainVendorDashboard(params);
+      if (res.success && res.data) {
+        setStats({
+          totalBranches: res.data.totalBranches || 0,
+          totalSellers: res.data.totalSellers || 0,
+          totalBuyers: res.data.totalBuyers || 0,
+          totalSales: res.data.totalSales || 0,
+          totalCommission: res.data.totalCommission || 0,
+          todayAuctions: res.data.todayAuctions || 0,
+        });
+        setFilteredTransactions(res.data.recentTransactions || []);
+      }
+    } catch (error) {
+      console.error("Error fetching main vendor dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getFilterLabel = () => {
+    switch (dateFilter) {
+      case "today": return "Today";
+      case "yesterday": return "Yesterday";
+      case "week": return "This Week";
+      case "month": return "This Month";
+      case "year": return "This Year";
+      case "custom": return formatDate(customDate);
+      case "all": return "All Time";
+      default: return "Today";
+    }
+  };
 
   return (
-    <div className="dashboard">
+    <>
       <div className="content-header">
         <div className="header-top">
           <h1>Main Vendor Dashboard</h1>
+          <div className="header-actions">
+            <div className="dashboard-filter-container">
+              
+              {/* Branch Filter */}
+              <div className="filter-dropdown-wrapper">
+                <Building className="filter-icon" size={16} />
+                <select
+                  value={selectedBranch}
+                  onChange={(e) => setSelectedBranch(e.target.value)}
+                  className="dashboard-filter-select"
+                  style={{ minWidth: '130px' }}
+                >
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Date Filter */}
+              <div className="filter-dropdown-wrapper">
+                <Filter className="filter-icon" size={16} />
+                <select
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="dashboard-filter-select"
+                >
+                  <option value="today">Today</option>
+                  <option value="yesterday">Yesterday</option>
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                  <option value="year">This Year</option>
+                  <option value="all">All Time</option>
+                  <option value="custom">Custom Date</option>
+                </select>
+              </div>
+
+              {dateFilter === "custom" && (
+                <div className="custom-date-wrapper fade-in">
+                  <Calendar className="calendar-icon" size={16} />
+                  <input
+                    type="date"
+                    value={customDate}
+                    onChange={(e) => setCustomDate(e.target.value)}
+                    max={new Date().toISOString().split("T")[0]}
+                    className="dashboard-date-input"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         <div className="breadcrumb">
           <span>Main Vendor</span>
-          <span className="breadcrumb-separator">&gt;</span>
+          <span className="breadcrumb-separator">/</span>
           <span>Dashboard</span>
         </div>
       </div>
 
       <div className="content-body">
-        <div className="stats-grid">
-          {stats.map((stat, index) => (
-            <Link key={index} to={stat.link}>
-              <div className="stat-card">
-                <div className="stat-header">
-                  <div className={`stat-icon ${stat.color}`}>
-                    {stat.icon}
-                  </div>
-                  <div className="stat-value">{stat.value}</div>
+        {/* Stats Grid - 5 Cards (Branches, Sellers, Buyers, Sales, Commission) */}
+        <div className="stats-grid dashboard-stats-grid fade-in">
+          
+          <div className="stat-card db-stat-card db-stat-purple" style={{ cursor: 'default' }}>
+            <div className="stat-header">
+              <div className="stat-icon db-stat-icon-purple">
+                <Building size={20} />
+              </div>
+              <div>
+                <div className="stat-value">{stats.totalBranches}</div>
+                <div className="stat-label">Branches</div>
+              </div>
+            </div>
+          </div>
+
+          <Link to="/mainvendor/sellers" className="db-stat-link">
+            <div className="stat-card db-stat-card db-stat-blue">
+              <div className="stat-header">
+                <div className="stat-icon db-stat-icon-blue">
+                  <Users size={20} />
                 </div>
-                <div className="stat-label">{stat.title}</div>
+                <div>
+                  <div className="stat-value">{stats.totalSellers}</div>
+                  <div className="stat-label">Sellers</div>
+                </div>
               </div>
-            </Link>
-          ))}
+            </div>
+          </Link>
+
+          <Link to="/mainvendor/buyers" className="db-stat-link">
+            <div className="stat-card db-stat-card db-stat-indigo">
+              <div className="stat-header">
+                <div className="stat-icon db-stat-icon-indigo">
+                  <UsersRound size={20} />
+                </div>
+                <div>
+                  <div className="stat-value">{stats.totalBuyers}</div>
+                  <div className="stat-label">Buyers</div>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          <Link to="/mainvendor/history" className="db-stat-link">
+            <div className="stat-card db-stat-card db-stat-green">
+              <div className="stat-header">
+                <div className="stat-icon db-stat-icon-green">
+                  <BadgeIndianRupee size={20} />
+                </div>
+                <div>
+                  <div className="stat-value">
+                    ₹{stats.totalSales.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </div>
+                  <div className="stat-label">Total Sales</div>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          <Link to="/mainvendor/commission" className="db-stat-link">
+            <div className="stat-card db-stat-card db-stat-amber">
+              <div className="stat-header">
+                <div className="stat-icon db-stat-icon-amber">
+                  <HandCoins size={20} />
+                </div>
+                <div>
+                  <div className="stat-value">
+                    ₹{stats.totalCommission.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                  </div>
+                  <div className="stat-label">Total Commission</div>
+                </div>
+              </div>
+            </div>
+          </Link>
+
         </div>
 
-        <div className="section-header">
-          <h2 className="section-title">Recent Activity</h2>
+        {/* Recent Transactions - Mirroring vendor dashboard UI */}
+        <div className="section-header section-margin-top">
+          <h3 className="section-title">
+            {selectedBranch === "all" ? "Global" : `${branches.find(b => b.id === selectedBranch)?.name || 'Branch'}`} Transactions ({getFilterLabel()})
+          </h3>
         </div>
 
-        <div className="card-list">
-          <div className="data-card">
-            <div className="data-card-header">
-              <div>
-                <div className="data-card-title">Branch 1 - New Auction Started</div>
-                <div className="data-card-subtitle">2 hours ago</div>
-              </div>
+        <div className="card-list fade-in">
+          {loading ? (
+            <div className="empty-state">
+              <div className="sb-spinner sb-spinner-center"></div>
+              <p>Loading global data...</p>
             </div>
-            <div className="data-card-body">
-              <div className="data-row">
-                <span className="data-label">Items:</span>
-                <span className="data-value">15</span>
-              </div>
-              <div className="data-row">
-                <span className="data-label">Starting Bid:</span>
-                <span className="data-value">₹10,000</span>
-              </div>
+          ) : filteredTransactions.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">📭</div>
+              <p>No transactions found for {getFilterLabel().toLowerCase()}</p>
             </div>
-          </div>
+          ) : (
+            filteredTransactions.map((transaction) => (
+              <div key={transaction._id || Math.random()} className="data-card">
+                <div className="data-card-header">
+                  <div>
+                    <div className="data-card-title">
+                      {transaction.productName}
+                    </div>
+                    <div className="data-card-subtitle">
+                      {transaction.branchName} • {formatDate(transaction.date)}
+                    </div>
+                  </div>
+                  <div className="badge badge-success">Completed</div>
+                </div>
 
-          <div className="data-card">
-            <div className="data-card-header">
-              <div>
-                <div className="data-card-title">Commission Collected</div>
-                <div className="data-card-subtitle">1 day ago</div>
+                <div className="data-card-body">
+                  <div className="data-row">
+                    <span className="data-label">Seller</span>
+                    <span className="data-value">{transaction.sellerName}</span>
+                  </div>
+                  <div className="data-row">
+                    <span className="data-label">Buyer</span>
+                    <span className="data-value">{transaction.buyerName}</span>
+                  </div>
+                  <div className="data-row">
+                    <span className="data-label">Qty / Unit</span>
+                    <span className="data-value">
+                      {transaction.quantity} {transaction.unit || "qty"}
+                    </span>
+                  </div>
+                  <div className="data-row">
+                    <span className="data-label">Price</span>
+                    <span className="data-value" style={{fontWeight: 600}}>
+                      ₹{(transaction.finalAmount || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="data-row">
+                    <span className="data-label">Commission</span>
+                    <span className="data-value text-amber" style={{fontWeight: 600}}>
+                      ₹{(transaction.commissionAmount || 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="data-card-body">
-              <div className="data-row">
-                <span className="data-label">Amount:</span>
-                <span className="data-value">₹5,000</span>
-              </div>
-            
-            </div>
-          </div>
+            ))
+          )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

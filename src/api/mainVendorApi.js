@@ -137,3 +137,27 @@ export const getMainVendorHistory = async (params) => {
   }
 };
 
+export const getMainVendorCommissionRecords = async (params) => {
+  try {
+    const response = await api.get("/main-vendor/commission", { params });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const getMainVendorDashboard = async (params) => {
+  try {
+    const response = await api.get("/main-vendor/dashboard", { params });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
