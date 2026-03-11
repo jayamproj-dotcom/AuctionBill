@@ -258,7 +258,7 @@ function Commission() {
             <p>No commission records found for the selected filters.</p>
           </div>
         ) : (
-          <div className="mvh-table-wrapper card">
+          <div className="mvh-table-wrapper">
             <table className="mvh-table">
               <thead className="bg-tertiary">
                 <tr>

@@ -15,6 +15,19 @@ const SubAdminManagement = () => {
   const [adminToDelete, setAdminToDelete] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 550);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 550);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  
+  
+
   useEffect(() => {
     fetchSubAdmins();
   }, []);
@@ -184,12 +197,12 @@ const SubAdminManagement = () => {
           </div>
         </div>
       </div>
-      <div className="saas-card subAdminTableCard">
+      <div className={isMobile ? "subAdminTableCard" : "saas-card"}>
         {isLoading ? (
           <div className="saas-loading saas-loading-padded">Loading sub-admins...</div>
         ) : (
           <div className="saas-table-container">
-            <table className="saas-table subAdminTable saas-desktop-only-1100">
+            <table className="saas-table subAdminTable saas-desktop-only-550">
               <thead className="subAdminTableHeader">
                 <tr>
                   <th>S.NO</th>
@@ -263,7 +276,7 @@ const SubAdminManagement = () => {
               </tbody>
             </table>
 
-            <div className="saas-mobile-cards-view-1100">
+            <div className="saas-mobile-cards-view-550">
               {filteredSubAdmins.length === 0 ? (
                 <div className="saas-text-center saas-p-20 saas-text-muted">No sub-admins found</div>
               ) : (
