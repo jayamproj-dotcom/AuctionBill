@@ -2711,7 +2711,7 @@ body.saas-admin-active {
 
   /* Notification dropdown: constrain to viewport */
   .saas-notification-dropdown {
-    width: calc(100vw - 1rem);
+    width: calc(73vw - 1rem);
     right: -0.6rem;
     border-radius: 0.75rem;
   }
@@ -2887,7 +2887,7 @@ body.saas-admin-active {
 
   /* Notification dropdown */
   .saas-notification-dropdown {
-    width: calc(100vw - 0.75rem);
+    width: calc(80vw - 0.75rem);
     right: -0.5rem;
   }
   .notification-dropdown-header {
@@ -3058,7 +3058,7 @@ body.saas-admin-active {
 
   /* Notification */
   .saas-notification-dropdown {
-    width: calc(100vw - 0.5rem);
+    width: calc(90vw - 0.5rem);
     right: -0.25rem;
     border-radius: 0.5rem;
   }
