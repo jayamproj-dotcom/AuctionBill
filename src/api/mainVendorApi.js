@@ -101,6 +101,18 @@ export const getMainVendorSellers = async (params) => {
   }
 };
 
+export const getMainVendorBuyers = async (params) => {
+  try {
+    const response = await api.get("/main-vendor/buyers", { params });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
 export const getMainVendorBranches = async () => {
   try {
     const response = await api.get("/main-vendor/branches");
