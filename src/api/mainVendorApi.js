@@ -125,3 +125,15 @@ export const getMainVendorBranches = async () => {
   }
 };
 
+export const getMainVendorHistory = async (params) => {
+  try {
+    const response = await api.get("/main-vendor/history", { params });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+

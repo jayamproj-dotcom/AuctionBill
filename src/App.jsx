@@ -14,7 +14,6 @@ import SellerDetails from "./components/SellerDetails/SellerDetails.jsx";
 import BuyerDetails from "./components/BuyerDetails/BuyerDetails.jsx";
 import CommissionRecord from "./components/CommissionRecord/CommissionRecord.jsx";
 import Manage from "./components/Manage/Manage.jsx";
-import Subscription from "./components/Subscription/Subscription.jsx";
 import PendingProducts from "./components/PendingProducts/PendingProducts.jsx";
 import Billing from "./components/Billing/Billing.jsx";
 import SaaSLayout from "./pages/SaaSAdmin/SaaSLayout.jsx";
@@ -38,6 +37,7 @@ import MainVendorDashboard from "./pages/MainVendorPage/MainVendorDashboard.jsx"
 import Branches from "./pages/MainVendorPage/Branches.jsx";
 import Sellers from "./pages/MainVendorPage/Sellers.jsx";
 import Buyers from "./pages/MainVendorPage/Buyers.jsx";
+import Subscription from "./components/Subscription/Subscription.jsx";
 import Commission from "./pages/MainVendorPage/Commission.jsx";
 import MainVendorHistory from "./pages/MainVendorPage/MainVendorHistory.jsx";
 
