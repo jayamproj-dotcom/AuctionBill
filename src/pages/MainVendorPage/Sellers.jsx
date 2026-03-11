@@ -149,6 +149,8 @@ function Sellers() {
                         className="icon-btn delete"
                         title="Delete Seller"
                         onClick={() => confirmDeleteSeller(seller.id)}
+                        disabled
+                        style={{ opacity: 0.5, cursor: "not-allowed" }}
                       >
                         <Trash2 size={16} />
                       </button>

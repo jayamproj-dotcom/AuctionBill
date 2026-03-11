@@ -85,27 +85,31 @@ function Branches() {
     setShowModal(true);
   };
 
-  const toggleStatus = async (branch) => {
-    try {
-      const newStatus = branch.status === "Active" ? "Inactive" : "Active";
-      const res = await updateVendor(branch._id || branch.id, {
-        status: newStatus,
-      });
-      if (res.status) {
-        setBranches(
-          branches.map((b) =>
-            b._id === branch._id || b.id === branch.id
-              ? { ...b, status: newStatus }
-              : b,
-          ),
-        );
-        toast.success(`Branch ${newStatus} successfully`);
-      }
-    } catch (error) {
-      console.error("Error toggling status:", error);
-      toast.error(error.message || "Failed to update branch status");
+ const toggleStatus = async (branch) => {
+  try {
+    const branchId = branch._id || branch.id;
+    const newStatus = branch.status === "Active" ? "Inactive" : "Active";
+
+    const res = await updateVendor(branchId, {
+      status: newStatus,
+    });
+
+    if (res.status) {
+      setBranches((prev) =>
+        prev.map((b) =>
+          (b._id || b.id) === branchId
+            ? { ...b, status: newStatus }
+            : b
+        )
+      );
+
+      toast.success(`Branch ${newStatus} successfully`);
     }
-  };
+  } catch (error) {
+    console.error("Error toggling status:", error);
+    toast.error(error.message || "Failed to update branch status");
+  }
+};
 
   const fetchStates = async () => {
     setLoadingStates(true);
@@ -253,6 +257,7 @@ function Branches() {
                           type="checkbox"
                           checked={branch.status === "Active"}
                           onChange={() => toggleStatus(branch)}
+                          disabled={loading}
                         />
                         <span className="slider"></span>
                         <span className="toggle-label">{branch.status}</span>

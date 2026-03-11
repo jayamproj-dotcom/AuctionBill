@@ -183,8 +183,6 @@ const MainVendorLayout = () => {
                   <KeyRound size={16} />
                   <span>Change Password</span>
                 </div>
-
-                <div className="dropdown-divider"></div>
                 <div
                   className="dropdown-item text-danger"
                   onClick={handleLogout}
