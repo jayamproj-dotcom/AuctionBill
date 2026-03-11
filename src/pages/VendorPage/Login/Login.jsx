@@ -127,7 +127,7 @@ const VendorLogin = () => {
     <div className="login-page">
       <div className="login-top-right"></div>
       <div className="login-card">
-        <h2>{loginType === "main" ? "Main Admin Login" : "Branch Login"}</h2>
+        <h2>{loginType === "main" ? "Main Vendor Login" : "Branch Login"}</h2>
         <p className="login-subtitle">
           {loginType === "main"
             ? "Sign in to manage your branches and auctions"
@@ -141,7 +141,7 @@ const VendorLogin = () => {
             onClick={() => handleTypeChange("main")}
           >
             <User size={16} />
-            Main Admin
+            Main Vendor
           </button>
           <button
             className={`type-btn ${loginType === "branch" ? "active" : ""}`}
