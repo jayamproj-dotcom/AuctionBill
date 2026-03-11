@@ -114,18 +114,16 @@
     padding: 4rem 1rem !important;
 }
 
-/* Responsive Table Scroll */
+/* Responsive Table Scroll - Replaced with Dynamic Cards */
 .table-responsive {
     width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
 }
 
 .hs-table {
-    min-width: 800px; /* Ensure table has enough width to trigger scroll on small screens */
+    width: 100%;
+    border-collapse: collapse;
 }
 
-/* Decoupled Table Styles (No Mobile Card Transformation) */
 .hs-data-table {
     width: 100%;
     border-collapse: collapse;
@@ -158,31 +156,71 @@
     background-color: var(--bg-hover);
 }
 
-/* Force Table Display - Prevent any global display:block on mobile */
-@media (max-width: 630px) {
+/* MOBILE CARD VIEW */
+@media (max-width: 570px) {
     .hs-data-table,
     .hs-data-table thead,
     .hs-data-table tbody,
     .hs-data-table th,
     .hs-data-table td,
     .hs-data-table tr {
-        display: table-cell !important;
-    }
-    
-    .hs-data-table {
-        display: table !important;
-    }
-    
-    .hs-data-table tr {
-        display: table-row !important;
+        display: block !important;
     }
 
-    .hs-data-table thead {
-        display: table-header-group !important;
+    .hs-data-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
     }
 
-    .hs-data-table tbody {
-        display: table-row-group !important;
+    .hs-data-table tr.hs-tr {
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: 12px;
+        background-color: var(--bg-secondary);
+        border-radius: 10px;
+        padding: 4px 0;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .hs-data-table td.hs-td {
+        border: none;
+        border-bottom: 1px dashed var(--border-color);
+        position: relative;
+        padding-left: 45%;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        text-align: right;
+        min-height: 40px;
+    }
+
+    .hs-data-table td.hs-td:last-child {
+        border-bottom: none;
+    }
+
+    .hs-data-table td.hs-td::before {
+        position: absolute;
+        top: 10px;
+        left: 12px;
+        width: 40%;
+        padding-right: 8px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .hs-data-table td.hs-td:nth-of-type(1)::before { content: "Date"; }
+    .hs-data-table td.hs-td:nth-of-type(2)::before { content: "Product"; }
+    .hs-data-table td.hs-td:nth-of-type(3)::before { content: "Seller"; }
+    .hs-data-table td.hs-td:nth-of-type(4)::before { content: "Buyer"; }
+    .hs-data-table td.hs-td:nth-of-type(5)::before { content: "Qty"; }
+    .hs-data-table td.hs-td:nth-of-type(6)::before { content: "Total"; }
+    .hs-data-table td.hs-td:nth-of-type(7)::before { content: "Comm."; }
+
+    .hs-num-col {
+        text-align: right !important;
     }
 }
-

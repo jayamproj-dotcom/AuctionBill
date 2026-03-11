@@ -21,11 +21,15 @@
 }
 
 .mobile-header h2 {
-    font-size: 1.25rem;
+    font-size: 1.05rem;
     margin: 0;
     color: white;
 }
-
+@media (max-width: 350px) {
+    .mobile-header h2 {
+         font-size: .85rem;
+    }
+}
 .menu-toggle {
     background: rgba(255, 255, 255, 0.2);
     border: none;
@@ -326,10 +330,11 @@ a .stat-card:hover {
 
 /* responsive labels for branch table when using custom-data-table */
 @media (max-width: 550px) {
-  .branch-table td.custom-td:nth-of-type(1):before { content: "Branch Name"; }
-  .branch-table td.custom-td:nth-of-type(2):before { content: "Location"; }
-  .branch-table td.custom-td:nth-of-type(3):before { content: "Status"; }
-  .branch-table td.custom-td:nth-of-type(4):before { content: "Actions"; }
+  .branch-table td.custom-td:nth-of-type(1):before { content: "Name" !important; }
+  .branch-table td.custom-td:nth-of-type(2):before { content: "Branch ID" !important; }
+  .branch-table td.custom-td:nth-of-type(3):before { content: "State / City" !important; }
+  .branch-table td.custom-td:nth-of-type(4):before { content: "Status" !important; }
+  .branch-table td.custom-td:nth-of-type(5):before { content: "Actions" !important; }
 }
 
 /* toggle switch reused from TodayAuction */
@@ -935,7 +940,7 @@ select.form-control {
 /* ─────────────────────────────────────────────────────────────────
    3. MOBILE CARD VIEW (max-width: 650px)
 ───────────────────────────────────────────────────────────────── */
-@media (max-width: 650px) {
+@media (max-width: 570px) {
     /* Hide dividers on mobile so they stack cleanly */
     .mvh-divider {
         display: none;

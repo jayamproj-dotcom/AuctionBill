@@ -229,7 +229,7 @@ function Branches() {
           {loading && !branches.length ? (
             <div className="p-4 text-center">Loading...</div>
           ) : (
-            <table className="data-table custom-data-table vendor-table">
+            <table className="data-table custom-data-table branch-table">
               <thead>
                 <tr>
                   <th className="custom-th">Name</th>
@@ -252,22 +252,24 @@ function Branches() {
                       {branch.state}, {branch.city}
                     </td>
                     <td className="custom-td">
-                      <label className="toggle-switch">
-                        <input
-                          type="checkbox"
-                          checked={branch.status === "Active"}
-                          onChange={() => toggleStatus(branch)}
-                          disabled={loading}
-                        />
-                        <span className="slider"></span>
-                        <span className="toggle-label">{branch.status}</span>
-                      </label>
+                      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
+                        <label className="toggle-switch" style={{ marginRight: 0 }}>
+                          <input
+                            type="checkbox"
+                            checked={branch.status === "Active"}
+                            onChange={() => toggleStatus(branch)}
+                            disabled={loading}
+                          />
+                          <span className="slider"></span>
+                          <span className="toggle-label">{branch.status}</span>
+                        </label>
+                      </div>
                     </td>
                     <td
                       className="custom-td"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="saas-flex saas-gap-075">
+                      <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
                         <button
                           className="icon-btn edit"
                           onClick={() => handleEdit(branch)}
