@@ -285,7 +285,7 @@ const SaaSLayout = () => {
                       <h4 className="notification-dropdown-title">
                         Notifications
                       </h4>
-                      <span className="notification-count">
+                      <span className="notification-count1">
                         {unreadCount} Unread
                       </span>
                     </div>

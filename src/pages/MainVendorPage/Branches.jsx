@@ -321,50 +321,35 @@ function Branches() {
                       required
                     />
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">State</label>
-                    <SearchableSelect
-                      name="state"
-                      value={formData.state}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setFormData((prev) => ({
-                          ...prev,
-                          state: val,
-                          city: "",
-                        }));
-                        fetchCities(val);
-                      }}
-                      placeholder={
-                        loadingStates ? "Loading..." : "Select state"
-                      }
-                      options={states.map((s) => ({
-                        label: s.name,
-                        value: s.name,
-                      }))}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">City</label>
-                    <SearchableSelect
-                      name="city"
-                      value={formData.city}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          city: e.target.value,
-                        }))
-                      }
-                      disabled={!formData.state || loadingCities}
-                      placeholder={loadingCities ? "Loading..." : "Select city"}
-                      options={cities.map((c) => ({
-                        label: c.name,
-                        value: c.name,
-                      }))}
-                      required
-                    />
-                  </div>
+                 <div className="form-row" style={{ flexDirection: "row", gap: "1rem" }}>
+  <div className="form-group" style={{ flex: 1 }}>
+    <label className="form-label">State</label>
+    <SearchableSelect
+      name="state"
+      value={formData.state}
+      onChange={(e) => {
+        const val = e.target.value;
+        setFormData((prev) => ({ ...prev, state: val, city: "" }));
+        fetchCities(val);
+      }}
+      placeholder={loadingStates ? "Loading..." : "Select state"}
+      options={states.map((s) => ({ label: s.name, value: s.name }))}
+      required
+    />
+  </div>
+  <div className="form-group" style={{ flex: 1 }}>
+    <label className="form-label">City</label>
+    <SearchableSelect
+      name="city"
+      value={formData.city}
+      onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
+      disabled={!formData.state || loadingCities}
+      placeholder={loadingCities ? "Loading..." : "Select city"}
+      options={cities.map((c) => ({ label: c.name, value: c.name }))}
+      required
+    />
+  </div>
+</div>
                   <div className="form-group">
                     <label className="form-label">Status</label>
                     <select
