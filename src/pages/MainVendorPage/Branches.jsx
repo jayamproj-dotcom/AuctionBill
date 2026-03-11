@@ -6,11 +6,11 @@ import ConfirmationModal from "../../components/Common/ConfirmationModal";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import {
-  getVendors,
   createVendor,
   updateVendor,
   deleteVendor,
 } from "../../api/adminApi";
+import { getMainVendorBranches } from "../../api/mainVendorApi";
 
 function Branches() {
   const { vendorId } = useSelector((state) => state.vendorAuth);
@@ -43,21 +43,21 @@ function Branches() {
     fetchStates();
   }, []);
 
- const loadData = async () => {
-  setLoading(true);
-  try {
-    const vendorsRes = await getVendors({ mainVendorId: currentMainVendorId });
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const vendorsRes = await getMainVendorBranches();
 
-    if (vendorsRes.status) {
-      setBranches(vendorsRes.vendors || []);
+      if (vendorsRes.status) {
+        setBranches(vendorsRes.vendors || []);
+      }
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast.error("Failed to load branches data");
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error loading data:", error);
-    toast.error("Failed to load branches data");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   const handleAdd = () => {

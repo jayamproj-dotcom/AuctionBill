@@ -1,101 +1,75 @@
-import React, { useState } from "react";
-import { Phone, Mail, Pencil, Trash2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Phone, Mail, Pencil, Trash2, Loader2 } from "lucide-react";
 import ConfirmationModal from "../../components/Common/ConfirmationModal";
 import SearchableSelect from "../../components/Common/SearchableSelect";
+import { getMainVendorSellers, getMainVendorBranches } from "../../api/mainVendorApi";
+import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 function Sellers() {
+  const { vendorId, vendorLoggedIn } = useSelector((state) => state.vendorAuth);
+  // Re-check sessionStorage if Redux is lagging or after refresh
+  const currentMainVendorId = vendorId || sessionStorage.getItem("vendorId");
+
+  console.log("currentMainVendorId", currentMainVendorId);
+
   const [selectedBranch, setSelectedBranch] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [sellers, setSellers] = useState([]);
+  const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [fetchingBranches, setFetchingBranches] = useState(false);
 
-  const branches = [
-    { id: "all", name: "All Branches" },
-    { id: "1", name: "Branch 1" },
-    { id: "2", name: "Branch 2" },
-    { id: "3", name: "Branch 3" },
-  ];
+  useEffect(() => {
+    fetchBranches();
+  }, []);
 
-  // transform for searchable select
-  const branchOptions = branches.map((b) => ({ label: b.name, value: b.id }));
+  useEffect(() => {
+    fetchSellers();
+  }, [selectedBranch]);
 
-  const sellers = [
-    {
-      id: 1,
-      name: "Alice Johnson",
-      email: "alice@example.com",
-      phone: "123-456-7890",
-      branch: "Branch 1",
-      city: "Bangalore",
-      state: "Karnataka",
-      address: "123 Main St",
-      status: "active",
-    },
-    {
-      id: 2,
-      name: "Bob Smith",
-      email: "bob@example.com",
-      phone: "123-456-7891",
-      branch: "Branch 1",
-      city: "Mumbai",
-      state: "Maharashtra",
-      address: "456 Marine Drive",
-      status: "inactive",
-    },
-    {
-      id: 3,
-      name: "Charlie Brown",
-      email: "charlie@example.com",
-      phone: "123-456-7892",
-      branch: "Branch 2",
-      city: "Chennai",
-      state: "Tamil Nadu",
-      address: "789 Anna Salai",
-      status: "active",
-    },
-    {
-      id: 4,
-      name: "Diana Prince",
-      email: "diana@example.com",
-      phone: "123-456-7893",
-      branch: "Branch 2",
-      city: "Hyderabad",
-      state: "Telangana",
-      address: "101 Film Nagar",
-      status: "active",
-    },
-    {
-      id: 5,
-      name: "Eve Wilson",
-      email: "eve@example.com",
-      phone: "123-456-7894",
-      branch: "Branch 3",
-      city: "Pune",
-      state: "Maharashtra",
-      address: "202 FC Road",
-      status: "inactive",
-    },
-  ];
+  const fetchBranches = async () => {
+    setFetchingBranches(true);
+    try {
+      const res = await getMainVendorBranches();
+      if (res.status) {
+        setBranches([{ _id: "all", name: "All Branches" }, ...(res.vendors || [])]);
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+    } finally {
+      setFetchingBranches(false);
+    }
+  };
 
-  const filteredSellers = sellers
-    .filter((seller) => {
-      if (selectedBranch === "all") return true;
-      return (
-        seller.branch === branches.find((b) => b.id === selectedBranch)?.name
-      );
-    })
-    .filter((seller) => {
-      if (!searchTerm) return true;
-      const q = searchTerm.toLowerCase();
-      return (
-        seller.name.toLowerCase().includes(q) ||
-        (seller.email || "").toLowerCase().includes(q)
-      );
-    });
+  const fetchSellers = async () => {
+    setLoading(true);
+    try {
+      const res = await getMainVendorSellers({ branchId: selectedBranch });
+      if (res.status) {
+        setSellers(res.sellers || []);
+      }
+    } catch (error) {
+      console.error("Error fetching sellers:", error);
+      toast.error("Failed to load sellers");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const branchOptions = branches.map((b) => ({ label: b.name, value: b._id || b.id }));
+
+  const filteredSellers = sellers.filter((seller) => {
+    if (!searchTerm) return true;
+    const q = searchTerm.toLowerCase();
+    return (
+      seller.name.toLowerCase().includes(q) ||
+      (seller.email || "").toLowerCase().includes(q) ||
+      (seller.phone || "").toLowerCase().includes(q)
+    );
+  });
 
   const [confirmInfo, setConfirmInfo] = useState({ isOpen: false, sellerId: null });
-
-  const handleDeleteSeller = (id) => {
-    setSellers(sellers.filter((s) => s.id !== id));
-  };
 
   const confirmDeleteSeller = (id) => {
     setConfirmInfo({ isOpen: true, sellerId: id });
@@ -106,9 +80,9 @@ function Sellers() {
   };
 
   const handleConfirm = () => {
-    if (confirmInfo.sellerId != null) {
-      handleDeleteSeller(confirmInfo.sellerId);
-    }
+    // Current delete logic is placeholder since it's only "list view" requested
+    // But we could implement delete if needed later
+    toast.info("Delete functionality not implemented yet");
     handleConfirmClose();
   };
 
@@ -133,81 +107,96 @@ function Sellers() {
             options={branchOptions}
             value={selectedBranch}
             onChange={(e) => setSelectedBranch(e.target.value)}
-            placeholder="All Branches"
+            placeholder={fetchingBranches ? "Loading branches..." : "All Branches"}
+            disabled={fetchingBranches}
           />
         </div>
         <div className="form-group" style={{ marginBottom: "1rem" }}>
           <input
             type="text"
             className="form-control"
-            placeholder="Search sellers…"
+            placeholder="Search sellers by name, email or phone…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <div className="card-list">
-          {filteredSellers.map((seller) => (
-            <div key={seller.id} className="data-card">
-              <div className="data-card-header">
-                <div>
-                  <div className="data-card-title">{seller.name}</div>
-                  <div className="data-card-subtitle">{seller.branch}</div>
-                </div>
-                <div style={{ display: "flex", gap: "6px" }}>
-                  <button
-                    className="icon-btn edit"
-                    title="Edit Seller"
-                    // onClick={() => handleEditSeller(seller)}
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    className="icon-btn delete"
-                    title="Delete Seller"
-                    onClick={() => confirmDeleteSeller(seller.id)}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-              <div className="data-card-body">
-                {/* <div className="data-row">
-                  <span className="data-label">
-                   Email:
-                  </span>
-                  <span className="data-value">{seller.email}</span>
-                </div> */}
-               
-                <div className="data-row">
-                  <span className="data-label">Location</span>
-                  <span className="data-value">
-                    {[seller.city, seller.state]
-                      .filter(Boolean)
-                      .join(", ") || seller.address || "N/A"}
-                  </span>
-                </div>
-                <div className="data-row">
-                  <span className="data-label">Login Access</span>
-                  <span
-                    className={`data-value badge ${
-                      seller.status === "inactive" ? "badge-error" : "badge-success"
-                    }`}
-                  >
-                    {seller.status === "inactive" ? "Disabled" : "Enabled"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {filteredSellers.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-state-icon">👥</div>
-            <p>No sellers found for the selected branch.</p>
+        {loading ? (
+          <div className="loading-state" style={{ textAlign: "center", padding: "3rem" }}>
+            <Loader2 className="animate-spin" size={40} style={{ margin: "0 auto", color: "#F39C12" }} />
+            <p style={{ marginTop: "1rem" }}>Fetching sellers...</p>
           </div>
+        ) : (
+          <>
+            <div className="card-list">
+              {filteredSellers.map((seller) => (
+                <div key={seller.id} className="data-card">
+                  <div className="data-card-header">
+                    <div>
+                      <div className="data-card-title">{seller.name}</div>
+                      <div className="data-card-subtitle">{seller.branch}</div>
+                    </div>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button
+                        className="icon-btn edit"
+                        title="Edit Seller"
+                        disabled
+                        style={{ opacity: 0.5, cursor: "not-allowed" }}
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        className="icon-btn delete"
+                        title="Delete Seller"
+                        onClick={() => confirmDeleteSeller(seller.id)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="data-card-body">
+                    <div className="data-row">
+                      <span className="data-label">Contact</span>
+                      <span className="data-value">{seller.phone || "N/A"}</span>
+                    </div>
+                    {seller.email && (
+                      <div className="data-row">
+                        <span className="data-label">Email</span>
+                        <span className="data-value">{seller.email}</span>
+                      </div>
+                    )}
+                    <div className="data-row">
+                      <span className="data-label">Location</span>
+                      <span className="data-value">
+                        {[seller.city, seller.state]
+                          .filter(Boolean)
+                          .join(", ") || seller.address || "N/A"}
+                      </span>
+                    </div>
+                    <div className="data-row">
+                      <span className="data-label">Status</span>
+                      <span
+                        className={`data-value badge ${
+                          seller.status === "inactive" ? "badge-error" : "badge-success"
+                        }`}
+                      >
+                        {seller.status === "inactive" ? "Disabled" : "Enabled"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {filteredSellers.length === 0 && (
+              <div className="empty-state" style={{ textAlign: "center", padding: "3rem" }}>
+                <div className="empty-state-icon" style={{ fontSize: "3rem", marginBottom: "1rem" }}>👥</div>
+                <p>No sellers found.</p>
+              </div>
+            )}
+          </>
         )}
+
         <ConfirmationModal
           isOpen={confirmInfo.isOpen}
           onClose={handleConfirmClose}
