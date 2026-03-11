@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Phone, Mail, Pencil, Trash2 } from "lucide-react";
 import ConfirmationModal from "../../components/Common/ConfirmationModal";
+import SearchableSelect from "../../components/Common/SearchableSelect";
 
 function Buyers() {
   const [selectedBranch, setSelectedBranch] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const branches = [
     { id: "all", name: "All Branches" },
@@ -11,6 +13,8 @@ function Buyers() {
     { id: "2", name: "Branch 2" },
     { id: "3", name: "Branch 3" },
   ];
+
+  const branchOptions = branches.map((b) => ({ label: b.name, value: b.id }));
 
   const buyers = [
     {
@@ -75,14 +79,21 @@ function Buyers() {
     },
   ];
 
-  const filteredBuyers =
-    selectedBranch === "all"
-      ? buyers
-      : buyers.filter(
-          (buyer) =>
-            buyer.branch ===
-            branches.find((b) => b.id === selectedBranch)?.name,
-        );
+  const filteredBuyers = buyers
+    .filter((buyer) => {
+      if (selectedBranch === "all") return true;
+      return (
+        buyer.branch === branches.find((b) => b.id === selectedBranch)?.name
+      );
+    })
+    .filter((buyer) => {
+      if (!searchTerm) return true;
+      const q = searchTerm.toLowerCase();
+      return (
+        buyer.name.toLowerCase().includes(q) ||
+        (buyer.email || "").toLowerCase().includes(q)
+      );
+    });
 
   const [confirmInfo, setConfirmInfo] = useState({ isOpen: false, buyerId: null });
 
@@ -121,17 +132,22 @@ function Buyers() {
       <div className="content-body">
         <div className="form-group" style={{ marginBottom: "1rem" }}>
           <label className="form-label">Select Branch</label>
-          <select
-            className="form-control"
+          <SearchableSelect
+            name="branch"
+            options={branchOptions}
             value={selectedBranch}
             onChange={(e) => setSelectedBranch(e.target.value)}
-          >
-            {branches.map((branch) => (
-              <option key={branch.id} value={branch.id}>
-                {branch.name}
-              </option>
-            ))}
-          </select>
+            placeholder="All Branches"
+          />
+        </div>
+        <div className="form-group" style={{ marginBottom: "1rem" }}>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search buyers…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
 
         <div className="card-list">
