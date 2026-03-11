@@ -88,3 +88,28 @@ export const mainVendorChangePassword = async (data) => {
     throw error;
   }
 };
+
+export const getMainVendorSellers = async (params) => {
+  try {
+    const response = await api.get("/main-vendor/sellers", { params });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const getMainVendorBranches = async () => {
+  try {
+    const response = await api.get("/main-vendor/branches");
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+

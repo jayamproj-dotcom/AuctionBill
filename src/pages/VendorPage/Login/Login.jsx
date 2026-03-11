@@ -156,7 +156,8 @@ const VendorLogin = () => {
         <form onSubmit={handleManualLogin} className="login-form">
           <div className="form-group">
             <label>
-              {loginType === "main" ? "Email Address" : "Branch Email"}
+              {/* {loginType === "main" ? "Email Address" : "Branch Email"} */}
+              Email Address
             </label>
             <div className="input-container">
               <Mail size={18} className="input-icon" />
@@ -165,11 +166,12 @@ const VendorLogin = () => {
                 name="identifier"
                 value={credentials.identifier}
                 onChange={handleChange}
-                placeholder={
-                  loginType === "main"
-                    ? "Enter email address"
-                    : "Enter branch email"
-                }
+                // placeholder={
+                //   loginType === "main"
+                //     ? "Enter email address"
+                //     : "Enter branch email"
+                // }
+                placeholder="Enter email address"
                 required
               />
             </div>

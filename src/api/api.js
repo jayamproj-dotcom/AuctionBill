@@ -16,11 +16,13 @@ api.interceptors.request.use(
         let token = null;
 
         const currentPath = window.location.pathname;
-        const isSaaSContext = currentPath.includes('/saas');
+        const isSaaSContext = currentPath.includes('/saas') && !currentPath.includes('/mainvendor');
+        const isMainVendorContext = currentPath.includes('/mainvendor');
+        const isVendorContext = currentPath.includes('/vendor') && !currentPath.includes('/mainvendor');
 
         if (isSaaSContext) {
             token = state.saasAuth?.adminToken || sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token');
-        } else if (currentPath.includes('/vendor')) {
+        } else if (isMainVendorContext || isVendorContext) {
             token = state.vendorAuth?.vendorToken || sessionStorage.getItem('vendorToken') || localStorage.getItem('token') || sessionStorage.getItem('token');
         }
 
