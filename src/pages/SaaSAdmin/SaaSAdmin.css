@@ -758,7 +758,7 @@ body.saas-admin-active {
 
   .saas-mobile-cards-view {
     display: block !important;
-    padding: 1rem;
+    /* padding: 1rem; */
   }
 
   /* Force table container to not scroll horizontally */
@@ -778,26 +778,26 @@ body.saas-admin-active {
 }
 
 /* Responsive Table Toggle at 1100px (for Sub-Admin Management) */
-.saas-mobile-cards-view-1100 {
+.saas-mobile-cards-view-550 {
   display: none;
   background-color: #f8fafc;
 }
 
-@media (max-width: 1100px) {
-  .saas-desktop-only-1100 {
+@media (max-width: 550px) {
+  .saas-desktop-only-550 {
     display: none !important;
   }
 
-  .saas-mobile-cards-view-1100 {
+  .saas-mobile-cards-view-550 {
     display: block !important;
-    padding: 1.25rem;
+    /* padding: 1.25rem; */
   }
 
-  .subAdminTableCard {
+  /* .subAdminTableCard {
     background-color: transparent !important;
     border: none !important;
     box-shadow: none !important;
-  }
+  } */
 
   .saas-table-container {
     overflow-x: hidden !important;
@@ -817,7 +817,7 @@ body.saas-admin-active {
 
   .saas-mobile-cards-view-480 {
     display: block !important;
-    padding: 1rem;
+    /* padding: 1rem; */
   }
 }
 
@@ -1584,10 +1584,10 @@ body.saas-admin-active {
   gap: 5px;
 }
 
-.subAdminTableCard {
+/* .subAdminTableCard {
   padding: 0;
   overflow: hidden;
-}
+} */
 
 .subAdminTable {
   width: 100%;
@@ -2998,7 +2998,7 @@ body.saas-admin-active {
   .saas-select,
   .saas-textarea {
     font-size: 0.82rem;
-    padding: 0.55rem 0.75rem;
+    padding: 0.55rem 2rem;
   }
   .saas-label {
     font-size: 0.82rem;
@@ -3247,7 +3247,7 @@ body.saas-admin-active {
   .saas-select,
   .saas-textarea {
     font-size: 0.78rem;
-    padding: 0.5rem 0.65rem;
+    padding: 0.5rem 2rem;
   }
   .saas-input-padded {
     padding-left: 36px;

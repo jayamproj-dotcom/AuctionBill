@@ -33,6 +33,17 @@ const VendorManagement = () => {
   const [plans, setPlans] = useState([]);
   const { saasRole, saasPermissions } = useSelector((state) => state.saasAuth);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 550);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 550);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const isSubAdmin = saasRole === "sub-admin" || saasRole === "subadmin";
   const canManageVendors =
     !isSubAdmin ||
@@ -534,8 +545,6 @@ const VendorManagement = () => {
                   className="saas-input"
                 />
               </div>
-
-              
             </div>
             <div className="saas-modal-footer">
               <button
@@ -702,9 +711,9 @@ const VendorManagement = () => {
         </div>
       </div>
 
-      <div className="saas-card subAdminTableCard">
+      <div className={isMobile ? "subAdminTableCard" : "saas-card"}>
         <div className="saas-table-container">
-          <table className="saas-table subAdminTable saas-desktop-only">
+          <table className="saas-table  subAdminTable saas-desktop-only">
             <thead className="subAdminTableHeader">
               <tr>
                 <th>Main Vendor Name</th>
@@ -1364,25 +1373,6 @@ const VendorManagement = () => {
                     </label>
                     <div className="saas-font-medium">
                       {formatDate(selectedVendor.planEndDate)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Analytics Preview */}
-              <div>
-                <h4 className="saas-profile-header">Performance Overview</h4>
-                <div className="inner-grid-2">
-                  <div className="saas-stat-card saas-p-1">
-                    <span className="saas-stat-label">Total Auctions</span>
-                    <div className="saas-stat-value saas-text-xl">
-                      {selectedVendor.totalAuctions}
-                    </div>
-                  </div>
-                  <div className="saas-stat-card saas-p-1">
-                    <span className="saas-stat-label">Total Revenue</span>
-                    <div className="saas-stat-value saas-text-xl">
-                      {selectedVendor.revenue}
                     </div>
                   </div>
                 </div>

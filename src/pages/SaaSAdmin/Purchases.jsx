@@ -9,6 +9,17 @@ const Purchases = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 550);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 550);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   useEffect(() => {
     const fetchPurchases = async () => {
       try {
@@ -103,7 +114,7 @@ const Purchases = () => {
         </div>
       </div>
 
-      <div className="saas-card subAdminTableCard">
+      <div className={isMobile ? "subAdminTableCard" : "saas-card"}>
         <div className="saas-table-container">
           <table className="saas-table subAdminTable saas-desktop-only-480">
             <thead className="subAdminTableHeader">
