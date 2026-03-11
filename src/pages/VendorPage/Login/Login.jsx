@@ -247,14 +247,16 @@ const VendorLogin = () => {
           />
         </div> */}
 
-        <div className="login-footer">
-          <p className="signup-link-text">
-            Don't have an account?{" "}
-            <Link to="/signup" className="signup-link">
-              Request Main Vendor Access
-            </Link>
-          </p>
-        </div>
+        {loginType === "main" && (
+          <div className="login-footer">
+            <p className="signup-link-text">
+              Don't have an account?{" "}
+              <Link to="/signup" className="signup-link">
+                Request Main Vendor Access
+              </Link>
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
