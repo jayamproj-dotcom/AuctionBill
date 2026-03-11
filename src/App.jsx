@@ -13,7 +13,6 @@ import History from "./components/History/History.jsx";
 import SellerDetails from "./components/SellerDetails/SellerDetails.jsx";
 import BuyerDetails from "./components/BuyerDetails/BuyerDetails.jsx";
 import CommissionRecord from "./components/CommissionRecord/CommissionRecord.jsx";
-import Manage from "./components/Manage/Manage.jsx";
 import PendingProducts from "./components/PendingProducts/PendingProducts.jsx";
 import Billing from "./components/Billing/Billing.jsx";
 import SaaSLayout from "./pages/SaaSAdmin/SaaSLayout.jsx";
