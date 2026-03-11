@@ -177,18 +177,7 @@ function History() {
       <div className="content-header">
         <div className="header-top">
           <h1>History</h1>
-          <div className="header-actions">
-            <button
-              className="btn btn-outline btn-sm"
-              title="Download Report"
-              disabled
-            >
-              <span>
-                <Download size={18} />
-              </span>
-              Download
-            </button>
-          </div>
+         
         </div>
         <div className="breadcrumb">
           <span>Home</span>
