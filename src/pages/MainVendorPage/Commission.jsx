@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { HandCoins } from "lucide-react";
+import { HandCoins,Search,Filter } from "lucide-react";
+import SearchableSelect from "../../components/Common/SearchableSelect";
 
 function Commission() {
   const [selectedBranch, setSelectedBranch] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const branches = [
     { id: "all", name: "All Branches" },
@@ -10,6 +12,8 @@ function Commission() {
     { id: "2", name: "Branch 2" },
     { id: "3", name: "Branch 3" },
   ];
+
+  const branchOptions = branches.map((b) => ({ label: b.name, value: b.id }));
 
   const commissions = [
     {
@@ -69,13 +73,21 @@ function Commission() {
     },
   ];
 
-  const filteredCommissions =
+  const filteredCommissions = commissions
+  .filter((comm) =>
     selectedBranch === "all"
-      ? commissions
-      : commissions.filter(
-          (comm) =>
-            comm.branch === branches.find((b) => b.id === selectedBranch)?.name,
-        );
+      ? true
+      : comm.branch === branches.find((b) => b.id === selectedBranch)?.name
+  )
+  .filter((comm) => {
+    if (!searchTerm) return true;
+    const q = searchTerm.toLowerCase();
+    return (
+      comm.productName.toLowerCase().includes(q) ||
+      comm.seller.toLowerCase().includes(q) ||
+      comm.buyer.toLowerCase().includes(q)
+    );
+  });
 
   const totalCommission = filteredCommissions.reduce(
     (sum, comm) => sum + comm.amount,
@@ -96,32 +108,61 @@ return (
       <div className="content-body">
         <div className="form-group" style={{ marginBottom: "1rem" }}>
           <label className="form-label">Select Branch</label>
-          <select
-            className="form-control"
+          <SearchableSelect
+            name="branch"
+            options={branchOptions}
             value={selectedBranch}
             onChange={(e) => setSelectedBranch(e.target.value)}
-          >
-            {branches.map((branch) => (
-              <option key={branch.id} value={branch.id}>
-                {branch.name}
-              </option>
-            ))}
-          </select>
+            placeholder="All Branches"
+          />
         </div>
 
+       
         <div className="stats-grid" style={{ marginBottom: "1rem" }}>
-          <div className="stat-card">
-            <div className="stat-header">
-              <div className="stat-icon bg-yellow-500">
-                <HandCoins />
-              </div>
-              <div className="stat-value">
-                ₹{totalCommission.toLocaleString()}
-              </div>
-            </div>
-            <div className="stat-label">Total Commission</div>
-          </div>
-        </div>
+  <div className="stat-card">
+    <div className="stat-header">
+      <div className="stat-icon bg-yellow-500">
+        <HandCoins />
+      </div>
+      <div className="stat-value">
+        ₹{totalCommission.toLocaleString()}
+      </div>
+    </div>
+    <div className="stat-label">Total Commission</div>
+  </div>
+</div>
+
+{/* Search + Filter Row — same as History */}
+<div className="card fade-in cr-filter-card" style={{ marginBottom: "1rem" }}>
+  <div className="cr-filter-row">
+    <div className="cr-search-wrap">
+      <Search size={15} className="cr-search-icon" />
+      <input
+        type="text"
+        className="cr-search-input"
+        placeholder="Search product, seller, buyer…"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+    </div>
+    <div className="cr-controls">
+      <div className="cr-select-wrap">
+        <Filter size={13} className="cr-select-icon" />
+        <select
+          value={selectedBranch}
+          onChange={(e) => setSelectedBranch(e.target.value)}
+          className="cr-select"
+        >
+          {branches.map((b) => (
+            <option key={b.id} value={b.id}>{b.name}</option>
+          ))}
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 
         <div className="section-header cr-section-header">
           <h3 className="section-title">Commission Details</h3>

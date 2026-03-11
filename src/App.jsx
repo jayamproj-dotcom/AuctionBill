@@ -44,9 +44,9 @@ import MainVendorHistory from "./pages/MainVendorPage/MainVendorHistory.jsx";
 import Profile from "./pages/MainVendorPage/Profile.jsx";
 
 function App() {
-  // Global safety check for corrupted localStorage data
+ 
   useEffect(() => {
-    getAuctionData(); // This will trigger the healing/fallback logic in the utility
+    getAuctionData();
 
     const handleWheel = () => {
       if (document.activeElement.type === "number") {

@@ -52,7 +52,7 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const { config } = error;
-        
+
         // If config does not exist or retry option is not set, reject
         if (!config || config.retryCount >= RETRY_COUNT) {
             return Promise.reject(error);
@@ -60,16 +60,16 @@ api.interceptors.response.use(
 
         // Only retry on network errors or 5xx server errors
         const shouldRetry = !error.response || (error.response.status >= 500 && error.response.status <= 599);
-        
+
         if (!shouldRetry) {
             return Promise.reject(error);
         }
 
         config.retryCount = (config.retryCount || 0) + 1;
-        
+
         // Wait before retrying
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * config.retryCount));
-        
+
         console.log(`Retrying request (${config.retryCount}/${RETRY_COUNT})...`);
         return api(config);
     }

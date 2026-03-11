@@ -1,8 +1,14 @@
 import React, { useState } from "react";
 import { History as HistoryIcon, Calendar, PackageSearch } from "lucide-react";
+import SearchableSelect from "../../components/Common/SearchableSelect";
 
 function History() {
   const [selectedBranch, setSelectedBranch] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
 
   const branches = [
     { id: "all", name: "All Branches" },
@@ -10,6 +16,7 @@ function History() {
     { id: "2", name: "Branch 2" },
     { id: "3", name: "Branch 3" },
   ];
+  const branchOptions = branches.map((b) => ({ label: b.name, value: b.id }));
 
   const history = [
     {
@@ -89,13 +96,60 @@ function History() {
     },
   ];
 
-  const filteredHistory =
-    selectedBranch === "all"
-      ? history
-      : history.filter(
-          (item) =>
-            item.branch === branches.find((b) => b.id === selectedBranch)?.name,
-        );
+  const getDateRange = (filter) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const next = (d) => new Date(d.getTime() + 24 * 60 * 60 * 1000);
+
+    switch (filter) {
+      case "today":
+        return { start: today, end: next(today) };
+      case "yesterday":
+        const y = new Date(today);
+        y.setDate(y.getDate() - 1);
+        return { start: y, end: today };
+      case "week":
+        const w = new Date(today);
+        w.setDate(w.getDate() - 7);
+        return { start: w, end: next(today) };
+      case "month":
+        const m = new Date(today);
+        m.setDate(1);
+        return { start: m, end: next(today) };
+      case "year":
+        return { start: new Date(today.getFullYear(), 0, 1), end: next(today) };
+      case "custom":
+        const c = new Date(customDate);
+        c.setHours(0, 0, 0, 0);
+        return { start: c, end: next(c) };
+      default:
+        return null;
+    }
+  };
+
+  const filteredHistory = history
+    .filter((item) => {
+      if (selectedBranch === "all") return true;
+      return (
+        item.branch === branches.find((b) => b.id === selectedBranch)?.name
+      );
+    })
+    .filter((item) => {
+      if (!searchTerm) return true;
+      const q = searchTerm.toLowerCase();
+      return (
+        item.productName.toLowerCase().includes(q) ||
+        item.sellerName.toLowerCase().includes(q) ||
+        item.buyerName.toLowerCase().includes(q)
+      );
+    })
+    .filter((item) => {
+      if (dateFilter === "all") return true;
+      const range = getDateRange(dateFilter);
+      if (!range) return true;
+      const d = new Date(item.date);
+      return d >= range.start && d < range.end;
+    });
 
   return (
     <div className="history">
@@ -113,18 +167,88 @@ function History() {
       <div className="content-body">
         <div className="form-group" style={{ marginBottom: "1rem" }}>
           <label className="form-label">Select Branch</label>
-          <select
-            className="form-control"
+          <SearchableSelect
+            name="branch"
+            options={branchOptions}
             value={selectedBranch}
             onChange={(e) => setSelectedBranch(e.target.value)}
-          >
-            {branches.map((branch) => (
-              <option key={branch.id} value={branch.id}>
-                {branch.name}
-              </option>
-            ))}
-          </select>
+            placeholder="All Branches"
+          />
         </div>
+       <div style={{
+  display: "flex",
+  alignItems: "center",
+  border: "1px solid var(--border-color)",
+  borderRadius: "var(--radius-md)",
+  overflow: "hidden",
+  marginBottom: "1rem",
+  background: "var(--bg-card)",
+}}>
+  {/* Search */}
+  <div style={{ display: "flex", alignItems: "center", flex: 1, padding: "0 0.75rem", gap: "0.5rem" }}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--text-muted)", flexShrink: 0 }}>
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input
+      type="text"
+      style={{
+        border: "none",
+        outline: "none",
+        background: "transparent",
+        fontSize: "0.875rem",
+        color: "var(--text-primary)",
+        width: "100%",
+        padding: "0.75rem 0",
+      }}
+      placeholder="Search product, seller, buyer..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+    />
+  </div>
+
+  {/* Divider */}
+  <div style={{ width: "1px", height: "36px", background: "var(--border-color)" }} />
+
+  {/* Date Filter */}
+  <div style={{ display: "flex", alignItems: "center", padding: "0 0.75rem", gap: "0.5rem", flexShrink: 0 }}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--primary-amber)" }}>
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+    </svg>
+    <select
+      style={{
+        border: "none",
+        outline: "none",
+        background: "transparent",
+        fontSize: "0.875rem",
+        color: "var(--text-primary)",
+        cursor: "pointer",
+        padding: "0.75rem 0",
+      }}
+      value={dateFilter}
+      onChange={(e) => setDateFilter(e.target.value)}
+    >
+      <option value="all">All Time</option>
+      <option value="today">Today</option>
+      <option value="yesterday">Yesterday</option>
+      <option value="week">This Week</option>
+      <option value="month">This Month</option>
+      <option value="year">This Year</option>
+      <option value="custom">Custom Date</option>
+    </select>
+  </div>
+</div>
+
+{dateFilter === "custom" && (
+  <div className="form-group" style={{ marginBottom: "1rem" }}>
+    <input
+      type="date"
+      className="form-control"
+      value={customDate}
+      onChange={(e) => setCustomDate(e.target.value)}
+      max={new Date().toISOString().split("T")[0]}
+    />
+  </div>
+)}
 
         <div className="section-header section-header-margin">
           <h3 className="section-title">
