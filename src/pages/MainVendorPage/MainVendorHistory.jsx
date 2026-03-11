@@ -6,10 +6,11 @@ import {
   getMainVendorHistory,
 } from "../../api/mainVendorApi";
 
+
 function History() {
   const [selectedBranch, setSelectedBranch] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateFilter, setDateFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("today");
   const [customDate, setCustomDate] = useState(
     new Date().toISOString().split("T")[0],
   );
@@ -138,27 +139,9 @@ function History() {
             placeholder="All Branches"
           />
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            border: "1px solid var(--border-color)",
-            borderRadius: "var(--radius-md)",
-            overflow: "hidden",
-            marginBottom: "1rem",
-            background: "var(--bg-card)",
-          }}
-        >
+        <div className="mvh-filter-bar">
           {/* Search */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              flex: 1,
-              padding: "0 0.75rem",
-              gap: "0.5rem",
-            }}
-          >
+          <div className="mvh-search-wrap">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="16"
@@ -176,15 +159,7 @@ function History() {
             </svg>
             <input
               type="text"
-              style={{
-                border: "none",
-                outline: "none",
-                background: "transparent",
-                fontSize: "0.875rem",
-                color: "var(--text-primary)",
-                width: "100%",
-                padding: "0.75rem 0",
-              }}
+              className="mvh-search-input"
               placeholder="Search product, seller, buyer..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -192,24 +167,10 @@ function History() {
           </div>
 
           {/* Divider */}
-          <div
-            style={{
-              width: "1px",
-              height: "36px",
-              background: "var(--border-color)",
-            }}
-          />
+          <div className="mvh-divider" />
 
           {/* Date Filter */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "0 0.75rem",
-              gap: "0.5rem",
-              flexShrink: 0,
-            }}
-          >
+          <div className="mvh-date-wrap">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="14"
@@ -225,15 +186,7 @@ function History() {
               <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
             </svg>
             <select
-              style={{
-                border: "none",
-                outline: "none",
-                background: "transparent",
-                fontSize: "0.875rem",
-                color: "var(--text-primary)",
-                cursor: "pointer",
-                padding: "0.75rem 0",
-              }}
+              className="mvh-date-select"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
             >
@@ -278,18 +231,18 @@ function History() {
         </div>
 
         <div className="fade-in" style={{ padding: 0, overflow: "hidden" }}>
-          <div className="table-responsive">
-            <table className="data-table hs-data-table hs-table">
+          <div className="mvh-table-wrapper">
+            <table className="mvh-table">
               <thead className="bg-tertiary">
                 <tr>
-                  <th className="hs-th">Date</th>
-                  <th className="hs-th">Product</th>
-                  <th className="hs-th">Seller</th>
-                  <th className="hs-th">Buyer</th>
-                  <th className="hs-th hs-num-col">Qty</th>
-                  <th className="hs-th hs-num-col">Total</th>
-                  <th className="hs-th hs-num-col">Comm.</th>
-                  <th className="hs-th hs-num-col">Net</th>
+                  <th className="mvh-th">Date</th>
+                  <th className="mvh-th">Product</th>
+                  <th className="mvh-th">Seller</th>
+                  <th className="mvh-th">Buyer</th>
+                  <th className="mvh-th mvh-num-col">Qty</th>
+                  <th className="mvh-th mvh-num-col">Total</th>
+                  <th className="mvh-th mvh-num-col">Comm.</th>
+                  
                 </tr>
               </thead>
               <tbody>
@@ -310,33 +263,29 @@ function History() {
                   </tr>
                 ) : (
                   history.map((t) => (
-                    <tr key={t.id} className="hs-tr">
-                      <td className="hs-td">
+                    <tr key={t.id} className="mvh-tr">
+                      <td className="mvh-td">
                         <span className="cr-date-badge">{t.date}</span>
                       </td>
-                      <td className="hs-td">
+                      <td className="mvh-td">
                         <div className="font-semibold text-primary">
                           {t.productName}
                         </div>
                         {t.branch && <small className="text-muted">{t.branch}</small>}
                       </td>
-                      <td className="hs-td">{t.sellerName}</td>
-                      <td className="hs-td">{t.buyerName}</td>
-                      <td className="hs-td hs-num-col">
+                      <td className="mvh-td">{t.sellerName}</td>
+                      <td className="mvh-td">{t.buyerName}</td>
+                      <td className="mvh-td mvh-num-col">
                         <span className="hs-qty-text">{t.quantity}</span>
                         {t.unit && <small className="text-muted ml-1">{t.unit}</small>}
                       </td>
-                      <td className="hs-td hs-num-col">
+                      <td className="mvh-td mvh-num-col">
                         <span className="font-bold">
                           ₹{((t.totalAmount !== undefined ? t.totalAmount : t.finalAmount) || 0).toLocaleString()}
                         </span>
-                        {t.rate !== undefined && (
-                          <div style={{ fontSize: "0.75rem", marginTop: "2px" }} className="text-muted">
-                            @ ₹{t.rate}
-                          </div>
-                        )}
+                        
                       </td>
-                      <td className="hs-td hs-num-col">
+                      <td className="mvh-td mvh-num-col">
                         <span className="text-amber">
                           ₹{(t.commissionAmount || 0).toLocaleString()}
                         </span>
@@ -349,11 +298,7 @@ function History() {
                           </div>
                         )}
                       </td>
-                      <td className="hs-td hs-num-col">
-                        <span className="text-success font-bold">
-                          ₹{(t.netAmount || 0).toLocaleString()}
-                        </span>
-                      </td>
+                      
                     </tr>
                   ))
                 )}

@@ -828,3 +828,193 @@ a .stat-card:hover {
 select.form-control {
     cursor: pointer;
 }
+/* MainVendorHistory.css */
+
+/* ─────────────────────────────────────────────────────────────────
+   1. SEARCH & FILTER RESPONSIVE (Prevents Page Horizontal Scroll)
+───────────────────────────────────────────────────────────────── */
+.mvh-filter-bar {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 1rem;
+    background: var(--bg-card);
+    flex-wrap: wrap; 
+}
+
+.mvh-search-wrap {
+    display: flex;
+    align-items: center;
+    flex: 1 1 200px;
+    padding: 0 0.75rem;
+    gap: 0.5rem;
+}
+
+.mvh-search-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    width: 100%;
+    padding: 0.75rem 0;
+}
+
+.mvh-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--border-color);
+}
+
+.mvh-date-wrap {
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.mvh-date-select {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 0.75rem 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   2. RESPONSIVE TABLE (Stops horizontal scroll on the table)
+───────────────────────────────────────────────────────────────── */
+.mvh-table-wrapper {
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-card);
+}
+
+.mvh-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.mvh-th {
+    padding: 12px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
+    text-align: left;
+    background-color: var(--bg-tertiary);
+}
+
+.mvh-td {
+    padding: 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mvh-tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.mvh-tr:hover {
+    background-color: var(--bg-hover);
+}
+
+.mvh-num-col {
+    text-align: right;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   3. MOBILE CARD VIEW (max-width: 650px)
+───────────────────────────────────────────────────────────────── */
+@media (max-width: 650px) {
+    /* Hide dividers on mobile so they stack cleanly */
+    .mvh-divider {
+        display: none;
+    }
+    
+    .mvh-date-wrap,
+    .mvh-search-wrap {
+        width: 100%;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .mvh-date-wrap {
+        border-bottom: none;
+    }
+
+    /* Convert Table to Cards */
+    .mvh-table,
+    .mvh-table thead,
+    .mvh-table tbody,
+    .mvh-table th,
+    .mvh-table td,
+    .mvh-table tr {
+        display: block;
+    }
+
+    .mvh-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .mvh-table tr.mvh-tr {
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: 12px;
+        background-color: var(--bg-secondary);
+        border-radius: 10px;
+        padding: 4px 0;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .mvh-table td.mvh-td {
+        border: none;
+        border-bottom: 1px dashed var(--border-color);
+        position: relative;
+        padding-left: 45%;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        text-align: right;
+        min-height: 40px;
+    }
+
+    .mvh-table td.mvh-td:last-child {
+        border-bottom: none;
+    }
+
+    .mvh-table td.mvh-td::before {
+        position: absolute;
+        top: 10px;
+        left: 12px;
+        width: 40%;
+        padding-right: 8px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    /* Label generation for the 7 columns */
+    .mvh-table td.mvh-td:nth-of-type(1)::before { content: "Date"; }
+    .mvh-table td.mvh-td:nth-of-type(2)::before { content: "Product"; }
+    .mvh-table td.mvh-td:nth-of-type(3)::before { content: "Seller"; }
+    .mvh-table td.mvh-td:nth-of-type(4)::before { content: "Buyer"; }
+    .mvh-table td.mvh-td:nth-of-type(5)::before { content: "Qty"; }
+    .mvh-table td.mvh-td:nth-of-type(6)::before { content: "Total"; }
+    .mvh-table td.mvh-td:nth-of-type(7)::before { content: "Comm."; }
+
+    .mvh-num-col {
+        text-align: right !important;
+    }
+}
