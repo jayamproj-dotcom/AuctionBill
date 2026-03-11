@@ -198,7 +198,7 @@ function AddProduct() {
                         <div className="search-icon-container">
                             <input
                                 type="text"
-                                placeholder="Search by product name or variety..."
+                                placeholder="Search by product name"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="search-input"

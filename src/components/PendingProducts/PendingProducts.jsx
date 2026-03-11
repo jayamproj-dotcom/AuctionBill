@@ -165,7 +165,7 @@ function PendingProducts() {
                         <div className="search-icon-container">
                             <input
                                 type="text"
-                                placeholder="Search by product, seller, or variant..."
+                                placeholder="Search by product, seller"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="search-input"
