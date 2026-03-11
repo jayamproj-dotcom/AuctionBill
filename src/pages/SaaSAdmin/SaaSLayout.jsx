@@ -167,7 +167,7 @@ const SaaSLayout = () => {
 
   const handleLogout = () => {
     dispatch(clearSaasAuthData());
-    navigate("/saas-admin");
+    navigate("/auctionbilling/saas-admin");
   };
 
   const isSubAdmin = saasRole === "sub-admin" || saasRole === "subadmin";
