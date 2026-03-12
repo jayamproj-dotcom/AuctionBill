@@ -289,7 +289,7 @@ function MainVendorDashboard() {
         {/* Recent Transactions - Mirroring vendor dashboard UI */}
         <div className="section-header section-margin-top">
           <h3 className="section-title">
-            {selectedBranch === "all" ? "Global" : `${branches.find(b => b.id === selectedBranch)?.name || 'Branch'}`} Transactions ({getFilterLabel()})
+            {selectedBranch === "all" ? "" : `${branches.find(b => b.id === selectedBranch)?.name || 'Branch'}`} Transactions ({getFilterLabel()})
           </h3>
         </div>
 
