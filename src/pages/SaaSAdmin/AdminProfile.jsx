@@ -272,17 +272,16 @@ const AdminProfile = () => {
         <div className="saas-modal-content">
 
           <div className="saas-text-center saas-mb-30">
-            {/* <div 
-               className="saas-settings-profile-photo"
-               style={{ backgroundImage: settings.adminPhoto ? `url(${settings.adminPhoto})` : 'none' }}
-               onClick={triggerFileInput}
-             >
-                {!settings.adminPhoto && "SA"}
-                
-                <div className="saas-settings-camera-icon">
-                  <Camera size={14} />
-                </div>
-             </div> */}
+            {/* When uncommented: use img for photo (no inline style needed)
+               {settings.adminPhoto ? (
+                 <img src={settings.adminPhoto} alt="Profile" className="saas-settings-profile-photo-img" onClick={triggerFileInput} />
+               ) : (
+                 <div className="saas-settings-profile-photo" onClick={triggerFileInput}>
+                   SA
+                   <div className="saas-settings-camera-icon"><Camera size={14} /></div>
+                 </div>
+               )}
+             */}
 
             {/* <input
               type="file"

@@ -368,42 +368,6 @@ const SubscriptionManagement = () => {
         cancelText="Cancel"
         variant="danger"
       />
-
-      {/* <div className="saas-card saas-mt-15">
-        <div className="saas-card-header">
-          <h3 className="saas-text-lg saas-font-semibold">Recent Subscription Payments</h3>
-          <button className="saas-btn btn-sm btn-outline">Export Report</button>
-        </div>
-        <div className="saas-table-container">
-          <table className="saas-table">
-            <thead>
-              <tr>
-                <th>Vendor</th>
-                <th>Plan</th>
-                <th>Amount</th>
-                <th>Date</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Royal Auctions</td>
-                <td>Premium</td>
-                <td>₹2,499</td>
-                <td>2026-02-01  </td>
-                <td><span className="saas-badge badge-success">Success</span></td>
-              </tr>
-              <tr>
-                <td>Heritage Bids</td>
-                <td>Basic</td>
-                <td>₹999</td>
-                <td>2026-02-05</td>
-                <td><span className="saas-badge badge-success">Success</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div> */}
     </div>
   );
 };

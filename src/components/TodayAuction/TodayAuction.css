@@ -288,7 +288,7 @@
   }
 
   .action-buttons {
-    width: 100%;
+  
     display: flex;
     justify-content: flex-end;
   }
@@ -329,7 +329,7 @@
   }
 
   .header-actions {
-    width: 100%;
+   
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -445,6 +445,65 @@
 /* Extracted Inline Styles */
 .form-group-relative {
   position: relative;
+  z-index: 1;
+}
+
+.form-group-relative.searchable-select-z-open {
+  z-index: 9999;
+}
+
+.form-group-mt-15 {
+  margin-top: 1.5rem;
+}
+
+.variants-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.form-label-no-mb {
+  margin-bottom: 0;
+}
+
+.global-comm-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.global-comm-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.variant-comm-input-inline {
+  width: 60px;
+  padding: 2px 8px;
+}
+
+.text-primary-color {
+  color: var(--primary-color);
+}
+
+.variant-searchable-select {
+  margin: 0;
+  flex: 1;
+  min-width: 130px;
+}
+
+.form-label-mt {
+  margin-top: 1rem;
+}
+
+.temp-buyer-input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .search-card {
@@ -458,7 +517,7 @@
 
 .search-input {
   width: 100%;
-  padding: 10px 15px;
+  padding: 10px 40px 10px 15px;
   border-radius: 8px;
   border: 1px solid var(--border-color);
   background-color: var(--bg-secondary);
@@ -699,7 +758,7 @@
 }
 
 /* Responsive Table Styles */
-@media (max-width: 630px) {
+@media (max-width: 550px) {
   .custom-data-table,
   .custom-data-table thead,
   .custom-data-table tbody,
@@ -771,6 +830,40 @@
   }
   .custom-data-table td.custom-td:nth-of-type(4):before {
     content: "Actions";
+  }
+  .action-stack {
+      align-items: flex-end;
+  }
+}
+
+/* Tiny screen protection specifically for the 320px responsive issue in Today Auction */
+@media (max-width: 380px) {
+  .custom-data-table td.custom-td {
+      padding-left: 35% !important;
+  }
+  .custom-data-table td.custom-td:before {
+      width: 30% !important;
+      font-size: 0.7rem !important;
+      left: 10px !important;
+  }
+  .table-product-name {
+      font-size: 0.9rem !important;
+  }
+  .variant-inline-chip {
+      padding: 2px 6px !important;
+      font-size: 0.7rem !important;
+  }
+  .action-btn-wide {
+      padding: 6px 10px !important;
+      min-width: 70px !important;
+      font-size: 0.8rem !important;
+  }
+  .action-icon-small {
+      width: 28px !important;
+      height: 28px !important;
+  }
+  .product-variants-inline {
+      align-items: flex-end; /* Align tags to right edge like AddProduct */
   }
 }
 

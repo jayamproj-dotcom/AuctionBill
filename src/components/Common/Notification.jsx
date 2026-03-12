@@ -3,13 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
   getVendorNotifications,
-  markNotificationAsRead,
+  markNotificationAsRead as markVendorNotificationAsRead,
 } from "../../api/vendorApi";
+import { getAdminNotifications } from "../../api/adminApi";
 import "./Notification.css";
-import { Bell, Check, Trash2 } from "lucide-react";
+import { Bell, Check } from "lucide-react";
 
 const Notification = ({ expiryDate: propsExpiryDate }) => {
   const { vendorId } = useSelector((state) => state.vendorAuth);
+  const { isAdmin } = useSelector((state) => state.saasAuth);
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -17,23 +19,35 @@ const Notification = ({ expiryDate: propsExpiryDate }) => {
   const dropdownRef = useRef(null);
 
   const fetchNotifications = async () => {
-    if (vendorId) {
+    // Determine which API to use based on auth state
+    if (vendorId || isAdmin) {
       try {
-        const data = await getVendorNotifications();
+        const data = isAdmin
+          ? await getAdminNotifications()
+          : await getVendorNotifications();
+
         if (data && data.status && data.notifications) {
           const formatted = data.notifications.map((n) => {
             let icon = "🔔";
             let typeClass = "info";
+
+            // Map icons based on types
             if (n.type === "plan_upgrade") {
               icon = "⭐";
               typeClass = "success";
             } else if (n.type === "asset_upgrade") {
               icon = "💎";
               typeClass = "primary";
-            } else if (n.type === "new_registration") {
+            } else if (
+              n.type === "new_registration" ||
+              n.type === "signup_request"
+            ) {
               icon = "🎉";
               typeClass = "success";
-            } else if (n.type === "subscription_alert") {
+            } else if (
+              n.type === "subscription_alert" ||
+              n.type === "expiry_warning"
+            ) {
               icon = "⚠️";
               typeClass = "warning";
             } else if (n.type === "other") {
@@ -41,22 +55,35 @@ const Notification = ({ expiryDate: propsExpiryDate }) => {
               typeClass = "info";
             }
 
-            if (n.title === "Subscription Expired") {
+            if (
+              n.title === "Subscription Expired" ||
+              n.title?.includes("Expired")
+            ) {
               icon = "🚫";
               typeClass = "danger";
             }
+
+            // Display sender name if available for admin notifications
+            const displayTitle = n.title;
+            const displayMessage = n.message;
+
+            // Format time - show date and time
+            const dateObj = new Date(n.createdAt);
+            const timeStr = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 
             return {
               id: n._id,
               type: typeClass,
               icon,
-              title: n.title,
-              message: n.message,
-              time: new Date(n.createdAt).toLocaleDateString(),
+              title: displayTitle,
+              message: displayMessage,
+              time: timeStr,
               link: n.link || null,
               isRead: n.isRead,
+              sender: n.senderName || n.userId?.name || null,
             };
           });
+
           setNotifications(formatted);
           setUnreadCount(formatted.filter((n) => !n.isRead).length);
         }
@@ -71,7 +98,7 @@ const Notification = ({ expiryDate: propsExpiryDate }) => {
     // Poll every 1 minute for new notifications
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
-  }, [vendorId]);
+  }, [vendorId, isAdmin]);
 
   // Handle outside click
   useEffect(() => {
@@ -99,9 +126,11 @@ const Notification = ({ expiryDate: propsExpiryDate }) => {
   const handleMarkAsRead = async (e, id) => {
     e.stopPropagation();
     try {
-      await markNotificationAsRead(id);
-      // Refresh list locally
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      await markVendorNotificationAsRead(id);
+      // Update local state instead of removing, to show "read" status
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+      );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (error) {
       console.error("Failed to mark read:", error);
@@ -112,13 +141,18 @@ const Notification = ({ expiryDate: propsExpiryDate }) => {
     // Mark as read when clicked
     if (!notif.isRead) {
       try {
-        await markNotificationAsRead(notif.id);
-      } catch (err) {}
+        await markVendorNotificationAsRead(notif.id);
+      } catch (err) {
+        console.error("Failed to mark read on click:", err);
+      }
     }
 
     if (notif.link) {
       navigate(notif.link);
+    } else if (isAdmin && notif.type === "new_registration") {
+      navigate("/saas/vendors");
     }
+
     setIsOpen(false);
     fetchNotifications();
   };
@@ -146,7 +180,7 @@ const Notification = ({ expiryDate: propsExpiryDate }) => {
           </div>
           <div className="notification-list">
             {notifications.length === 0 ? (
-              <div className="notification-empty">No new notifications</div>
+              <div className="notification-empty">No notifications</div>
             ) : (
               notifications.map((notif) => (
                 <div
@@ -158,14 +192,28 @@ const Notification = ({ expiryDate: propsExpiryDate }) => {
                   <div className="notification-content">
                     <div className="notification-title">
                       {notif.title}
-                      <button
-                        className="mark-read-btn"
-                        title="Mark as read"
-                        onClick={(e) => handleMarkAsRead(e, notif.id)}
-                      >
-                        <Check size={14} />
-                      </button>
+                      {!notif.isRead && (
+                        <button
+                          className="mark-read-btn"
+                          title="Mark as read"
+                          onClick={(e) => handleMarkAsRead(e, notif.id)}
+                        >
+                          <Check size={14} />
+                        </button>
+                      )}
                     </div>
+                    {notif.sender && (
+                      <div
+                        style={{
+                          fontSize: "0.75rem",
+                          fontWeight: "bold",
+                          color: "#475569",
+                          marginBottom: "2px",
+                        }}
+                      >
+                        From: {notif.sender}
+                      </div>
+                    )}
                     <div className="notification-message">{notif.message}</div>
                     <div className="notification-time">{notif.time}</div>
                   </div>

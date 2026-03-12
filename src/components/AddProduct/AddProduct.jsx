@@ -198,7 +198,7 @@ function AddProduct() {
                         <div className="search-icon-container">
                             <input
                                 type="text"
-                                placeholder="Search by product name or variety..."
+                                placeholder="Search by product name"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="search-input"
@@ -228,7 +228,7 @@ function AddProduct() {
                         </div>
                     ) : (
                         <div className="table-responsive bg-card rounded-lg shadow-sm custom-table-wrapper">
-                            <table className="data-table custom-data-table">
+                            <table className="data-table custom-data-table add-product-data-table">
                                 <thead className="bg-tertiary">
                                     <tr>
                                         <th className="custom-th">Product Name</th>

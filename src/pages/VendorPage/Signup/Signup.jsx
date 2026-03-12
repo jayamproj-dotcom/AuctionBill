@@ -15,7 +15,7 @@ import {
   Lock,
 } from "lucide-react";
 import { getSubscriptions } from "../../../api/adminApi";
-import { vendorSignup } from "../../../api/vendorApi";
+import { mainVendorSignup } from "../../../api/mainVendorApi";
 import { toast } from "react-toastify";
 import SearchableSelect from "../../../components/Common/SearchableSelect.jsx";
 import "./Signup.css";
@@ -168,14 +168,14 @@ const Signup = () => {
         plan: selectedPlan._id,
       };
 
-      const res = await vendorSignup(payload);
+      const res = await mainVendorSignup(payload);
       if (res.status) {
         toast.success(res.message || "Registration request submitted!");
         setConfirmModal({
           isOpen: true,
           title: "Registration Successful",
           message:
-            "Subscription request received. Please wait for admin approval.",
+            "Main Vendor subscription request received. Our team will review your application and contact you soon.",
           variant: "success",
           onConfirm: () => {
             setConfirmModal((prev) => ({ ...prev, isOpen: false }));
@@ -222,8 +222,8 @@ const Signup = () => {
         {step === 1 ? (
           <div className="plans-section fade-in">
             <div className="section-header">
-              <h1>Choose Your Plan</h1>
-              <p>Select a subscription plan that fits your business needs</p>
+              <h1>Main Vendor Registration</h1>
+              <p>Choose a plan to start managing your auction business</p>
             </div>
 
             <div className="plans-grid">
@@ -246,7 +246,7 @@ const Signup = () => {
                   </div>
                   <div className="plan-description">
                     {plan.description ||
-                      "Access to all auction tools and vendor features."}
+                      "Access to all branch management and auction tools."}
                   </div>
                   <ul className="plan-features">
                     {plan.features && plan.features.length > 0 ? (
@@ -291,7 +291,7 @@ const Signup = () => {
               <button className="back-btn" onClick={() => setStep(1)}>
                 <ArrowLeft size={20} /> Change Plan
               </button>
-              <h2>Complete Your Registration</h2>
+              <h2>Complete Your Main Vendor Profile</h2>
               <p>
                 You've selected the <strong>{selectedPlan.name}</strong> plan
               </p>
@@ -468,13 +468,13 @@ const Signup = () => {
                         Request...
                       </>
                     ) : (
-                      "Submit Subscription Request"
+                      "Submit Main Vendor Request"
                     )}
                   </button>
                   <p className="terms-text">
                     By clicking submit, you agree to our Terms of Service and
-                    Privacy Policy. Your account will be activated after admin
-                    review.
+                    Privacy Policy. Your Main Vendor account will be activated
+                    after admin review.
                   </p>
                 </div>
               </div>

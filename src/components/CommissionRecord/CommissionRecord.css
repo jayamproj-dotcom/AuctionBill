@@ -340,9 +340,9 @@
 
 
 /* ─────────────────────────────────────────────────────────────────
-   8. RESPONSIVE  ≤ 630 px
+   8. RESPONSIVE  ≤ 550 px
 ───────────────────────────────────────────────────────────────── */
-@media (max-width: 630px) {
+@media (max-width: 550px) {
 
     /* Global bar – tighter */
     .cr-global-bar {
@@ -430,6 +430,14 @@
     .commission-table td.custom-td:nth-of-type(5)::before { content: "Comm %"; }
     .commission-table td.custom-td:nth-of-type(6)::before { content: "Earned"; }
 
+    /* Fix center col alignment on mobile so the 10% badge floats properly right */
+    .commission-table td.custom-td.cr-center-col {
+        text-align: right !important;
+    }
+    .commission-table td.custom-td.cr-num-col {
+        text-align: right !important;
+    }
+
     /* Highlight col on mobile – no bg */
     .cr-highlight-col { background: transparent !important; }
 
@@ -473,6 +481,16 @@
     }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 380px) {
     .cr-global-input { width: 52px !important; }
+    
+    .commission-table td.custom-td {
+        padding-left: 35% !important;
+    }
+    
+    .commission-table td.custom-td::before {
+        width: 30% !important;
+        font-size: 0.7rem !important;
+        left: 10px !important;
+    }
 }

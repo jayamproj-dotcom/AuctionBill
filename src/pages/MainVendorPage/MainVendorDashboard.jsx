@@ -1,87 +1,88 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
-  ChartNoAxesCombined,
+  Building,
   Users,
   UsersRound,
   HandCoins,
   BadgeIndianRupee,
-  Bell,
-  ArrowDownLeft,
-  ArrowUpRight,
   Filter,
   Calendar,
 } from "lucide-react";
 import { formatDate } from "../../utils/dateUtils";
-import { useSelector } from "react-redux";
-import { getDashboardSummary } from "../../api/dashboardApi";
-import "./Dashboard.css";
+import { getMainVendorDashboard, getMainVendorBranches } from "../../api/mainVendorApi";
 
-function Dashboard() {
-  const { vendorId } = useSelector((state) => state.vendorAuth);
-  const fallbackVendorId = sessionStorage.getItem("vendorId");
-  const currentVendorId = vendorId || fallbackVendorId;
+// Reuse standard Dashboard styling for consistency
+import "../../components/Dashboard/Dashboard.css";
 
+function MainVendorDashboard() {
   const [stats, setStats] = useState({
+    totalBranches: 0,
     totalSellers: 0,
     totalBuyers: 0,
     totalSales: 0,
     totalCommission: 0,
     todayAuctions: 0,
-    totalQty: 0,
-    totalPayIn: 0,
-    totalPayOut: 0,
   });
+  
   const [dateFilter, setDateFilter] = useState("today");
   const [customDate, setCustomDate] = useState(
     new Date().toISOString().split("T")[0],
   );
+  
+  const [branches, setBranches] = useState([{ id: "all", name: "All Branches" }]);
+  const [selectedBranch, setSelectedBranch] = useState("all");
+
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (currentVendorId) {
-      fetchDashboardData();
+    fetchBranches();
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [dateFilter, customDate, selectedBranch]);
+
+  const fetchBranches = async () => {
+    try {
+      const res = await getMainVendorBranches();
+      if (res.status) {
+        const branchList = res.vendors.map((v) => ({
+          id: v._id,
+          name: v.name,
+        }));
+        setBranches([{ id: "all", name: "All Branches" }, ...branchList]);
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
     }
-  }, [currentVendorId, dateFilter, customDate]);
+  };
 
   const getDateRange = (filter) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const nextTime = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+
     switch (filter) {
       case "today":
-        return {
-          start: today,
-          end: new Date(today.getTime() + 24 * 60 * 60 * 1000),
-        };
+        return { start: today, end: nextTime };
       case "yesterday":
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
-        return {
-          start: yesterday,
-          end: today,
-        };
+        return { start: yesterday, end: today };
       case "week":
         const weekStart = new Date(today);
         weekStart.setDate(weekStart.getDate() - 7);
-        return {
-          start: weekStart,
-          end: new Date(today.getTime() + 24 * 60 * 60 * 1000),
-        };
+        return { start: weekStart, end: nextTime };
       case "month":
         const monthStart = new Date(today);
         monthStart.setDate(1);
-        return {
-          start: monthStart,
-          end: new Date(today.getTime() + 24 * 60 * 60 * 1000),
-        };
+        return { start: monthStart, end: nextTime };
       case "year":
         const yearStart = new Date(today.getFullYear(), 0, 1);
-        return {
-          start: yearStart,
-          end: new Date(today.getTime() + 24 * 60 * 60 * 1000),
-        };
+        return { start: yearStart, end: nextTime };
       case "custom":
         const custom = new Date(customDate);
         custom.setHours(0, 0, 0, 0);
@@ -90,10 +91,7 @@ function Dashboard() {
           end: new Date(custom.getTime() + 24 * 60 * 60 * 1000),
         };
       default:
-        return {
-          start: today,
-          end: new Date(today.getTime() + 24 * 60 * 60 * 1000),
-        };
+        return { start: today, end: nextTime };
     }
   };
 
@@ -101,10 +99,13 @@ function Dashboard() {
     setLoading(true);
     try {
       let params = {};
+      if (selectedBranch !== "all") {
+        params.branchId = selectedBranch;
+      }
+      
       if (dateFilter === "today") {
         params.date = new Date().toISOString().split("T")[0];
       } else if (dateFilter !== "all") {
-        // if 'all' then no date limit
         const range = getDateRange(dateFilter);
         if (range) {
           params.startDate = range.start.toISOString().split("T")[0];
@@ -112,22 +113,20 @@ function Dashboard() {
         }
       }
 
-      const res = await getDashboardSummary(currentVendorId, params);
+      const res = await getMainVendorDashboard(params);
       if (res.success && res.data) {
         setStats({
+          totalBranches: res.data.totalBranches || 0,
           totalSellers: res.data.totalSellers || 0,
           totalBuyers: res.data.totalBuyers || 0,
           totalSales: res.data.totalSales || 0,
           totalCommission: res.data.totalCommission || 0,
           todayAuctions: res.data.todayAuctions || 0,
-          totalQty: res.data.totalQty || 0,
-          totalPayIn: res.data.totalPayIn || 0,
-          totalPayOut: res.data.totalPayOut || 0,
         });
         setFilteredTransactions(res.data.recentTransactions || []);
       }
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      console.error("Error fetching main vendor dashboard data:", error);
     } finally {
       setLoading(false);
     }
@@ -135,20 +134,14 @@ function Dashboard() {
 
   const getFilterLabel = () => {
     switch (dateFilter) {
-      case "today":
-        return "Today";
-      case "yesterday":
-        return "Yesterday";
-      case "week":
-        return "This Week";
-      case "month":
-        return "This Month";
-      case "year":
-        return "This Year";
-      case "custom":
-        return formatDate(customDate);
-      default:
-        return "Today";
+      case "today": return "Today";
+      case "yesterday": return "Yesterday";
+      case "week": return "This Week";
+      case "month": return "This Month";
+      case "year": return "This Year";
+      case "custom": return formatDate(customDate);
+      case "all": return "All Time";
+      default: return "Today";
     }
   };
 
@@ -156,9 +149,26 @@ function Dashboard() {
     <>
       <div className="content-header">
         <div className="header-top">
-          <h1>Dashboard</h1>
+          <h1>Main Vendor Dashboard</h1>
           <div className="header-actions">
             <div className="dashboard-filter-container">
+              
+              {/* Branch Filter */}
+              <div className="filter-dropdown-wrapper">
+                <Building className="filter-icon" size={16} />
+                <select
+                  value={selectedBranch}
+                  onChange={(e) => setSelectedBranch(e.target.value)}
+                  className="dashboard-filter-select"
+                  style={{ minWidth: '130px' }}
+                >
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Date Filter */}
               <div className="filter-dropdown-wrapper">
                 <Filter className="filter-icon" size={16} />
                 <select
@@ -171,6 +181,7 @@ function Dashboard() {
                   <option value="week">This Week</option>
                   <option value="month">This Month</option>
                   <option value="year">This Year</option>
+                  <option value="all">All Time</option>
                   <option value="custom">Custom Date</option>
                 </select>
               </div>
@@ -188,37 +199,32 @@ function Dashboard() {
                 </div>
               )}
             </div>
-            {/* Demo Button removed */}
           </div>
         </div>
         <div className="breadcrumb">
-          <span>Home</span>
+          <span>Main Vendor</span>
           <span className="breadcrumb-separator">/</span>
           <span>Dashboard</span>
         </div>
       </div>
 
       <div className="content-body">
-        {/* Stats Grid - 5 Cards */}
+        {/* Stats Grid - 5 Cards (Branches, Sellers, Buyers, Sales, Commission) */}
         <div className="stats-grid dashboard-stats-grid fade-in">
-          {/* <div className="stat-card">
-                        <div className="stat-header">
-                            <div className="stat-icon"><ChartNoAxesCombined /></div>
-                            <Link to="/admin/today-auction"><div>
-                                <div className="stat-value">{stats.todayAuctions}</div>
-                                <div className="stat-label">Today</div>
-                            </div></Link>
-                        </div>
-                        <div className="stat-change positive">
-                            <span>📅</span>
-                            <span>Live Count</span>
-                        </div>
-                    </div> */}
+          
+          <div className="stat-card db-stat-card db-stat-purple" style={{ cursor: 'default' }}>
+            <div className="stat-header">
+              <div className="stat-icon db-stat-icon-purple">
+                <Building size={20} />
+              </div>
+              <div>
+                <div className="stat-value">{stats.totalBranches}</div>
+                <div className="stat-label">Branches</div>
+              </div>
+            </div>
+          </div>
 
-          <Link
-            to="/vendor/seller-details"
-            className="db-stat-link"
-          >
+          <Link to="/mainvendor/sellers" className="db-stat-link">
             <div className="stat-card db-stat-card db-stat-blue">
               <div className="stat-header">
                 <div className="stat-icon db-stat-icon-blue">
@@ -232,10 +238,7 @@ function Dashboard() {
             </div>
           </Link>
 
-          <Link
-            to="/vendor/buyer-details"
-            className="db-stat-link"
-          >
+          <Link to="/mainvendor/buyers" className="db-stat-link">
             <div className="stat-card db-stat-card db-stat-indigo">
               <div className="stat-header">
                 <div className="stat-icon db-stat-icon-indigo">
@@ -249,115 +252,57 @@ function Dashboard() {
             </div>
           </Link>
 
-          <div className="stat-card db-stat-card db-stat-green">
-            <div className="stat-header">
-              <div className="stat-icon db-stat-icon-green">
-                <ArrowDownLeft size={20} />
-              </div>
-              <div>
-                <div className="stat-value">
-                  ₹{stats.totalPayIn.toLocaleString()}
-                </div>
-                <div className="stat-label">Pay In</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="stat-card db-stat-card db-stat-red">
-            <div className="stat-header">
-              <div className="stat-icon db-stat-icon-red">
-                <ArrowUpRight size={20} />
-              </div>
-              <div>
-                <div className="stat-value">
-                  ₹{stats.totalPayOut.toLocaleString()}
-                </div>
-                <div className="stat-label">Pay Out</div>
-              </div>
-            </div>
-          </div>
-
-          <Link
-            to="/vendor/history"
-            className="db-stat-link"
-          >
-            <div className="stat-card db-stat-card db-stat-purple">
+          <Link to="/mainvendor/history" className="db-stat-link">
+            <div className="stat-card db-stat-card db-stat-green">
               <div className="stat-header">
-                <div className="stat-icon db-stat-icon-purple">
+                <div className="stat-icon db-stat-icon-green">
                   <BadgeIndianRupee size={20} />
                 </div>
                 <div>
                   <div className="stat-value">
-                    ₹{stats.totalSales.toFixed(0)}
+                    ₹{stats.totalSales.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </div>
-                  <div className="stat-label">Sales</div>
+                  <div className="stat-label">Total Sales</div>
                 </div>
               </div>
             </div>
           </Link>
 
-                    <Link to="/vendor/commission" className="db-stat-link">
-                        <div className="stat-card db-stat-card db-stat-amber">
-                            <div className="stat-header">
-                                <div className="stat-icon db-stat-icon-amber"><HandCoins size={20} /></div>
-                                <div>
-                                    <div className="stat-value">₹{(stats.totalCommission ).toFixed(1)}</div>
-                                    <div className="stat-label">Commission</div>
-                                </div>
-                            </div>
-                        </div>
-                    </Link>
-
+          <Link to="/mainvendor/commission" className="db-stat-link">
+            <div className="stat-card db-stat-card db-stat-amber">
+              <div className="stat-header">
+                <div className="stat-icon db-stat-icon-amber">
+                  <HandCoins size={20} />
                 </div>
+                <div>
+                  <div className="stat-value">
+                    ₹{stats.totalCommission.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                  </div>
+                  <div className="stat-label">Total Commission</div>
+                </div>
+              </div>
+            </div>
+          </Link>
 
-        {/* Date Filter Selection */}
-        {/* <div className="card filter-card fade-in">
-                    <div className={`form-grid ${dateFilter === 'custom' ? 'filter-grid-custom' : 'filter-grid-single'}`}>
-                        <div className="form-group">
-                            <label className="form-label">Quick Filter</label>
-                            <select
-                                value={dateFilter}
-                                onChange={(e) => setDateFilter(e.target.value)}
-                                className="full-width-select"
-                            >
-                                <option value="today">Today</option>
-                                <option value="yesterday">Yesterday</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                                <option value="year">This Year</option>
-                                <option value="custom">📅 Custom Date</option>
-                            </select>
-                        </div>
-                        {dateFilter === 'custom' && (
-                            <div className="form-group fade-in">
-                                <label className="form-label">Pick a Date</label>
-                                <input
-                                    type="date"
-                                    value={customDate}
-                                    onChange={(e) => setCustomDate(e.target.value)}
-                                    max={new Date().toISOString().split('T')[0]}
-                                    className="full-width-input"
-                                />
-                            </div>
-                        )}
-                    </div>
-                </div> */}
+        </div>
 
-        {/* Recent Transactions - Mobile Card List */}
+        {/* Recent Transactions - Mirroring vendor dashboard UI */}
         <div className="section-header section-margin-top">
-          <h3 className="section-title">Transactions ({getFilterLabel()})</h3>
+          <h3 className="section-title">
+            {selectedBranch === "all" ? "" : `${branches.find(b => b.id === selectedBranch)?.name || 'Branch'}`} Transactions ({getFilterLabel()})
+          </h3>
         </div>
 
         <div className="card-list fade-in">
           {loading ? (
             <div className="empty-state">
               <div className="sb-spinner sb-spinner-center"></div>
-              <p>Loading stats...</p>
+              <p>Loading global data...</p>
             </div>
           ) : filteredTransactions.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">📭</div>
-              <p>No transactions for {getFilterLabel().toLowerCase()}</p>
+              <p>No transactions found for {getFilterLabel().toLowerCase()}</p>
             </div>
           ) : (
             filteredTransactions.map((transaction) => (
@@ -368,7 +313,7 @@ function Dashboard() {
                       {transaction.productName}
                     </div>
                     <div className="data-card-subtitle">
-                      {formatDate(transaction.date)}
+                      {transaction.branchName} • {formatDate(transaction.date)}
                     </div>
                   </div>
                   <div className="badge badge-success">Completed</div>
@@ -391,13 +336,13 @@ function Dashboard() {
                   </div>
                   <div className="data-row">
                     <span className="data-label">Price</span>
-                    <span className="data-value">
+                    <span className="data-value" style={{fontWeight: 600}}>
                       ₹{(transaction.finalAmount || 0).toLocaleString()}
                     </span>
                   </div>
                   <div className="data-row">
                     <span className="data-label">Commission</span>
-                    <span className="data-value text-amber">
+                    <span className="data-value text-amber" style={{fontWeight: 600}}>
                       ₹{(transaction.commissionAmount || 0).toLocaleString()}
                     </span>
                   </div>
@@ -411,4 +356,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default MainVendorDashboard;

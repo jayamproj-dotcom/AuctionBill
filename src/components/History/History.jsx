@@ -177,18 +177,7 @@ function History() {
       <div className="content-header">
         <div className="header-top">
           <h1>History</h1>
-          <div className="header-actions">
-            <button
-              className="btn btn-outline btn-sm"
-              title="Download Report"
-              disabled
-            >
-              <span>
-                <Download size={18} />
-              </span>
-              Download
-            </button>
-          </div>
+         
         </div>
         <div className="breadcrumb">
           <span>Home</span>
@@ -306,7 +295,7 @@ function History() {
                   <th className="hs-th hs-num-col">Qty</th>
                   <th className="hs-th hs-num-col">Total</th>
                   <th className="hs-th hs-num-col">Comm.</th>
-                  <th className="hs-th hs-num-col">Net</th>
+                  {/* <th className="hs-th hs-num-col">Net</th> */}
                 </tr>
               </thead>
               <tbody>
@@ -356,11 +345,11 @@ function History() {
                           ({t.commissionPercent}%)
                         </div>
                       </td>
-                      <td className="hs-td hs-num-col">
+                      {/* <td className="hs-td hs-num-col">
                         <span className="text-success font-bold">
                           ₹{t.netAmount.toLocaleString()}
                         </span>
-                      </td>
+                      </td> */}
                     </tr>
                   ))
                 )}

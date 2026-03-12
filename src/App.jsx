@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
-import VendorLogin from "./pages/VentorPage/Login/Login.jsx";
-import ForgotPassword from "./pages/VentorPage/Login/ForgotPassword.jsx";
-import VendorChangePassword from "./pages/VentorPage/Login/VendorChangePassword.jsx";
+import VendorLogin from "./pages/VendorPage/Login/Login.jsx";
+import ForgotPassword from "./pages/VendorPage/Login/ForgotPassword.jsx";
+import VendorChangePassword from "./pages/VendorPage/Login/VendorChangePassword.jsx";
 import SaasForgotPassword from "./pages/SaaSAdmin/SaasForgotPassword.jsx";
-import VendorLayout from "./pages/VentorPage/VentorLayout.jsx";
-import Signup from "./pages/VentorPage/Signup/Signup.jsx";
+import VendorLayout from "./pages/VendorPage/VendorLayout.jsx";
+import Signup from "./pages/VendorPage/Signup/Signup.jsx";
 import Dashboard from "./components/Dashboard/Dashboard.jsx";
 import AddProduct from "./components/AddProduct/AddProduct.jsx";
 import TodayAuction from "./components/TodayAuction/TodayAuction.jsx";
@@ -13,9 +13,8 @@ import History from "./components/History/History.jsx";
 import SellerDetails from "./components/SellerDetails/SellerDetails.jsx";
 import BuyerDetails from "./components/BuyerDetails/BuyerDetails.jsx";
 import CommissionRecord from "./components/CommissionRecord/CommissionRecord.jsx";
-import Manage from "./components/Manage/Manage.jsx";
-import Subscription from "./components/Subscription/Subscription.jsx";
 import PendingProducts from "./components/PendingProducts/PendingProducts.jsx";
+import Billing from "./components/Billing/Billing.jsx";
 import SaaSLayout from "./pages/SaaSAdmin/SaaSLayout.jsx";
 import SaaSDashboard from "./pages/SaaSAdmin/SaaSDashboard.jsx";
 import VendorManagement from "./pages/SaaSAdmin/VendorManagement.jsx";
@@ -26,16 +25,27 @@ import AdminProfile from "./pages/SaaSAdmin/AdminProfile.jsx";
 import SaaSChangePassword from "./pages/SaaSAdmin/SaaSChangePassword.jsx";
 import SaaSLogin from "./pages/SaaSAdmin/SaaSLogin.jsx";
 import { getAuctionData } from "./utils/localStorage";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-import { GoogleOAuthProvider } from '@react-oauth/google';
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
+// Main Vendor imports
+import MainVendorLayout from "./pages/MainVendorPage/MainVendorLayout.jsx";
+import MainVendorDashboard from "./pages/MainVendorPage/MainVendorDashboard.jsx";
+import Branches from "./pages/MainVendorPage/Branches.jsx";
+import Sellers from "./pages/MainVendorPage/Sellers.jsx";
+import Buyers from "./pages/MainVendorPage/Buyers.jsx";
+import Subscription from "./components/Subscription/Subscription.jsx";
+import Commission from "./pages/MainVendorPage/Commission.jsx";
+import MainVendorHistory from "./pages/MainVendorPage/MainVendorHistory.jsx";
+
+import Profile from "./pages/MainVendorPage/Profile.jsx";
 
 function App() {
-  // Global safety check for corrupted localStorage data
+ 
   useEffect(() => {
-    getAuctionData(); // This will trigger the healing/fallback logic in the utility
-
+    getAuctionData();
 
     const handleWheel = () => {
       if (document.activeElement.type === "number") {
@@ -61,7 +71,6 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/signup" element={<Signup />} />
 
-
           {/* Vendor area with nested routes */}
           <Route path="/vendor" element={<VendorLayout />}>
             <Route index element={<Dashboard />} />
@@ -73,16 +82,17 @@ function App() {
             <Route path="seller-details" element={<SellerDetails />} />
             <Route path="buyer-details" element={<BuyerDetails />} />
             <Route path="commission" element={<CommissionRecord />} />
-            <Route path="manage" element={<Manage />} />
-            <Route path="subscription" element={<Subscription />} />
+
+            <Route path="billing" element={<Billing />} />
             <Route path="change-password" element={<VendorChangePassword />} />
           </Route>
 
-
           {/* SaaS Admin Login */}
           <Route path="/saas-admin" element={<SaaSLogin />} />
-          <Route path="/saas-forgot-password" element={<SaasForgotPassword />} />
-
+          <Route
+            path="/saas-forgot-password"
+            element={<SaasForgotPassword />}
+          />
 
           {/* SaaS Admin Area */}
           <Route path="/saas" element={<SaaSLayout />}>
@@ -94,6 +104,20 @@ function App() {
             <Route path="subadmins" element={<SubAdminManagement />} />
             <Route path="settings" element={<AdminProfile />} />
             <Route path="change-password" element={<SaaSChangePassword />} />
+          </Route>
+
+          {/* Main Vendor Area */}
+          <Route path="/mainvendor" element={<MainVendorLayout />}>
+            <Route index element={<MainVendorDashboard />} />
+            <Route path="dashboard" element={<MainVendorDashboard />} />
+            <Route path="branches" element={<Branches />} />
+            <Route path="sellers" element={<Sellers />} />
+            <Route path="buyers" element={<Buyers />} />
+            <Route path="commission" element={<Commission />} />
+            <Route path="history" element={<MainVendorHistory />} />
+            <Route path="subscription" element={<Subscription />} />
+            <Route path="manage" element={<Profile />} />
+            <Route path="change-password" element={<VendorChangePassword />} />
           </Route>
         </Routes>
 

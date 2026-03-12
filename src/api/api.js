@@ -16,11 +16,13 @@ api.interceptors.request.use(
         let token = null;
 
         const currentPath = window.location.pathname;
-        const isSaaSContext = currentPath.includes('/saas');
+        const isSaaSContext = currentPath.includes('/saas') && !currentPath.includes('/mainvendor');
+        const isMainVendorContext = currentPath.includes('/mainvendor');
+        const isVendorContext = currentPath.includes('/vendor') && !currentPath.includes('/mainvendor');
 
         if (isSaaSContext) {
             token = state.saasAuth?.adminToken || sessionStorage.getItem('admin_token') || localStorage.getItem('admin_token');
-        } else if (currentPath.includes('/vendor')) {
+        } else if (isMainVendorContext || isVendorContext) {
             token = state.vendorAuth?.vendorToken || sessionStorage.getItem('vendorToken') || localStorage.getItem('token') || sessionStorage.getItem('token');
         }
 
@@ -52,7 +54,7 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const { config } = error;
-        
+
         // If config does not exist or retry option is not set, reject
         if (!config || config.retryCount >= RETRY_COUNT) {
             return Promise.reject(error);
@@ -60,16 +62,16 @@ api.interceptors.response.use(
 
         // Only retry on network errors or 5xx server errors
         const shouldRetry = !error.response || (error.response.status >= 500 && error.response.status <= 599);
-        
+
         if (!shouldRetry) {
             return Promise.reject(error);
         }
 
         config.retryCount = (config.retryCount || 0) + 1;
-        
+
         // Wait before retrying
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * config.retryCount));
-        
+
         console.log(`Retrying request (${config.retryCount}/${RETRY_COUNT})...`);
         return api(config);
     }

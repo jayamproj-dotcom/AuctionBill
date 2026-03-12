@@ -182,6 +182,120 @@
 /* Product View Modal Styles */
 .product-view-container {
     padding: 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.product-view-row {
+    display: flex;
+    gap: 20px;
+}
+
+.product-info-details {
+    flex: 1;
+}
+
+.product-view-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.product-view-variant-header {
+    margin: 0 0 10px 0;
+}
+
+/* Buyer card & profile layout */
+.buyer-card-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.buyer-profile-mb {
+    margin-bottom: 2rem;
+}
+
+.buyer-profile-actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.buyer-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-icon-mr {
+    margin-right: 5px;
+}
+
+.form-control-date {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.transaction-modal-overlay {
+    z-index: 999;
+}
+
+.buyer-back-link {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.buyer-back-link-static {
+    cursor: default;
+    text-decoration: none;
+}
+
+.search-input-wrap {
+    position: relative;
+}
+
+.search-input-padded {
+    padding-right: 40px;
+    width: 100%;
+}
+
+.search-icon-pos {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}
+
+.buyer-card-actions-inline {
+    display: flex;
+    gap: 5px;
+}
+
+.table-total-bold {
+    font-weight: bold;
+    color: black;
+}
+
+.optional-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
 }
 
 .product-image-preview img {
@@ -243,4 +357,35 @@
     font-size: 0.75rem;
     margin-top: 4px;
     font-weight: 500;
+}
+
+/* Radio Group */
+.radio-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+    background: var(--bg-secondary);
+}
+
+.radio-label.checked {
+    border-color: var(--primary);
+    background: var(--bg-tertiary);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.radio-label input {
+    cursor: pointer;
 }

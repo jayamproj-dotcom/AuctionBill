@@ -166,7 +166,7 @@ const SaaSLogin = () => {
                             </button>
                         </div>
                         {errors.password && <span className="error-msg">{errors.password}</span>}
-                        <div style={{ textAlign: 'right' }}>
+                        <div style={{ textAlign: 'right', marginTop: '5px' }}>
                             <Link to="/saas-forgot-password" style={{ fontSize: '13px', color: '#f39c12', textDecoration: 'none' }}>
                                 Forgot Password?
                             </Link>

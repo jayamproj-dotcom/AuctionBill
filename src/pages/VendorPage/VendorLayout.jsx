@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import VendorSidebar from "./VentorSidebar.jsx";
-import "./Ventor.css";
+import VendorSidebar from "./VendorSidebar.jsx";
+import "./Vendor.css";
 import logo from "../../assets/images/logo.png";
 import user from "../../assets/images/user.png";
 import { LogOut, User, KeyRound } from "lucide-react";
@@ -122,12 +122,14 @@ const VendorLayout = () => {
           ☰
         </button>
 
+
         <div className="header-logo">
           <img src={logo} alt="Logo" />
-          <h2>Auction Billing</h2>
+          <h2>{userName} Branch</h2>
         </div>
 
-        <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <div className="header-actions">
+          <Notification />
 
           <div className="header-profile-container" ref={profileRef}>
             <div className="header-profile" onClick={toggleProfile}>
@@ -155,7 +157,7 @@ const VendorLayout = () => {
                   <div className="profile-dropdown-email">{userEmail}</div>
                 </div>
 
-                <div className="dropdown-item" onClick={() => {
+                {/* <div className="dropdown-item" onClick={() => {
                   navigate('/vendor/manage');
                   setProfileOpen(false);
                 }}>
@@ -168,9 +170,9 @@ const VendorLayout = () => {
                 }}>
                   <KeyRound size={16} />
                   <span>Change Password</span>
-                </div>
+                </div> */}
 
-                <div className="dropdown-divider"></div>
+              
                 <div className="dropdown-item text-danger" onClick={handleLogout}>
                   <LogOut size={16} />
                   <span>Logout</span>
@@ -179,7 +181,7 @@ const VendorLayout = () => {
             )}
           </div>
 
-          <Notification />
+          
         </div>
       </div>
       

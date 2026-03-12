@@ -1,0 +1,321 @@
+import React, { useState, useEffect } from "react";
+import { History as HistoryIcon, Calendar, PackageSearch } from "lucide-react";
+import SearchableSelect from "../../components/Common/SearchableSelect";
+import {
+  getMainVendorBranches,
+  getMainVendorHistory,
+} from "../../api/mainVendorApi";
+
+
+function History() {
+  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateFilter, setDateFilter] = useState("today");
+  const [customDate, setCustomDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
+  const [branches, setBranches] = useState([
+    { id: "all", name: "All Branches" },
+  ]);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchBranches();
+  }, []);
+
+  useEffect(() => {
+    // Add a slight debounce for search term
+    const timer = setTimeout(() => {
+      fetchHistory();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [selectedBranch, searchTerm, dateFilter, customDate]);
+
+  const fetchBranches = async () => {
+    try {
+      const res = await getMainVendorBranches();
+      if (res.status) {
+        const branchList = res.vendors.map((v) => ({
+          id: v._id,
+          name: v.name,
+        }));
+        setBranches([{ id: "all", name: "All Branches" }, ...branchList]);
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+    }
+  };
+
+  const fetchHistory = async () => {
+    setLoading(true);
+    try {
+      let startDate = null;
+      let endDate = null;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const next = (d) => new Date(d.getTime() + 24 * 60 * 60 * 1000);
+
+      switch (dateFilter) {
+        case "today":
+          startDate = today.toISOString().split("T")[0];
+          endDate = next(today).toISOString().split("T")[0];
+          break;
+        case "yesterday":
+          const y = new Date(today);
+          y.setDate(y.getDate() - 1);
+          startDate = y.toISOString().split("T")[0];
+          endDate = today.toISOString().split("T")[0];
+          break;
+        case "week":
+          const w = new Date(today);
+          w.setDate(w.getDate() - 7);
+          startDate = w.toISOString().split("T")[0];
+          endDate = next(today).toISOString().split("T")[0];
+          break;
+        case "month":
+          const m = new Date(today);
+          m.setDate(1);
+          startDate = m.toISOString().split("T")[0];
+          endDate = next(today).toISOString().split("T")[0];
+          break;
+        case "year":
+          startDate = new Date(today.getFullYear(), 0, 1)
+            .toISOString()
+            .split("T")[0];
+          endDate = next(today).toISOString().split("T")[0];
+          break;
+        case "custom":
+          const c = new Date(customDate);
+          c.setHours(0, 0, 0, 0);
+          startDate = c.toISOString().split("T")[0];
+          endDate = next(c).toISOString().split("T")[0];
+          break;
+      }
+
+      const params = {};
+      if (selectedBranch !== "all") params.branchId = selectedBranch;
+      if (searchTerm) params.searchTerm = searchTerm;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+
+      const res = await getMainVendorHistory(params);
+      console.log(res);
+      
+      if (res.status) {
+        setHistory(res.transactions || res.history || []);
+      }
+    } catch (error) {
+      console.error("Error fetching history:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const branchOptions = branches.map((b) => ({ label: b.name, value: b.id }));
+
+  return (
+    <div className="history">
+      <div className="content-header">
+        <div className="header-top">
+          <h1>Transaction History</h1>
+        </div>
+        <div className="breadcrumb">
+          <span>Main Vendor</span>
+          <span className="breadcrumb-separator">&gt;</span>
+          <span>History</span>
+        </div>
+      </div>
+
+      <div className="content-body">
+        <div className="form-group" style={{ marginBottom: "1rem" }}>
+          <label className="form-label">Select Branch</label>
+          <SearchableSelect
+            name="branch"
+            options={branchOptions}
+            value={selectedBranch}
+            onChange={(e) => setSelectedBranch(e.target.value)}
+            placeholder="All Branches"
+          />
+        </div>
+        <div className="mvh-filter-bar">
+          {/* Search */}
+          <div className="mvh-search-wrap">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: "var(--text-muted)", flexShrink: 0 }}
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              className="mvh-search-input"
+              placeholder="Search product, seller, buyer..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="mvh-divider" />
+
+          {/* Date Filter */}
+          <div className="mvh-date-wrap">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: "var(--primary-amber)" }}
+            >
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
+            <select
+              className="mvh-date-select"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+              <option value="custom">Custom Date</option>
+            </select>
+          </div>
+        </div>
+
+        {dateFilter === "custom" && (
+          <div className="form-group" style={{ marginBottom: "1rem" }}>
+            <input
+              type="date"
+              className="form-control"
+              value={customDate}
+              onChange={(e) => setCustomDate(e.target.value)}
+              max={new Date().toISOString().split("T")[0]}
+            />
+          </div>
+        )}
+
+        <div className="section-header section-header-margin">
+          <h3 className="section-title">
+            Recordings ({history.length})
+            {loading && (
+              <span
+                style={{
+                  marginLeft: "10px",
+                  fontSize: "0.875rem",
+                  color: "var(--text-muted)",
+                }}
+              >
+                Loading...
+              </span>
+            )}
+          </h3>
+        </div>
+
+        <div className="fade-in" style={{ padding: 0, overflow: "hidden" }}>
+          <div className="mvh-table-wrapper">
+            <table className="mvh-table">
+              <thead className="bg-tertiary">
+                <tr>
+                  <th className="mvh-th">Date</th>
+                  <th className="mvh-th">Product</th>
+                  <th className="mvh-th">Seller</th>
+                  <th className="mvh-th">Buyer</th>
+                  <th className="mvh-th mvh-num-col">Qty</th>
+                  <th className="mvh-th mvh-num-col">Total</th>
+                  <th className="mvh-th mvh-num-col">Comm.</th>
+                  
+                </tr>
+              </thead>
+              <tbody>
+                {history.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="empty-td">
+                      <div className="empty-state">
+                        <div className="empty-state-icon">
+                          <PackageSearch />
+                        </div>
+                        <p>
+                          {loading
+                            ? "Loading history..."
+                            : "No history records found for the selected filters."}
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  history.map((t) => (
+                    <tr key={t.id} className="mvh-tr">
+                      <td className="mvh-td">
+                        <span className="cr-date-badge">{t.date}</span>
+                      </td>
+                      <td className="mvh-td">
+                        <div className="font-semibold text-primary">
+                          {t.productName}
+                        </div>
+                        {t.branch && <small className="text-muted">{t.branch}</small>}
+                      </td>
+                      <td className="mvh-td">{t.sellerName}</td>
+                      <td className="mvh-td">{t.buyerName}</td>
+                      <td className="mvh-td mvh-num-col">
+                        <span className="hs-qty-text">{t.quantity}</span>
+                        {t.unit && <small className="text-muted ml-1">{t.unit}</small>}
+                      </td>
+                      <td className="mvh-td mvh-num-col">
+                        <span className="font-bold">
+                          ₹{((t.totalAmount !== undefined ? t.totalAmount : t.finalAmount) || 0).toLocaleString()}
+                        </span>
+                        
+                      </td>
+                      <td className="mvh-td mvh-num-col">
+                        <span className="text-amber">
+                          ₹{(t.commissionAmount || 0).toLocaleString()}
+                        </span>
+                        {t.commissionPercent !== undefined && (
+                          <div
+                            style={{ fontSize: "0.7rem" }}
+                            className="text-muted"
+                          >
+                            ({t.commissionPercent}%)
+                          </div>
+                        )}
+                      </td>
+                      
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {!loading && history.length === 0 && (
+          <div className="empty-state">
+            <div className="empty-state-icon">📜</div>
+            <p>No history records found for the selected filters.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default History;

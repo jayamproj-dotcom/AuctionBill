@@ -15,6 +15,19 @@ const SubAdminManagement = () => {
   const [adminToDelete, setAdminToDelete] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 550);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 550);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  
+  
+
   useEffect(() => {
     fetchSubAdmins();
   }, []);
@@ -184,12 +197,12 @@ const SubAdminManagement = () => {
           </div>
         </div>
       </div>
-      <div className="saas-card subAdminTableCard">
+      <div className={isMobile ? "subAdminTableCard" : "saas-card"}>
         {isLoading ? (
           <div className="saas-loading saas-loading-padded">Loading sub-admins...</div>
         ) : (
           <div className="saas-table-container">
-            <table className="saas-table subAdminTable">
+            <table className="saas-table subAdminTable saas-desktop-only-550">
               <thead className="subAdminTableHeader">
                 <tr>
                   <th>S.NO</th>
@@ -227,7 +240,7 @@ const SubAdminManagement = () => {
                         <td>
                           <div className="subAdminPermissionsContainer">
                             <PermissionToggle
-                              label="Vendor Add"
+                              label="Vendor access"
                               isActive={subAdmin.permissions?.vendorAdd}
                               onToggle={() => handlePermissionChange('vendorAdd', !subAdmin.permissions?.vendorAdd, id)}
                             />
@@ -236,11 +249,6 @@ const SubAdminManagement = () => {
                               isActive={subAdmin.permissions?.subscriptionAccess}
                               onToggle={() => handlePermissionChange('subscriptionAccess', !subAdmin.permissions?.subscriptionAccess, id)}
                             />
-                            {/* <PermissionToggle
-                              label="Password Change Option"
-                              isActive={subAdmin.permissions?.passwordChange}
-                              onToggle={() => handlePermissionChange('passwordChange', !subAdmin.permissions?.passwordChange, id)}
-                            /> */}
                           </div>
                         </td>
                         <td className="text-center">
@@ -267,6 +275,84 @@ const SubAdminManagement = () => {
                 )}
               </tbody>
             </table>
+
+            <div className="saas-mobile-cards-view-550">
+              {filteredSubAdmins.length === 0 ? (
+                <div className="saas-text-center saas-p-20 saas-text-muted">No sub-admins found</div>
+              ) : (
+                filteredSubAdmins.map((subAdmin, index) => {
+                  const id = subAdmin._id || subAdmin.id;
+                  return (
+                    <div key={id} className="saas-mobile-card">
+                      <div className="saas-mobile-card-row">
+                        <span className="saas-mobile-card-label">S.NO</span>
+                        <span className="saas-mobile-card-value saas-font-bold">#{index + 1}</span>
+                      </div>
+                      <div className="saas-mobile-card-row">
+                        <span className="saas-mobile-card-label">Name</span>
+                        <span className="saas-mobile-card-value saas-font-bold">{subAdmin.username}</span>
+                      </div>
+                      <div className="saas-mobile-card-row">
+                        <span className="saas-mobile-card-label">Email</span>
+                        <span className="saas-mobile-card-value">{subAdmin.email}</span>
+                      </div>
+                      <div className="saas-mobile-card-row">
+                        <span className="saas-mobile-card-label">Status</span>
+                        <div className="saas-mobile-card-value">
+                           <div className="saasStatusToggleContainer" onClick={() => handleStatusToggle(id)}>
+                            <div className={`saasStatusToggleTrack ${subAdmin.status === 'Active' ? 'active' : 'inactive'}`}>
+                              <div className={`saasStatusToggleThumb ${subAdmin.status === 'Active' ? 'active' : 'inactive'}`}>
+                                {subAdmin.status === 'Active' && <Check size={12} color="#059669" />}
+                                {subAdmin.status !== 'Active' && <X size={12} color="#f87171" />}
+                              </div>
+                            </div>
+                            <span className="saasStatusLabel">
+                              {subAdmin.status === 'Active' ? 'Enabled' : 'Disabled'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="saas-mobile-card-row saas-flex-col saas-align-start">
+                        <span className="saas-mobile-card-label saas-mb-075">Sub Admin Access</span>
+                        <div className="subAdminPermissionsContainer saas-w-full">
+                          <PermissionToggle
+                            label="Vendor access"
+                            isActive={subAdmin.permissions?.vendorAdd}
+                            onToggle={() => handlePermissionChange('vendorAdd', !subAdmin.permissions?.vendorAdd, id)}
+                          />
+                          <PermissionToggle
+                            label="Subscription Access"
+                            isActive={subAdmin.permissions?.subscriptionAccess}
+                            onToggle={() => handlePermissionChange('subscriptionAccess', !subAdmin.permissions?.subscriptionAccess, id)}
+                          />
+                        </div>
+                      </div>
+                      <div className="saas-mobile-card-row">
+                        <span className="saas-mobile-card-label">Actions</span>
+                        <div className="saas-mobile-card-value">
+                          <div className="action-buttons">
+                            <button
+                              className="icon-btn"
+                              title="Edit Sub-Admin"
+                              onClick={() => handleEdit(subAdmin)}
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              className="icon-btn delete"
+                              title="Delete Sub-Admin"
+                              onClick={() => handleDelete(id)}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         )}
       </div>

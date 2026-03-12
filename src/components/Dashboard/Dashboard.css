@@ -1,5 +1,15 @@
 /* Dashboard.css */
 
+.db-stat-link {
+  text-decoration: none;
+  display: block;
+  height: 100%;
+}
+
+.sb-spinner-center {
+  margin: 0 auto;
+}
+
 .dashboard-stats-grid {
     grid-template-columns: repeat(2, 1fr);
 }
@@ -35,6 +45,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .filter-dropdown-wrapper {
@@ -113,13 +124,13 @@
     }
 
     .header-top {
-        flex-direction: column;
+       
         align-items: flex-start;
         gap: 1rem;
     }
     
     .header-actions {
-        width: 100%;
+   
         justify-content: space-between;
     }
 

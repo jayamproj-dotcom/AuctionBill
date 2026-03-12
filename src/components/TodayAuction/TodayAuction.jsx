@@ -28,7 +28,6 @@ const SearchableSelect = ({
   required,
   label,
   className = "",
-  style = {},
 }) => {
   const [searchTerm, setSearchTerm] = useState(value || "");
   const [isOpen, setIsOpen] = useState(false);
@@ -78,8 +77,7 @@ const SearchableSelect = ({
   return (
     <div
       ref={containerRef}
-      className={`form-group form-group-relative ${className}`}
-      style={{ zIndex: isOpen ? 9999 : 1, ...style }}
+      className={`form-group form-group-relative ${isOpen ? 'searchable-select-z-open' : ''} ${className}`}
     >
       {label && <label className="form-label">{label}</label>}
       <input
@@ -186,7 +184,7 @@ function TodayAuction() {
     title: "",
     message: "",
     variant: "info",
-    onConfirm: () => {},
+    onConfirm: () => { },
     showCancel: false,
     confirmText: "OK",
   });
@@ -619,7 +617,7 @@ function TodayAuction() {
             <div className="search-icon-container">
               <input
                 type="text"
-                placeholder="Search by product, seller, or variant..."
+                placeholder="Search by product, seller "
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="search-input"
@@ -912,35 +910,17 @@ function TodayAuction() {
                   required
                 />
 
-                <div className="form-group" style={{ marginTop: "1.5rem" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <label className="form-label" style={{ marginBottom: 0 }}>
+                <div className="form-group form-group-mt-15">
+                  <div className="variants-header-row">
+                    <label className="form-label form-label-no-mb">
                       Variants
                     </label>
                     <div className="global-comm-wrapper">
-                      <span
-                        style={{
-                          fontSize: "0.85rem",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
+                      <span className="global-comm-text">
                         Product Commission:
                       </span>
                       {editingGlobalComm ? (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
+                        <div className="global-comm-edit-row">
                           <input
                             type="number"
                             value={defaultCommission}
@@ -951,8 +931,7 @@ function TodayAuction() {
                                 commission: e.target.value,
                               }));
                             }}
-                            className="variant-comm-input"
-                            style={{ width: "60px", padding: "2px 8px" }}
+                            className="variant-comm-input variant-comm-input-inline"
                             autoFocus
                           />
                           <button
@@ -964,14 +943,8 @@ function TodayAuction() {
                           </button>
                         </div>
                       ) : (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          <strong style={{ color: "var(--primary-color)" }}>
+                        <div className="global-comm-edit-row">
+                          <strong className="text-primary-color">
                             {defaultCommission}%
                           </strong>
                           <button
@@ -989,12 +962,12 @@ function TodayAuction() {
                     <SearchableSelect
                       options={
                         newProduct.masterProduct &&
-                        newProduct.masterProduct.varieties &&
-                        newProduct.masterProduct.varieties.length > 0
+                          newProduct.masterProduct.varieties &&
+                          newProduct.masterProduct.varieties.length > 0
                           ? newProduct.masterProduct.varieties.map((v, i) => ({
-                              id: `${i}-${v}`,
-                              name: v,
-                            }))
+                            id: `${i}-${v}`,
+                            name: v,
+                          }))
                           : []
                       }
                       value={variantData.variety || ""}
@@ -1005,7 +978,7 @@ function TodayAuction() {
                         }));
                       }}
                       placeholder="Variety"
-                      style={{ margin: 0, flex: 1, minWidth: "130px" }}
+                      className="variant-searchable-select"
                     />
 
                     <select
@@ -1047,8 +1020,8 @@ function TodayAuction() {
                         Select Unit
                       </option>
                       {newProduct.masterProduct &&
-                      newProduct.masterProduct.units &&
-                      newProduct.masterProduct.units.length > 0 ? (
+                        newProduct.masterProduct.units &&
+                        newProduct.masterProduct.units.length > 0 ? (
                         newProduct.masterProduct.units.map((u, i) => (
                           <option key={i} value={u}>
                             {u}
@@ -1207,35 +1180,17 @@ function TodayAuction() {
                   required
                 />
 
-                <div className="form-group" style={{ marginTop: "1.5rem" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <label className="form-label" style={{ marginBottom: 0 }}>
+                <div className="form-group form-group-mt-15">
+                  <div className="variants-header-row">
+                    <label className="form-label form-label-no-mb">
                       Variants (Read-only)
                     </label>
                     <div className="global-comm-wrapper">
-                      <span
-                        style={{
-                          fontSize: "0.85rem",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
+                      <span className="global-comm-text">
                         Product Commission:
                       </span>
                       {editingGlobalComm ? (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
+                        <div className="global-comm-edit-row">
                           <input
                             type="number"
                             value={defaultCommission}
@@ -1246,8 +1201,7 @@ function TodayAuction() {
                                 commission: e.target.value,
                               }));
                             }}
-                            className="variant-comm-input"
-                            style={{ width: "60px", padding: "2px 8px" }}
+                            className="variant-comm-input variant-comm-input-inline"
                             autoFocus
                           />
                           <button
@@ -1259,14 +1213,8 @@ function TodayAuction() {
                           </button>
                         </div>
                       ) : (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          <strong style={{ color: "var(--primary-color)" }}>
+                        <div className="global-comm-edit-row">
+                          <strong className="text-primary-color">
                             {defaultCommission}%
                           </strong>
                           <button
@@ -1423,20 +1371,12 @@ function TodayAuction() {
                         }
                         placeholder="Enter temporary buyer name..."
                         required
-                        className="form-input"
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid var(--border-color)",
-                          backgroundColor: "var(--bg-secondary)",
-                          color: "var(--text-primary)",
-                        }}
+                        className="form-input temp-buyer-input"
                       />
                     </>
                   )}
 
-                  <label className="form-label" style={{ marginTop: "1rem" }}>
+                  <label className="form-label form-label-mt">
                     Select Variant
                   </label>
                   <select
@@ -1531,15 +1471,18 @@ function TodayAuction() {
                           <label className="form-label">
                             Quantity to Sell ({v.unit})
                           </label>
+
                           <input
                             type="number"
                             value={saleData.qtyToSell}
                             onChange={(e) => {
                               const val = e.target.value;
+
                               if (val === "") {
                                 setSaleData({ ...saleData, qtyToSell: "" });
                               } else {
-                                const numVal = parseFloat(val);
+                                const numVal = Math.round(parseFloat(val)); // round value
+
                                 if (numVal > available) {
                                   toast.error(
                                     `Quantity cannot exceed ${available} ${v.unit}`,
@@ -1549,7 +1492,10 @@ function TodayAuction() {
                                     qtyToSell: available,
                                   });
                                 } else {
-                                  setSaleData({ ...saleData, qtyToSell: val });
+                                  setSaleData({
+                                    ...saleData,
+                                    qtyToSell: numVal,
+                                  });
                                 }
                               }
                             }}
@@ -1559,11 +1505,10 @@ function TodayAuction() {
                             placeholder={`Max: ${available}`}
                             required
                           />
+
                           <small className="form-hint">
                             Remaining:{" "}
-                            {(
-                              available - (parseFloat(saleData.qtyToSell) || 0)
-                            ).toFixed(2)}{" "}
+                            {available - (parseInt(saleData.qtyToSell) || 0)}{" "}
                             {v.unit}
                           </small>
                         </div>
@@ -1574,13 +1519,16 @@ function TodayAuction() {
                               ? `Rate per ${v.unit} (₹)`
                               : "Total Amount (₹)"}
                           </label>
+
                           <input
                             type="number"
                             value={saleData.finalPrice}
                             onChange={(e) =>
                               setSaleData({
                                 ...saleData,
-                                finalPrice: Math.max(0, e.target.value),
+                                finalPrice: Math.round(
+                                  Number(e.target.value) || 0,
+                                ),
                               })
                             }
                             placeholder={
@@ -1589,6 +1537,7 @@ function TodayAuction() {
                                 : `Total for ${saleData.qtyToSell || "?"} ${v.unit}`
                             }
                             min="0"
+                            step="1"
                             required
                           />
                         </div>
@@ -1597,34 +1546,52 @@ function TodayAuction() {
                         {saleData.finalPrice &&
                           saleData.qtyToSell &&
                           (() => {
-                            const qty = parseFloat(saleData.qtyToSell) || 0;
-                            const price = parseFloat(saleData.finalPrice) || 0;
+                            const qty = Math.round(
+                              Number(saleData.qtyToSell) || 0,
+                            );
+                            const price = Math.round(
+                              Number(saleData.finalPrice) || 0,
+                            );
+
                             const total =
                               saleData.priceMode === "perQty"
-                                ? price * qty
+                                ? Math.round(price * qty)
                                 : price;
+
                             const rate =
                               saleData.priceMode === "perQty"
                                 ? price
                                 : qty > 0
-                                  ? price / qty
+                                  ? Math.round(price / qty)
                                   : 0;
-                            const comm =
+
+                            const comm = Math.round(
                               (total *
                                 (selectedProduct.commissionPercent || 0)) /
-                              100;
-                            const net = total - comm;
+                              100,
+                            );
+
+                            const net = Math.round(total - comm);
+
                             return (
                               <div className="card calc-card">
                                 {saleData.priceMode === "wholeProduct" && (
                                   <p className="calc-row">
-                                    <strong>Rate per {v.unit}:</strong> ₹
-                                    {rate.toFixed(2)}
+                                    <strong>Rate per {v.unit}:</strong> ₹{rate}
                                   </p>
                                 )}
+
                                 <p className="calc-row">
                                   <strong>Total Amount:</strong> ₹
                                   {total.toLocaleString()}
+                                </p>
+
+                                <p className="calc-row">
+                                  <strong>Commission:</strong> ₹{comm}
+                                </p>
+
+                                <p className="calc-row">
+                                  <strong>Net Amount:</strong> ₹{net}
                                 </p>
                               </div>
                             );
