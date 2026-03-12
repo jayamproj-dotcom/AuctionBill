@@ -22,6 +22,7 @@ import {
   getMainVendorPurchasesById,
 } from "../../api/adminApi";
 import ConfirmationModal from "../Common/ConfirmationModal";
+import LoadingSpinner from "../Common/LoadingSpinner";
 
 const Subscription = () => {
   const { vendorId } = useSelector((state) => state.vendorAuth);
@@ -238,10 +239,7 @@ const Subscription = () => {
           </div>
         </div>
         <div className="content-body">
-          <div className="sb-loading-state">
-            <div className="sb-spinner"></div>
-            <p>Loading subscription details…</p>
-          </div>
+          <LoadingSpinner message="Loading subscription details..." />
         </div>
       </>
     );

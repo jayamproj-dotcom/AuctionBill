@@ -4,6 +4,7 @@ import { Trash2, Plus, X, Loader2, Edit2, Search } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import * as productApi from '../../api/vendorApi';
 import ConfirmationModal from '../Common/ConfirmationModal';
+import LoadingSpinner from '../Common/LoadingSpinner';
 import './AddProduct.css';
 import '../TodayAuction/TodayAuction.css';
 
@@ -211,12 +212,7 @@ function AddProduct() {
                 {/* Table */}
                 <div className="card-list fade-in">
                     {loading ? (
-                        <div className="empty-state">
-                            <div className="empty-state-icon">
-                                <Loader2 className="animate-spin" size={32} color="var(--primary-color)" />
-                            </div>
-                            <p>Loading products...</p>
-                        </div>
+                        <LoadingSpinner message="Loading products..." />
                     ) : filteredProducts.length === 0 ? (
                         <div className="empty-state">
                             <div className="empty-state-icon">📦</div>

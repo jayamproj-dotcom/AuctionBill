@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import LoadingSpinner from "../../components/Common/LoadingSpinner";
 import axios from "axios";
 import SearchableSelect from "../../components/Common/SearchableSelect";
 import ConfirmationModal from "../../components/Common/ConfirmationModal";
@@ -227,7 +228,7 @@ function Branches() {
       <div className="content-body">
         <div className="table-responsive custom-table-wrapper">
           {loading && !branches.length ? (
-            <div className="p-4 text-center">Loading...</div>
+            <LoadingSpinner message="Fetching branches..." />
           ) : (
             <table className="data-table custom-data-table branch-table">
               <thead>

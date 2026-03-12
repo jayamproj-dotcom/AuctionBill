@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import ConfirmationModal from "../Common/ConfirmationModal";
+import LoadingSpinner from "../Common/LoadingSpinner";
 import "./TodayAuction.css";
 import { toast } from "react-toastify";
 import {
@@ -138,6 +139,7 @@ const SearchableSelect = ({
 
 function TodayAuction() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [sellers, setSellers] = useState([]);
   const [buyers, setBuyers] = useState([]);
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -360,6 +362,7 @@ function TodayAuction() {
   useEffect(() => {
     const fetchInitialData = async () => {
       if (!vendorId) return;
+      setLoading(true);
       try {
         const masterData = await productApi.getProducts({ vendorId });
         setMasterProducts(masterData);
@@ -382,9 +385,11 @@ function TodayAuction() {
           setBuyers(buyerResponse.data.filter((b) => b.status === "active"));
         }
 
-        loadData();
+        await loadData();
       } catch (error) {
         console.error("Failed to fetch initial data", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchInitialData();
@@ -628,7 +633,9 @@ function TodayAuction() {
         </div>
 
         <div className="card-list fade-in">
-          {products.length === 0 ? (
+          {loading ? (
+            <LoadingSpinner message="Loading today's auction..." />
+          ) : products.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">
                 <PackageSearch />

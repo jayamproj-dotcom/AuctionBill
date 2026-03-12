@@ -18,6 +18,7 @@ import { getBillingData } from "../../api/billingApi";
 import { toast } from "react-toastify";
 import jsPDF from "jspdf";
 import SearchableSelect from "../Common/SearchableSelect";
+import LoadingSpinner from "../Common/LoadingSpinner";
 import "./Billing.css";
 
 const Billing = () => {
@@ -41,10 +42,18 @@ const Billing = () => {
   const [fetchingData, setFetchingData] = useState(false);
 
   useEffect(() => {
-    if (currentVendorId) {
-      loadSellers();
-      loadBuyers();
-    }
+    const fetchInitialData = async () => {
+      if (!currentVendorId) return;
+      setLoading(true);
+      try {
+        await Promise.all([loadSellers(), loadBuyers()]);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInitialData();
   }, [currentVendorId]);
 
   const loadSellers = async () => {
@@ -658,7 +667,10 @@ const Billing = () => {
       </div>
 
       <div className="content-body">
-        <div className="billing-card main-config">
+        {loading ? (
+          <LoadingSpinner message="Loading billing configurations..." />
+        ) : (
+          <div className="billing-card main-config">
           <div className="config-section">
             <h3 className="section-title">Select Category</h3>
             <div className="options-grid">
@@ -888,6 +900,7 @@ const Billing = () => {
             </button>
           </div>
         </div>
+      )}
       </div>
     </>
   );

@@ -14,6 +14,7 @@ import { getMainVendorDashboard, getMainVendorBranches } from "../../api/mainVen
 
 // Reuse standard Dashboard styling for consistency
 import "../../components/Dashboard/Dashboard.css";
+import LoadingSpinner from "../../components/Common/LoadingSpinner";
 
 function MainVendorDashboard() {
   const [stats, setStats] = useState({
@@ -295,10 +296,7 @@ function MainVendorDashboard() {
 
         <div className="card-list fade-in">
           {loading ? (
-            <div className="empty-state">
-              <div className="sb-spinner sb-spinner-center"></div>
-              <p>Loading global data...</p>
-            </div>
+            <LoadingSpinner message="Fetching dashboard data..." />
           ) : filteredTransactions.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">📭</div>

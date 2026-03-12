@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
+import LoadingSpinner from "../Common/LoadingSpinner";
 import {
   getCommission,
   updateCommission,
@@ -243,9 +244,7 @@ function CommissionRecord() {
 
         <div className="fade-in">
           {isLoading ? (
-            <div className="empty-state">
-              <p>Loading records...</p>
-            </div>
+            <LoadingSpinner message="Loading commission records..." />
           ) : commissions.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">💰</div>

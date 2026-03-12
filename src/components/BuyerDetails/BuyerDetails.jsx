@@ -26,12 +26,14 @@ import {
   Loader,
 } from "lucide-react";
 import SearchableSelect from "../Common/SearchableSelect";
+import LoadingSpinner from "../Common/LoadingSpinner";
 import { toast } from "react-toastify";
 
 function BuyerDetails() {
   const vendorIdFromRedux = useSelector((state) => state.vendorAuth?.vendorId);
   const vendorId = vendorIdFromRedux || sessionStorage.getItem("vendorId");
   const [buyers, setBuyers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedBuyer, setSelectedBuyer] = useState(null);
   const [ledger, setLedger] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -146,6 +148,7 @@ function BuyerDetails() {
 
   const loadBuyers = async () => {
     if (!vendorId) return;
+    setLoading(true);
     try {
       const response = await getBuyers(vendorId);
       const buyersData = response.data || [];
@@ -156,6 +159,8 @@ function BuyerDetails() {
     } catch (error) {
       console.error("Error loading buyers:", error);
       toast.error("Failed to load buyers");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -675,7 +680,9 @@ function BuyerDetails() {
               </div>
             </div>
             <div className="card-list fade-in">
-              {buyers.length === 0 ? (
+              {loading ? (
+                <LoadingSpinner message="Loading buyers..." />
+              ) : buyers.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-state-icon">
                     <ShoppingCart />

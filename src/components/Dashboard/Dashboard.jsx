@@ -16,6 +16,7 @@ import { formatDate } from "../../utils/dateUtils";
 import { useSelector } from "react-redux";
 import { getDashboardSummary } from "../../api/dashboardApi";
 import "./Dashboard.css";
+import LoadingSpinner from "../Common/LoadingSpinner";
 
 function Dashboard() {
   const { vendorId } = useSelector((state) => state.vendorAuth);
@@ -350,10 +351,7 @@ function Dashboard() {
 
         <div className="card-list fade-in">
           {loading ? (
-            <div className="empty-state">
-              <div className="sb-spinner sb-spinner-center"></div>
-              <p>Loading stats...</p>
-            </div>
+            <LoadingSpinner message="Loading stats..." />
           ) : filteredTransactions.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">📭</div>

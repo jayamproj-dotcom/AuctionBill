@@ -13,6 +13,7 @@ import {
   Calendar,
   PackageSearch,
 } from "lucide-react";
+import LoadingSpinner from "../Common/LoadingSpinner";
 
 function History() {
   const { vendorId } = useSelector((state) => state.vendorAuth);
@@ -163,10 +164,7 @@ function History() {
           </div>
         </div>
         <div className="content-body">
-          <div className="empty-state">
-            <div className="sb-spinner"></div>
-            <p>Loading History...</p>
-          </div>
+          <LoadingSpinner message="Loading History..." />
         </div>
       </>
     );

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { History as HistoryIcon, Calendar, PackageSearch } from "lucide-react";
+import LoadingSpinner from "../../components/Common/LoadingSpinner";
 import SearchableSelect from "../../components/Common/SearchableSelect";
 import {
   getMainVendorBranches,
@@ -213,99 +214,79 @@ function History() {
           </div>
         )}
 
-        <div className="section-header section-header-margin">
-          <h3 className="section-title">
-            Recordings ({history.length})
-            {loading && (
-              <span
-                style={{
-                  marginLeft: "10px",
-                  fontSize: "0.875rem",
-                  color: "var(--text-muted)",
-                }}
-              >
-                Loading...
-              </span>
-            )}
-          </h3>
-        </div>
-
-        <div className="fade-in" style={{ padding: 0, overflow: "hidden" }}>
-          <div className="mvh-table-wrapper">
-            <table className="mvh-table">
-              <thead className="bg-tertiary">
-                <tr>
-                  <th className="mvh-th">Date</th>
-                  <th className="mvh-th">Product</th>
-                  <th className="mvh-th">Seller</th>
-                  <th className="mvh-th">Buyer</th>
-                  <th className="mvh-th mvh-num-col">Qty</th>
-                  <th className="mvh-th mvh-num-col">Total</th>
-                  <th className="mvh-th mvh-num-col">Comm.</th>
-                  
-                </tr>
-              </thead>
-              <tbody>
-                {history.length === 0 ? (
+        {loading ? (
+          <LoadingSpinner message="Fetching history..." />
+        ) : (
+          <div className="fade-in" style={{ padding: 0, overflow: "hidden" }}>
+            <div className="mvh-table-wrapper">
+              <table className="mvh-table">
+                <thead className="bg-tertiary">
                   <tr>
-                    <td colSpan="8" className="empty-td">
-                      <div className="empty-state">
-                        <div className="empty-state-icon">
-                          <PackageSearch />
-                        </div>
-                        <p>
-                          {loading
-                            ? "Loading history..."
-                            : "No history records found for the selected filters."}
-                        </p>
-                      </div>
-                    </td>
+                    <th className="mvh-th">Date</th>
+                    <th className="mvh-th">Product</th>
+                    <th className="mvh-th">Seller</th>
+                    <th className="mvh-th">Buyer</th>
+                    <th className="mvh-th mvh-num-col">Qty</th>
+                    <th className="mvh-th mvh-num-col">Total</th>
+                    <th className="mvh-th mvh-num-col">Comm.</th>
                   </tr>
-                ) : (
-                  history.map((t) => (
-                    <tr key={t.id} className="mvh-tr">
-                      <td className="mvh-td">
-                        <span className="cr-date-badge">{t.date}</span>
-                      </td>
-                      <td className="mvh-td">
-                        <div className="font-semibold text-primary">
-                          {t.productName}
-                        </div>
-                        {t.branch && <small className="text-muted">{t.branch}</small>}
-                      </td>
-                      <td className="mvh-td">{t.sellerName}</td>
-                      <td className="mvh-td">{t.buyerName}</td>
-                      <td className="mvh-td mvh-num-col">
-                        <span className="hs-qty-text">{t.quantity}</span>
-                        {t.unit && <small className="text-muted ml-1">{t.unit}</small>}
-                      </td>
-                      <td className="mvh-td mvh-num-col">
-                        <span className="font-bold">
-                          ₹{((t.totalAmount !== undefined ? t.totalAmount : t.finalAmount) || 0).toLocaleString()}
-                        </span>
-                        
-                      </td>
-                      <td className="mvh-td mvh-num-col">
-                        <span className="text-amber">
-                          ₹{(t.commissionAmount || 0).toLocaleString()}
-                        </span>
-                        {t.commissionPercent !== undefined && (
-                          <div
-                            style={{ fontSize: "0.7rem" }}
-                            className="text-muted"
-                          >
-                            ({t.commissionPercent}%)
+                </thead>
+                <tbody>
+                  {history.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="empty-td">
+                        <div className="empty-state">
+                          <div className="empty-state-icon">
+                            <PackageSearch />
                           </div>
-                        )}
+                          <p>No history records found for the selected filters.</p>
+                        </div>
                       </td>
-                      
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    history.map((t) => (
+                      <tr key={t.id} className="mvh-tr">
+                        <td className="mvh-td">
+                          <span className="cr-date-badge">{t.date}</span>
+                        </td>
+                        <td className="mvh-td">
+                          <div className="font-semibold text-primary">
+                            {t.productName}
+                          </div>
+                          {t.branch && <small className="text-muted">{t.branch}</small>}
+                        </td>
+                        <td className="mvh-td">{t.sellerName}</td>
+                        <td className="mvh-td">{t.buyerName}</td>
+                        <td className="mvh-td mvh-num-col">
+                          <span className="hs-qty-text">{t.quantity}</span>
+                          {t.unit && <small className="text-muted ml-1">{t.unit}</small>}
+                        </td>
+                        <td className="mvh-td mvh-num-col">
+                          <span className="font-bold">
+                            ₹{((t.totalAmount !== undefined ? t.totalAmount : t.finalAmount) || 0).toLocaleString()}
+                          </span>
+                        </td>
+                        <td className="mvh-td mvh-num-col">
+                          <span className="text-amber">
+                            ₹{(t.commissionAmount || 0).toLocaleString()}
+                          </span>
+                          {t.commissionPercent !== undefined && (
+                            <div
+                              style={{ fontSize: "0.7rem" }}
+                              className="text-muted"
+                            >
+                              ({t.commissionPercent}%)
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
         {!loading && history.length === 0 && (
           <div className="empty-state">

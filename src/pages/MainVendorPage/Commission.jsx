@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { HandCoins, Search, Filter, Calendar } from "lucide-react";
+import LoadingSpinner from "../../components/Common/LoadingSpinner";
 import SearchableSelect from "../../components/Common/SearchableSelect";
 import {
   getMainVendorBranches,
@@ -240,7 +241,6 @@ function Commission() {
         <div className="section-header cr-section-header" style={{ marginBottom: "1rem", marginTop: "1rem" }}>
           <h3 className="section-title">
             Commission Details 
-            {loading && <span style={{fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '10px'}}>Loading...</span>}
           </h3>
           <span className="badge" style={{ backgroundColor: 'rgba(245, 158, 11, 0.12)', color: 'var(--primary-amber)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
             {filteredCommissions.length} records
@@ -248,10 +248,7 @@ function Commission() {
         </div>
 
         {loading ? (
-           <div className="empty-state">
-              <div className="empty-state-icon" style={{ opacity: 0.5 }}>⏳</div>
-              <p>Fetching commission data...</p>
-           </div>
+           <LoadingSpinner message="Fetching commission data..." />
         ) : filteredCommissions.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">💰</div>

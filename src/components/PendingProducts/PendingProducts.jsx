@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
+import LoadingSpinner from '../Common/LoadingSpinner';
 import './PendingProducts.css';
 import '../TodayAuction/TodayAuction.css'; // Reusing base card styles
 import { Undo2, ListFilterPlus, Search } from 'lucide-react';
@@ -11,6 +12,7 @@ import { getSellers } from '../../api/sellerApi';
 
 function PendingProducts() {
     const [pendingProducts, setPendingProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [today, setToday] = useState('');
     const [sellers, setSellers] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -27,6 +29,7 @@ function PendingProducts() {
     }, [vendorId]);
 
     const loadInitialData = async (currentDate) => {
+        setLoading(true);
         try {
             const sellersRes = await getSellers(vendorId);
             if (sellersRes.success) {
@@ -35,6 +38,8 @@ function PendingProducts() {
             await loadPendingProducts(currentDate);
         } catch (error) {
             console.error("Failed to load initial data", error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -176,7 +181,9 @@ function PendingProducts() {
                 </div>
 
                 <div className="card-list fade-in">
-                    {pendingProducts.length === 0 ? (
+                    {loading ? (
+                        <LoadingSpinner message="Loading pending products..." />
+                    ) : pendingProducts.length === 0 ? (
                         <div className="empty-state">
                             <div className="empty-state-icon">✅</div>
                             <p>No pending products found.</p>

@@ -7,6 +7,7 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { updateVendorProfileData } from "../../redux/slices/vendorAuthSlice";
+import LoadingSpinner from "../../components/Common/LoadingSpinner";
 
 function Profile() {
   const dispatch = useDispatch();
@@ -103,12 +104,7 @@ function Profile() {
   };
 
   if (loading) {
-    return (
-      <div className="profile-loading">
-        <Loader className="animate-spin" size={32} />
-        <p>Loading Profile...</p>
-      </div>
-    );
+    return <LoadingSpinner message="Loading Profile..." />;
   }
 
   return (

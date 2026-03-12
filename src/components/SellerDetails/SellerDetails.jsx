@@ -15,6 +15,7 @@ import {
   Download,
 } from "lucide-react";
 import SearchableSelect from "../Common/SearchableSelect";
+import LoadingSpinner from "../Common/LoadingSpinner";
 import { toast } from "react-toastify";
 import jsPDF from "jspdf";
 import { getBillingData } from "../../api/billingApi";
@@ -754,10 +755,7 @@ function SellerDetails() {
             {/* Seller Cards */}
             <div className="card-list fade-in">
               {loading ? (
-                <div className="empty-state">
-                  <Loader size={32} className="spin" />
-                  <p>Loading sellers...</p>
-                </div>
+                <LoadingSpinner message="Loading sellers..." />
               ) : sellers.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-state-icon">👤</div>

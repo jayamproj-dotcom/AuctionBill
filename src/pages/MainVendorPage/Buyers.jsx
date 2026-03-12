@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Phone, Mail, Pencil, Trash2, Loader2 } from "lucide-react";
+import LoadingSpinner from "../../components/Common/LoadingSpinner";
 import ConfirmationModal from "../../components/Common/ConfirmationModal";
 import SearchableSelect from "../../components/Common/SearchableSelect";
 import { getMainVendorBuyers, getMainVendorBranches } from "../../api/mainVendorApi";
@@ -118,10 +119,7 @@ function Buyers() {
         </div>
 
         {loading ? (
-          <div className="loading-state" style={{ textAlign: "center", padding: "3rem" }}>
-            <Loader2 className="animate-spin" size={40} style={{ margin: "0 auto", color: "#F39C12" }} />
-            <p style={{ marginTop: "1rem" }}>Fetching buyers...</p>
-          </div>
+          <LoadingSpinner message="Fetching buyers..." />
         ) : (
           <>
             <div className="card-list">
