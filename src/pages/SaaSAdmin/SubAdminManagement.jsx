@@ -199,7 +199,11 @@ const SubAdminManagement = () => {
       </div>
       <div className={isMobile ? "subAdminTableCard" : "saas-card"}>
         {isLoading ? (
-          <div className="saas-loading saas-loading-padded">Loading sub-admins...</div>
+          <div className="saas-loading saas-loading-padded">
+            <Loader
+              className="saas-spinner saas-inline-block"
+              size={24}
+            />{" "}Loading sub-admins...</div>
         ) : (
           <div className="saas-table-container">
             <table className="saas-table subAdminTable saas-desktop-only-550">

@@ -142,7 +142,11 @@ const SubscriptionManagement = () => {
       </div>
 
       {isLoading ? (
-        <div className="saas-loading">Loading plans...</div>
+        <div className="saas-loading">
+          <Loader
+            className="saas-spinner saas-inline-block"
+            size={24}
+          />{" "}Loading plans...</div>
       ) : (
         <div className="saas-grid-responsive">
           {plans.map((plan) => (

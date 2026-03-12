@@ -1,13 +1,22 @@
 import { useState, useEffect } from "react";
-import { Search, Loader } from "lucide-react";
+import { Search, Loader, Download, X } from "lucide-react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { toast } from "react-toastify";
 import { formatDate } from "../../utils/dateUtils";
-import { getMainVendorPurchases } from "../../api/adminApi";
+import { getMainVendorPurchases, exportMainVendorPurchases } from "../../api/adminApi";
 import "./SaaSAdmin.css";
 
 const Purchases = () => {
   const [purchases, setPurchases] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportParams, setExportParams] = useState({
+    startDate: null,
+    endDate: null,
+  });
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 550);
 
@@ -88,8 +97,108 @@ const Purchases = () => {
     );
   });
 
+  const handleExportDownload = async () => {
+    setExportLoading(true);
+    try {
+      const exportData = {
+        from: exportParams.startDate,
+        to: exportParams.endDate,
+        search: searchQuery,
+      };
+
+      const response = await exportMainVendorPurchases(exportData);
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `purchase_history_${new Date().toISOString().split("T")[0]}.xlsx`,
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setIsExportModalOpen(false);
+      toast.success("Purchase history exported successfully");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Error exporting data. Please try again.");
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   return (
     <div className="fade-in">
+      {/* Export Modal */}
+      {isExportModalOpen && (
+        <div
+          className="saas-modal-overlay"
+          onClick={() => setIsExportModalOpen(false)}
+        >
+          <div
+            className="saas-modal saas-export-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="saas-modal-header">
+              <h3 className="saas-text-xl saas-font-semibold">
+                Export Purchase History
+              </h3>
+              <button
+                onClick={() => setIsExportModalOpen(false)}
+                className="saas-modal-close-btn"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="saas-modal-content">
+              <div className="mb-1 full-width">
+                <label className="saas-label">Date Range (Purchase Date)</label>
+                <DatePicker
+                  selectsRange={true}
+                  startDate={exportParams.startDate}
+                  endDate={exportParams.endDate}
+                  onChange={(update) => {
+                    const [start, end] = update;
+                    setExportParams((prev) => ({
+                      ...prev,
+                      startDate: start,
+                      endDate: end,
+                    }));
+                  }}
+                  isClearable={true}
+                  placeholderText="Select range (From - To)"
+                  className="saas-input"
+                />
+              </div>
+            </div>
+            <div className="saas-modal-footer">
+              <button
+                className="saas-btn btn-secondary"
+                onClick={() => setIsExportModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="saas-btn btn-primary"
+                onClick={handleExportDownload}
+                disabled={exportLoading}
+              >
+                {exportLoading ? (
+                  <>
+                    <Loader className="saas-spinner" size={16} /> Exporting...
+                  </>
+                ) : (
+                  "Download Excel"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="saas-card saas-mb-15 subAdminCard">
         <h2 className="saas-text-2xl saas-font-bold subAdminCardTitle">
           Main Vendor Purchase History
@@ -109,7 +218,12 @@ const Purchases = () => {
             />
           </div>
           <div className="saas-flex saas-gap-10px">
-            <button className="saas-btn btn-outline">Export CSV</button>
+            <button
+              className="saas-btn btn-outline"
+              onClick={() => setIsExportModalOpen(true)}
+            >
+              <Download size={18} /> Export Excel
+            </button>
           </div>
         </div>
       </div>
