@@ -386,3 +386,17 @@ export const getMainVendorPurchases = async () => {
     throw error;
   }
 };
+
+export const exportMainVendorPurchases = async (filters) => {
+  try {
+    const response = await api.post("/main-vendor/purchases/export", filters, {
+      responseType: "blob",
+    });
+    return response;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};

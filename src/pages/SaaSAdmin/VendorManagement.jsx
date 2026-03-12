@@ -30,6 +30,7 @@ import SearchableSelect from "../../components/Common/SearchableSelect.jsx";
 const VendorManagement = () => {
   const role = localStorage.getItem("saas_role");
   const [vendors, setVendors] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState([]);
   const { saasRole, saasPermissions } = useSelector((state) => state.saasAuth);
 
@@ -230,6 +231,7 @@ const VendorManagement = () => {
   };
 
   const loadData = async () => {
+    setLoading(true);
     try {
       const [plansRes, vendorsRes] = await Promise.all([
         getSubscriptions(),
@@ -249,6 +251,8 @@ const VendorManagement = () => {
       }
     } catch (error) {
       console.error("Error loading data", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -725,197 +729,226 @@ const VendorManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredVendors.map((vendor) => (
-                <tr
-                  key={vendor._id || vendor.id}
-                  onClick={() => handleRowClick(vendor)}
-                  className="vendor-row"
-                >
-                  <td className="saas-font-medium">
-                    <div className="saas-flex saas-align-center saas-gap-05">
-                      {vendor.name}
-                      {vendor.requestedPlan && (
-                        <span
-                          className="saas-badge badge-warning saas-badge-warning-req"
-                          title="Plan Upgrade Requested"
-                        >
-                          Upgrade Req.
-                        </span>
-                      )}
-                    </div>
+              {loading ? (
+                <tr>
+                  <td colSpan="8" className="saas-text-center saas-py-4">
+                    <Loader
+                      className="saas-spinner saas-inline-block"
+                      size={24}
+                    />{" "}
+                    Loading main vendors...
                   </td>
-                  <td>{vendor.email}</td>
-                  <td>
-                    {vendor.city || "N/A"}, {vendor.state || "N/A"}
+                </tr>
+              ) : filteredVendors.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="saas-text-center saas-py-4">
+                    No main vendors found.
                   </td>
-                  <td>
-                    <a
-                      href={`https://wa.me/91${vendor.phone?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hello ${vendor.name}, This is from AuctionBill Admin side.`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="saas-whatsapp-link"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        width="16"
-                        height="16"
-                        fill="currentColor"
-                        className="wa-icon"
-                      >
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 0 5.414 0 12.05c0 2.123.552 4.197 1.598 6.02L0 24l6.125-1.606a11.81 11.81 0 005.923 1.586h.006c6.634 0 12.048-5.414 12.048-12.05a11.75 11.75 0 00-3.525-8.498z" />
-                      </svg>
-                      {vendor.phone}
-                    </a>
-                  </td>
-                  <td>
-                    <span
-                      className={`saas-badge ${
-                        vendor.status === "Active"
-                          ? "badge-success"
-                          : vendor.status === "Pending"
-                            ? "badge-warning"
-                            : "badge-danger"
-                      }`}
-                    >
-                      {vendor.status}
-                    </span>
-                  </td>
-                  {canManageVendors && (
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <div className="saas-flex saas-gap-075">
-                        <>
-                          <button
-                            className="icon-btn edit"
-                            title="Edit Main Vendor"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditClick(vendor);
-                            }}
+                </tr>
+              ) : (
+                filteredVendors.map((vendor) => (
+                  <tr
+                    key={vendor._id || vendor.id}
+                    onClick={() => handleRowClick(vendor)}
+                    className="vendor-row"
+                  >
+                    <td className="saas-font-medium">
+                      <div className="saas-flex saas-align-center saas-gap-05">
+                        {vendor.name}
+                        {vendor.requestedPlan && (
+                          <span
+                            className="saas-badge badge-warning saas-badge-warning-req"
+                            title="Plan Upgrade Requested"
                           >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            className="icon-btn delete"
-                            title="Delete Main Vendor"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClick(vendor);
-                            }}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </>
+                            Upgrade Req.
+                          </span>
+                        )}
                       </div>
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td>{vendor.email}</td>
+                    <td>
+                      {vendor.city || "N/A"}, {vendor.state || "N/A"}
+                    </td>
+                    <td>
+                      <a
+                        href={`https://wa.me/91${vendor.phone?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hello ${vendor.name}, This is from AuctionBill Admin side.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="saas-whatsapp-link"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          className="wa-icon"
+                        >
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 0 5.414 0 12.05c0 2.123.552 4.197 1.598 6.02L0 24l6.125-1.606a11.81 11.81 0 005.923 1.586h.006c6.634 0 12.048-5.414 12.048-12.05a11.75 11.75 0 00-3.525-8.498z" />
+                        </svg>
+                        {vendor.phone}
+                      </a>
+                    </td>
+                    <td>
+                      <span
+                        className={`saas-badge ${
+                          vendor.status === "Active"
+                            ? "badge-success"
+                            : vendor.status === "Pending"
+                              ? "badge-warning"
+                              : "badge-danger"
+                        }`}
+                      >
+                        {vendor.status}
+                      </span>
+                    </td>
+                    {canManageVendors && (
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <div className="saas-flex saas-gap-075">
+                          <>
+                            <button
+                              className="icon-btn edit"
+                              title="Edit Main Vendor"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditClick(vendor);
+                              }}
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              className="icon-btn delete"
+                              title="Delete Main Vendor"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(vendor);
+                              }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
 
           <div className="saas-mobile-cards-view">
-            {filteredVendors.map((vendor) => (
-              <div
-                key={vendor._id || vendor.id}
-                className="saas-mobile-card"
-                onClick={() => handleRowClick(vendor)}
-              >
-                <div className="saas-mobile-card-row">
-                  <span className="saas-mobile-card-label">Name</span>
-                  <div className="saas-mobile-card-value saas-font-bold">
-                    <div
-                      className="saas-flex saas-align-center saas-gap-05"
-                      style={{ justifyContent: "flex-end" }}
-                    >
-                      {vendor.name}
-                      {vendor.requestedPlan && (
-                        <span
-                          className="saas-badge badge-warning"
-                          style={{ fontSize: "10px" }}
-                          title="Plan Upgrade Requested"
-                        >
-                          Upgrade Req.
-                        </span>
-                      )}
+            {loading ? (
+              <div className="saas-text-center saas-p-20">
+                <Loader className="saas-spinner saas-inline-block" size={24} />{" "}
+                Loading main vendors...
+              </div>
+            ) : filteredVendors.length === 0 ? (
+              <div className="saas-text-center saas-p-20 saas-text-muted">
+                No main vendors found.
+              </div>
+            ) : (
+              filteredVendors.map((vendor) => (
+                <div
+                  key={vendor._id || vendor.id}
+                  className="saas-mobile-card"
+                  onClick={() => handleRowClick(vendor)}
+                >
+                  <div className="saas-mobile-card-row">
+                    <span className="saas-mobile-card-label">Name</span>
+                    <div className="saas-mobile-card-value saas-font-bold">
+                      <div
+                        className="saas-flex saas-align-center saas-gap-05"
+                        style={{ justifyContent: "flex-end" }}
+                      >
+                        {vendor.name}
+                        {vendor.requestedPlan && (
+                          <span
+                            className="saas-badge badge-warning"
+                            style={{ fontSize: "10px" }}
+                            title="Plan Upgrade Requested"
+                          >
+                            Upgrade Req.
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="saas-mobile-card-row">
-                  <span className="saas-mobile-card-label">Email</span>
-                  <span
-                    className="saas-mobile-card-value"
-                    style={{ wordBreak: "break-all" }}
-                  >
-                    {vendor.email}
-                  </span>
-                </div>
-                <div className="saas-mobile-card-row">
-                  <span className="saas-mobile-card-label">Location</span>
-                  <span className="saas-mobile-card-value">
-                    {vendor.city || "N/A"}, {vendor.state || "N/A"}
-                  </span>
-                </div>
-                <div className="saas-mobile-card-row">
-                  <span className="saas-mobile-card-label">Phone</span>
-                  <span className="saas-mobile-card-value">
-                    <a
-                      href={`https://wa.me/91${vendor.phone?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hello ${vendor.name}, This is from AuctionBill Admin side.`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="saas-whatsapp-link"
+                  <div className="saas-mobile-card-row">
+                    <span className="saas-mobile-card-label">Email</span>
+                    <span
+                      className="saas-mobile-card-value"
+                      style={{ wordBreak: "break-all" }}
+                    >
+                      {vendor.email}
+                    </span>
+                  </div>
+                  <div className="saas-mobile-card-row">
+                    <span className="saas-mobile-card-label">Location</span>
+                    <span className="saas-mobile-card-value">
+                      {vendor.city || "N/A"}, {vendor.state || "N/A"}
+                    </span>
+                  </div>
+                  <div className="saas-mobile-card-row">
+                    <span className="saas-mobile-card-label">Phone</span>
+                    <span className="saas-mobile-card-value">
+                      <a
+                        href={`https://wa.me/91${vendor.phone?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hello ${vendor.name}, This is from AuctionBill Admin side.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="saas-whatsapp-link"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {vendor.phone}
+                      </a>
+                    </span>
+                  </div>
+                  <div className="saas-mobile-card-row">
+                    <span className="saas-mobile-card-label">Status</span>
+                    <span className="saas-mobile-card-value">
+                      <span
+                        className={`saas-badge ${
+                          vendor.status === "Active"
+                            ? "badge-success"
+                            : vendor.status === "Pending"
+                              ? "badge-warning"
+                              : "badge-danger"
+                        }`}
+                      >
+                        {vendor.status}
+                      </span>
+                    </span>
+                  </div>
+                  {canManageVendors && (
+                    <div
+                      className="saas-mobile-card-row"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {vendor.phone}
-                    </a>
-                  </span>
-                </div>
-                <div className="saas-mobile-card-row">
-                  <span className="saas-mobile-card-label">Status</span>
-                  <span className="saas-mobile-card-value">
-                    <span
-                      className={`saas-badge ${
-                        vendor.status === "Active"
-                          ? "badge-success"
-                          : vendor.status === "Pending"
-                            ? "badge-warning"
-                            : "badge-danger"
-                      }`}
-                    >
-                      {vendor.status}
-                    </span>
-                  </span>
-                </div>
-                {canManageVendors && (
-                  <div
-                    className="saas-mobile-card-row"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <span className="saas-mobile-card-label">Actions</span>
-                    <div className="saas-flex saas-gap-10px">
-                      <button
-                        className="icon-btn edit"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditClick(vendor);
-                        }}
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        className="icon-btn delete"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteClick(vendor);
-                        }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <span className="saas-mobile-card-label">Actions</span>
+                      <div className="saas-flex saas-gap-10px">
+                        <button
+                          className="icon-btn edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditClick(vendor);
+                          }}
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          className="icon-btn delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(vendor);
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
