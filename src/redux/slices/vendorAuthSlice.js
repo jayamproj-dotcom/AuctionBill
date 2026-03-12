@@ -9,6 +9,7 @@ const initialState = {
     vendorUserAddress: sessionStorage.getItem('vendorUserAddress') || '',
     vendorId: sessionStorage.getItem('vendorId') || '',
     vendorToken: sessionStorage.getItem('vendorToken') || '',
+    sessionError: false,
 };
 
 const vendorAuthSlice = createSlice({
@@ -81,10 +82,13 @@ const vendorAuthSlice = createSlice({
             localStorage.removeItem('vendorUserPhoto');
             localStorage.removeItem('vendorUserPhone');
             localStorage.removeItem('vendorUserAddress');
+        },
+        setVendorSessionError: (state, action) => {
+            state.sessionError = action.payload;
         }
     }
 });
 
-export const { setVendorAuthData, clearVendorAuthData, updateVendorProfileData } = vendorAuthSlice.actions;
+export const { setVendorAuthData, clearVendorAuthData, updateVendorProfileData, setVendorSessionError } = vendorAuthSlice.actions;
 
 export default vendorAuthSlice.reducer;

@@ -9,6 +9,8 @@ import {
   getAdminProfile,
   getAdminNotifications,
   markNotificationAsRead,
+  adminHeartbeat,
+  logoutAdmin,
 } from "../../api/adminApi";
 import {
   House,
@@ -106,7 +108,57 @@ const SaaSLayout = () => {
     }
   };
 
-  // Add a class to body when in SaaS Admin to allow full-width override
+  // Activity tracking and Heartbeat
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    let heartbeatInterval;
+    let inactivityTimeout;
+    const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes
+
+    const resetInactivityTimer = () => {
+      if (inactivityTimeout) clearTimeout(inactivityTimeout);
+      inactivityTimeout = setTimeout(() => {
+        console.log("Inactivity detected, logging out...");
+        handleLogout();
+      }, INACTIVITY_LIMIT);
+    };
+
+    const sendHeartbeat = () => {
+      adminHeartbeat()
+        .then((res) => {
+          if (!res.status) handleLogout();
+        })
+        .catch((err) => {
+          console.error("Heartbeat failed:", err);
+          if (err.message?.includes("session") || err.message?.includes("active")) {
+             handleLogout();
+          }
+        });
+    };
+
+    // Events to track activity
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+    
+    activityEvents.forEach(event => {
+      window.addEventListener(event, resetInactivityTimer);
+    });
+
+    // Initial timer start
+    resetInactivityTimer();
+
+    // Start heartbeat interval (every 1 minute)
+    heartbeatInterval = setInterval(sendHeartbeat, 60000);
+
+    return () => {
+      if (inactivityTimeout) clearTimeout(inactivityTimeout);
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, resetInactivityTimer);
+      });
+    };
+  }, [isAdmin]);
+
   useEffect(() => {
     document.body.classList.add("saas-admin-active");
 
@@ -138,13 +190,15 @@ const SaaSLayout = () => {
 
             // If status is Inactive or false, force log out.
             if (status === "Inactive" || status === false) {
-              dispatch(clearSaasAuthData());
-              navigate("/saas-admin");
+              handleLogout();
             }
           }
         })
         .catch((err) => {
           console.error("Failed to sync profile:", err);
+          if (err.message?.includes("session") || err.message?.includes("active") || err.message?.includes("token")) {
+             handleLogout();
+          }
         });
     };
 
@@ -166,8 +220,10 @@ const SaaSLayout = () => {
   }, [navigate, location.pathname, dispatch, isAdmin]);
 
   const handleLogout = () => {
-    dispatch(clearSaasAuthData());
-    navigate("/auctionbilling/saas-admin");
+    logoutAdmin().finally(() => {
+      dispatch(clearSaasAuthData());
+      navigate("/saas-admin");
+    });
   };
 
   const isSubAdmin = saasRole === "sub-admin" || saasRole === "subadmin";

@@ -13,6 +13,31 @@ export const vendorLogin = async (data) => {
   }
 };
 
+// Vendor Logout
+export const logoutVendor = async () => {
+  try {
+    const response = await api.post("/vendor/logout");
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const vendorHeartbeat = async () => {
+  try {
+    const response = await api.post("/vendor/heartbeat");
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
 export const getVendorProfile = async (id) => {
   try {
     const response = await api.get(`/vendor/${id}`);

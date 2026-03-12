@@ -23,6 +23,7 @@ const initialState = {
     saasAdminPhoto: sessionStorage.getItem('saas_admin_photo') || null,
     saasRole: sessionStorage.getItem('saas_role') || null,
     saasPermissions: saasPermissionsObj,
+    sessionError: false,
 };
 
 const saasAuthSlice = createSlice({
@@ -67,9 +68,12 @@ const saasAuthSlice = createSlice({
             localStorage.removeItem('saas_admin_photo');
             localStorage.removeItem('saas_role');
             localStorage.removeItem('saas_permissions');
+        },
+        setSaasSessionError: (state, action) => {
+            state.sessionError = action.payload;
         }
     }
 });
 
-export const { setSaasAuthData, clearSaasAuthData } = saasAuthSlice.actions;
+export const { setSaasAuthData, clearSaasAuthData, setSaasSessionError } = saasAuthSlice.actions;
 export default saasAuthSlice.reducer;

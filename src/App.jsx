@@ -41,6 +41,7 @@ import Commission from "./pages/MainVendorPage/Commission.jsx";
 import MainVendorHistory from "./pages/MainVendorPage/MainVendorHistory.jsx";
 
 import Profile from "./pages/MainVendorPage/Profile.jsx";
+import SessionManager from "./components/Common/SessionManager.jsx";
 
 function App() {
  
@@ -65,6 +66,7 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <BrowserRouter basename={import.meta.env.VITE_BASE_URL}>
+        <SessionManager />
         <Routes>
           {/* Vendor Login */}
           <Route path="/" element={<VendorLogin />} />

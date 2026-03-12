@@ -1,5 +1,7 @@
 import axios from 'axios';
 import { store } from '../redux/store';
+import { setSaasSessionError } from '../redux/slices/saasAuthSlice';
+import { setVendorSessionError } from '../redux/slices/vendorAuthSlice';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
@@ -53,7 +55,20 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
-        const { config } = error;
+        const { config, response } = error;
+
+        // Check for session error from server
+        if (response && response.status === 401 && response.data && response.data.sessionError) {
+            const currentPath = window.location.pathname;
+            const isSaaSContext = currentPath.includes('/saas') && !currentPath.includes('/mainvendor');
+            
+            if (isSaaSContext) {
+                store.dispatch(setSaasSessionError(true));
+            } else {
+                store.dispatch(setVendorSessionError(true));
+            }
+            return Promise.reject(error);
+        }
 
         // If config does not exist or retry option is not set, reject
         if (!config || config.retryCount >= RETRY_COUNT) {

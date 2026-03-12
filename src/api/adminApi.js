@@ -13,6 +13,32 @@ export const adminLogin = async (data) => {
   }
 };
 
+// Admin heartbeat API
+export const adminHeartbeat = async () => {
+  try {
+    const response = await api.post("/admin/heartbeat");
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+// Admin logout API
+export const logoutAdmin = async () => {
+  try {
+    const response = await api.post("/admin/logout");
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
 // Verify admin password API
 export const verifyAdminPassword = async (data) => {
   try {

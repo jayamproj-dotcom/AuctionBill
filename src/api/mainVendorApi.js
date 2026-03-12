@@ -26,6 +26,31 @@ export const mainVendorLogin = async (data) => {
   }
 };
 
+// Main Vendor Logout
+export const logoutMainVendor = async () => {
+  try {
+    const response = await api.post("/main-vendor/logout");
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const mainVendorHeartbeat = async () => {
+  try {
+    const response = await api.post("/main-vendor/heartbeat");
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
 export const getMainVendorProfile = async (id) => {
   try {
     const response = await api.get(`/main-vendor/profile/${id}`);
