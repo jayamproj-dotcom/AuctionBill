@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Search, Loader, Download, X } from "lucide-react";
+import VoiceSearch from "../../components/Common/VoiceSearch";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
@@ -130,13 +131,21 @@ const Purchases = () => {
     }
   };
 
+  const handleClearExportParams = () => {
+    setIsExportModalOpen(false)
+    setExportParams({
+      startDate: null,
+      endDate: null,
+    });
+  };
+
   return (
     <div className="fade-in">
       {/* Export Modal */}
       {isExportModalOpen && (
         <div
           className="saas-modal-overlay"
-          onClick={() => setIsExportModalOpen(false)}
+          onClick={() => handleClearExportParams()}
         >
           <div
             className="saas-modal saas-export-modal"
@@ -147,7 +156,7 @@ const Purchases = () => {
                 Export Purchase History
               </h3>
               <button
-                onClick={() => setIsExportModalOpen(false)}
+                onClick={() => handleClearExportParams()}
                 className="saas-modal-close-btn"
               >
                 <X size={20} />
@@ -177,7 +186,7 @@ const Purchases = () => {
             <div className="saas-modal-footer">
               <button
                 className="saas-btn btn-secondary"
-                onClick={() => setIsExportModalOpen(false)}
+                onClick={() => handleClearExportParams()}
               >
                 Cancel
               </button>
@@ -199,7 +208,7 @@ const Purchases = () => {
         </div>
       )}
 
-      <div className="saas-card saas-mb-15 subAdminCard">
+      <div className="saas-card saas-mb-15 subAdminCard relative">
         <h2 className="saas-text-2xl saas-font-bold subAdminCardTitle">
           Main Vendor Purchase History
         </h2>
@@ -216,6 +225,9 @@ const Purchases = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            <div className="voice-search-wrapper-right">
+              <VoiceSearch onResult={(result) => setSearchQuery(result)} />
+            </div>
           </div>
           <div className="saas-flex saas-gap-10px">
             <button
@@ -236,7 +248,7 @@ const Purchases = () => {
                 <th>Main Vendor Name</th>
                 <th>Plan</th>
                 <th>Price</th>
-                <th>Payment</th>
+                {/* <th>Payment</th> */}
                 <th>Status</th>
                 <th>Purchase Date</th>
                 <th>Expiry Date</th>
@@ -272,13 +284,13 @@ const Purchases = () => {
                         </span>
                       </td>
                       <td>{purchase.price}</td>
-                      <td>
+                      {/* <td>
                         <span
                           className={`saas-badge ${purchase.paymentStatus === "Paid" ? "badge-success" : "badge-danger"}`}
                         >
                           {purchase.paymentStatus}
                         </span>
-                      </td>
+                      </td> */}
                       <td>
                         <span
                           className={`saas-badge ${getStatusBadge(purchase.status, purchase.expiryDate)}`}
@@ -353,7 +365,7 @@ const Purchases = () => {
                       {purchase.price}
                     </span>
                   </div>
-                  <div className="saas-mobile-card-row">
+                  {/* <div className="saas-mobile-card-row">
                     <span className="saas-mobile-card-label">Payment</span>
                     <span className="saas-mobile-card-value">
                       <span
@@ -362,7 +374,7 @@ const Purchases = () => {
                         {purchase.paymentStatus}
                       </span>
                     </span>
-                  </div>
+                  </div> */}
                   <div className="saas-mobile-card-row">
                     <span className="saas-mobile-card-label">Date</span>
                     <span className="saas-mobile-card-value">

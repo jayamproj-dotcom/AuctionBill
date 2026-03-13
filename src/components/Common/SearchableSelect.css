@@ -50,6 +50,16 @@
 .searchable-select-search-wrap {
   padding: 0.5rem;
   border-bottom: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.voice-search-wrapper-absolute {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
 }
 
 .searchable-select-search-input {

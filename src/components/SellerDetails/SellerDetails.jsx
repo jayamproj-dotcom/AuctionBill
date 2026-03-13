@@ -17,6 +17,7 @@ import {
 import SearchableSelect from "../Common/SearchableSelect";
 import LoadingSpinner from "../Common/LoadingSpinner";
 import { toast } from "react-toastify";
+import VoiceSearch from "../Common/VoiceSearch";
 import jsPDF from "jspdf";
 import { getBillingData } from "../../api/billingApi";
 import {
@@ -748,6 +749,9 @@ function SellerDetails() {
                       color: "#9ca3af",
                     }}
                   />
+                  <div className="voice-search-wrapper-right">
+                    <VoiceSearch onResult={(result) => setSearchQuery(result)} />
+                  </div>
                 </div>
               </div>
             </div>

@@ -4,6 +4,7 @@ import ConfirmationModal from '../../components/Common/ConfirmationModal';
 import { Plus, X, Download, Trash2, Search, Check, Edit, Loader } from 'lucide-react';
 import { getSubAdmins, createSubAdmin, updateSubAdmin, deleteSubAdmin } from '../../api/adminApi';
 import { toast } from 'react-toastify';
+import VoiceSearch from '../../components/Common/VoiceSearch';
 
 const SubAdminManagement = () => {
   const [subAdmins, setSubAdmins] = useState([]);
@@ -186,6 +187,9 @@ const SubAdminManagement = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            <div className="voice-search-wrapper-right">
+              <VoiceSearch onResult={(result) => setSearchQuery(result)} />
+            </div>
           </div>
           <div className="saas-flex saas-gap-10px">
              <button className="saas-btn btn-primary" onClick={handleAddSubAdmin}>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { History as HistoryIcon, Calendar, PackageSearch } from "lucide-react";
+import VoiceSearch from "../../components/Common/VoiceSearch";
 import LoadingSpinner from "../../components/Common/LoadingSpinner";
 import SearchableSelect from "../../components/Common/SearchableSelect";
 import {
@@ -165,6 +166,9 @@ function History() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            <div className="voice-search-wrapper-absolute" style={{ right: '0px' }}>
+              <VoiceSearch onResult={(result) => setSearchTerm(result)} />
+            </div>
           </div>
 
           {/* Divider */}

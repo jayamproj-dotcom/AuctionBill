@@ -28,6 +28,7 @@ import {
 import SearchableSelect from "../Common/SearchableSelect";
 import LoadingSpinner from "../Common/LoadingSpinner";
 import { toast } from "react-toastify";
+import VoiceSearch from "../Common/VoiceSearch";
 
 function BuyerDetails() {
   const vendorIdFromRedux = useSelector((state) => state.vendorAuth?.vendorId);
@@ -676,6 +677,9 @@ function BuyerDetails() {
                       color: "#9ca3af",
                     }}
                   />
+                  <div className="voice-search-wrapper-right">
+                    <VoiceSearch onResult={(result) => setSearchQuery(result)} />
+                  </div>
                 </div>
               </div>
             </div>

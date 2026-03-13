@@ -1,0 +1,131 @@
+.voice-search-container {
+  display: flex;
+  align-items: center;
+  /* position: relative; */
+  margin-left: 8px;
+}
+
+.voice-search-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  background-color: rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.voice-search-btn:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: scale(1.1);
+}
+
+.voice-search-btn.listening {
+  background-color: rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+.pulse {
+  animation: bg-pulse 1.5s infinite;
+}
+
+@keyframes bg-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.listening-indicator {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.voice-search-status {
+  position: absolute;
+  top: calc(100% + 0px);
+  right: 0;
+  background: white;
+  padding: 8px 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  z-index: 100000;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  animation: fadeInDown 0.3s ease-out;
+  min-width: 150px;
+  max-width: 300px;
+}
+
+.voice-search-status span {
+  font-size: 14px;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+
+.close-voice {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  display: flex;
+  padding: 0;
+  margin-left: auto;
+}
+
+.close-voice:hover {
+  color: #4b5563;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dark mode support if applicable */
+[data-theme='dark'] .voice-search-status {
+  background: #1f2937;
+  color: white;
+}
+
+[data-theme='dark'] .voice-search-status span {
+  color: #e5e7eb;
+}

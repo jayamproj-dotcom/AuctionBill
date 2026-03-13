@@ -449,3 +449,28 @@ tr:hover {
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
+/* Voice Search Utilities */
+.voice-search-wrapper-right {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  z-index: 10;
+}
+
+.voice-search-wrapper-absolute {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  z-index: 10;
+}
+
+.saasSearchWrapperWide {
+  position: relative;
+}

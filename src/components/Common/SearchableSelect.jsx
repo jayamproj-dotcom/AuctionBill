@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './SearchableSelect.css';
+import VoiceSearch from './VoiceSearch';
 
 const SearchableSelect = ({ options, value, onChange, placeholder, disabled, name, required }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -75,6 +76,9 @@ const SearchableSelect = ({ options, value, onChange, placeholder, disabled, nam
               onClick={(e) => e.stopPropagation()}
               autoFocus
             />
+            <div className="voice-search-wrapper-absolute">
+               <VoiceSearch onResult={(result) => setSearchTerm(result)} />
+            </div>
           </div>
           <div className="searchable-select-options">
             {filteredOptions.length > 0 ? (

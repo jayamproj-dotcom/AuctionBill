@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { HandCoins, Search, Filter, Calendar } from "lucide-react";
+import VoiceSearch from "../../components/Common/VoiceSearch";
 import LoadingSpinner from "../../components/Common/LoadingSpinner";
 import SearchableSelect from "../../components/Common/SearchableSelect";
 import {
@@ -203,6 +204,9 @@ function Commission() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            <div className="voice-search-wrapper-absolute" style={{ right: '0px' }}>
+              <VoiceSearch onResult={(result) => setSearchTerm(result)} />
+            </div>
           </div>
 
           <div className="mvh-divider" />

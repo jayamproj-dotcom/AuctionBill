@@ -12,22 +12,28 @@ const SessionModal = ({ type }) => {
     const handleLogout = async () => {
         try {
             if (type === 'saas') {
-                // Try to notify backend if possible, but don't wait
-                fetch(`${import.meta.env.VITE_API_URL}admin/logout`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${sessionStorage.getItem('admin_token')}` },
-                    keepalive: true
-                }).catch(() => {});
+                const token = sessionStorage.getItem('admin_token');
+                if (token && token !== 'null' && token !== 'undefined') {
+                    // Try to notify backend if possible, but don't wait
+                    fetch(`${import.meta.env.VITE_API_URL}admin/logout`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        keepalive: true
+                    }).catch(() => {});
+                }
 
                 dispatch(clearSaasAuthData());
                 dispatch(setSaasSessionError(false));
                 navigate('/saas-admin');
             } else {
-                fetch(`${import.meta.env.VITE_API_URL}vendor/logout`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${sessionStorage.getItem('vendorToken')}` },
-                    keepalive: true
-                }).catch(() => {});
+                const token = sessionStorage.getItem('vendorToken');
+                if (token && token !== 'null' && token !== 'undefined') {
+                    fetch(`${import.meta.env.VITE_API_URL}vendor/logout`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        keepalive: true
+                    }).catch(() => {});
+                }
 
                 dispatch(clearVendorAuthData());
                 dispatch(setVendorSessionError(false));

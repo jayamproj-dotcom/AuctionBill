@@ -6,6 +6,7 @@ import SearchableSelect from "../../components/Common/SearchableSelect";
 import { getMainVendorBuyers, getMainVendorBranches } from "../../api/mainVendorApi";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import VoiceSearch from "../../components/Common/VoiceSearch";
 
 function Buyers() {
   const { vendorId, vendorLoggedIn } = useSelector((state) => state.vendorAuth);
@@ -109,13 +110,18 @@ function Buyers() {
           />
         </div>
         <div className="form-group" style={{ marginBottom: "1rem" }}>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Search buyers by name, email or phone…"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <div style={{ position: "relative" }}>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search buyers by name, email or phone…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="voice-search-wrapper-absolute">
+              <VoiceSearch onResult={(result) => setSearchTerm(result)} />
+            </div>
+          </div>
         </div>
 
         {loading ? (

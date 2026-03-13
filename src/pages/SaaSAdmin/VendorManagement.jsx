@@ -26,6 +26,7 @@ import {
   exportMainVendors,
 } from "../../api/adminApi";
 import SearchableSelect from "../../components/Common/SearchableSelect.jsx";
+import VoiceSearch from "../../components/Common/VoiceSearch";
 
 const VendorManagement = () => {
   const role = localStorage.getItem("saas_role");
@@ -466,6 +467,14 @@ const VendorManagement = () => {
     }
   };
 
+  const handleClearExportParams = () => {
+    setIsExportModalOpen(false)
+    setExportParams({
+      startDate: null,
+      endDate: null,
+    });
+  };
+
   return (
     <div className="fade-in relative">
       <ConfirmationModal
@@ -510,7 +519,7 @@ const VendorManagement = () => {
       {isExportModalOpen && (
         <div
           className="saas-modal-overlay"
-          onClick={() => setIsExportModalOpen(false)}
+          onClick={() => handleClearExportParams()}
         >
           <div
             className="saas-modal saas-export-modal"
@@ -521,7 +530,7 @@ const VendorManagement = () => {
                 Export Main Vendor Data
               </h3>
               <button
-                onClick={() => setIsExportModalOpen(false)}
+                onClick={() => handleClearExportParams()}
                 className="saas-modal-close-btn"
               >
                 <X size={20} />
@@ -553,7 +562,7 @@ const VendorManagement = () => {
             <div className="saas-modal-footer">
               <button
                 className="saas-btn btn-secondary"
-                onClick={() => setIsExportModalOpen(false)}
+                onClick={() => handleClearExportParams()}
               >
                 Cancel
               </button>
@@ -592,6 +601,9 @@ const VendorManagement = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            <div className="voice-search-wrapper-right">
+              <VoiceSearch onResult={(result) => setSearchQuery(result)} />
+            </div>
           </div>
           <div className="saas-flex saas-gap-10px">
             <button

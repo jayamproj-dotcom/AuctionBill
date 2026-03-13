@@ -20,6 +20,7 @@ import { getCommission } from "../../api/commissionApi";
 import { getSellers } from "../../api/sellerApi";
 import * as auctionApi from "../../api/auctionApi";
 import * as buyerApi from "../../api/buyerApi";
+import VoiceSearch from "../Common/VoiceSearch";
 
 const SearchableSelect = ({
   options,
@@ -107,6 +108,12 @@ const SearchableSelect = ({
         required={required}
         autoComplete="off"
       />
+      <div className="voice-search-wrapper-absolute">
+         <VoiceSearch onResult={(result) => {
+           setSearchTerm(result);
+           setIsOpen(true);
+         }} />
+      </div>
       {isOpen && (
         <ul className="dropdown-options">
           {options.filter((opt) =>
@@ -628,6 +635,9 @@ function TodayAuction() {
                 className="search-input"
               />
               <Search size={20} className="search-icon-absolute" />
+              <div className="voice-search-wrapper-right">
+                <VoiceSearch onResult={(result) => setSearchQuery(result)} />
+              </div>
             </div>
           </div>
         </div>
