@@ -187,17 +187,23 @@ const SaaSLayout = () => {
         </div>
 
         <nav className="saas-nav">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`saas-nav-item ${location.pathname === item.path ? "active" : ""}`}
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <span className="nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive = item.path === "/saas" 
+              ? (location.pathname === "/saas" || location.pathname === "/saas/" || location.pathname === "/saas/dashboard")
+              : location.pathname === item.path;
+              
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`saas-nav-item ${isActive ? "active" : ""}`}
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <span className="nav-icon">{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="saas-sidebar-footer">
@@ -221,8 +227,12 @@ const SaaSLayout = () => {
               <Menu size={24} />
             </button>
             <h2 className="saas-header-title-text">
-              {navItems.find((n) => n.path === location.pathname)?.label ||
-                "Admin"}
+              {navItems.find((n) => {
+                if (n.path === "/saas") {
+                  return location.pathname === "/saas" || location.pathname === "/saas/" || location.pathname === "/saas/dashboard";
+                }
+                return n.path === location.pathname;
+              })?.label || "Admin"}
             </h2>
           </div>
           <div className="saas-header-right">

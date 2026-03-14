@@ -15,6 +15,7 @@ import {
   Search,
   Check,
 } from "lucide-react";
+import VoiceSearch from "../Common/VoiceSearch";
 import * as productApi from "../../api/vendorApi";
 import { getCommission } from "../../api/commissionApi";
 import { getSellers } from "../../api/sellerApi";
@@ -81,32 +82,41 @@ const SearchableSelect = ({
       className={`form-group form-group-relative ${isOpen ? 'searchable-select-z-open' : ''} ${className}`}
     >
       {label && <label className="form-label">{label}</label>}
-      <input
-        type="text"
-        value={searchTerm}
-        onChange={(e) => {
-          setSearchTerm(e.target.value);
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setIsOpen(true);
+            if (e.target.value === "") onChange({ _id: "", id: "", name: "" });
+          }}
+          onFocus={() => setIsOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && isOpen && options.length > 0) {
+              e.preventDefault();
+              const match =
+                options.find(
+                  (opt) => opt.name.toLowerCase() === searchTerm.toLowerCase(),
+                ) ||
+                options.filter((opt) =>
+                  opt.name.toLowerCase().includes(searchTerm.toLowerCase()),
+                )[0];
+              if (match) handleSelect(match);
+            }
+          }}
+          placeholder={placeholder}
+          required={required}
+          autoComplete="off"
+          style={{ flex: 1 }}
+        />
+        <VoiceSearch onSearch={(text) => {
+          setSearchTerm(text);
           setIsOpen(true);
-          if (e.target.value === "") onChange({ _id: "", id: "", name: "" });
-        }}
-        onFocus={() => setIsOpen(true)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && isOpen && options.length > 0) {
-            e.preventDefault();
-            const match =
-              options.find(
-                (opt) => opt.name.toLowerCase() === searchTerm.toLowerCase(),
-              ) ||
-              options.filter((opt) =>
-                opt.name.toLowerCase().includes(searchTerm.toLowerCase()),
-              )[0];
-            if (match) handleSelect(match);
-          }
-        }}
-        placeholder={placeholder}
-        required={required}
-        autoComplete="off"
-      />
+          const match = options.find(o => o.name.toLowerCase() === text.toLowerCase());
+          if (match) handleSelect(match);
+        }} />
+      </div>
       {isOpen && (
         <ul className="dropdown-options">
           {options.filter((opt) =>
@@ -620,14 +630,20 @@ function TodayAuction() {
         <div className="card fade-in search-card">
           <div className="form-group search-form-group">
             <div className="search-icon-container">
-              <input
-                type="text"
-                placeholder="Search by product, seller "
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
-              <Search size={20} className="search-icon-absolute" />
+              <div className="search-input-wrapper" style={{ position: 'relative', flex: 1 }}>
+                <Search size={20} className="search-icon-absolute" style={{ left: '12px', right: 'auto' }} />
+                <input
+                  type="text"
+                  placeholder="Search by product, seller "
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                  style={{ paddingLeft: '40px', paddingRight: '40px' }}
+                />
+                <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                  <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { History as HistoryIcon, Calendar, PackageSearch } from "lucide-react";
 import LoadingSpinner from "../../components/Common/LoadingSpinner";
 import SearchableSelect from "../../components/Common/SearchableSelect";
+import VoiceSearch from "../../components/Common/VoiceSearch";
 import {
   getMainVendorBranches,
   getMainVendorHistory,
@@ -142,29 +143,35 @@ function History() {
         </div>
         <div className="mvh-filter-bar">
           {/* Search */}
-          <div className="mvh-search-wrap">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ color: "var(--text-muted)", flexShrink: 0 }}
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              className="mvh-search-input"
-              placeholder="Search product, seller, buyer..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="mvh-search-wrap" style={{ flex: 1 }}>
+            <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ color: "var(--text-muted)", position: 'absolute', left: '12px' }}
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="text"
+                className="mvh-search-input"
+                style={{ paddingLeft: '35px', paddingRight: '40px', width: '100%' }}
+                placeholder="Search product, seller, buyer..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                <VoiceSearch onSearch={(text) => setSearchTerm(text)} minimal={true} />
+              </div>
+            </div>
           </div>
 
           {/* Divider */}

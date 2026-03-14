@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './SearchableSelect.css';
+import VoiceSearch from './VoiceSearch';
 
 const SearchableSelect = ({ options, value, onChange, placeholder, disabled, name, required }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,7 +66,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, disabled, nam
       
       {isOpen && (
         <div className="searchable-select-dropdown">
-          <div className="searchable-select-search-wrap">
+          <div className="searchable-select-search-wrap" style={{ position: 'relative' }}>
             <input 
               type="text" 
               className="saas-input searchable-select-search-input" 
@@ -73,8 +74,12 @@ const SearchableSelect = ({ options, value, onChange, placeholder, disabled, nam
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onClick={(e) => e.stopPropagation()}
+              style={{ paddingRight: '35px' }}
               autoFocus
             />
+            <div style={{ position: 'absolute', right: '5px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+              <VoiceSearch onSearch={(text) => setSearchTerm(text)} minimal={true} />
+            </div>
           </div>
           <div className="searchable-select-options">
             {filteredOptions.length > 0 ? (

@@ -137,8 +137,6 @@ const SessionExpires = () => {
       const now = Date.now();
       const idleTime = now - lastActivityRef.current;
 
-      console.log("Idle time:", idleTime, "Limit:", INACTIVITY_LIMIT);
-
       if (idleTime > INACTIVITY_LIMIT) {
         console.log("Session expired due to inactivity");
         clearInterval(interval); // Stop repeating logic once session is marked as expired

@@ -108,7 +108,7 @@ api.interceptors.response.use(
             // Also trigger for network errors or exhausted 5xx retries
             if (!response || (response.status >= 500 && response.status <= 599)) {
                 console.log("Network error or exhausted retries, showing session popup...");
-                triggerSessionExpiry();
+                // triggerSessionExpiry();
             }
             return Promise.reject(error);
         }

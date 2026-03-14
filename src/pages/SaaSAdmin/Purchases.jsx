@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { formatDate } from "../../utils/dateUtils";
 import { getMainVendorPurchases, exportMainVendorPurchases } from "../../api/adminApi";
 import "./SaaSAdmin.css";
+import VoiceSearch from "../../components/Common/VoiceSearch";
 
 const Purchases = () => {
   const [purchases, setPurchases] = useState([]);
@@ -208,14 +209,20 @@ const Purchases = () => {
         </p>
         <div className="saas-flex-between subAdminTopControls">
           <div className="saasSearchWrapperWide">
-            <Search size={18} className="saasSearchIconPosition" />
-            <input
-              type="text"
-              className="saas-input saasSearchInputWide"
-              placeholder="Search purchases..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <div style={{ position: 'relative', flex: 1 }}>
+              <Search size={18} className="saasSearchIconPosition" />
+              <input
+                type="text"
+                className="saas-input saasSearchInputWide"
+                placeholder="Search purchases..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ paddingRight: '40px' }}
+              />
+              <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
+              </div>
+            </div>
           </div>
           <div className="saas-flex saas-gap-10px">
             <button

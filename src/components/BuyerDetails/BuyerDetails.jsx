@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import SearchableSelect from "../Common/SearchableSelect";
 import LoadingSpinner from "../Common/LoadingSpinner";
+import VoiceSearch from "../Common/VoiceSearch";
 import { toast } from "react-toastify";
 
 function BuyerDetails() {
@@ -657,25 +658,28 @@ function BuyerDetails() {
 
             <div className="card fade-in buyer-search-card">
               <div className="form-group buyer-search-form-group">
-                <div style={{ position: "relative" }}>
+                <div style={{ position: "relative", width: "100%" }}>
+                  <Search
+                    size={20}
+                    style={{
+                      position: "absolute",
+                      left: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#9ca3af",
+                    }}
+                  />
                   <input
                     type="text"
                     placeholder="Search buyer by name..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="buyer-search-input"
-                    style={{ paddingRight: "40px", width: "100%" }}
+                    style={{ paddingLeft: "40px", paddingRight: "40px", width: "100%" }}
                   />
-                  <Search
-                    size={20}
-                    style={{
-                      position: "absolute",
-                      right: "12px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: "#9ca3af",
-                    }}
-                  />
+                  <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                    <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
+                  </div>
                 </div>
               </div>
             </div>

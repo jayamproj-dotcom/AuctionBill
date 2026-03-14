@@ -4,6 +4,7 @@ import ConfirmationModal from '../../components/Common/ConfirmationModal';
 import { Plus, X, Download, Trash2, Search, Check, Edit, Loader } from 'lucide-react';
 import { getSubAdmins, createSubAdmin, updateSubAdmin, deleteSubAdmin } from '../../api/adminApi';
 import { toast } from 'react-toastify';
+import VoiceSearch from '../../components/Common/VoiceSearch';
 
 const SubAdminManagement = () => {
   const [subAdmins, setSubAdmins] = useState([]);
@@ -178,14 +179,20 @@ const SubAdminManagement = () => {
         <p className="saas-text-muted saas-text-sm saas-mb-15">Manage and monitor all sub-admins in the system</p>
         <div className="saas-flex-between subAdminTopControls">
           <div className="saasSearchWrapperWide">
-            <Search size={18} className="saasSearchIconPosition" />
-            <input
-              type="text"
-              className="saas-input saasSearchInputWide"
-              placeholder="Search sub-admins..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <div style={{ position: 'relative', flex: 1 }}>
+              <Search size={18} className="saasSearchIconPosition" />
+              <input
+                type="text"
+                className="saas-input saasSearchInputWide"
+                placeholder="Search sub-admins..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ paddingRight: '40px' }}
+              />
+              <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
+              </div>
+            </div>
           </div>
           <div className="saas-flex saas-gap-10px">
              <button className="saas-btn btn-primary" onClick={handleAddSubAdmin}>

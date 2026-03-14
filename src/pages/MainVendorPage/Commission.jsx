@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { HandCoins, Search, Filter, Calendar } from "lucide-react";
 import LoadingSpinner from "../../components/Common/LoadingSpinner";
 import SearchableSelect from "../../components/Common/SearchableSelect";
+import VoiceSearch from "../../components/Common/VoiceSearch";
 import {
   getMainVendorBranches,
   getMainVendorCommissionRecords,
@@ -194,15 +195,21 @@ function Commission() {
         {/* Filters (Search + Date) - using the solid layout from History.jsx */}
         <div className="mvh-filter-bar" style={{ marginBottom: '1.5rem' }}>
           {/* Search */}
-          <div className="mvh-search-wrap">
-            <Search size={16} style={{ color: "var(--text-muted)" }} />
-            <input
-              type="text"
-              className="mvh-search-input"
-              placeholder="Search product, seller, or branch..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="mvh-search-wrap" style={{ flex: 1 }}>
+            <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+              <Search size={16} style={{ color: "var(--text-muted)", position: 'absolute', left: '12px' }} />
+              <input
+                type="text"
+                className="mvh-search-input"
+                style={{ paddingLeft: '35px', paddingRight: '40px', width: '100%' }}
+                placeholder="Search product, seller, or branch..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                <VoiceSearch onSearch={(text) => setSearchTerm(text)} minimal={true} />
+              </div>
+            </div>
           </div>
 
           <div className="mvh-divider" />
