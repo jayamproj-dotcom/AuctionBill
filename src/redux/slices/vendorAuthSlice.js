@@ -9,12 +9,16 @@ const initialState = {
     vendorUserAddress: sessionStorage.getItem('vendorUserAddress') || '',
     vendorId: sessionStorage.getItem('vendorId') || '',
     vendorToken: sessionStorage.getItem('vendorToken') || '',
+    sessionError: false,
 };
 
 const vendorAuthSlice = createSlice({
     name: 'vendorAuth',
     initialState,
     reducers: {
+        setVendorSessionError: (state, action) => {
+            state.sessionError = action.payload;
+        },
         setVendorAuthData: (state, action) => {
             const { user, token } = action.payload;
 
@@ -26,6 +30,7 @@ const vendorAuthSlice = createSlice({
             state.vendorId = user._id || '';
             state.vendorUserPhone = user.phone || '';
             state.vendorUserAddress = user.address || '';
+            state.sessionError = false;
 
             sessionStorage.setItem('vendorLoggedIn', 'true');
             sessionStorage.setItem('vendorUserEmail', user.email || '');
@@ -65,6 +70,7 @@ const vendorAuthSlice = createSlice({
             state.vendorId = '';
             state.vendorUserPhone = '';
             state.vendorUserAddress = '';
+            state.sessionError = false;
 
             sessionStorage.removeItem('vendorLoggedIn');
             sessionStorage.removeItem('vendorUserEmail');
@@ -85,6 +91,6 @@ const vendorAuthSlice = createSlice({
     }
 });
 
-export const { setVendorAuthData, clearVendorAuthData, updateVendorProfileData } = vendorAuthSlice.actions;
+export const { setVendorAuthData, clearVendorAuthData, updateVendorProfileData, setVendorSessionError } = vendorAuthSlice.actions;
 
 export default vendorAuthSlice.reducer;

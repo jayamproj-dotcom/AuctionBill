@@ -23,12 +23,16 @@ const initialState = {
     saasAdminPhoto: sessionStorage.getItem('saas_admin_photo') || null,
     saasRole: sessionStorage.getItem('saas_role') || null,
     saasPermissions: saasPermissionsObj,
+    sessionError: false,
 };
 
 const saasAuthSlice = createSlice({
     name: 'saasAuth',
     initialState,
     reducers: {
+        setSaasSessionError: (state, action) => {
+            state.sessionError = action.payload;
+        },
         setSaasAuthData: (state, action) => {
             const data = action.payload;
 
@@ -41,6 +45,7 @@ const saasAuthSlice = createSlice({
             if (data.saasAdminPhoto !== undefined) state.saasAdminPhoto = data.saasAdminPhoto;
             if (data.saasRole !== undefined) state.saasRole = data.saasRole;
             if (data.saasPermissions !== undefined) state.saasPermissions = data.saasPermissions;
+            state.sessionError = false;
         },
         clearSaasAuthData: (state) => {
             state.adminToken = null;
@@ -50,6 +55,7 @@ const saasAuthSlice = createSlice({
             state.saasAdminPhoto = null;
             state.saasRole = null;
             state.saasPermissions = {};
+            state.sessionError = false;
 
             sessionStorage.removeItem('admin_token');
             sessionStorage.removeItem('is_admin');
@@ -71,5 +77,5 @@ const saasAuthSlice = createSlice({
     }
 });
 
-export const { setSaasAuthData, clearSaasAuthData } = saasAuthSlice.actions;
+export const { setSaasAuthData, clearSaasAuthData, setSaasSessionError } = saasAuthSlice.actions;
 export default saasAuthSlice.reducer;

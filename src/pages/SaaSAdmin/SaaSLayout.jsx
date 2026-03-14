@@ -9,6 +9,7 @@ import {
   getAdminProfile,
   getAdminNotifications,
   markNotificationAsRead,
+  adminLogout,
 } from "../../api/adminApi";
 import {
   House,
@@ -94,6 +95,19 @@ const SaaSLayout = () => {
     }
   }, [isAdmin]);
 
+    useEffect(() => {
+    document.body.classList.add("saas-admin-active");
+
+    // Check for auth token using Redux mapped local storage originally
+    if (!isAdmin) {
+      navigate("/saas-admin");
+    }
+
+    return () => {
+      document.body.classList.remove("saas-admin-active");
+    };
+  }, [navigate, location.pathname, isAdmin]);
+
   const handleMarkAsRead = async (id) => {
     try {
       const res = await markNotificationAsRead(id);
@@ -106,68 +120,16 @@ const SaaSLayout = () => {
     }
   };
 
-  // Add a class to body when in SaaS Admin to allow full-width override
-  useEffect(() => {
-    document.body.classList.add("saas-admin-active");
-
-    const checkAdminStatus = () => {
-      // Fetch latest profile to automatically reflect role/permission changes
-      getAdminProfile()
-        .then((res) => {
-          if (res.status && res.admin) {
-            const { role, permissions, username, status } = res.admin;
-
-            sessionStorage.setItem("saas_role", role);
-            if (permissions)
-              sessionStorage.setItem(
-                "saas_permissions",
-                JSON.stringify(permissions),
-              );
-            if (username) {
-              sessionStorage.setItem("saas_admin_name", username);
-              setAdminName(username);
-            }
-
-            dispatch(
-              setSaasAuthData({
-                saasRole: role,
-                saasPermissions: permissions || {},
-                saasAdminName: username || "Super Admin",
-              }),
-            );
-
-            // If status is Inactive or false, force log out.
-            if (status === "Inactive" || status === false) {
-              dispatch(clearSaasAuthData());
-              navigate("/saas-admin");
-            }
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to sync profile:", err);
-        });
-    };
-
-    let intervalId;
-
-    // Check for auth token using Redux mapped local storage originally
-    if (!isAdmin) {
-      navigate("/saas-admin");
-    } else {
-      checkAdminStatus();
-      // Poll every 10 seconds to detect if admin changed status to Inactive automatically
-      intervalId = setInterval(checkAdminStatus, 10000);
+  const handleLogout = async() => {
+    try {
+      const res = await adminLogout();
+      if (res.status) {
+        dispatch(clearSaasAuthData());
+        navigate("/saas-admin");
+      }
+    } catch (error) {
+      console.error("Error logging out:", error);
     }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-      document.body.classList.remove("saas-admin-active");
-    };
-  }, [navigate, location.pathname, dispatch, isAdmin]);
-
-  const handleLogout = () => {
-    dispatch(clearSaasAuthData());
-    navigate("/auctionbilling/saas-admin");
   };
 
   const isSubAdmin = saasRole === "sub-admin" || saasRole === "subadmin";

@@ -27,6 +27,7 @@ import SaaSLogin from "./pages/SaaSAdmin/SaaSLogin.jsx";
 import { getAuctionData } from "./utils/localStorage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import SessionExpires from "./components/Common/SessionExpires";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -131,6 +132,7 @@ function App() {
           draggable
           theme="light"
         />
+        <SessionExpires />
       </BrowserRouter>
     </GoogleOAuthProvider>
   );

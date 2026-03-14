@@ -13,6 +13,30 @@ export const adminLogin = async (data) => {
   }
 };
 
+export const adminLogout = async () => {
+  try {
+    const response = await api.post("/session/logout");
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
+export const heartBeat = async () => {
+  try {
+    const response = await api.post("/session/heartbeat");
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    }
+    throw error;
+  }
+};
+
 // Verify admin password API
 export const verifyAdminPassword = async (data) => {
   try {
