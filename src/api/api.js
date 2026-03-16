@@ -1,7 +1,7 @@
 import axios from "axios";
 import { store } from "../redux/store";
-import { setSaasSessionError } from "../redux/slices/saasAuthSlice";
-import { setVendorSessionError } from "../redux/slices/vendorAuthSlice";
+import { setSaasSessionError, setSaasAccountStatusError } from "../redux/slices/saasAuthSlice";
+import { setVendorSessionError, setVendorAccountStatusError } from "../redux/slices/vendorAuthSlice";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -22,6 +22,17 @@ const triggerSessionExpiry = () => {
         store.dispatch(setSaasSessionError(true));
     } else if (isMainVendorContext || isVendorContext) {
         store.dispatch(setVendorSessionError(true));
+    }
+};
+
+const triggerAccountStatusError = (type, message) => {
+    const currentPath = window.location.pathname;
+    const isSaaSContext = currentPath.includes('/saas') && !currentPath.includes('/mainvendor');
+    
+    if (isSaaSContext) {
+        store.dispatch(setSaasAccountStatusError({ type, message }));
+    } else {
+        store.dispatch(setVendorAccountStatusError({ type, message }));
     }
 };
 
@@ -95,6 +106,34 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const { config, response } = error;
+
+              const data = response.data;
+
+      // 🔴 ACCOUNT DELETED
+      if (data?.accountDeleted) {
+        triggerAccountStatusError('deleted', data.message || "Your account was deleted");
+        return Promise.reject(error);
+      }
+      if (data?.mainVendorAccountDeleted) {
+        triggerAccountStatusError('main_deleted', data.message || "Main Vendor account deleted");
+        return Promise.reject(error);
+      }
+
+      // 🟠 ACCOUNT INACTIVE
+      if (data?.accountInactive) {
+        triggerAccountStatusError('inactive', data.message || "Your account is inactive");
+        return Promise.reject(error);
+      }
+      if (data?.mainVendorAccountInactive) {
+        triggerAccountStatusError('main_inactive', data.message || "Main Vendor account is inactive");
+        return Promise.reject(error);
+      }
+
+      // 🟡 SUBSCRIPTION EXPIRED
+      if (data?.planExpired) {
+        triggerAccountStatusError('expired', data.message || "Your subscription has expired");
+        return Promise.reject(error);
+      }
 
         // Detect 401 Unauthorized or Session Expired status
         if (response && (response.status === 401 || response.data?.sessionExpired)) {

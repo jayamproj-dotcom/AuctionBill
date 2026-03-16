@@ -24,10 +24,10 @@ import SubAdminManagement from "./pages/SaaSAdmin/SubAdminManagement.jsx";
 import AdminProfile from "./pages/SaaSAdmin/AdminProfile.jsx";
 import SaaSChangePassword from "./pages/SaaSAdmin/SaaSChangePassword.jsx";
 import SaaSLogin from "./pages/SaaSAdmin/SaaSLogin.jsx";
-import { getAuctionData } from "./utils/localStorage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SessionExpires from "./components/Common/SessionExpires";
+import AccountStatusModal from "./components/Common/AccountStatusModal";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -46,8 +46,6 @@ import Profile from "./pages/MainVendorPage/Profile.jsx";
 function App() {
  
   useEffect(() => {
-    getAuctionData();
-
     const handleWheel = () => {
       if (document.activeElement.type === "number") {
         document.activeElement.blur();
@@ -133,6 +131,7 @@ function App() {
           theme="light"
         />
         <SessionExpires />
+        <AccountStatusModal />
       </BrowserRouter>
     </GoogleOAuthProvider>
   );

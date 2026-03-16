@@ -24,6 +24,7 @@ const initialState = {
     saasRole: sessionStorage.getItem('saas_role') || null,
     saasPermissions: saasPermissionsObj,
     sessionError: false,
+    accountStatusError: null, // { type: 'deleted' | 'inactive' | 'expired', message: string }
 };
 
 const saasAuthSlice = createSlice({
@@ -32,6 +33,9 @@ const saasAuthSlice = createSlice({
     reducers: {
         setSaasSessionError: (state, action) => {
             state.sessionError = action.payload;
+        },
+        setSaasAccountStatusError: (state, action) => {
+            state.accountStatusError = action.payload;
         },
         setSaasAuthData: (state, action) => {
             const data = action.payload;
@@ -46,6 +50,7 @@ const saasAuthSlice = createSlice({
             if (data.saasRole !== undefined) state.saasRole = data.saasRole;
             if (data.saasPermissions !== undefined) state.saasPermissions = data.saasPermissions;
             state.sessionError = false;
+            state.accountStatusError = null;
         },
         clearSaasAuthData: (state) => {
             state.adminToken = null;
@@ -56,6 +61,7 @@ const saasAuthSlice = createSlice({
             state.saasRole = null;
             state.saasPermissions = {};
             state.sessionError = false;
+            state.accountStatusError = null;
 
             sessionStorage.removeItem('admin_token');
             sessionStorage.removeItem('is_admin');
@@ -77,5 +83,5 @@ const saasAuthSlice = createSlice({
     }
 });
 
-export const { setSaasAuthData, clearSaasAuthData, setSaasSessionError } = saasAuthSlice.actions;
+export const { setSaasAuthData, clearSaasAuthData, setSaasSessionError, setSaasAccountStatusError } = saasAuthSlice.actions;
 export default saasAuthSlice.reducer;

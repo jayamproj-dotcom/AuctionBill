@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { History as HistoryIcon, Calendar, PackageSearch } from "lucide-react";
+import { History as HistoryIcon, Calendar, PackageSearch, Search, Filter } from "lucide-react";
 import LoadingSpinner from "../../components/Common/LoadingSpinner";
 import SearchableSelect from "../../components/Common/SearchableSelect";
 import VoiceSearch from "../../components/Common/VoiceSearch";
@@ -141,28 +141,14 @@ function History() {
             placeholder="All Branches"
           />
         </div>
-        <div className="mvh-filter-bar">
+        <div className="cr-filter-row" style={{ marginBottom: '1.5rem' }}>
           {/* Search */}
-          <div className="mvh-search-wrap" style={{ flex: 1 }}>
-            <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ color: "var(--text-muted)", position: 'absolute', left: '12px' }}
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
+          <div className="cr-search-wrap" style={{ flex: 1 }}>
+            <div className="search-input-wrapper" style={{ position: 'relative', flex: 1 }}>
+              <Search size={15} className="cr-search-icon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
               <input
                 type="text"
-                className="mvh-search-input"
+                className="cr-search-input"
                 style={{ paddingLeft: '35px', paddingRight: '40px', width: '100%' }}
                 placeholder="Search product, seller, buyer..."
                 value={searchTerm}
@@ -174,52 +160,38 @@ function History() {
             </div>
           </div>
 
-          {/* Divider */}
-          <div className="mvh-divider" />
+          <div className="cr-controls">
+            <div className="cr-select-wrap">
+              <Filter size={13} className="cr-select-icon" />
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="cr-select"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+                <option value="custom">📅 Custom Date</option>
+              </select>
+            </div>
 
-          {/* Date Filter */}
-          <div className="mvh-date-wrap">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ color: "var(--primary-amber)" }}
-            >
-              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-            </svg>
-            <select
-              className="mvh-date-select"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-            >
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="year">This Year</option>
-              <option value="custom">Custom Date</option>
-            </select>
+            {dateFilter === "custom" && (
+              <div className="cr-date-wrap fade-in">
+                <Calendar size={13} className="cr-date-icon" />
+                <input
+                  type="date"
+                  value={customDate}
+                  onChange={(e) => setCustomDate(e.target.value)}
+                  max={new Date().toISOString().split("T")[0]}
+                  className="cr-date-input"
+                />
+              </div>
+            )}
           </div>
         </div>
-
-        {dateFilter === "custom" && (
-          <div className="form-group" style={{ marginBottom: "1rem" }}>
-            <input
-              type="date"
-              className="form-control"
-              value={customDate}
-              onChange={(e) => setCustomDate(e.target.value)}
-              max={new Date().toISOString().split("T")[0]}
-            />
-          </div>
-        )}
 
         {loading ? (
           <LoadingSpinner message="Fetching history..." />

@@ -10,6 +10,7 @@ const initialState = {
     vendorId: sessionStorage.getItem('vendorId') || '',
     vendorToken: sessionStorage.getItem('vendorToken') || '',
     sessionError: false,
+    accountStatusError: null, // { type: 'deleted' | 'inactive' | 'expired', message: string }
 };
 
 const vendorAuthSlice = createSlice({
@@ -18,6 +19,9 @@ const vendorAuthSlice = createSlice({
     reducers: {
         setVendorSessionError: (state, action) => {
             state.sessionError = action.payload;
+        },
+        setVendorAccountStatusError: (state, action) => {
+            state.accountStatusError = action.payload;
         },
         setVendorAuthData: (state, action) => {
             const { user, token } = action.payload;
@@ -31,6 +35,7 @@ const vendorAuthSlice = createSlice({
             state.vendorUserPhone = user.phone || '';
             state.vendorUserAddress = user.address || '';
             state.sessionError = false;
+            state.accountStatusError = null;
 
             sessionStorage.setItem('vendorLoggedIn', 'true');
             sessionStorage.setItem('vendorUserEmail', user.email || '');
@@ -71,6 +76,7 @@ const vendorAuthSlice = createSlice({
             state.vendorUserPhone = '';
             state.vendorUserAddress = '';
             state.sessionError = false;
+            state.accountStatusError = null;
 
             sessionStorage.removeItem('vendorLoggedIn');
             sessionStorage.removeItem('vendorUserEmail');
@@ -91,6 +97,6 @@ const vendorAuthSlice = createSlice({
     }
 });
 
-export const { setVendorAuthData, clearVendorAuthData, updateVendorProfileData, setVendorSessionError } = vendorAuthSlice.actions;
+export const { setVendorAuthData, clearVendorAuthData, updateVendorProfileData, setVendorSessionError, setVendorAccountStatusError } = vendorAuthSlice.actions;
 
 export default vendorAuthSlice.reducer;

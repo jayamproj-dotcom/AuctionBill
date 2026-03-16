@@ -55,7 +55,7 @@
   position: absolute;
   top: 100%;
   /* left: 10%; */
-  right: 0;
+  right: 0%;
   margin-top: 8px;
   background: white;
   padding: 8px 16px;
@@ -153,9 +153,9 @@
   position: fixed; /* Use fixed or calculate absolute better */
   top: auto;
   bottom: 20px;
-  left: 50%;
+  left: 0%;
   right: auto;
-  transform: translateX(-50%);
+  transform: translateX(-100%);
   margin-top: 0;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
