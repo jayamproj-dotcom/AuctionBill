@@ -267,12 +267,12 @@ function History() {
           </div>
         )}
 
-        {!loading && history.length === 0 && (
+        {/* {!loading && history.length === 0 && (
           <div className="empty-state">
             <div className="empty-state-icon">📜</div>
             <p>No history records found for the selected filters.</p>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

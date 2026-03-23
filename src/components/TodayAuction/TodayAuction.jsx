@@ -110,12 +110,12 @@ const SearchableSelect = ({
           autoComplete="off"
           style={{ flex: 1 }}
         />
-        <VoiceSearch onSearch={(text) => {
+        {/* <VoiceSearch onSearch={(text) => {
           setSearchTerm(text);
           setIsOpen(true);
           const match = options.find(o => o.name.toLowerCase() === text.toLowerCase());
           if (match) handleSelect(match);
-        }} />
+        }} /> */}
       </div>
       {isOpen && (
         <ul className="dropdown-options">
