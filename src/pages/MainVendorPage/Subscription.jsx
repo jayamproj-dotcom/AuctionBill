@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { formatDate } from "../../utils/dateUtils";
 import { jsPDF } from "jspdf";
-import "./Subscription.css";
-import "../TodayAuction/TodayAuction.css";
+import "./MainVendor.css";
+import "../../components/TodayAuction/TodayAuction.css";
 import {
   CreditCard,
   CheckCircle2,
@@ -21,8 +21,8 @@ import {
   updateMainVendor,
   getMainVendorPurchasesById,
 } from "../../api/adminApi";
-import ConfirmationModal from "../Common/ConfirmationModal";
-import LoadingSpinner from "../Common/LoadingSpinner";
+import ConfirmationModal from "../../components/Common/ConfirmationModal";
+import LoadingSpinner from "../../components/Common/LoadingSpinner";
 
 const Subscription = () => {
   const { vendorId } = useSelector((state) => state.vendorAuth);

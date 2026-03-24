@@ -13,6 +13,7 @@ import {
   Loader,
   Pencil,
   Download,
+  Edit2,
 } from "lucide-react";
 import SearchableSelect from "../Common/SearchableSelect";
 import LoadingSpinner from "../Common/LoadingSpinner";
@@ -112,6 +113,17 @@ function SellerDetails() {
     new Date().toISOString().split("T")[0],
   );
   const [fetchingPdf, setFetchingPdf] = useState(false);
+
+  // ── Custom Commission Modal ────────────────────────────
+  const [showCommissionModal, setShowCommissionModal] = useState(false);
+  const [commissionData, setCommissionData] = useState({
+    customCommission: false,
+    commissionPercent: "",
+    commissionStartDate: "",
+    commissionEndDate: "",
+    forever: true,
+  });
+  const [isCommissionSaving, setIsCommissionSaving] = useState(false);
 
   // ─────────────────────────────────────────────────────
   //  Init
@@ -490,6 +502,64 @@ function SellerDetails() {
       toast.error(err.message || "Failed to fetch PDF data");
     } finally {
       setFetchingPdf(false);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────
+  //  Custom Commission
+  // ─────────────────────────────────────────────────────
+  const openCommissionModal = () => {
+    if (!selectedSeller) return;
+    setCommissionData({
+      commissionPercent: selectedSeller.customCommission ? (selectedSeller.commissionPercent || "") : "",
+      commissionStartDate: selectedSeller.commissionStartDate ? new Date(selectedSeller.commissionStartDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+      commissionEndDate: selectedSeller.commissionEndDate ? new Date(selectedSeller.commissionEndDate).toISOString().split("T")[0] : "",
+      forever: !selectedSeller.commissionEndDate,
+    });
+    setShowCommissionModal(true);
+  };
+
+  const handleSaveCommission = async (e) => {
+    e.preventDefault();
+    if (!selectedSeller) return;
+
+    const isCustom = commissionData.commissionPercent !== "" && commissionData.commissionPercent !== null && commissionData.commissionPercent !== undefined;
+
+    if (isCustom && !commissionData.commissionStartDate) {
+        toast.error("Please provide a start date.");
+        return;
+    }
+
+    if (isCustom && !commissionData.forever && !commissionData.commissionEndDate) {
+        toast.error("Please provide an end date, or check 'Forever'.");
+        return;
+    }
+
+    setIsCommissionSaving(true);
+    try {
+      const payload = {
+        customCommission: isCustom,
+        commissionPercent: isCustom ? Number(commissionData.commissionPercent) : 0,
+        commissionStartDate: isCustom && commissionData.commissionStartDate ? new Date(commissionData.commissionStartDate).toISOString() : null,
+        commissionEndDate: isCustom && !commissionData.forever && commissionData.commissionEndDate ? new Date(commissionData.commissionEndDate).toISOString() : null,
+      };
+      
+      await updateSeller(selectedSeller._id || selectedSeller.id, payload);
+      toast.success(isCustom ? "Commission configured successfully" : "Custom commission removed, tracking global commission");
+      setShowCommissionModal(false);
+      
+      // Update local state
+      setSelectedSeller((prev) => ({
+        ...prev,
+        ...payload
+      }));
+      setSellers((prev) => prev.map(s => 
+        (s._id || s.id) === (selectedSeller._id || selectedSeller.id) ? { ...s, ...payload } : s
+      ));
+    } catch (err) {
+      toast.error(err?.message || "Failed to update commission configuration");
+    } finally {
+      setIsCommissionSaving(false);
     }
   };
 
@@ -887,6 +957,12 @@ function SellerDetails() {
                       ₹{(selectedSeller.advanceAmount || 0).toLocaleString()}
                     </span>
                   </div>
+                   <div className="data-row">
+                    <span className="data-label">Commission Rate</span>
+                    <span className="data-value text-success">
+                      {selectedSeller.customCommission ? `${selectedSeller.commissionPercent}% (Custom)` : "Global Default"}
+                    </span>
+                  </div>
                   <div className="data-row">
                     <span className="data-label">Login Access</span>
                     <span
@@ -968,6 +1044,13 @@ function SellerDetails() {
                 style={{ display: "flex", gap: "10px" }}
               >
                 
+                <button
+                  className="btn btn-secondary"
+                  onClick={openCommissionModal}
+                >
+                  <Edit2 size={16} style={{ marginRight: "5px" }} /> Customize Commission
+                </button>
+
                 <button
                   className="btn btn-primary"
                   onClick={openGlobalPaymentModal}
@@ -1476,6 +1559,107 @@ function SellerDetails() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Commission Modal ── */}
+      {showCommissionModal && selectedSeller && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowCommissionModal(false)}
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Customize Seller Commission</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowCommissionModal(false)}
+              >
+                <X />
+              </button>
+            </div>
+            <form onSubmit={handleSaveCommission}>
+              <div className="modal-body">
+                <div className="fade-in" style={{ padding: '0 5px' }}>
+                    <div className="form-group">
+                        <label className="form-label">Commission Percentage (%)</label>
+                        <input
+                            type="number"
+                            className="form-control"
+                            value={commissionData.commissionPercent}
+                            onChange={(e) => setCommissionData({...commissionData, commissionPercent: e.target.value})}
+                            min="0"
+                            max="100"
+                            step="any"
+                            placeholder="e.g. 5 (Leave empty to use Global Commission)"
+                        />
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '15px', marginTop: '15px' }}>
+                        <div className="form-group" style={{ flex: 1 }}>
+                            <label className="form-label">Valid From</label>
+                            <input
+                                type="date"
+                                className="form-control"
+                                value={commissionData.commissionStartDate}
+                                onChange={(e) => setCommissionData({...commissionData, commissionStartDate: e.target.value})}
+                                disabled={commissionData.commissionPercent === ""}
+                            />
+                        </div>
+
+                        <div className="form-group" style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <label className="form-label" style={{ marginBottom: 0 }}>Valid Until</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                    <input
+                                        type="checkbox"
+                                        id="foreverToggle"
+                                        checked={commissionData.forever}
+                                        onChange={(e) => setCommissionData({...commissionData, forever: e.target.checked})}
+                                        disabled={commissionData.commissionPercent === ""}
+                                    />
+                                    <label htmlFor="foreverToggle" style={{ fontSize: '13px', margin: 0 }}>Forever</label>
+                                </div>
+                            </div>
+                            <input
+                                type="date"
+                                className="form-control"
+                                value={commissionData.commissionEndDate}
+                                onChange={(e) => setCommissionData({...commissionData, commissionEndDate: e.target.value})}
+                                disabled={commissionData.forever || commissionData.commissionPercent === ""}
+                                title={commissionData.forever ? "Disable 'Forever' to set an end date" : ""}
+                            />
+                        </div>
+                    </div>
+                    <p style={{ fontSize: '12px', color: '#666', marginTop: '10px' }}>
+                        Tip: To remove a seller's custom commission and fallback to the global rate, simply clear the percentage field.
+                    </p>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowCommissionModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isCommissionSaving}
+                >
+                  {isCommissionSaving ? (
+                    <>
+                      <Loader size={14} className="spin" /> Saving...
+                    </>
+                  ) : (
+                    "Save Commission"
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

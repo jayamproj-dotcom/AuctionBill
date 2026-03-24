@@ -37,7 +37,7 @@ import MainVendorDashboard from "./pages/MainVendorPage/MainVendorDashboard.jsx"
 import Branches from "./pages/MainVendorPage/Branches.jsx";
 import Sellers from "./pages/MainVendorPage/Sellers.jsx";
 import Buyers from "./pages/MainVendorPage/Buyers.jsx";
-import Subscription from "./components/Subscription/Subscription.jsx";
+import Subscription from "./pages/MainVendorPage/Subscription.jsx";
 import Commission from "./pages/MainVendorPage/Commission.jsx";
 import MainVendorHistory from "./pages/MainVendorPage/MainVendorHistory.jsx";
 

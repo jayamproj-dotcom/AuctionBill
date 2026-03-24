@@ -21,6 +21,7 @@ import { getCommission } from "../../api/commissionApi";
 import { getSellers } from "../../api/sellerApi";
 import * as auctionApi from "../../api/auctionApi";
 import * as buyerApi from "../../api/buyerApi";
+import { getSellerCommission } from "../../utils/commissionUtils";
 
 const SearchableSelect = ({
   options,
@@ -187,6 +188,7 @@ function TodayAuction() {
   });
 
   const [imagePreview, setImagePreview] = useState(null);
+  const [globalVendorCommission, setGlobalVendorCommission] = useState("");
   const [defaultCommission, setDefaultCommission] = useState("");
   const [editingGlobalComm, setEditingGlobalComm] = useState(false);
   const [editingVariantRowComm, setEditingVariantRowComm] = useState(false);
@@ -380,6 +382,7 @@ function TodayAuction() {
         const commData = await getCommission(vendorId);
         if (commData && commData.success) {
           const val = commData.data;
+          setGlobalVendorCommission(val);
           setDefaultCommission(val);
           setVariantData((prev) => ({ ...prev, commission: val }));
         }
@@ -873,13 +876,20 @@ function TodayAuction() {
                   label="Seller"
                   options={sellers}
                   value={newProduct.sellerName}
-                  onChange={(seller) =>
+                  onChange={(seller) => {
+                    const sellDate = newProduct.date || new Date().toISOString().split("T")[0];
+                    let comm = globalVendorCommission;
+                    if (seller && (seller._id || seller.id)) {
+                      comm = getSellerCommission(seller, globalVendorCommission, sellDate);
+                    }
                     setNewProduct({
                       ...newProduct,
                       sellerId: seller._id || seller.id,
                       sellerName: seller.name,
-                    })
-                  }
+                    });
+                    setDefaultCommission(comm);
+                    setVariantData(prev => ({...prev, commission: comm}));
+                  }}
                   placeholder="Type to search seller..."
                   required
                 />
