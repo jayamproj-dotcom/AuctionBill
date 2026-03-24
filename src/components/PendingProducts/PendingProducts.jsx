@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { formatDate } from '../../utils/dateUtils';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import LoadingSpinner from '../Common/LoadingSpinner';
+import VoiceSearch from '../Common/VoiceSearch';
 import './PendingProducts.css';
 import '../TodayAuction/TodayAuction.css'; // Reusing base card styles
 import { Undo2, ListFilterPlus, Search } from 'lucide-react';
@@ -168,14 +169,20 @@ function PendingProducts() {
                 <div className="card fade-in search-card">
                     <div className="form-group search-form-group">
                         <div className="search-icon-container">
-                            <input
-                                type="text"
-                                placeholder="Search by product, seller"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="search-input"
-                            />
-                            <Search size={20} className="search-icon-absolute" />
+                            <div className="search-input-wrapper" style={{ position: 'relative', flex: 1 }}>
+                                <Search size={20} className="search-icon-absolute" style={{ left: '12px', right: 'auto' }} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by product, seller"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="search-input"
+                                    style={{ paddingLeft: '40px', paddingRight: '40px' }}
+                                />
+                                <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                                    <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

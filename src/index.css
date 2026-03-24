@@ -304,7 +304,13 @@ input, select, textarea {
   transition: all var(--transition-base);
 }
 
-input:focus, select:focus, textarea:focus {
+/* input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary-amber);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+} */
+
+input:focus, textarea:focus {
   outline: none;
   border-color: var(--primary-amber);
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);

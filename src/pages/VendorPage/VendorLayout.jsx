@@ -63,7 +63,7 @@ const VendorLayout = () => {
               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
               
               if (diffDays <= 0) {
-                alert("Your subscription has expired. Please log in after renewing your plan.");
+                console.log("Subscription expired");
                 handleLogout();
               }
             }

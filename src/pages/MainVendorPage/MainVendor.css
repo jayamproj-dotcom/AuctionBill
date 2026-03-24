@@ -1050,3 +1050,106 @@ select.form-control {
         text-align: right !important;
     }
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   4. CR-STYLE FILTERS (Shared Style)
+───────────────────────────────────────────────────────────────── */
+.cr-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    background: var(--bg-card);
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+}
+
+.cr-search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 150px;
+}
+
+.cr-search-icon {
+    color: var(--text-muted);
+}
+
+.cr-search-input {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    height: 38px;
+}
+
+.cr-search-input:focus {
+    outline: none;
+    border-color: var(--primary-amber);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.cr-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.cr-select-wrap,
+.cr-date-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.cr-select-icon,
+.cr-date-icon {
+    position: absolute;
+    left: 10px;
+    color: var(--text-muted);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.cr-select,
+.cr-date-input {
+    padding: 0.48rem 0.75rem 0.48rem 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: 38px;
+}
+
+.cr-select { min-width: 125px; }
+.cr-date-input { min-width: 135px; }
+
+.cr-select:focus,
+.cr-date-input:focus {
+    outline: none;
+    border-color: var(--primary-amber);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+@media (max-width: 550px) {
+    .cr-filter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .cr-search-wrap { width: 100%; }
+    .cr-controls {
+        width: 100%;
+    }
+    .cr-select-wrap, .cr-date-wrap {
+        flex: 1;
+    }
+    .cr-select, .cr-date-input {
+        width: 100%;
+    }
+}

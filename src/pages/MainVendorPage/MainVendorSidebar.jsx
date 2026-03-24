@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   House,
   Building,
@@ -19,6 +19,7 @@ import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice";
 const MainVendorSidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
 
   const handleLogout = (e) => {
     e.preventDefault();
@@ -47,7 +48,7 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
       <nav className="sidebar-nav">
         <NavLink
           to="/mainvendor/dashboard"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          className={({ isActive }) => `nav-item ${isActive || location.pathname === "/mainvendor" || location.pathname === "/mainvendor/" ? "active" : ""}`}
           onClick={onClose}
         >
           <span className="nav-icon">

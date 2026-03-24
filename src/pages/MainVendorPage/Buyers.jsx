@@ -3,6 +3,7 @@ import { Phone, Mail, Pencil, Trash2, Loader2 } from "lucide-react";
 import LoadingSpinner from "../../components/Common/LoadingSpinner";
 import ConfirmationModal from "../../components/Common/ConfirmationModal";
 import SearchableSelect from "../../components/Common/SearchableSelect";
+import VoiceSearch from "../../components/Common/VoiceSearch";
 import { getMainVendorBuyers, getMainVendorBranches } from "../../api/mainVendorApi";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -109,13 +110,19 @@ function Buyers() {
           />
         </div>
         <div className="form-group" style={{ marginBottom: "1rem" }}>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Search buyers by name, email or phone…"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <div style={{ position: 'relative', width: '100%' }}>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search buyers by name, email or phone…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ paddingRight: '40px' }}
+            />
+            <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+              <VoiceSearch onSearch={(text) => setSearchTerm(text)} minimal={true} />
+            </div>
+          </div>
         </div>
 
         {loading ? (

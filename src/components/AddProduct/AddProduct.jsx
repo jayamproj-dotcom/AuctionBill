@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import * as productApi from '../../api/vendorApi';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import LoadingSpinner from '../Common/LoadingSpinner';
+import VoiceSearch from '../Common/VoiceSearch';
 import './AddProduct.css';
 import '../TodayAuction/TodayAuction.css';
 
@@ -197,17 +198,24 @@ function AddProduct() {
                 <div className="card fade-in search-card">
                     <div className="form-group search-form-group">
                         <div className="search-icon-container">
-                            <input
-                                type="text"
-                                placeholder="Search by product name"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="search-input"
-                            />
-                            <Search size={20} className="search-icon-absolute" />
+                            <div className="search-input-wrapper" style={{ position: 'relative', flex: 1 }}>
+                                <Search size={20} className="search-icon-absolute" style={{ left: '12px', right: 'auto' }} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by product name"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="search-input"
+                                    style={{ paddingLeft: '40px', paddingRight: '40px' }}
+                                />
+                                <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                                    <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+
 
                 {/* Table */}
                 <div className="card-list fade-in">

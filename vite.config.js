@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/backend': {
-          target: 'https://jayam.co.in',
+          target: 'https://webscape.co.in',
           changeOrigin: true,
           secure: false,
           cookieDomainRewrite: "localhost"

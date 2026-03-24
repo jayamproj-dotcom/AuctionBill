@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { HandCoins, Search, Filter, Calendar } from "lucide-react";
 import LoadingSpinner from "../../components/Common/LoadingSpinner";
 import SearchableSelect from "../../components/Common/SearchableSelect";
+import VoiceSearch from "../../components/Common/VoiceSearch";
 import {
   getMainVendorBranches,
   getMainVendorCommissionRecords,
@@ -192,51 +193,57 @@ function Commission() {
         </div>
 
         {/* Filters (Search + Date) - using the solid layout from History.jsx */}
-        <div className="mvh-filter-bar" style={{ marginBottom: '1.5rem' }}>
+        <div className="cr-filter-row" style={{ marginBottom: '1.5rem' }}>
           {/* Search */}
-          <div className="mvh-search-wrap">
-            <Search size={16} style={{ color: "var(--text-muted)" }} />
-            <input
-              type="text"
-              className="mvh-search-input"
-              placeholder="Search product, seller, or branch..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="cr-search-wrap" style={{ flex: 1 }}>
+            <div className="search-input-wrapper" style={{ position: 'relative', flex: 1 }}>
+              <Search size={15} className="cr-search-icon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+              <input
+                type="text"
+                className="cr-search-input"
+                style={{ paddingLeft: '35px', paddingRight: '40px', width: '100%' }}
+                placeholder="Search product or seller…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                <VoiceSearch onSearch={(text) => setSearchTerm(text)} minimal={true} />
+              </div>
+            </div>
           </div>
 
-          <div className="mvh-divider" />
+          <div className="cr-controls">
+            <div className="cr-select-wrap">
+              <Filter size={13} className="cr-select-icon" />
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="cr-select"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+                <option value="custom">📅 Custom Date</option>
+              </select>
+            </div>
 
-          {/* Date Filter */}
-          <div className="mvh-date-wrap">
-            <Filter size={14} style={{ color: "var(--primary-amber)" }} />
-            <select
-              className="mvh-date-select"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-            >
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="year">This Year</option>
-              <option value="custom">Custom Date</option>
-            </select>
+            {dateFilter === "custom" && (
+              <div className="cr-date-wrap fade-in">
+                <Calendar size={13} className="cr-date-icon" />
+                <input
+                  type="date"
+                  value={customDate}
+                  onChange={(e) => setCustomDate(e.target.value)}
+                  max={new Date().toISOString().split("T")[0]}
+                  className="cr-date-input"
+                />
+              </div>
+            )}
           </div>
         </div>
-
-        {dateFilter === "custom" && (
-          <div className="form-group" style={{ marginBottom: "1rem" }}>
-            <input
-              type="date"
-              className="form-control"
-              value={customDate}
-              onChange={(e) => setCustomDate(e.target.value)}
-              max={new Date().toISOString().split("T")[0]}
-            />
-          </div>
-        )}
 
         <div className="section-header cr-section-header" style={{ marginBottom: "1rem", marginTop: "1rem" }}>
           <h3 className="section-title">
