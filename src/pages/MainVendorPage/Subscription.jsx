@@ -69,6 +69,10 @@ const Subscription = () => {
             typeof vendorPlan === "object" ? vendorPlan._id : vendorPlan;
           const planName = vendorPlan.name || "Current Plan";
 
+          console.log(activeSub);
+          console.log(vendorPlan);
+          
+
           if (activeSub || vendorPlanId) {
             setSubscription({
               id: currentVendor._id,
@@ -93,7 +97,7 @@ const Subscription = () => {
                   new Date().setFullYear(new Date().getFullYear() + 1),
                 ).toISOString(),
               price: activeSub?.priceAtPurchase ?? vendorPlan.price ?? 0,
-              branchCount: activeSub?.branchCountAtPurchase ?? vendorPlan.branchCount ?? 0,
+              branchCount: activeSub?.branchCount ?? vendorPlan.branchCount ?? 0,
               durationType: vendorPlan.durationType,
               durationValue: vendorPlan.durationValue,
             });

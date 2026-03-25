@@ -64,11 +64,11 @@ const MainVendorLayout = () => {
           if (res.status && res.vendor) {
             const currentVendor = res.vendor;
 
-            // Dynamically sync Redux state with backend the moment dashboard loads
-            const latestBranchCount = currentVendor.plan?.branchCount || 0;
+            const activeSub = currentVendor.activeSubscription;
+            const latestBranchCount = activeSub?.branchCount ?? currentVendor.plan?.branchCount ?? 0;
+            
             dispatch(setVendorBranchCount(latestBranchCount));
 
-            const activeSub = currentVendor.activeSubscription;
             const expiryDate = activeSub?.endDate || currentVendor.planEndDate;
 
             if (expiryDate) {
