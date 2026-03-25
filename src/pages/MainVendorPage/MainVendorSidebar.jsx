@@ -19,6 +19,7 @@ import {
 import logo from "../../assets/images/logo-sidebar.png";
 import { useDispatch, useSelector } from "react-redux";
 import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice";
+import { mainVendorLogout } from "../../api/mainVendorApi";
 
 const MainVendorSidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -26,8 +27,13 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { branchCount } = useSelector((state) => state.vendorAuth);
 
-  const handleLogout = (e) => {
+  const handleLogout = async (e) => {
     e.preventDefault();
+    try {
+      await mainVendorLogout();
+    } catch (err) {
+      console.error("Logout API failed:", err);
+    }
     dispatch(clearVendorAuthData());
     onClose();
     navigate("/");
