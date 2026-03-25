@@ -18,7 +18,7 @@ import "../../components/Dashboard/Dashboard.css";
 import LoadingSpinner from "../../components/Common/LoadingSpinner";
 
 function MainVendorDashboard() {
-  const { vendorId } = useSelector((state) => state.vendorAuth);
+  const { vendorId, branchCount } = useSelector((state) => state.vendorAuth);
   const currentMainVendorId = vendorId || sessionStorage.getItem("vendorId");
 
   const [stats, setStats] = useState({
@@ -39,7 +39,7 @@ function MainVendorDashboard() {
     { id: "all", name: "All Branches" },
     { id: currentMainVendorId, name: "My Details" }
   ]);
-  const [selectedBranch, setSelectedBranch] = useState("all");
+  const [selectedBranch, setSelectedBranch] = useState(branchCount > 0 ? "all" : currentMainVendorId);
 
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -166,19 +166,21 @@ function MainVendorDashboard() {
             <div className="dashboard-filter-container">
               
               {/* Branch Filter */}
-              <div className="filter-dropdown-wrapper">
-                <Building className="filter-icon" size={16} />
-                <select
-                  value={selectedBranch}
-                  onChange={(e) => setSelectedBranch(e.target.value)}
-                  className="dashboard-filter-select"
-                  style={{ minWidth: '130px' }}
-                >
-                  {branches.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
-              </div>
+              {branchCount > 0 && (
+                <div className="filter-dropdown-wrapper">
+                  <Building className="filter-icon" size={16} />
+                  <select
+                    value={selectedBranch}
+                    onChange={(e) => setSelectedBranch(e.target.value)}
+                    className="dashboard-filter-select"
+                    style={{ minWidth: '130px' }}
+                  >
+                    {branches.map(b => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Date Filter */}
               <div className="filter-dropdown-wrapper">
@@ -224,17 +226,19 @@ function MainVendorDashboard() {
         {/* Stats Grid - 5 Cards (Branches, Sellers, Buyers, Sales, Commission) */}
         <div className="stats-grid dashboard-stats-grid fade-in">
           
-          <div className="stat-card db-stat-card db-stat-purple" style={{ cursor: 'default' }}>
-            <div className="stat-header">
-              <div className="stat-icon db-stat-icon-purple">
-                <Building size={20} />
-              </div>
-              <div>
-                <div className="stat-value">{stats.totalBranches}</div>
-                <div className="stat-label">Branches</div>
+          {branchCount > 0 && (
+            <div className="stat-card db-stat-card db-stat-purple" style={{ cursor: 'default' }}>
+              <div className="stat-header">
+                <div className="stat-icon db-stat-icon-purple">
+                  <Building size={20} />
+                </div>
+                <div>
+                  <div className="stat-value">{stats.totalBranches}</div>
+                  <div className="stat-label">Branches</div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <Link to="/mainvendor/sellers" className="db-stat-link">
             <div className="stat-card db-stat-card db-stat-blue">

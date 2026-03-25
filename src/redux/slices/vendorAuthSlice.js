@@ -9,6 +9,7 @@ const initialState = {
     vendorUserAddress: sessionStorage.getItem('vendorUserAddress') || '',
     vendorId: sessionStorage.getItem('vendorId') || '',
     vendorToken: sessionStorage.getItem('vendorToken') || '',
+    branchCount: sessionStorage.getItem('branchCount') ? parseInt(sessionStorage.getItem('branchCount')) : 0,
     sessionError: false,
     accountStatusError: null, // { type: 'deleted' | 'inactive' | 'expired', message: string }
 };
@@ -34,6 +35,7 @@ const vendorAuthSlice = createSlice({
             state.vendorId = user._id || '';
             state.vendorUserPhone = user.phone || '';
             state.vendorUserAddress = user.address || '';
+            state.branchCount = user.plan?.branchCount || 0;
             state.sessionError = false;
             state.accountStatusError = null;
 
@@ -45,6 +47,7 @@ const vendorAuthSlice = createSlice({
             sessionStorage.setItem('vendorId', user._id || '');
             sessionStorage.setItem('vendorUserPhone', user.phone || '');
             sessionStorage.setItem('vendorUserAddress', user.address || '');
+            sessionStorage.setItem('branchCount', (user.plan?.branchCount || 0).toString());
         },
         updateVendorProfileData: (state, action) => {
             const { name, photo, phone, address } = action.payload;
@@ -75,6 +78,7 @@ const vendorAuthSlice = createSlice({
             state.vendorId = '';
             state.vendorUserPhone = '';
             state.vendorUserAddress = '';
+            state.branchCount = 0;
             state.sessionError = false;
             state.accountStatusError = null;
 
@@ -86,6 +90,7 @@ const vendorAuthSlice = createSlice({
             sessionStorage.removeItem('vendorId');
             sessionStorage.removeItem('vendorUserPhone');
             sessionStorage.removeItem('vendorUserAddress');
+            sessionStorage.removeItem('branchCount');
 
             localStorage.removeItem('vendorLoggedIn');
             localStorage.removeItem('vendorUserEmail');
@@ -93,6 +98,7 @@ const vendorAuthSlice = createSlice({
             localStorage.removeItem('vendorUserPhoto');
             localStorage.removeItem('vendorUserPhone');
             localStorage.removeItem('vendorUserAddress');
+            localStorage.removeItem('branchCount');
         }
     }
 });

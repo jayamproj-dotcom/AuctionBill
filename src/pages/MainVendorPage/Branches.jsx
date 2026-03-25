@@ -14,7 +14,7 @@ import {
 import { getMainVendorBranches } from "../../api/mainVendorApi";
 
 function Branches() {
-  const { vendorId } = useSelector((state) => state.vendorAuth);
+  const { vendorId, branchCount } = useSelector((state) => state.vendorAuth);
   const currentMainVendorId = vendorId || sessionStorage.getItem("vendorId");
 
   const [branches, setBranches] = useState([]);
@@ -62,6 +62,12 @@ function Branches() {
 
 
   const handleAdd = () => {
+    if (branches.length >= branchCount) {
+      toast.warning(
+        `Your limit is ${branchCount} branches and you have already added ${branches.length}.`,
+      );
+      return;
+    }
     setEditingBranch(null);
     setFormData({
       name: "",

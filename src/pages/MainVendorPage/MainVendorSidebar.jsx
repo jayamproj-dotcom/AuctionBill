@@ -17,13 +17,14 @@ import {
   FileText,
 } from "lucide-react";
 import logo from "../../assets/images/logo-sidebar.png";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice";
 
 const MainVendorSidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
+  const { branchCount } = useSelector((state) => state.vendorAuth);
 
   const handleLogout = (e) => {
     e.preventDefault();
@@ -62,60 +63,64 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
           <span>Dashboard</span>
         </NavLink>
 
-        <NavLink
-          to="/mainvendor/branches"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <Building />
-          </span>
-          <span>Branches</span>
-        </NavLink>
+        {branchCount > 0 && (
+          <>
+            <NavLink
+              to="/mainvendor/branches"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <Building />
+              </span>
+              <span>Branches</span>
+            </NavLink>
 
-        <NavLink
-          to="/mainvendor/sellers"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <UserCog />
-          </span>
-          <span>All Sellers</span>
-        </NavLink>
+            <NavLink
+              to="/mainvendor/sellers"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <UserCog />
+              </span>
+              <span>All Sellers</span>
+            </NavLink>
 
-        <NavLink
-          to="/mainvendor/buyers"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <ShoppingCart />
-          </span>
-          <span>All Buyers</span>
-        </NavLink>
+            <NavLink
+              to="/mainvendor/buyers"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <ShoppingCart />
+              </span>
+              <span>All Buyers</span>
+            </NavLink>
 
-        <NavLink
-          to="/mainvendor/commission"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <Handshake />
-          </span>
-          <span>All Commission</span>
-        </NavLink>
+            <NavLink
+              to="/mainvendor/commission"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <Handshake />
+              </span>
+              <span>All Commission</span>
+            </NavLink>
 
-        <NavLink
-          to="/mainvendor/main-history"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <History />
-          </span>
-          <span>All History</span>
-        </NavLink>
+            <NavLink
+              to="/mainvendor/main-history"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <History />
+              </span>
+              <span>All History</span>
+            </NavLink>
+          </>
+        )}
 
         <div className="sidebar-label">My Operations</div>
         
