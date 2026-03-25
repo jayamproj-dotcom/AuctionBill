@@ -93,7 +93,7 @@ const Subscription = () => {
                   new Date().setFullYear(new Date().getFullYear() + 1),
                 ).toISOString(),
               price: activeSub?.priceAtPurchase ?? vendorPlan.price ?? 0,
-              branchCount: vendorPlan.branchCount ?? 0,
+              branchCount: activeSub?.branchCountAtPurchase ?? vendorPlan.branchCount ?? 0,
               durationType: vendorPlan.durationType,
               durationValue: vendorPlan.durationValue,
             });
@@ -341,11 +341,11 @@ const Subscription = () => {
             </div>
 
             <div className="sb-features-block">
-              <div className="sb-features-title">Plan Limits</div>
+              <div className="sb-features-title">Included Features</div>
               <ul className="sb-features-list">
                 <li>
                   <CheckCircle2 size={13} className="sb-check-icon" />
-                  Branch Limit: {subscription.branchCount} Branches
+                  {subscription.branchCount || 0} Branches Allowed
                 </li>
               </ul>
             </div>
@@ -408,13 +408,8 @@ const Subscription = () => {
                     <ul className="sb-upgrade-features">
                       <li>
                         <Check size={12} />
-                        Branch Limit: {plan.branchCount}
+                        {plan.branchCount || 0} Branches Allowed
                       </li>
-                      {plan.description && (
-                        <li className="sb-more-features">
-                          {plan.description}
-                        </li>
-                      )}
                     </ul>
                     <button
                       className={`btn ${isCurrent ? "btn-outline" : "btn-primary"} sb-upgrade-btn ${subscription.hasPendingRequest ? "disabled" : ""}`}
