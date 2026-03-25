@@ -9,7 +9,7 @@ import { googleLogout } from "@react-oauth/google";
 import { useSelector, useDispatch } from "react-redux";
 import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice.js"; // Reuse or create new slice?
 import { resolveImageUrl } from "../../utils/imageUtils.js";
-import { getMainVendorProfile } from "../../api/mainVendorApi.js";
+import { getMainVendorProfile, mainVendorLogout } from "../../api/mainVendorApi.js";
 import Notification from "../../components/Common/Notification.jsx";
 
 const MainVendorLayout = () => {
@@ -43,8 +43,13 @@ const MainVendorLayout = () => {
   const fallbackVendorId = sessionStorage.getItem("vendorId");
   const currentVendorId = vendorId || fallbackVendorId;
 
-  const handleLogout = () => {
-    googleLogout();
+  const handleLogout = async () => {
+    try {
+      googleLogout();
+      await mainVendorLogout();
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
     dispatch(clearVendorAuthData());
     setProfileOpen(false);
     navigate("/");
