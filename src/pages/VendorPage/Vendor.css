@@ -166,13 +166,11 @@
     background-color: var(--bg-hover);
     color: var(--text-primary);
 }
-
 .nav-item.active {
     background-color: rgba(245, 158, 11, 0.1);
     color: var(--primary-amber);
     border-left-color: var(--primary-amber);
 }
-
 .nav-icon {
     font-size: 1.25rem;
     width: 28px;
@@ -180,8 +178,6 @@
     align-items: center;
     justify-content: center;
 }
-
-/* Main Content Area */
 /* Main Content Area */
 .main-content {
     flex: 1;
