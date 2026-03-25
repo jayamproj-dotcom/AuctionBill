@@ -77,9 +77,6 @@ const VendorLayout = () => {
     checkSubscription();
   }, [isLoggedIn, currentVendorId]);
 
-  // If not logged in, don't render anything (prevents flash of content)
-  if (!isLoggedIn) return null;
-
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -107,6 +104,8 @@ const VendorLayout = () => {
     };
   }, []);
 
+  // If not logged in, don't render anything (prevents flash of content)
+  if (!isLoggedIn) return null;
 
   // Retrieve user info
   const userName = vendorUserName || sessionStorage.getItem('vendorUserName') || "Vendor";

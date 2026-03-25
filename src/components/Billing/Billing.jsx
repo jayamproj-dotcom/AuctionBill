@@ -610,12 +610,18 @@ const Billing = () => {
 
         doc.text(totalLabel, xOffsets[0], yPos);
 
-        // Align total under the Amount column (column index 7 for seller/buyer reports)
-        const amtIdx =
-          mainOption === "seller" || mainOption === "buyer"
-            ? 7
-            : xOffsets.length - 1;
-        doc.text(`Rs. ${totalValue}`, xOffsets[amtIdx], yPos);
+        let amtIdx = xOffsets.length - 1;
+        if (
+          (mainOption === "seller" && subOption === "selling_product") ||
+          (mainOption === "buyer" && subOption === "purchase_history")
+        ) {
+          amtIdx = 7;
+        }
+        
+        // Safeguard in case amtIdx is somehow out of bounds
+        if (!xOffsets[amtIdx]) amtIdx = xOffsets.length - 1;
+
+        doc.text(`Rs. ${totalValue}`, xOffsets[amtIdx] || 150, yPos);
       }
 
       // --- Footer ---
@@ -634,7 +640,9 @@ const Billing = () => {
     toast.success("PDF Downloaded successfully");
   };
 
-  const truncate = (str, n) => {
+  const truncate = (val, n) => {
+    if (val === null || val === undefined) return "";
+    const str = String(val);
     if (!str) return "";
     return str.length > n ? str.substr(0, n - 1) + "..." : str;
   };

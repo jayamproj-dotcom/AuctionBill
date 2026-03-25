@@ -92,8 +92,6 @@ const MainVendorLayout = () => {
     checkSubscription();
   }, [isLoggedIn, currentVendorId]);
 
-  if (!isLoggedIn) return null;
-
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -118,6 +116,8 @@ const MainVendorLayout = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  if (!isLoggedIn) return null;
 
   const userName =
     vendorUserName || sessionStorage.getItem("vendorUserName") || "Vendor";

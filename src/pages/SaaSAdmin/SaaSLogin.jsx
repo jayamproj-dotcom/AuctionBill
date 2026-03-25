@@ -153,6 +153,7 @@ const SaaSLogin = () => {
                                 value={credentials.password}
                                 onChange={handleChange}
                                 placeholder="Enter admin password"
+                                autoComplete="current-password"
                                 disabled={loading}
                             />
                             <button

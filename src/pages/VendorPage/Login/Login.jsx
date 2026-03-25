@@ -191,6 +191,7 @@ const VendorLogin = () => {
                 placeholder={
                   loginType === "main" ? "Enter password" : "Enter branch ID"
                 }
+                autoComplete="current-password"
                 required
               />
               {loginType === "main" && (
