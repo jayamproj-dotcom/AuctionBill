@@ -110,10 +110,23 @@ function App() {
             <Route index element={<MainVendorDashboard />} />
             <Route path="dashboard" element={<MainVendorDashboard />} />
             <Route path="branches" element={<Branches />} />
+            
+            {/* Operational Routes for Main Vendor */}
+            <Route path="add-product" element={<AddProduct />} />
+            <Route path="today-auction" element={<TodayAuction />} />
+            <Route path="pending-products" element={<PendingProducts />} />
+            <Route path="history" element={<History />} />
+            <Route path="seller-details" element={<SellerDetails />} />
+            <Route path="buyer-details" element={<BuyerDetails />} />
+            <Route path="commission-record" element={<CommissionRecord />} />
+            <Route path="billing" element={<Billing />} />
+
+            {/* Management Routes for Main Vendor */}
             <Route path="sellers" element={<Sellers />} />
             <Route path="buyers" element={<Buyers />} />
             <Route path="commission" element={<Commission />} />
-            <Route path="history" element={<MainVendorHistory />} />
+            <Route path="main-history" element={<MainVendorHistory />} />
+            
             <Route path="subscription" element={<Subscription />} />
             <Route path="manage" element={<Profile />} />
             <Route path="change-password" element={<VendorChangePassword />} />

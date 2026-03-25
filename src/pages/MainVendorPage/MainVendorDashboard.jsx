@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   Building,
   Users,
@@ -17,6 +18,9 @@ import "../../components/Dashboard/Dashboard.css";
 import LoadingSpinner from "../../components/Common/LoadingSpinner";
 
 function MainVendorDashboard() {
+  const { vendorId } = useSelector((state) => state.vendorAuth);
+  const currentMainVendorId = vendorId || sessionStorage.getItem("vendorId");
+
   const [stats, setStats] = useState({
     totalBranches: 0,
     totalSellers: 0,
@@ -31,7 +35,10 @@ function MainVendorDashboard() {
     new Date().toISOString().split("T")[0],
   );
   
-  const [branches, setBranches] = useState([{ id: "all", name: "All Branches" }]);
+  const [branches, setBranches] = useState([
+    { id: "all", name: "All Branches" },
+    { id: currentMainVendorId, name: "My Details" }
+  ]);
   const [selectedBranch, setSelectedBranch] = useState("all");
 
   const [filteredTransactions, setFilteredTransactions] = useState([]);
@@ -39,7 +46,7 @@ function MainVendorDashboard() {
 
   useEffect(() => {
     fetchBranches();
-  }, []);
+  }, [currentMainVendorId]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -53,7 +60,11 @@ function MainVendorDashboard() {
           id: v._id,
           name: v.name,
         }));
-        setBranches([{ id: "all", name: "All Branches" }, ...branchList]);
+        setBranches([
+          { id: "all", name: "All Branches" },
+          { id: currentMainVendorId, name: "My Details" },
+          ...branchList
+        ]);
       }
     } catch (error) {
       console.error("Error fetching branches:", error);
@@ -290,7 +301,12 @@ function MainVendorDashboard() {
         {/* Recent Transactions - Mirroring vendor dashboard UI */}
         <div className="section-header section-margin-top">
           <h3 className="section-title">
-            {selectedBranch === "all" ? "" : `${branches.find(b => b.id === selectedBranch)?.name || 'Branch'}`} Transactions ({getFilterLabel()})
+            {selectedBranch === "all" 
+              ? "" 
+              : selectedBranch === currentMainVendorId 
+                ? "My Operational " 
+                : `${branches.find(b => b.id === selectedBranch)?.name || 'Branch'} `}
+            Transactions ({getFilterLabel()})
           </h3>
         </div>
 

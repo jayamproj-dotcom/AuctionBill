@@ -11,6 +11,10 @@ import {
   Gem,
   LogOut,
   X,
+  PackagePlus,
+  ChartSpline,
+  PackageSearch,
+  FileText,
 } from "lucide-react";
 import logo from "../../assets/images/logo-sidebar.png";
 import { useDispatch } from "react-redux";
@@ -46,6 +50,7 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
       </div>
 
       <nav className="sidebar-nav">
+        <div className="sidebar-label">Management</div>
         <NavLink
           to="/mainvendor/dashboard"
           className={({ isActive }) => `nav-item ${isActive || location.pathname === "/mainvendor" || location.pathname === "/mainvendor/" ? "active" : ""}`}
@@ -76,7 +81,7 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
           <span className="nav-icon">
             <UserCog />
           </span>
-          <span>Sellers</span>
+          <span>All Sellers</span>
         </NavLink>
 
         <NavLink
@@ -87,7 +92,7 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
           <span className="nav-icon">
             <ShoppingCart />
           </span>
-          <span>Buyers</span>
+          <span>All Buyers</span>
         </NavLink>
 
         <NavLink
@@ -98,7 +103,97 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
           <span className="nav-icon">
             <Handshake />
           </span>
-          <span>Commission</span>
+          <span>All Commission</span>
+        </NavLink>
+
+        <NavLink
+          to="/mainvendor/main-history"
+          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          onClick={onClose}
+        >
+          <span className="nav-icon">
+            <History />
+          </span>
+          <span>All History</span>
+        </NavLink>
+
+        <div className="sidebar-label">My Operations</div>
+        
+        <NavLink
+          to="/mainvendor/add-product"
+          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          onClick={onClose}
+        >
+          <span className="nav-icon">
+            <PackagePlus />
+          </span>
+          <span>Product List</span>
+        </NavLink>
+
+        <NavLink
+          to="/mainvendor/today-auction"
+          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          onClick={onClose}
+        >
+          <span className="nav-icon">
+            <ChartSpline />
+          </span>
+          <span>Today Auction</span>
+        </NavLink>
+
+        <NavLink
+          to="/mainvendor/pending-products"
+          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          onClick={onClose}
+        >
+          <span className="nav-icon">
+            <PackageSearch />
+          </span>
+          <span>Pending Products</span>
+        </NavLink>
+
+        <NavLink
+          to="/mainvendor/billing"
+          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          onClick={onClose}
+        >
+          <span className="nav-icon">
+            <FileText />
+          </span>
+          <span>Billing & Invoices</span>
+        </NavLink>
+
+        <NavLink
+          to="/mainvendor/seller-details"
+          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          onClick={onClose}
+        >
+          <span className="nav-icon">
+            <UserCog />
+          </span>
+          <span>My Sellers</span>
+        </NavLink>
+
+        <NavLink
+          to="/mainvendor/buyer-details"
+          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          onClick={onClose}
+        >
+          <span className="nav-icon">
+            <ShoppingCart />
+          </span>
+          <span>My Buyers</span>
+        </NavLink>
+
+        <NavLink
+          to="/mainvendor/commission-record"
+          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          onClick={onClose}
+        >
+          <span className="nav-icon">
+            <Handshake />
+          </span>
+          <span>My Commission</span>
         </NavLink>
 
         <NavLink
@@ -109,8 +204,10 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
           <span className="nav-icon">
             <History />
           </span>
-          <span>History</span>
+          <span>My History</span>
         </NavLink>
+
+        <div className="sidebar-label">Account</div>
 
         <NavLink
           to="/mainvendor/subscription"
