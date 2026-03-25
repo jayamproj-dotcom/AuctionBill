@@ -87,7 +87,7 @@ const VendorLogin = () => {
     try {
       const decoded = jwtDecode(credentialResponse.credential);
       const email = decoded.email.toLowerCase();
-      const name = decoded.name || "Main Vendor";
+      const name = decoded.name || "Vendor";
       const picture = decoded.picture || "";
 
       dispatch(
@@ -127,7 +127,7 @@ const VendorLogin = () => {
     <div className="login-page">
       <div className="login-top-right"></div>
       <div className="login-card">
-        <h2>{loginType === "main" ? "Main Vendor Login" : "Branch Login"}</h2>
+        <h2>{loginType === "main" ? "Vendor Login" : "Branch Login"}</h2>
         <p className="login-subtitle">
           {loginType === "main"
             ? "Sign in to manage your branches and auctions"
@@ -141,7 +141,7 @@ const VendorLogin = () => {
             onClick={() => handleTypeChange("main")}
           >
             <User size={16} />
-            Main Vendor
+            Vendor
           </button>
           <button
             className={`type-btn ${loginType === "branch" ? "active" : ""}`}
@@ -252,7 +252,7 @@ const VendorLogin = () => {
             <p className="signup-link-text">
               Don't have an account?{" "}
               <Link to="/signup" className="signup-link">
-                Request Main Vendor Access
+                Request Vendor Access
               </Link>
             </p>
           </div>

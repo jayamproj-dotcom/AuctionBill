@@ -202,10 +202,10 @@ const Purchases = () => {
 
       <div className="saas-card saas-mb-15 subAdminCard">
         <h2 className="saas-text-2xl saas-font-bold subAdminCardTitle">
-          Main Vendor Purchase History
+          Vendor Purchase History
         </h2>
         <p className="saas-text-muted saas-text-sm saas-mb-15">
-          View all main vendor subscriptions and purchases
+          View all vendor subscriptions and purchases
         </p>
         <div className="saas-flex-between subAdminTopControls">
           <div className="saasSearchWrapperWide">
@@ -240,7 +240,7 @@ const Purchases = () => {
           <table className="saas-table subAdminTable saas-desktop-only-480">
             <thead className="subAdminTableHeader">
               <tr>
-                <th>Main Vendor Name</th>
+                <th>Vendor Name</th>
                 <th>Plan</th>
                 <th>Price</th>
                 <th>Payment</th>

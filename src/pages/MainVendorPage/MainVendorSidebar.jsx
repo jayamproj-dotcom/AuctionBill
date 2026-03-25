@@ -42,7 +42,7 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
           </div>
           <div className="logo-text">
             <h2>Auction Billing</h2>
-            <p>Main Vendor</p>
+            <p>Vendor</p>
           </div>
         </div>
         <button className="close-sidebar" onClick={onClose}>

@@ -153,7 +153,7 @@ function Commission() {
           <h1>Commission Records</h1>
         </div>
         <div className="breadcrumb">
-          <span>Main Vendor</span>
+          <span>Vendor</span>
           <span className="breadcrumb-separator">&gt;</span>
           <span>Commission</span>
         </div>

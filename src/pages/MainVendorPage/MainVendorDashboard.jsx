@@ -138,7 +138,7 @@ function MainVendorDashboard() {
         setFilteredTransactions(res.data.recentTransactions || []);
       }
     } catch (error) {
-      console.error("Error fetching main vendor dashboard data:", error);
+      console.error("Error fetching  vendor dashboard data:", error);
     } finally {
       setLoading(false);
     }
@@ -161,7 +161,7 @@ function MainVendorDashboard() {
     <>
       <div className="content-header">
         <div className="header-top">
-          <h1>Main Vendor Dashboard</h1>
+          <h1>Vendor Dashboard</h1>
           <div className="header-actions">
             <div className="dashboard-filter-container">
               
@@ -216,7 +216,7 @@ function MainVendorDashboard() {
           </div>
         </div>
         <div className="breadcrumb">
-          <span>Main Vendor</span>
+          <span>Vendor</span>
           <span className="breadcrumb-separator">/</span>
           <span>Dashboard</span>
         </div>

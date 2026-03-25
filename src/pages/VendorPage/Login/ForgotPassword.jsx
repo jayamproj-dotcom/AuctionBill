@@ -177,9 +177,9 @@ const ForgotPassword = () => {
             Forgot Password
           </h2>
           <p className="saas-subtitle">
-            {step === 1 && "Enter Main Vendor email to receive OTP"}
+            {step === 1 && "Enter Vendor email to receive OTP"}
             {step === 2 && "Enter OTP sent to your email"}
-            {step === 3 && "Set your new Main Vendor password"}
+            {step === 3 && "Set your new Vendor password"}
           </p>
         </div>
 

@@ -97,7 +97,7 @@ const SaaSDashboard = () => {
 
           <div className="saas-stat-value">{stats.totalMainVendors}</div>
 
-          <div className="saas-stat-label">Total Main Vendors</div>
+          <div className="saas-stat-label">Total Vendors</div>
         </Link>
 
         <div className="saas-stat-card">
@@ -136,7 +136,7 @@ const SaaSDashboard = () => {
       <div className="saas-card">
         <div className="saas-card-header">
           <h3 className="saas-text-lg saas-font-semibold">
-            Recent Main Vendor Registrations
+            Recent Vendor Registrations
           </h3>
           <Link to="/saas/vendors">
             {" "}
@@ -147,7 +147,7 @@ const SaaSDashboard = () => {
           <table className="saas-table saas-desktop-only">
             <thead>
               <tr>
-                <th>Main Vendor Name</th>
+                <th>Vendor Name</th>
                 <th>Email</th>
                 <th>Plan</th>
                 <th>Status</th>

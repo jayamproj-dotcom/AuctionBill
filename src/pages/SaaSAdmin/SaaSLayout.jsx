@@ -141,7 +141,7 @@ const SaaSLayout = () => {
       label: "Purchases",
       icon: <ShoppingCart size={20} />,
     },
-    { path: "/saas/vendors", label: "Main Vendors", icon: <Users size={20} /> },
+    { path: "/saas/vendors", label: "Vendors", icon: <Users size={20} /> },
     {
       path: "/saas/subscriptions",
       label: "Subscriptions",

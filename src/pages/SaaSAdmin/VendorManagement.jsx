@@ -134,10 +134,10 @@ const VendorManagement = () => {
       setIsAddModalOpen(false);
       resetAddForm();
       loadData();
-      toast.success("Main Vendor added successfully");
+      toast.success("Vendor added successfully");
     } catch (error) {
       console.error(error);
-      toast.error(error?.message || "Error adding main vendor");
+      toast.error(error?.message || "Error adding vendor");
     } finally {
       setIsSavingAdd(false);
     }
@@ -317,10 +317,10 @@ const VendorManagement = () => {
       setIsEditModalOpen(false);
       setEditingVendor(null);
       loadData();
-      toast.success("Main Vendor updated successfully");
+      toast.success("Vendor updated successfully");
     } catch (error) {
       console.error(error);
-      toast.error(error?.message || "Error updating main vendor");
+      toast.error(error?.message || "Error updating vendor");
     } finally {
       setIsSaving(false);
     }
@@ -344,10 +344,10 @@ const VendorManagement = () => {
         setVendorToDelete(null);
         setIsConfirmOpen(false);
         loadData();
-        toast.success("Main Vendor deleted successfully");
+        toast.success("Vendor deleted successfully");
       } catch (error) {
         console.error(error);
-        toast.error(error?.message || "Error deleting main vendor");
+        toast.error(error?.message || "Error deleting vendor");
       } finally {
         setIsDeleting(false);
       }
@@ -403,7 +403,7 @@ const VendorManagement = () => {
       link.remove();
 
       setIsExportModalOpen(false);
-      toast.success("Main Vendors exported successfully");
+      toast.success("Vendors exported successfully");
     } catch (error) {
       console.error("Export error:", error);
       toast.error("Error exporting data. Please try again.");
@@ -473,10 +473,10 @@ const VendorManagement = () => {
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={confirmDelete}
-        title="Delete Main Vendor Account"
+        title="Delete Vendor Account"
         message={`Are you sure you want to delete ${vendorToDelete?.name}?`}
-        subMessage="This action will permanently remove the main vendor and all associated data."
-        confirmText="Yes, Delete Main Vendor"
+        subMessage="This action will permanently remove the vendor and all associated data."
+        confirmText="Yes, Delete Vendor"
         cancelText="Cancel"
         variant="danger"
         isLoading={isDeleting}
@@ -519,7 +519,7 @@ const VendorManagement = () => {
           >
             <div className="saas-modal-header">
               <h3 className="saas-text-xl saas-font-semibold">
-                Export Main Vendor Data
+                Export Vendor Data
               </h3>
               <button
                 onClick={() => setIsExportModalOpen(false)}
@@ -578,10 +578,10 @@ const VendorManagement = () => {
 
       <div className="saas-card saas-mb-15 subAdminCard">
         <h2 className="saas-text-2xl saas-font-bold subAdminCardTitle">
-          Manage Main Vendors
+          Manage Vendors
         </h2>
         <p className="saas-text-muted saas-text-sm saas-mb-15">
-          Manage and monitor all main vendors in the system
+          Manage and monitor all vendors in the system
         </p>
         <div className="saas-flex-between subAdminTopControls">
           <div className="saasSearchWrapperWide">
@@ -590,7 +590,7 @@ const VendorManagement = () => {
               <input
                 type="text"
                 className="saas-input saasSearchInputWide"
-                placeholder="Search main vendors..."
+                placeholder="Search vendors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{ paddingRight: '40px' }}
@@ -715,7 +715,7 @@ const VendorManagement = () => {
                 className="saas-btn btn-primary"
                 onClick={() => setIsAddModalOpen(true)}
               >
-                <Plus size={18} /> Add Main Vendor
+                <Plus size={18} /> Add Vendor
               </button>
             )}
           </div>
@@ -727,7 +727,7 @@ const VendorManagement = () => {
           <table className="saas-table  subAdminTable saas-desktop-only">
             <thead className="subAdminTableHeader">
               <tr>
-                <th>Main Vendor Name</th>
+                <th>Vendor Name</th>
                 <th>Email</th>
                 <th>Location</th>
                 <th>Phone</th>
@@ -743,13 +743,13 @@ const VendorManagement = () => {
                       className="saas-spinner saas-inline-block"
                       size={24}
                     />{" "}
-                    Loading main vendors...
+                    Loading vendors...
                   </td>
                 </tr>
               ) : filteredVendors.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="saas-text-center saas-py-4">
-                    No main vendors found.
+                    No vendors found.
                   </td>
                 </tr>
               ) : (
@@ -815,7 +815,7 @@ const VendorManagement = () => {
                           <>
                             <button
                               className="icon-btn edit"
-                              title="Edit Main Vendor"
+                              title="Edit Vendor"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleEditClick(vendor);
@@ -825,7 +825,7 @@ const VendorManagement = () => {
                             </button>
                             <button
                               className="icon-btn delete"
-                              title="Delete Main Vendor"
+                              title="Delete Vendor"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDeleteClick(vendor);
@@ -847,11 +847,11 @@ const VendorManagement = () => {
             {loading ? (
               <div className="saas-text-center saas-p-20">
                 <Loader className="saas-spinner saas-inline-block" size={24} />{" "}
-                Loading main vendors...
+                Loading vendors...
               </div>
             ) : filteredVendors.length === 0 ? (
               <div className="saas-text-center saas-p-20 saas-text-muted">
-                No main vendors found.
+                No vendors found.
               </div>
             ) : (
               filteredVendors.map((vendor) => (
@@ -969,7 +969,7 @@ const VendorManagement = () => {
           <div className="saas-modal" onClick={(e) => e.stopPropagation()}>
             <div className="saas-modal-header">
               <h3 className="saas-text-xl saas-font-semibold">
-                Add New Main Vendor
+                Add New Vendor
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
@@ -982,7 +982,7 @@ const VendorManagement = () => {
               <div className="saas-modal-content">
                 <div className="inner-grid-2">
                   <div className="form-group">
-                    <label className="saas-label">Main Vendor Name *</label>
+                    <label className="saas-label">Vendor Name *</label>
                     <input
                       type="text"
                       name="name"
@@ -1094,7 +1094,7 @@ const VendorManagement = () => {
                       <Loader className="saas-spinner" size={16} /> Saving...
                     </>
                   ) : (
-                    "Add Main Vendor"
+                    "Add Vendor"
                   )}
                 </button>
               </div>
@@ -1112,7 +1112,7 @@ const VendorManagement = () => {
           <div className="saas-modal" onClick={(e) => e.stopPropagation()}>
             <div className="saas-modal-header">
               <h3 className="saas-text-xl saas-font-semibold">
-                Edit Main Vendor
+                Edit Vendor
               </h3>
               <button
                 onClick={() => setIsEditModalOpen(false)}
@@ -1125,7 +1125,7 @@ const VendorManagement = () => {
               <div className="saas-modal-content">
                 <div className="inner-grid-2">
                   <div className="form-group">
-                    <label className="saas-label">Main Vendor Name *</label>
+                    <label className="saas-label">Vendor Name *</label>
                     <input
                       type="text"
                       name="name"
@@ -1262,7 +1262,7 @@ const VendorManagement = () => {
           <div className="saas-modal" onClick={(e) => e.stopPropagation()}>
             <div className="saas-modal-header">
               <h3 className="saas-text-xl saas-font-semibold">
-                Main Vendor Details: {selectedVendor.name}
+                Vendor Details: {selectedVendor.name}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -1278,7 +1278,7 @@ const VendorManagement = () => {
                 <div className="inner-grid-2">
                   <div>
                     <label className="saas-label saas-text-muted">
-                      Main Vendor Name
+                      Vendor Name
                     </label>
                     <div className="saas-font-medium">
                       {selectedVendor.name}

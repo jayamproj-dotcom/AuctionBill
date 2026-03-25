@@ -175,7 +175,7 @@ const Signup = () => {
           isOpen: true,
           title: "Registration Successful",
           message:
-            "Main Vendor subscription request received. Our team will review your application and contact you soon.",
+            "Vendor subscription request received. Our team will review your application and contact you soon.",
           variant: "success",
           onConfirm: () => {
             setConfirmModal((prev) => ({ ...prev, isOpen: false }));
@@ -222,7 +222,7 @@ const Signup = () => {
         {step === 1 ? (
           <div className="plans-section fade-in">
             <div className="section-header">
-              <h1>Main Vendor Registration</h1>
+              <h1>Vendor Registration</h1>
               <p>Choose a plan to start managing your auction business</p>
             </div>
 
@@ -273,7 +273,7 @@ const Signup = () => {
               <button className="back-btn" onClick={() => setStep(1)}>
                 <ArrowLeft size={20} /> Change Plan
               </button>
-              <h2>Complete Your Main Vendor Profile</h2>
+              <h2>Complete Your Vendor Profile</h2>
               <p>
                 You've selected the <strong>{selectedPlan.name}</strong> plan
               </p>
@@ -450,12 +450,12 @@ const Signup = () => {
                         Request...
                       </>
                     ) : (
-                      "Submit Main Vendor Request"
+                      "Submit Vendor Request"
                     )}
                   </button>
                   <p className="terms-text">
                     By clicking submit, you agree to our Terms of Service and
-                    Privacy Policy. Your Main Vendor account will be activated
+                    Privacy Policy. Your Vendor account will be activated
                     after admin review.
                   </p>
                 </div>

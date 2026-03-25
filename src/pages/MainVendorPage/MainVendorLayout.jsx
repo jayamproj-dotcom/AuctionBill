@@ -7,7 +7,7 @@ import user from "../../assets/images/user.png";
 import { LogOut, User, KeyRound } from "lucide-react";
 import { googleLogout } from "@react-oauth/google";
 import { useSelector, useDispatch } from "react-redux";
-import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice.js"; // Reuse or create new slice?
+import { clearVendorAuthData, setVendorBranchCount } from "../../redux/slices/vendorAuthSlice.js";
 import { resolveImageUrl } from "../../utils/imageUtils.js";
 import { getMainVendorProfile } from "../../api/mainVendorApi.js";
 import Notification from "../../components/Common/Notification.jsx";
@@ -58,6 +58,11 @@ const MainVendorLayout = () => {
           const res = await getMainVendorProfile(currentVendorId);
           if (res.status && res.vendor) {
             const currentVendor = res.vendor;
+
+            // Dynamically sync Redux state with backend the moment dashboard loads
+            const latestBranchCount = currentVendor.plan?.branchCount || 0;
+            dispatch(setVendorBranchCount(latestBranchCount));
+
             const activeSub = currentVendor.activeSubscription;
             const expiryDate = activeSub?.endDate || currentVendor.planEndDate;
 
@@ -110,7 +115,7 @@ const MainVendorLayout = () => {
   }, []);
 
   const userName =
-    vendorUserName || sessionStorage.getItem("vendorUserName") || "Main Vendor";
+    vendorUserName || sessionStorage.getItem("vendorUserName") || "Vendor";
   const userPhoto =
     vendorUserPhoto || sessionStorage.getItem("vendorUserPhoto") || user;
   const userEmail =

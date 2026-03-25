@@ -49,6 +49,10 @@ const vendorAuthSlice = createSlice({
             sessionStorage.setItem('vendorUserAddress', user.address || '');
             sessionStorage.setItem('branchCount', (user.plan?.branchCount || 0).toString());
         },
+        setVendorBranchCount: (state, action) => {
+            state.branchCount = action.payload;
+            sessionStorage.setItem('branchCount', action.payload.toString());
+        },
         updateVendorProfileData: (state, action) => {
             const { name, photo, phone, address } = action.payload;
 
@@ -103,6 +107,6 @@ const vendorAuthSlice = createSlice({
     }
 });
 
-export const { setVendorAuthData, clearVendorAuthData, updateVendorProfileData, setVendorSessionError, setVendorAccountStatusError } = vendorAuthSlice.actions;
+export const { setVendorAuthData, clearVendorAuthData, updateVendorProfileData, setVendorSessionError, setVendorAccountStatusError, setVendorBranchCount } = vendorAuthSlice.actions;
 
 export default vendorAuthSlice.reducer;

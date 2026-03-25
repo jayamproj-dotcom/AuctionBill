@@ -115,7 +115,7 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
       if (data?.mainVendorAccountDeleted) {
-        triggerAccountStatusError('main_deleted', data.message || "Main Vendor account deleted");
+        triggerAccountStatusError('main_deleted', data.message || "Vendor account deleted");
         return Promise.reject(error);
       }
 
@@ -125,7 +125,7 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
       if (data?.mainVendorAccountInactive) {
-        triggerAccountStatusError('main_inactive', data.message || "Main Vendor account is inactive");
+        triggerAccountStatusError('main_inactive', data.message || "Vendor account is inactive");
         return Promise.reject(error);
       }
 

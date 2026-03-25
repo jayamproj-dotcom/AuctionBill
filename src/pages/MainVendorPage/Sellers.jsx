@@ -95,7 +95,7 @@ function Sellers() {
           <h1>Sellers Management</h1>
         </div>
         <div className="breadcrumb">
-          <span>Main Vendor</span>
+          <span>Vendor</span>
           <span className="breadcrumb-separator">&gt;</span>
           <span>Sellers</span>
         </div>

@@ -225,7 +225,7 @@ const Subscription = () => {
             <h1>Subscription &amp; Billing</h1>
           </div>
           <div className="breadcrumb">
-            <span>Main Vendor</span>
+            <span>Vendor</span>
             <span className="breadcrumb-separator">/</span>
             <span>Subscription</span>
           </div>
@@ -244,7 +244,7 @@ const Subscription = () => {
             <h1>Subscription &amp; Billing</h1>
           </div>
           <div className="breadcrumb">
-            <span>Main Vendor</span>
+            <span>Vendor</span>
             <span className="breadcrumb-separator">/</span>
             <span>Subscription</span>
           </div>
@@ -270,7 +270,7 @@ const Subscription = () => {
           </span>
         </div>
         <div className="breadcrumb">
-          <span>Main Vendor</span>
+          <span>Vendor</span>
           <span className="breadcrumb-separator">/</span>
           <span>Subscription</span>
         </div>
