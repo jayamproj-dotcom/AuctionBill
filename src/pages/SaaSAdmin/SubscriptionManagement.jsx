@@ -47,7 +47,7 @@ const SubscriptionManagement = () => {
       durationType: plan.durationType || 'month',
       status: plan.status || 'Active',
       isPopular: plan.isPopular || false,
-      features: Array.isArray(plan.features) ? plan.features : []
+      branchCount: plan.branchCount || 0
     });
     setIsModalOpen(true);
   };
@@ -61,7 +61,7 @@ const SubscriptionManagement = () => {
       durationType: 'month',
       status: 'Active',
       isPopular: false,
-      features: []
+      branchCount: 0
     });
     setIsModalOpen(true);
   };
@@ -94,6 +94,11 @@ const SubscriptionManagement = () => {
 
     const numericPrice = Number(editingPlan.price.toString().replace(/[^0-9]/g, ''));
     const numericDuration = Number(editingPlan.durationValue);
+    const numericBranchCount = Number(editingPlan.branchCount) || 0;
+
+    if (numericBranchCount < 0) {
+      return toast.error("Branch count cannot be negative");
+    }
 
     const payload = {
       name: editingPlan.name,
@@ -101,7 +106,7 @@ const SubscriptionManagement = () => {
       durationValue: numericDuration,
       durationType: editingPlan.durationType || 'month',
       status: editingPlan.status || 'Active',
-      features: editingPlan.features || [],
+      branchCount: numericBranchCount,
       isPopular: editingPlan.isPopular || false,
       slug: editingPlan.name.toLowerCase().replace(/\s+/g, '-')
     };
@@ -167,11 +172,9 @@ const SubscriptionManagement = () => {
               </div>
               <div className="saas-content saas-flex-1">
                 <ul className="saas-feature-list">
-                  {(Array.isArray(plan.features) ? plan.features : []).map((feature, index) => (
-                    <li key={index} className="saas-feature-item">
-                      <span className="saas-text-success">✓</span> {feature}
-                    </li>
-                  ))}
+                  <li className="saas-feature-item">
+                    <span className="saas-text-success">✓</span> {plan.branchCount || 0} Branches Allowed
+                  </li>
                 </ul>
               </div>
               {canManageSubscriptions && (
@@ -276,63 +279,24 @@ const SubscriptionManagement = () => {
               </div>
 
               <div className="saas-form-group">
-                <label className="saas-label">Features</label>
-                <select
-                  className="saas-select saas-mb-15"
-                  value=""
+                <label className="saas-label">Branch Count</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="saas-input"
+                  value={editingPlan?.branchCount}
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (val && !editingPlan.features?.includes(val)) {
-                      setEditingPlan({
-                        ...editingPlan,
-                        features: [...(editingPlan.features || []), val]
-                      });
+                    if (Number(val) < 0) return;
+                    setEditingPlan({ ...editingPlan, branchCount: val });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                      e.preventDefault();
                     }
                   }}
-                  style={{ marginBottom: '10px' }}
-                >
-                  <option value="">Select a feature to add</option>
-                  {[
-                    "3 Branches",
-                    "Unlimited Branches",
-                    "Email Support",
-                    "Normal Analytics",
-                    "Advanced Analytics",
-                    "Download Excel Report"
-                  ].map(f => (
-                    <option key={f} value={f} disabled={editingPlan?.features?.includes(f)}>{f}</option>
-                  ))}
-                </select>
-
-                <div className="saas-flex saas-gap-05 saas-flex-wrap">
-                  {editingPlan?.features?.map((feat, idx) => (
-                    <div 
-                      key={idx} 
-                      className="saas-badge badge-info saas-flex saas-align-center saas-gap-05" 
-                      style={{ padding: '0.4rem 0.7rem', display: 'inline-flex', alignItems: 'center' }}
-                    >
-                      <span>{feat}</span>
-                      <button 
-                        type="button" 
-                        onClick={() => setEditingPlan({
-                          ...editingPlan, 
-                          features: editingPlan.features.filter(f => f !== feat)
-                        })}
-                        style={{ 
-                          background: 'none', 
-                          border: 'none', 
-                          cursor: 'pointer', 
-                          padding: 0, 
-                          display: 'flex',
-                          color: 'inherit',
-                          opacity: 0.7
-                        }}
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                  placeholder="Enter branch count"
+                />
               </div>
 
               <div className="saas-form-group" style={{ marginTop: '1rem' }}>
