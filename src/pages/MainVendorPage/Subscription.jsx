@@ -70,14 +70,6 @@ const Subscription = () => {
           const planName = vendorPlan.name || "Current Plan";
 
           if (activeSub || vendorPlanId) {
-            let features =
-              activeSub?.featuresAtPurchase || vendorPlan.features || [];
-            if (!Array.isArray(features))
-              features =
-                typeof features === "object" && features !== null
-                  ? Object.values(features)
-                  : [];
-
             setSubscription({
               id: currentVendor._id,
               plan: planName,
@@ -101,7 +93,7 @@ const Subscription = () => {
                   new Date().setFullYear(new Date().getFullYear() + 1),
                 ).toISOString(),
               price: activeSub?.priceAtPurchase ?? vendorPlan.price ?? 0,
-              features,
+              branchCount: activeSub?.branchCountAtPurchase ?? vendorPlan.branchCount ?? 0,
               durationType: vendorPlan.durationType,
               durationValue: vendorPlan.durationValue,
             });
@@ -348,19 +340,15 @@ const Subscription = () => {
               </div>
             </div>
 
-            {subscription.features?.length > 0 && (
-              <div className="sb-features-block">
-                <div className="sb-features-title">Included Features</div>
-                <ul className="sb-features-list">
-                  {subscription.features.map((f, i) => (
-                    <li key={i}>
-                      <CheckCircle2 size={13} className="sb-check-icon" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <div className="sb-features-block">
+              <div className="sb-features-title">Included Features</div>
+              <ul className="sb-features-list">
+                <li>
+                  <CheckCircle2 size={13} className="sb-check-icon" />
+                  {subscription.branchCount || 0} Branches Allowed
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
@@ -418,18 +406,10 @@ const Subscription = () => {
                       </div>
                     </div>
                     <ul className="sb-upgrade-features">
-                      {plan.features?.slice(0, 3).map((f, fi) => (
-                        <li key={fi}>
-                          <Check size={12} />
-                          {f}
-                        </li>
-                      ))}
-                      {plan.features?.length > 3 && (
-                        <li className="sb-more-features">
-                          <Plus size={12} />
-                          {plan.features.length - 3} more features
-                        </li>
-                      )}
+                      <li>
+                        <Check size={12} />
+                        {plan.branchCount || 0} Branches Allowed
+                      </li>
                     </ul>
                     <button
                       className={`btn ${isCurrent ? "btn-outline" : "btn-primary"} sb-upgrade-btn ${subscription.hasPendingRequest ? "disabled" : ""}`}

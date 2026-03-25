@@ -249,28 +249,10 @@ const Signup = () => {
                       "Access to all branch management and auction tools."}
                   </div>
                   <ul className="plan-features">
-                    {plan.features && plan.features.length > 0 ? (
-                      plan.features.map((feature, idx) => (
-                        <li key={idx}>
-                          <Check size={16} /> {feature}
-                        </li>
-                      ))
-                    ) : (
-                      <>
-                        <li>
-                          <Check size={16} /> Unlimited Auctions
-                        </li>
-                        <li>
-                          <Check size={16} /> Real-time Bidding
-                        </li>
-                        <li>
-                          <Check size={16} /> Business Analytics
-                        </li>
-                        <li>
-                          <Check size={16} /> Dedicated Support
-                        </li>
-                      </>
-                    )}
+                    <li>
+                      <Check size={16} /> {plan.branchCount || 0} Branches Allowed
+                    </li>
+                    
                   </ul>
                   <button className="select-plan-btn">
                     Get Started <ArrowRight size={18} />
