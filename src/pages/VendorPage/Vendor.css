@@ -145,9 +145,6 @@
     color: var(--text-primary);
 }
 
-.sidebar-nav {
-    padding: var(--spacing-md) 0;
-}
 
 .nav-item {
     display: flex;

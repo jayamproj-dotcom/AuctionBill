@@ -13,9 +13,6 @@ import { useSelector } from "react-redux";
 
 const SubscriptionManagement = () => {
   const { saasRole, saasPermissions } = useSelector((state) => state.saasAuth);
-
-  console.log(saasRole, saasPermissions);
-
   const isSubAdmin = saasRole === "sub-admin" || saasRole === "subadmin";
   const canManageSubscriptions =
     !isSubAdmin ||
