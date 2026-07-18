@@ -14,6 +14,8 @@ import {
   PackageSearch,
   Search,
   Check,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import VoiceSearch from "../Common/VoiceSearch";
 import * as productApi from "../../api/vendorApi";
@@ -160,6 +162,19 @@ function TodayAuction() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [masterProducts, setMasterProducts] = useState([]);
+  const [expandedProducts, setExpandedProducts] = useState(new Set());
+
+  const toggleVariants = (productId) => {
+    setExpandedProducts((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  };
 
   // Vendor ID from Redux or Session Storage
   const vendorId =
@@ -191,8 +206,6 @@ function TodayAuction() {
   const [globalVendorCommission, setGlobalVendorCommission] = useState("");
   const [defaultCommission, setDefaultCommission] = useState("");
   const [editingGlobalComm, setEditingGlobalComm] = useState(false);
-  const [editingVariantRowComm, setEditingVariantRowComm] = useState(false);
-  const [editingCommVariantId, setEditingCommVariantId] = useState(null);
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: "",
@@ -220,10 +233,12 @@ function TodayAuction() {
       variety: "",
       quality: "quality1",
       quantity: "",
+      sellQuantity: 0,
       unit: "kg",
       commission: defaultCommission,
       commissionAmountForSellQuantity: 0,
       priceAmountForSellQuantity: 0,
+      balance: 0,
     });
   };
 
@@ -243,6 +258,7 @@ function TodayAuction() {
 
   const closeAddModal = () => {
     setShowAddProduct(false);
+    setEditingGlobalComm(false);
     resetProductForm();
   };
 
@@ -408,8 +424,28 @@ function TodayAuction() {
     fetchInitialData();
   }, [vendorId]);
 
+  // Auto-close the Sell modal if, after a data refresh, ALL variants of the selected product are sold out.
+  // Only variants with quantity > 0 are considered — a variant with quantity=0 is not real stock.
+  useEffect(() => {
+    if (!showSellModal || !selectedProduct) return;
+    const fresh = products.find((p) =>
+      (selectedProduct._id && p._id === selectedProduct._id) ||
+      (selectedProduct.id && p.id === selectedProduct.id),
+    );
+    if (!fresh) return;
+    const stockVariants = (fresh.variants || []).filter((v) => (v.quantity || 0) > 0);
+    const allSoldOut =
+      stockVariants.length > 0 &&
+      stockVariants.every((v) => (v.sellQuantity || 0) >= v.quantity);
+    if (allSoldOut) {
+      setShowSellModal(false);
+      setSelectedProduct(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products]);
+
   const loadData = async () => {
-    if (!vendorId) return;
+    if (!vendorId) return [];
     try {
       const today = new Date().toISOString().split("T")[0];
       const productResponse = await auctionApi.getAuctionProducts(vendorId, {
@@ -418,16 +454,21 @@ function TodayAuction() {
 
       if (productResponse.success) {
         const mappedProducts = productResponse.data.map((p) => {
+          // Only variants with quantity > 0 count as real stock.
+          // A variant with quantity=0 satisfies 0>=0=true which would wrongly mark the product sold-out.
+          const stockVariants = (p.variants || []).filter((v) => (v.quantity || 0) > 0);
           const isSoldOut =
-            p.variants &&
-            p.variants.length > 0 &&
-            p.variants.every((v) => (v.sellQuantity || 0) >= (v.quantity || 0));
+            stockVariants.length > 0 &&
+            stockVariants.every((v) => (v.sellQuantity || 0) >= v.quantity);
           return { ...p, status: isSoldOut ? "soldout" : p.status };
         });
         setProducts(mappedProducts);
+        return mappedProducts;
       }
+      return [];
     } catch (error) {
       console.error("Failed to load auction data", error);
+      return [];
     }
   };
 
@@ -476,39 +517,48 @@ function TodayAuction() {
   const handleSellProduct = async (e) => {
     e.preventDefault();
 
-    // Find the variant to validate stock
-    const product = products.find(
-      (p) => p._id === selectedProduct._id || p.id === selectedProduct.id,
-    );
-    const variant = product.variants.find(
-      (v) => (v._id || v.id) == saleData.variantId,
-    );
-    if (!variant) return;
-
-    const sellQty = parseFloat(saleData.qtyToSell) || 0;
-    const available = variant.quantity - (variant.sellQuantity || 0);
-
-    if (sellQty > available) {
-      toast.error(`Cannot sell more than available quantity (${available})`);
-      return;
-    }
-
-    // ── Price mode calculation ────────────────────────
-    let finalAmount, ratePerUnit;
-    if (saleData.priceMode === "perQty") {
-      // User entered price per unit (per kg / per piece)
-      ratePerUnit = parseFloat(saleData.finalPrice) || 0;
-      finalAmount = ratePerUnit * sellQty;
-    } else {
-      // User entered the whole / total amount directly
-      finalAmount = parseFloat(saleData.finalPrice) || 0;
-      ratePerUnit = sellQty > 0 ? finalAmount / sellQty : 0;
-    }
-
-    const totalCommission =
-      (finalAmount * (product.commissionPercent || 0)) / 100;
-
     try {
+      // Use selectedProduct directly — it is always kept fresh after each sale
+      const product = selectedProduct;
+      if (!product) {
+        toast.error("No product selected");
+        return;
+      }
+
+      const variant = product.variants.find(
+        (v) => (v._id || v.id) == saleData.variantId,
+      );
+      if (!variant) {
+        toast.error("Please select a variant");
+        return;
+      }
+
+      const sellQty = parseFloat(saleData.qtyToSell) || 0;
+      const available = variant.quantity - (variant.sellQuantity || 0);
+
+      if (sellQty <= 0) {
+        toast.error("Please enter a valid quantity");
+        return;
+      }
+
+      if (sellQty > available) {
+        toast.error(`Cannot sell more than available quantity (${available})`);
+        return;
+      }
+
+      // ── Price mode calculation ────────────────────────
+      let finalAmount, ratePerUnit;
+      if (saleData.priceMode === "perQty") {
+        ratePerUnit = parseFloat(saleData.finalPrice) || 0;
+        finalAmount = ratePerUnit * sellQty;
+      } else {
+        finalAmount = parseFloat(saleData.finalPrice) || 0;
+        ratePerUnit = sellQty > 0 ? finalAmount / sellQty : 0;
+      }
+
+      const totalCommission =
+        (finalAmount * (product.commissionPercent || 0)) / 100;
+
       const transactionData = {
         vendorId: vendorId,
         sellerId: product.sellerId,
@@ -530,6 +580,35 @@ function TodayAuction() {
       const response = await auctionApi.recordSale(transactionData);
 
       if (response.success) {
+        toast.success("Sale recorded successfully");
+
+        // Single fetch — get fresh data and use it immediately
+        const freshList = await loadData();
+        // Guard each clause: if product.id is undefined, undefined===undefined=true
+        // which would match every product and return the wrong one.
+        const freshProduct = freshList.find((p) =>
+          (product._id && p._id === product._id) ||
+          (product.id && p.id === product.id),
+        );
+
+        // Only count variants with quantity > 0 as real stock.
+        // A variant with quantity=0 satisfies 0>=0=true and would wrongly close the modal.
+        const stockVariants = freshProduct
+          ? (freshProduct.variants || []).filter((v) => (v.quantity || 0) > 0)
+          : [];
+        const allSoldOut =
+          stockVariants.length > 0 &&
+          stockVariants.every((v) => (v.sellQuantity || 0) >= v.quantity);
+        if (allSoldOut) {
+          // All real variants are sold — close the modal
+          setShowSellModal(false);
+          setSelectedProduct(null);
+        } else {
+          // Still has qty remaining — keep modal open with fresh product data
+          setSelectedProduct(freshProduct || product);
+        }
+
+        // Always reset form fields so user can sell again
         setSaleData({
           buyerId: "",
           buyerName: "",
@@ -541,15 +620,12 @@ function TodayAuction() {
           priceMode: "perQty",
           buyerType: "regular",
         });
-        setShowSellModal(false);
-        setSelectedProduct(null);
-        loadData();
-        toast.success("Sale recorded successfully");
       }
     } catch (error) {
       toast.error(error.message || "Failed to record sale");
     }
   };
+
 
   const openSellModal = (product) => {
     setSelectedProduct(product);
@@ -602,7 +678,7 @@ function TodayAuction() {
       <div className="content-header">
         <div className="header-top">
           <h1>Today Auction</h1>
-          <div className="header-actions">
+          {/* <div className="header-actions">
             <button
               className="btn btn-primary"
               onClick={() => setShowAddProduct(true)}
@@ -613,7 +689,7 @@ function TodayAuction() {
               </span>
               Add Product
             </button>
-          </div>
+          </div> */}
         </div>
         <div className="breadcrumb">
           <span>Home</span>
@@ -630,25 +706,33 @@ function TodayAuction() {
         </div>
 
         {/* Search Bar */}
-        <div className="card fade-in search-card">
-          <div className="form-group search-form-group">
-            <div className="search-icon-container">
-              <div className="search-input-wrapper" style={{ position: 'relative', flex: 1 }}>
-                <Search size={20} className="search-icon-absolute" style={{ left: '12px', right: 'auto' }} />
-                <input
-                  type="text"
-                  placeholder="Search by product, seller "
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="search-input"
-                  style={{ paddingLeft: '40px', paddingRight: '40px' }}
-                />
-                <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
-                  <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
-                </div>
-              </div>
-            </div>
-          </div>
+        <div style={{ position: "relative", marginBottom: "16px" }}>
+          <Search
+            size={18}
+            style={{
+              position: "absolute",
+              left: "12px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "var(--text-muted, #888)",
+              pointerEvents: "none",
+            }}
+          />
+          <input
+            type="text"
+            placeholder="Search by product, seller..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="search-input"
+            style={{
+              width: "100%",
+              paddingLeft: "38px",
+              paddingRight: "12px",
+              borderRadius: "8px",
+              background: "transparent",
+              boxSizing: "border-box",
+            }}
+          />
         </div>
 
         <div className="card-list fade-in">
@@ -666,8 +750,8 @@ function TodayAuction() {
               <table className="data-table custom-data-table">
                 <thead className="bg-tertiary">
                   <tr>
-                    <th className="custom-th">Product Details</th>
                     <th className="custom-th">Seller</th>
+                    <th className="custom-th">Product Details</th>
                     <th className="custom-th">Status</th>
                     <th className="custom-th custom-th-center">Actions</th>
                   </tr>
@@ -701,37 +785,7 @@ function TodayAuction() {
                         key={product._id || product.id}
                         className={`${product.isActive === false ? "product-disabled" : ""} custom-tr`}
                       >
-                        <td className="custom-td">
-                          <div className="font-semibold text-primary table-product-name">
-                            {capitalizeFirst(product.name)}
-                          </div>
-                          {product.variants && product.variants.length > 0 && (
-                            <div className="product-variants-inline">
-                              {product.variants.map((v) => {
-                                const remaining =
-                                  (v.quantity || 0) - (v.sellQuantity || 0);
-                                return (
-                                  <div
-                                    key={v._id || v.id}
-                                    className="variant-inline-chip"
-                                  >
-                                    <span className="variant-inline-name">
-                                      {capitalizeFirst(v.variety)}
-                                    </span>
-                                    <span
-                                      className={`badge badge-sm ${v.quality === "quality1" ? "badge-success" : v.quality === "quality2" ? "badge-warning" : "badge-error"}`}
-                                    >
-                                      {getQualityLabel(v.quality)}
-                                    </span>
-                                    <span className="variant-inline-qty">
-                                      {remaining} {v.unit}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </td>
+
                         <td className="custom-td">
                           <strong>
                             {
@@ -740,6 +794,64 @@ function TodayAuction() {
                               )?.name
                             }
                           </strong>
+                        </td>
+                        <td className="custom-td">
+                          <div
+                            className="font-semibold text-primary table-product-name"
+                            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                          >
+                            {capitalizeFirst(product.name)}
+                            {product.variants && product.variants.length > 0 && (
+                              <button
+                                type="button"
+                                className="icon-btn action-icon-small"
+                                style={{ padding: "2px", minWidth: "unset" }}
+                                onClick={() =>
+                                  toggleVariants(product._id || product.id)
+                                }
+                                title="Show variants"
+                              >
+                                {expandedProducts.has(product._id || product.id) ? (
+                                  <ChevronDown size={15} />
+                                ) : (
+                                  <ChevronRight size={15} />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                          {expandedProducts.has(product._id || product.id) &&
+                            product.variants &&
+                            product.variants.length > 0 && (
+                              <div className="product-variants-inline" style={{ marginTop: "6px" }}>
+                                {product.variants.map((v) => {
+                                  const remaining =
+                                    (v.quantity || 0) - (v.sellQuantity || 0);
+                                  return (
+                                    <div
+                                      key={v._id || v.id}
+                                      className="variant-inline-chip"
+                                    >
+                                      <span className="variant-inline-name">
+                                        {capitalizeFirst(v.variety)}
+                                      </span>
+                                      <span
+                                        className={`badge badge-sm ${v.quality === "quality1"
+                                          ? "badge-success"
+                                          : v.quality === "quality2"
+                                            ? "badge-warning"
+                                            : "badge-error"
+                                          }`}
+                                      >
+                                        {getQualityLabel(v.quality)}
+                                      </span>
+                                      <span className="variant-inline-qty">
+                                        {remaining} {v.unit}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
                         </td>
                         <td className="custom-td">
                           {product.status === "soldout" ? (
@@ -888,7 +1000,7 @@ function TodayAuction() {
                       sellerName: seller.name,
                     });
                     setDefaultCommission(comm);
-                    setVariantData(prev => ({...prev, commission: comm}));
+                    setVariantData(prev => ({ ...prev, commission: comm }));
                   }}
                   placeholder="Type to search seller..."
                   required
@@ -923,10 +1035,6 @@ function TodayAuction() {
                       selectedOpt.units && selectedOpt.units.length > 0
                         ? selectedOpt.units[0]
                         : "";
-                    const defaultVariety =
-                      selectedOpt?.varieties && selectedOpt.varieties.length > 0
-                        ? ""
-                        : "";
 
                     setNewProduct((prev) => ({
                       ...prev,
@@ -935,7 +1043,7 @@ function TodayAuction() {
                     }));
                     setVariantData((prev) => ({
                       ...prev,
-                      variety: defaultVariety,
+                      variety: "",
                       unit: defaultUnit,
                     }));
                   }}
@@ -1153,6 +1261,7 @@ function TodayAuction() {
           className="modal-overlay"
           onClick={() => {
             setShowEditProduct(false);
+            setEditingGlobalComm(false);
             setImagePreview(null);
           }}
         >
@@ -1163,6 +1272,7 @@ function TodayAuction() {
                 className="modal-close"
                 onClick={() => {
                   setShowEditProduct(false);
+                  setEditingGlobalComm(false);
                   setImagePreview(null);
                 }}
               >
@@ -1291,6 +1401,7 @@ function TodayAuction() {
                   className="btn btn-secondary"
                   onClick={() => {
                     setShowEditProduct(false);
+                    setEditingGlobalComm(false);
                     setImagePreview(null);
                   }}
                 >
@@ -1322,13 +1433,10 @@ function TodayAuction() {
             </div>
             <form onSubmit={handleSellProduct}>
               <div className="modal-body">
-                {/* ── Buyer Type Selection ── */}
                 <div className="form-group">
                   <label className="form-label">Buyer Type</label>
-                  <div className="price-mode-radios">
-                    <label
-                      className={`price-mode-option${saleData.buyerType === "regular" ? " active" : ""}`}
-                    >
+                  <div style={{ display: "flex", gap: "24px", marginTop: "8px", alignItems: "center" }}>
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: "500" }}>
                       <input
                         type="radio"
                         name="buyerType"
@@ -1342,15 +1450,11 @@ function TodayAuction() {
                             buyerName: "",
                           }))
                         }
+                        style={{ margin: 0, width: "16px", height: "16px", cursor: "pointer" }}
                       />
-                      <span className="price-mode-label">
-                        <strong>Regular Buyer</strong>
-                        <small>Existing registered buyer</small>
-                      </span>
+                      Regular Buyer
                     </label>
-                    <label
-                      className={`price-mode-option${saleData.buyerType === "temporary" ? " active" : ""}`}
-                    >
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: "500" }}>
                       <input
                         type="radio"
                         name="buyerType"
@@ -1364,16 +1468,14 @@ function TodayAuction() {
                             buyerName: "",
                           }))
                         }
+                        style={{ margin: 0, width: "16px", height: "16px", cursor: "pointer" }}
                       />
-                      <span className="price-mode-label">
-                        <strong>Temporary Buyer</strong>
-                        <small>One-time/New buyer</small>
-                      </span>
+                      Temporary Buyer
                     </label>
                   </div>
                 </div>
 
-                <div className="form-group">
+                <div className="form-grid-2">
                   {saleData.buyerType === "regular" ? (
                     <SearchableSelect
                       label="Buyer Name"
@@ -1390,7 +1492,7 @@ function TodayAuction() {
                       required
                     />
                   ) : (
-                    <>
+                    <div className="form-group">
                       <label className="form-label">Buyer Name</label>
                       <input
                         type="text"
@@ -1406,38 +1508,40 @@ function TodayAuction() {
                         required
                         className="form-input temp-buyer-input"
                       />
-                    </>
+                    </div>
                   )}
 
-                  <label className="form-label form-label-mt">
-                    Select Variant
-                  </label>
-                  <select
-                    value={saleData.variantId}
-                    onChange={(e) =>
-                      setSaleData({ ...saleData, variantId: e.target.value })
-                    }
-                    required
-                    className="form-input"
-                  >
-                    <option value="">-- Select Variant --</option>
-                    {selectedProduct.variants &&
-                      selectedProduct.variants.map((v) => {
-                        const sold = v.sellQuantity || 0;
-                        const remaining = v.quantity - sold;
-                        return (
-                          <option
-                            key={v._id || v.id}
-                            value={v._id || v.id}
-                            disabled={remaining <= 0}
-                          >
-                            {capitalizeFirst(v.variety)} -{" "}
-                            {getQualityLabel(v.quality)} - {remaining} /{" "}
-                            {v.quantity} {v.unit}
-                          </option>
-                        );
-                      })}
-                  </select>
+                  <div className="form-group">
+                    <label className="form-label">
+                      Select Variant
+                    </label>
+                    <select
+                      value={saleData.variantId}
+                      onChange={(e) =>
+                        setSaleData({ ...saleData, variantId: e.target.value })
+                      }
+                      required
+                      className="form-input"
+                    >
+                      <option value="">-- Select Variant --</option>
+                      {selectedProduct.variants &&
+                        selectedProduct.variants.map((v) => {
+                          const sold = v.sellQuantity || 0;
+                          const remaining = v.quantity - sold;
+                          return (
+                            <option
+                              key={v._id || v.id}
+                              value={v._id || v.id}
+                              disabled={remaining <= 0}
+                            >
+                              {capitalizeFirst(v.variety)} -{" "}
+                              {getQualityLabel(v.quality)} - {remaining} /{" "}
+                              {v.quantity} {v.unit}
+                            </option>
+                          );
+                        })}
+                    </select>
+                  </div>
                 </div>
 
                 {saleData.variantId &&
@@ -1454,10 +1558,8 @@ function TodayAuction() {
                         {/* ── Pricing Mode Radio Buttons ── */}
                         <div className="form-group">
                           <label className="form-label">Pricing Mode</label>
-                          <div className="price-mode-radios">
-                            <label
-                              className={`price-mode-option${saleData.priceMode === "perQty" ? " active" : ""}`}
-                            >
+                          <div style={{ display: "flex", gap: "24px", marginTop: "8px", alignItems: "center" }}>
+                            <label style={{ display: "inline-flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: "500" }}>
                               <input
                                 type="radio"
                                 name="priceMode"
@@ -1470,15 +1572,11 @@ function TodayAuction() {
                                     finalPrice: "",
                                   }))
                                 }
+                                style={{ margin: 0, width: "16px", height: "16px", cursor: "pointer" }}
                               />
-                              <span className="price-mode-label">
-                                <strong>Per {v.unit}</strong>
-                                <small>Enter rate per {v.unit}</small>
-                              </span>
+                              Per {v.unit}
                             </label>
-                            <label
-                              className={`price-mode-option${saleData.priceMode === "wholeProduct" ? " active" : ""}`}
-                            >
+                            <label style={{ display: "inline-flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: "500" }}>
                               <input
                                 type="radio"
                                 name="priceMode"
@@ -1491,100 +1589,96 @@ function TodayAuction() {
                                     finalPrice: "",
                                   }))
                                 }
+                                style={{ margin: 0, width: "16px", height: "16px", cursor: "pointer" }}
                               />
-                              <span className="price-mode-label">
-                                <strong>Whole Amount</strong>
-                                <small>Enter total for all qty</small>
-                              </span>
+                              Whole Amount
                             </label>
                           </div>
                         </div>
 
-                        <div className="form-group">
-                          <label className="form-label">
-                            Quantity to Sell ({v.unit})
-                          </label>
+                        <div className="form-grid-2">
+                          <div className="form-group">
+                            <label className="form-label">
+                              Quantity to Sell ({v.unit})
+                            </label>
 
-                          <input
-                            type="number"
-                            value={saleData.qtyToSell}
-                            onChange={(e) => {
-                              const val = e.target.value;
+                            <input
+                              type="number"
+                              value={saleData.qtyToSell}
+                              onChange={(e) => {
+                                const val = e.target.value;
 
-                              if (val === "") {
-                                setSaleData({ ...saleData, qtyToSell: "" });
-                              } else {
-                                const numVal = Math.round(parseFloat(val)); // round value
-
-                                if (numVal > available) {
-                                  toast.error(
-                                    `Quantity cannot exceed ${available} ${v.unit}`,
-                                  );
-                                  setSaleData({
-                                    ...saleData,
-                                    qtyToSell: available,
-                                  });
+                                if (val === "") {
+                                  setSaleData({ ...saleData, qtyToSell: "" });
                                 } else {
-                                  setSaleData({
-                                    ...saleData,
-                                    qtyToSell: numVal,
-                                  });
+                                  const numVal = Math.round(parseFloat(val)); // round value
+
+                                  if (numVal > available) {
+                                    toast.error(
+                                      `Quantity cannot exceed ${available} ${v.unit}`,
+                                    );
+                                    setSaleData({
+                                      ...saleData,
+                                      qtyToSell: available,
+                                    });
+                                  } else {
+                                    setSaleData({
+                                      ...saleData,
+                                      qtyToSell: numVal,
+                                    });
+                                  }
                                 }
+                              }}
+                              max={available}
+                              min="1"
+                              step="1"
+                              placeholder={`Max: ${available}`}
+                              required
+                            />
+
+                            <small className="form-hint">
+                              Remaining:{" "}
+                              {available - (parseInt(saleData.qtyToSell) || 0)}{" "}
+                              {v.unit}
+                            </small>
+                          </div>
+
+                          <div className="form-group">
+                            <label className="form-label">
+                              {saleData.priceMode === "perQty"
+                                ? `Rate per ${v.unit} (₹)`
+                                : "Total Amount (₹)"}
+                            </label>
+
+                            <input
+                              type="number"
+                              value={saleData.finalPrice}
+                              onChange={(e) =>
+                                setSaleData({
+                                  ...saleData,
+                                  finalPrice: Math.round(
+                                    Number(e.target.value) || 0,
+                                  ),
+                                })
                               }
-                            }}
-                            max={available}
-                            min="1"
-                            step="1"
-                            placeholder={`Max: ${available}`}
-                            required
-                          />
-
-                          <small className="form-hint">
-                            Remaining:{" "}
-                            {available - (parseInt(saleData.qtyToSell) || 0)}{" "}
-                            {v.unit}
-                          </small>
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label">
-                            {saleData.priceMode === "perQty"
-                              ? `Rate per ${v.unit} (₹)`
-                              : "Total Amount (₹)"}
-                          </label>
-
-                          <input
-                            type="number"
-                            value={saleData.finalPrice}
-                            onChange={(e) =>
-                              setSaleData({
-                                ...saleData,
-                                finalPrice: Math.round(
-                                  Number(e.target.value) || 0,
-                                ),
-                              })
-                            }
-                            placeholder={
-                              saleData.priceMode === "perQty"
-                                ? `Price per ${v.unit}`
-                                : `Total for ${saleData.qtyToSell || "?"} ${v.unit}`
-                            }
-                            min="0"
-                            step="1"
-                            required
-                          />
+                              placeholder={
+                                saleData.priceMode === "perQty"
+                                  ? `Price per ${v.unit}`
+                                  : `Total for ${saleData.qtyToSell || "?"} ${v.unit}`
+                              }
+                              min="0"
+                              step="1"
+                              required
+                            />
+                          </div>
                         </div>
 
                         {/* ── Live Calc Summary ── */}
                         {saleData.finalPrice &&
                           saleData.qtyToSell &&
                           (() => {
-                            const qty = Math.round(
-                              Number(saleData.qtyToSell) || 0,
-                            );
-                            const price = Math.round(
-                              Number(saleData.finalPrice) || 0,
-                            );
+                            const qty = Math.round(Number(saleData.qtyToSell) || 0);
+                            const price = Math.round(Number(saleData.finalPrice) || 0);
 
                             const total =
                               saleData.priceMode === "perQty"
@@ -1599,33 +1693,30 @@ function TodayAuction() {
                                   : 0;
 
                             const comm = Math.round(
-                              (total *
-                                (selectedProduct.commissionPercent || 0)) /
-                              100,
+                              (total * (selectedProduct.commissionPercent || 0)) / 100
                             );
 
                             const net = Math.round(total - comm);
 
                             return (
-                              <div className="card calc-card">
+                              <div className="calc-summary">
                                 {saleData.priceMode === "wholeProduct" && (
-                                  <p className="calc-row">
-                                    <strong>Rate per {v.unit}:</strong> ₹{rate}
-                                  </p>
+                                  <span>
+                                    <strong>Rate/{v.unit}:</strong> ₹{rate.toLocaleString()}
+                                  </span>
                                 )}
 
-                                <p className="calc-row">
-                                  <strong>Total Amount:</strong> ₹
-                                  {total.toLocaleString()}
-                                </p>
+                                <span>
+                                  <strong>Total:</strong> ₹{total.toLocaleString()}
+                                </span>
 
-                                <p className="calc-row">
-                                  <strong>Commission:</strong> ₹{comm}
-                                </p>
+                                <span>
+                                  <strong>Commission:</strong> ₹{comm.toLocaleString()}
+                                </span>
 
-                                <p className="calc-row">
-                                  <strong>Net Amount:</strong> ₹{net}
-                                </p>
+                                <span>
+                                  <strong>Net:</strong> ₹{net.toLocaleString()}
+                                </span>
                               </div>
                             );
                           })()}

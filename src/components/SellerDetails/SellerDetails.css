@@ -1,8 +1,8 @@
 /* SellerDetails.css */
 
-.clickable-card {
+/* .clickable-card {
     cursor: pointer;
-}
+} */
 
 .profile-container {
     padding: 1rem;
@@ -195,4 +195,319 @@
 
 .radio-label input {
     cursor: pointer;
+}
+
+/* ── Row-based Profile Details Grid ── */
+.profile-layout-vertical {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1.5px solid var(--border-color);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.profile-name-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.profile-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.profile-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem 1.5rem;
+}
+
+.profile-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.profile-detail-item.span-2 {
+    grid-column: span 2;
+}
+
+.profile-detail-item.span-3 {
+    grid-column: span 3;
+}
+
+.profile-detail-label {
+    font-size: 0.725rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.profile-detail-value {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.profile-detail-value.text-success {
+    color: var(--success) !important;
+}
+
+@media (max-width: 768px) {
+    .profile-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .profile-detail-item.span-2 {
+        grid-column: span 2;
+    }
+
+    .profile-detail-item.span-3 {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 500px) {
+    .profile-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem 1rem;
+    }
+    
+    .profile-detail-item.span-2,
+    .profile-detail-item.span-3 {
+        grid-column: span 2;
+    }
+}
+
+/* ── Product Variant Styles for local Add Product ── */
+.variant-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 992px) {
+  .variant-row {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .variant-row {
+    grid-template-columns: 1fr;
+  }
+
+  .variant-row input,
+  .variant-row select,
+  .variant-row button {
+    width: 100%;
+  }
+
+  .variant-row button {
+    margin-top: 5px;
+  }
+}
+
+.form-group-relative {
+  position: relative;
+  z-index: 1;
+}
+
+.form-group-relative.searchable-select-z-open {
+  z-index: 9999;
+}
+
+.form-group-mt-15 {
+  margin-top: 1.5rem;
+}
+
+.variants-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.form-label-no-mb {
+  margin-bottom: 0;
+}
+
+.global-comm-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.global-comm-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.variant-comm-input-inline {
+  width: 60px;
+  padding: 2px 8px;
+}
+
+.text-primary-color {
+  color: var(--primary-amber);
+}
+
+.variant-searchable-select {
+  margin: 0;
+  flex: 1;
+  min-width: 130px;
+}
+
+.add-variant-btn {
+  padding: 11px 12px;
+}
+
+.table-responsive-variants {
+  margin-top: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.variant-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.variant-table-th {
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+  padding: 8px;
+  color: var(--text-muted);
+}
+
+.variant-table-tr {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.variant-table-td {
+  padding: 8px;
+}
+
+.variant-comm-input {
+  width: 70px !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--border-color) !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  font-size: 0.9rem !important;
+}
+
+.variant-comm-input:focus {
+  border-color: var(--primary-amber) !important;
+  outline: none !important;
+}
+
+.global-comm-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-tertiary);
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+}
+
+/* Commission Modal Responsiveness */
+.commission-date-row {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.commission-date-row .form-group {
+    flex: 1;
+}
+
+@media (max-width: 480px) {
+    .commission-date-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* Actions Bar Layout Splits */
+.detail-actions-row-1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.detail-actions-row-2 {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+    .detail-actions-row-1 {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .detail-actions-row-1 .filter-controls {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .detail-actions-row-1 .filter-controls select,
+    .detail-actions-row-1 .filter-controls input,
+    .detail-actions-row-1 .filter-controls .fade-in {
+        width: 100% !important;
+    }
+    .detail-actions-row-1 .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .detail-actions-row-2 {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .detail-actions-row-2 .btn {
+        width: 100%;
+        justify-content: center;
+        margin-left: 0;
+    }
+}
+
+.calc-summary {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap; /* Remove this if you never want wrapping */
+  font-size: 15px;
+  margin-top: 10px;
+}
+
+.calc-summary span {
+  white-space: nowrap;
+}
+
+.calc-summary strong {
+  color: #333;
+  font-weight: 600;
 }

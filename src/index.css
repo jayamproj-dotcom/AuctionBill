@@ -12,7 +12,7 @@
   --bg-secondary: #ffffff;      /* Main panels */
   --bg-tertiary: #f1f5f9;       /* Table headers / inputs */
   --bg-card: #ffffff;
-  --bg-hover: #dadada;
+  --bg-hover: #e2e8f0;
 
   /* 📝 Text Colors */
   --text-primary: #0f172a;      /* Headings */
@@ -281,6 +281,12 @@ button {
   border-color: var(--info);
 }
 
+.icon-btn.view:hover {
+  color: var(--success);
+  background-color: rgba(22, 163, 74, 0.1);
+  border-color: var(--success);
+}
+
 .icon-btn.delete {
   color: var(--error);
 }
@@ -289,6 +295,18 @@ button {
   background-color: rgba(220, 38, 38, 0.1);
   border-color: var(--error);
   color: var(--error);
+}
+
+.icon-btn.pay {
+  color: var(--primary-amber);
+  border-color: var(--primary-amber-light);
+}
+
+.icon-btn.pay:hover {
+  background-color: rgba(245, 158, 11, 0.12);
+  border-color: var(--primary-amber);
+  color: var(--primary-amber-dark);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
 }
 
 /* Input Styles */
@@ -455,3 +473,58 @@ tr:hover {
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
+/* Align variant-row input, select, and button styles with the SearchableSelect trigger */
+.variant-row input,
+.variant-row select,
+.variant-row .form-control {
+  background-color: #ffffff !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 12px !important;
+  font-size: 0.875rem !important;
+  color: var(--text-primary) !important;
+  box-sizing: border-box !important;
+  line-height: 38px !important;
+  transition: border-color var(--transition-base) !important;
+}
+
+/* Custom select arrow styling for selects in variant-row */
+.variant-row select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 14px !important;
+  padding-right: 30px !important;
+}
+
+/* Focus styles: no outline or box-shadow, only border color change */
+.variant-row input:focus,
+.variant-row select:focus,
+.variant-row .form-control:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--primary-amber-dark) !important;
+}
+
+/* Align variant-row buttons with the 40px input/select height */
+.variant-row button,
+.variant-row .btn {
+  height: 40px !important;
+  min-height: 40px !important;
+  border-radius: 8px !important;
+  font-size: 0.875rem !important;
+  padding: 0 16px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  line-height: normal !important;
+}
+
+

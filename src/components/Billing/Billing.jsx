@@ -234,9 +234,9 @@ const Billing = () => {
           );
           return v
             ? {
-                name: `${v.variety || ""} ${v.quality || ""}`.trim(),
-                unit: v.unit || "",
-              }
+              name: `${v.variety || ""} ${v.quality || ""}`.trim(),
+              unit: v.unit || "",
+            }
             : { name: "N/A", unit: "" };
         };
 
@@ -345,34 +345,48 @@ const Billing = () => {
       doc.setFontSize(14);
       doc.setTextColor(0);
       doc.text("VENDOR DETAILS", 10, 42);
-
+      let vYPos = 48;
       doc.setFontSize(10);
-      doc.text(`Name: ${vendor.name}`, 10, 48);
-      doc.text(`Contact: ${vendor.phone || "N/A"}`, 10, 53);
-      doc.text(
-        `Address: ${vendor.address || "N/A"}, ${vendor.city || ""}, ${vendor.state || ""}`,
-        10,
-        58,
-      );
+      doc.text(`Name: ${vendor.name}`, 10, vYPos);
+      vYPos += 5;
+      doc.text(`Contact: ${vendor.phone || "N/A"}`, 10, vYPos);
+      vYPos += 5;
+      const vendorAddressLines = doc.splitTextToSize(`Address: ${vendor.address || "N/A"}, ${vendor.city || ""}, ${vendor.state || ""}`, 180);
+      vendorAddressLines.forEach((line) => {
+        doc.text(line, 10, vYPos);
+        vYPos += 5;
+      });
 
       // --- Target Details ---
-      let yPos = 75;
+      let yPos = vYPos + 6;
       if (mainOption === "seller" && data.seller) {
         doc.setFontSize(14);
         doc.text("SELLER DETAILS", 10, yPos);
+        yPos += 6;
         doc.setFontSize(10);
-        doc.text(`Name: ${data.seller.name}`, 10, yPos + 6);
-        doc.text(`Contact: ${data.seller.contact}`, 10, yPos + 11);
-        doc.text(`Address: ${data.seller.address || "N/A"}`, 10, yPos + 16);
-        yPos += 25;
+        doc.text(`Name: ${data.seller.name}`, 10, yPos);
+        yPos += 5;
+        doc.text(`Contact: ${data.seller.contact}`, 10, yPos);
+        yPos += 5;
+        const sellerAddressLines = doc.splitTextToSize(`Address: ${data.seller.address || "N/A"}`, 180);
+        sellerAddressLines.forEach((line) => {
+          doc.text(line, 10, yPos);
+          yPos += 5;
+        });
       } else if (mainOption === "buyer" && data.buyer) {
         doc.setFontSize(14);
         doc.text("BUYER DETAILS", 10, yPos);
+        yPos += 6;
         doc.setFontSize(10);
-        doc.text(`Name: ${data.buyer.name}`, 10, yPos + 6);
-        doc.text(`Contact: ${data.buyer.contact}`, 10, yPos + 11);
-        doc.text(`Address: ${data.buyer.address || "N/A"}`, 10, yPos + 16);
-        yPos += 25;
+        doc.text(`Name: ${data.buyer.name}`, 10, yPos);
+        yPos += 5;
+        doc.text(`Contact: ${data.buyer.contact}`, 10, yPos);
+        yPos += 5;
+        const buyerAddressLines = doc.splitTextToSize(`Address: ${data.buyer.address || "N/A"}`, 180);
+        buyerAddressLines.forEach((line) => {
+          doc.text(line, 10, yPos);
+          yPos += 5;
+        });
       } else {
         doc.setFontSize(14);
         doc.text(`${mainOption.toUpperCase()} REPORT`, 10, yPos);
@@ -399,6 +413,7 @@ const Billing = () => {
       };
 
       doc.setFontSize(10);
+      yPos += 2;
       doc.text(
         `Report Period: ${formatDate(finalStart)} to ${formatDate(finalEnd)}`,
         10,
@@ -511,9 +526,9 @@ const Billing = () => {
             );
             return v
               ? {
-                  name: `${v.variety || ""} ${v.quality || ""}`.trim(),
-                  unit: v.unit || "",
-                }
+                name: `${v.variety || ""} ${v.quality || ""}`.trim(),
+                unit: v.unit || "",
+              }
               : { name: "N/A", unit: "" };
           };
 
@@ -617,7 +632,7 @@ const Billing = () => {
         ) {
           amtIdx = 7;
         }
-        
+
         // Safeguard in case amtIdx is somehow out of bounds
         if (!xOffsets[amtIdx]) amtIdx = xOffsets.length - 1;
 
@@ -676,236 +691,236 @@ const Billing = () => {
           <LoadingSpinner message="Loading billing configurations..." />
         ) : (
           <div className="billing-card main-config">
-          <div className="config-section">
-            <h3 className="section-title">Select Category</h3>
-            <div className="options-grid">
-              <button
-                className={`option-btn ${mainOption === "seller" ? "active" : ""}`}
-                onClick={() => {
-                  setMainOption("seller");
-                  setSubOption("selling_product");
-                  setSelectedId("");
-                }}
-              >
-                <div className="icon-badge">
-                  <User size={20} />
-                </div>
-                <span>Seller</span>
-              </button>
-              <button
-                className={`option-btn ${mainOption === "buyer" ? "active" : ""}`}
-                onClick={() => {
-                  setMainOption("buyer");
-                  setSubOption("purchase_history");
-                  setSelectedId("");
-                }}
-              >
-                <div className="icon-badge">
-                  <ShoppingCart size={20} />
-                </div>
-                <span>Buyer</span>
-              </button>
-              <button
-                className={`option-btn ${mainOption === "history" ? "active" : ""}`}
-                onClick={() => {
-                  setMainOption("history");
-                  setSelectedId("");
-                }}
-              >
-                <div className="icon-badge">
-                  <History size={20} />
-                </div>
-                <span>History</span>
-              </button>
-              <button
-                className={`option-btn ${mainOption === "commission" ? "active" : ""}`}
-                onClick={() => {
-                  setMainOption("commission");
-                  setSelectedId("");
-                }}
-              >
-                <div className="icon-badge">
-                  <Handshake size={20} />
-                </div>
-                <span>Commission</span>
-              </button>
-            </div>
-          </div>
-
-          {(mainOption === "seller" || mainOption === "buyer") && (
-            <div className="config-section fade-in">
-              <h3 className="section-title">
-                Select {mainOption === "seller" ? "Seller" : "Buyer"}
-              </h3>
-              <SearchableSelect
-                name="selectedId"
-                value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
-                placeholder={`Choose ${mainOption === "seller" ? "Seller" : "Buyer"}...`}
-                options={(mainOption === "seller" ? sellers : buyers).map(
-                  (item) => ({
-                    label: `${item.name}`,
-                    value: item.id || item._id,
-                  }),
-                )}
-              />
-            </div>
-          )}
-
-          {mainOption === "seller" && (
-            <div className="config-section fade-in">
-              <h3 className="section-title">Export Type</h3>
-              <div className="radio-group">
-                <label
-                  className={`radio-label ${subOption === "selling_product" ? "checked" : ""}`}
+            <div className="config-section">
+              <h3 className="section-title">Select Category</h3>
+              <div className="options-grid">
+                <button
+                  className={`option-btn ${mainOption === "seller" ? "active" : ""}`}
+                  onClick={() => {
+                    setMainOption("seller");
+                    setSubOption("selling_product");
+                    setSelectedId("");
+                  }}
                 >
-                  <input
-                    type="radio"
-                    name="sellerSub"
-                    value="selling_product"
-                    checked={subOption === "selling_product"}
-                    onChange={(e) => setSubOption(e.target.value)}
-                  />
-                  <span className="text-nowrap">Selling Products</span>
-                </label>
-                <label
-                  className={`radio-label ${subOption === "payments_history" ? "checked" : ""}`}
-                >
-                  <input
-                    type="radio"
-                    name="sellerSub"
-                    value="payments_history"
-                    checked={subOption === "payments_history"}
-                    onChange={(e) => setSubOption(e.target.value)}
-                  />
-                  <span className="text-nowrap">Payments History</span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {mainOption === "buyer" && (
-            <div className="config-section fade-in">
-              <h3 className="section-title">Export Type</h3>
-              <div className="radio-group">
-                <label
-                  className={`radio-label ${subOption === "purchase_history" ? "checked" : ""}`}
-                >
-                  <input
-                    type="radio"
-                    name="buyerSub"
-                    value="purchase_history"
-                    checked={subOption === "purchase_history"}
-                    onChange={(e) => setSubOption(e.target.value)}
-                  />
-                  <span className="text-nowrap">Buying Products</span>
-                </label>
-                <label
-                  className={`radio-label ${subOption === "payments_history" ? "checked" : ""}`}
-                >
-                  <input
-                    type="radio"
-                    name="buyerSub"
-                    value="payments_history"
-                    checked={subOption === "payments_history"}
-                    onChange={(e) => setSubOption(e.target.value)}
-                  />
-                  <span className="text-nowrap">Payments History</span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          <div className="config-section">
-            <h3 className="section-title">Select Date Filter</h3>
-            <div className="radio-group" style={{ marginBottom: "1.5rem" }}>
-              <label
-                className={`radio-label ${dateFilter === "today" ? "checked" : ""}`}
-              >
-                <input
-                  type="radio"
-                  name="dateFilter"
-                  value="today"
-                  checked={dateFilter === "today"}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                />
-                <span className="text-nowrap">Today</span>
-              </label>
-              <label
-                className={`radio-label ${dateFilter === "selected" ? "checked" : ""}`}
-              >
-                <input
-                  type="radio"
-                  name="dateFilter"
-                  value="selected"
-                  checked={dateFilter === "selected"}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                />
-                <span className="text-nowrap">Selected Date</span>
-              </label>
-              <label
-                className={`radio-label ${dateFilter === "range" ? "checked" : ""}`}
-              >
-                <input
-                  type="radio"
-                  name="dateFilter"
-                  value="range"
-                  checked={dateFilter === "range"}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                />
-                <span className="text-nowrap">Choose Range</span>
-              </label>
-            </div>
-
-            {dateFilter !== "today" && (
-              <div className="date-inputs fade-in">
-                <div className="date-field">
-                  <label>{dateFilter === "selected" ? "Date" : "From"}</label>
-                  <div className="input-with-icon">
-                    <Calendar size={16} />
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
+                  <div className="icon-badge">
+                    <User size={20} />
                   </div>
+                  <span>Seller</span>
+                </button>
+                <button
+                  className={`option-btn ${mainOption === "buyer" ? "active" : ""}`}
+                  onClick={() => {
+                    setMainOption("buyer");
+                    setSubOption("purchase_history");
+                    setSelectedId("");
+                  }}
+                >
+                  <div className="icon-badge">
+                    <ShoppingCart size={20} />
+                  </div>
+                  <span>Buyer</span>
+                </button>
+                <button
+                  className={`option-btn ${mainOption === "history" ? "active" : ""}`}
+                  onClick={() => {
+                    setMainOption("history");
+                    setSelectedId("");
+                  }}
+                >
+                  <div className="icon-badge">
+                    <History size={20} />
+                  </div>
+                  <span>History</span>
+                </button>
+                <button
+                  className={`option-btn ${mainOption === "commission" ? "active" : ""}`}
+                  onClick={() => {
+                    setMainOption("commission");
+                    setSelectedId("");
+                  }}
+                >
+                  <div className="icon-badge">
+                    <Handshake size={20} />
+                  </div>
+                  <span>Commission</span>
+                </button>
+              </div>
+            </div>
+
+            {(mainOption === "seller" || mainOption === "buyer") && (
+              <div className="config-section fade-in">
+                <h3 className="section-title">
+                  Select {mainOption === "seller" ? "Seller" : "Buyer"}
+                </h3>
+                <SearchableSelect
+                  name="selectedId"
+                  value={selectedId}
+                  onChange={(e) => setSelectedId(e.target.value)}
+                  placeholder={`Choose ${mainOption === "seller" ? "Seller" : "Buyer"}...`}
+                  options={(mainOption === "seller" ? sellers : buyers).map(
+                    (item) => ({
+                      label: `${item.name}`,
+                      value: item.id || item._id,
+                    }),
+                  )}
+                />
+              </div>
+            )}
+
+            {mainOption === "seller" && (
+              <div className="config-section fade-in">
+                <h3 className="section-title">Export Type</h3>
+                <div className="radio-group">
+                  <label
+                    className={`radio-label ${subOption === "selling_product" ? "checked" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="sellerSub"
+                      value="selling_product"
+                      checked={subOption === "selling_product"}
+                      onChange={(e) => setSubOption(e.target.value)}
+                    />
+                    <span className="text-nowrap">Selling Products</span>
+                  </label>
+                  <label
+                    className={`radio-label ${subOption === "payments_history" ? "checked" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="sellerSub"
+                      value="payments_history"
+                      checked={subOption === "payments_history"}
+                      onChange={(e) => setSubOption(e.target.value)}
+                    />
+                    <span className="text-nowrap">Payments History</span>
+                  </label>
                 </div>
-                {dateFilter === "range" && (
+              </div>
+            )}
+
+            {mainOption === "buyer" && (
+              <div className="config-section fade-in">
+                <h3 className="section-title">Export Type</h3>
+                <div className="radio-group">
+                  <label
+                    className={`radio-label ${subOption === "purchase_history" ? "checked" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="buyerSub"
+                      value="purchase_history"
+                      checked={subOption === "purchase_history"}
+                      onChange={(e) => setSubOption(e.target.value)}
+                    />
+                    <span className="text-nowrap">Buying Products</span>
+                  </label>
+                  <label
+                    className={`radio-label ${subOption === "payments_history" ? "checked" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="buyerSub"
+                      value="payments_history"
+                      checked={subOption === "payments_history"}
+                      onChange={(e) => setSubOption(e.target.value)}
+                    />
+                    <span className="text-nowrap">Payments History</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            <div className="config-section">
+              <h3 className="section-title">Select Date Filter</h3>
+              <div className="radio-group" style={{ marginBottom: "1.5rem" }}>
+                <label
+                  className={`radio-label ${dateFilter === "today" ? "checked" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="dateFilter"
+                    value="today"
+                    checked={dateFilter === "today"}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                  />
+                  <span className="text-nowrap">Today</span>
+                </label>
+                <label
+                  className={`radio-label ${dateFilter === "selected" ? "checked" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="dateFilter"
+                    value="selected"
+                    checked={dateFilter === "selected"}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                  />
+                  <span className="text-nowrap">Selected Date</span>
+                </label>
+                <label
+                  className={`radio-label ${dateFilter === "range" ? "checked" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="dateFilter"
+                    value="range"
+                    checked={dateFilter === "range"}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                  />
+                  <span className="text-nowrap">Choose Range</span>
+                </label>
+              </div>
+
+              {dateFilter !== "today" && (
+                <div className="date-inputs fade-in">
                   <div className="date-field">
-                    <label>To</label>
+                    <label>{dateFilter === "selected" ? "Date" : "From"}</label>
                     <div className="input-with-icon">
                       <Calendar size={16} />
                       <input
                         type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
                       />
                     </div>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="billing-footer">
-            <button
-              className="download-btn"
-              onClick={handleDownloadPDF}
-              disabled={fetchingData}
-            >
-              {fetchingData ? (
-                <>
-                  <Loader className="spin" size={20} /> Generating PDF...
-                </>
-              ) : (
-                <>
-                  <Download size={20} /> Download PDF Invoice
-                </>
+                  {dateFilter === "range" && (
+                    <div className="date-field">
+                      <label>To</label>
+                      <div className="input-with-icon">
+                        <Calendar size={16} />
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
-            </button>
+            </div>
+
+            <div className="billing-footer">
+              <button
+                className="download-btn"
+                onClick={handleDownloadPDF}
+                disabled={fetchingData}
+              >
+                {fetchingData ? (
+                  <>
+                    <Loader className="spin" size={20} /> Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <Download size={20} /> Download PDF Invoice
+                  </>
+                )}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </>
   );

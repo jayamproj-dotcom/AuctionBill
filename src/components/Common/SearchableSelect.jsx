@@ -77,9 +77,9 @@ const SearchableSelect = ({ options, value, onChange, placeholder, disabled, nam
               style={{ paddingRight: '35px' }}
               autoFocus
             />
-            <div style={{ position: 'absolute', right: '5px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+            {/* <div style={{ position: 'absolute', right: '5px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
               <VoiceSearch onSearch={(text) => setSearchTerm(text)} minimal={true} />
-            </div>
+            </div> */}
           </div>
           <div className="searchable-select-options">
             {filteredOptions.length > 0 ? (

@@ -504,9 +504,9 @@ a .stat-card:hover {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border-color);
+    /* margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem; */
+    /* border-bottom: 1px solid var(--border-color); */
 }
 
 .data-card-title {

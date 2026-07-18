@@ -33,6 +33,19 @@ import { toast } from "react-toastify";
 function BuyerDetails() {
   const vendorIdFromRedux = useSelector((state) => state.vendorAuth?.vendorId);
   const vendorId = vendorIdFromRedux || sessionStorage.getItem("vendorId");
+
+  const capitalizeFirst = (text) => {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
+  const getQualityLabel = (quality) => {
+    if (quality === "quality1") return "Quality 1";
+    if (quality === "quality2") return "Quality 2";
+    if (quality === "quality3") return "Quality 3";
+    return quality;
+  };
+
   const [buyers, setBuyers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBuyer, setSelectedBuyer] = useState(null);
@@ -84,6 +97,13 @@ function BuyerDetails() {
     new Date().toISOString().split("T")[0],
   );
   const [fetchingPdf, setFetchingPdf] = useState(false);
+
+  // ── Billing Modal ──
+  const [showBillingModal, setShowBillingModal] = useState(false);
+  const [billType, setBillType] = useState("purchase_history");
+  const [billDateFilter, setBillDateFilter] = useState("all");
+  const [billStartDate, setBillStartDate] = useState(new Date().toISOString().split("T")[0]);
+  const [billEndDate, setBillEndDate] = useState(new Date().toISOString().split("T")[0]);
 
   const handleViewTransaction = (transaction) => {
     const product = transaction.productId;
@@ -412,6 +432,58 @@ function BuyerDetails() {
     setShowProductViewModal(true);
   };
 
+  const openBillingModal = () => {
+    setBillType(activeTab === "purchases" ? "purchase_history" : "payments_history");
+    setBillDateFilter(dateFilter);
+    setBillStartDate(startDate);
+    setBillEndDate(endDate);
+    setShowBillingModal(true);
+  };
+
+  const handleGenerateBillSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedBuyer) return;
+    setFetchingPdf(true);
+    try {
+      let finalStart = billStartDate;
+      let finalEnd = billEndDate;
+
+      if (billDateFilter === "today") {
+        finalStart = new Date().toISOString().split("T")[0];
+        finalEnd = finalStart;
+      } else if (billDateFilter === "selected") {
+        finalEnd = billStartDate;
+      } else if (billDateFilter === "all") {
+        finalStart = "";
+        finalEnd = "";
+      }
+
+      const params = {
+        type: "buyer",
+        subType: billType,
+        id: selectedBuyer._id || selectedBuyer.id,
+        startDate: finalStart,
+        endDate: finalEnd,
+        vendorId: vendorId,
+      };
+
+      const response = await getBillingData(params);
+      if (response.success) {
+        generatePDF({
+          ...response,
+          finalStart,
+          finalEnd,
+          subOption: params.subType,
+        });
+        setShowBillingModal(false);
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to fetch PDF data");
+    } finally {
+      setFetchingPdf(false);
+    }
+  };
+
   const handleDownloadPDF = async () => {
     if (!selectedBuyer) return;
     setFetchingPdf(true);
@@ -457,102 +529,295 @@ function BuyerDetails() {
 
   const generatePDF = (response) => {
     const { vendor, data, finalStart, finalEnd, subOption } = response;
-    const doc = new jsPDF();
-    const formatDateStr = (d) => {
-      if (!d) return "All Time";
-      return formatDate(d);
+
+    const truncate = (val, n) => {
+      if (val === null || val === undefined) return "";
+      const str = String(val);
+      if (!str) return "";
+      return str.length > n ? str.substr(0, n - 1) + "..." : str;
     };
 
-    // --- Header ---
-    doc.setFontSize(22);
-    doc.setTextColor(40, 44, 52);
-    doc.text("AUCTION BILLING SYSTEM", 105, 20, { align: "center" });
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text("Buyer Report", 105, 26, { align: "center" });
-    doc.line(10, 32, 200, 32);
+    const isReceiptFormat = subOption === "purchase_history";
 
-    // --- Vendor Details ---
-    doc.setFontSize(14);
-    doc.setTextColor(0);
-    doc.text("VENDOR DETAILS", 10, 42);
-    doc.setFontSize(10);
-    doc.text(`Name: ${vendor.name}`, 10, 48);
-    doc.text(`Contact: ${vendor.phone || "N/A"}`, 10, 53);
-    doc.text(`Address: ${vendor.address || "N/A"}`, 10, 58);
+    let doc;
+    if (isReceiptFormat) {
+      // Receipt format: narrow width like POS bill
+      doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: [80, 297], // 80mm width, A4 height for potential long receipts
+      });
+    } else {
+      // Standard A4 report format
+      doc = new jsPDF();
+    }
 
-    // --- Buyer Details ---
-    let yPos = 75;
-    doc.setFontSize(14);
-    doc.text("BUYER DETAILS", 10, yPos);
-    doc.setFontSize(10);
-    doc.text(`Name: ${data.buyer.name}`, 10, yPos + 6);
-    doc.text(`Contact: ${data.buyer.contact}`, 10, yPos + 11);
-    doc.text(`Address: ${data.buyer.address || "N/A"}`, 10, yPos + 16);
-    yPos += 25;
+    if (isReceiptFormat) {
+      // Receipt-style layout
+      let yPos = 10;
+      const pageWidth = 80;
+      const centerX = pageWidth / 2;
 
-    doc.text(
-      `Report Period: ${formatDateStr(finalStart)} to ${formatDateStr(finalEnd)}`,
-      10,
-      yPos,
-    );
-    yPos += 10;
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("AUCTION MARKET", centerX, yPos, { align: "center" });
+      yPos += 5;
 
-    const records = data.records || [];
-    const headers =
-      subOption === "purchase_history"
-        ? ["Date", "Product", "Qty", "Rate", "Total Amount"]
-        : ["Date", "Description", "Debit", "Credit", "Balance"];
-
-    doc.setFont("helvetica", "bold");
-    let xOffsets =
-      subOption === "purchase_history"
-        ? [10, 35, 80, 110, 150]
-        : [10, 40, 90, 130, 170];
-
-    headers.forEach((h, i) => doc.text(h, xOffsets[i], yPos));
-    yPos += 5;
-    doc.line(10, yPos, 200, yPos);
-    yPos += 7;
-
-    doc.setFont("helvetica", "normal");
-    records.forEach((rec) => {
-      if (yPos > 270) {
-        doc.addPage();
-        yPos = 20;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(vendor.name || "Market", centerX, yPos, { align: "center" });
+      yPos += 5;
+      if (vendor.phone) {
+        doc.text(`Tel: ${vendor.phone}`, centerX, yPos, { align: "center" });
+        yPos += 5;
       }
-      let row = [];
-      if (subOption === "purchase_history") {
-        row = [
-          formatDate(rec.date),
-          rec.productId?.name || "N/A",
-          rec.quantity?.toString() || "0",
-          `Rs. ${rec.rate || 0}`,
-          `Rs. ${rec.finalAmount || 0}`,
-        ];
-      } else {
-        row = [
+      doc.text("--------------------------------", centerX, yPos, {
+        align: "center",
+      });
+      yPos += 6;
+
+      // Date
+      const formatDateStr = (dateInput) => {
+        if (!dateInput) return "N/A";
+        if (
+          typeof dateInput === "string" &&
+          dateInput.includes("-") &&
+          dateInput.length === 10
+        ) {
+          const [y, m, d] = dateInput.split("-");
+          return `${d}-${m}-${y}`;
+        }
+        const date = new Date(dateInput);
+        if (isNaN(date)) return "N/A";
+        const d = String(date.getDate()).padStart(2, "0");
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const y = date.getFullYear();
+        return `${d}-${m}-${y}`;
+      };
+
+      doc.setFont("helvetica", "bold");
+      if (data.buyer) {
+        doc.text(`Buyer: ${data.buyer.name}`, 5, yPos);
+        yPos += 5;
+      }
+      doc.setFont("helvetica", "normal");
+      doc.text(`Date: ${formatDateStr(finalStart || new Date())}`, 5, yPos);
+      yPos += 6;
+
+      doc.text("-------------------------------------------", centerX, yPos, {
+        align: "center",
+      });
+      yPos += 6;
+
+      // Items header
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text("Item", 5, yPos);
+      doc.text("Qty", 37, yPos);
+      doc.text("Rate", 50, yPos);
+      doc.text("Price", 77, yPos, { align: "right" });
+
+      yPos += 4;
+      doc.text("--------------------------------", centerX, yPos, {
+        align: "center",
+      });
+      yPos += 5;
+
+      doc.setFont("helvetica", "normal");
+
+      const records = data.records || [];
+      let totalGross = 0;
+      let totalPaid = 0;
+      let allMethods = new Set();
+
+      records.forEach((rec) => {
+        if (yPos > 280) {
+          doc.addPage();
+          yPos = 10;
+        }
+
+        const getVariantInfo = (r) => {
+          if (!r.productId?.variants || !r.variantId)
+            return { name: "N/A", unit: "" };
+          const v = r.productId.variants.find(
+            (varnt) =>
+              (varnt._id || varnt.id).toString() === r.variantId.toString(),
+          );
+          return v
+            ? {
+                name: `${v.variety || ""} ${v.quality || ""}`.trim(),
+                unit: v.unit || "",
+              }
+            : { name: "N/A", unit: "" };
+        };
+
+        const vInfo = getVariantInfo(rec);
+        const variantSuffix = vInfo.name !== "N/A" ? `(${vInfo.name})` : "";
+        const productName = truncate(
+          `${rec.productId?.name || "N/A"}${variantSuffix}`,
+          22,
+        );
+
+        const qty = rec.quantity || 0;
+        const rate = rec.rate || 0;
+        const price = rec.finalAmount || 0;
+        const paid = rec.paidAmount || 0;
+        if (rec.method && rec.method !== "N/A") {
+          rec.method.split(", ").forEach((m) => allMethods.add(m));
+        }
+
+        totalGross += price;
+        totalPaid += paid;
+
+        // Item line
+        doc.text(`${productName}`, 5, yPos);
+        doc.text(`${qty}${vInfo.unit}`, 37, yPos);
+        doc.text(`${rate}`, 50, yPos);
+        doc.text(`Rs.${price}`, 77, yPos, { align: "right" });
+        yPos += 6;
+      });
+
+      // Total
+      yPos += 2;
+      doc.text("--------------------------------", centerX, yPos, {
+        align: "center",
+      });
+      yPos += 6;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.text("TOTAL PURCHASE", 5, yPos);
+      doc.text(`Rs.${totalGross}`, 75, yPos, { align: "right" });
+      yPos += 6;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text("Total Paid", 5, yPos);
+      doc.text(`Rs.${totalPaid}`, 75, yPos, { align: "right" });
+      yPos += 6;
+
+      const methodsStr = Array.from(allMethods).join(", ") || "Cash";
+      const balanceValue = Math.max(0, totalGross - totalPaid);
+
+      doc.text("Balance", 5, yPos);
+      doc.text(`Rs.${balanceValue}`, 75, yPos, {
+        align: "right",
+      });
+      yPos += 5;
+      doc.text("Method", 5, yPos);
+      doc.text(`${methodsStr}`, 75, yPos, { align: "right" });
+      yPos += 5;
+
+      if (data.totalAdvance > 0) {
+        doc.setFont("helvetica", "bold");
+        doc.text("Advance", 5, yPos);
+        doc.text(`Rs.${data.totalAdvance}`, 75, yPos, { align: "right" });
+        yPos += 5;
+        doc.setFont("helvetica", "normal");
+      }
+      yPos += 10;
+
+      // Footer
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("-----------THANK YOU-----------", centerX, yPos, {
+        align: "center",
+      });
+    } else {
+      // Standard A4 report layout
+      const formatDateStr = (d) => {
+        if (!d) return "All Time";
+        return formatDate(d);
+      };
+
+      // --- Header ---
+      doc.setFontSize(22);
+      doc.setTextColor(40, 44, 52);
+      doc.text("AUCTION BILLING SYSTEM", 105, 20, { align: "center" });
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text("Buyer Report", 105, 26, { align: "center" });
+      doc.line(10, 32, 200, 32);
+
+      // --- Vendor Details ---
+      doc.setFontSize(14);
+      doc.setTextColor(0);
+      doc.text("VENDOR DETAILS", 10, 42);
+      let vYPos = 48;
+      doc.setFontSize(10);
+      doc.text(`Name: ${vendor.name}`, 10, vYPos);
+      vYPos += 5;
+      doc.text(`Contact: ${vendor.phone || "N/A"}`, 10, vYPos);
+      vYPos += 5;
+      const vendorAddressLines = doc.splitTextToSize(`Address: ${vendor.address || "N/A"}`, 180);
+      vendorAddressLines.forEach((line) => {
+        doc.text(line, 10, vYPos);
+        vYPos += 5;
+      });
+
+      // --- Buyer Details ---
+      let yPos = vYPos + 6;
+      doc.setFontSize(14);
+      doc.text("BUYER DETAILS", 10, yPos);
+      yPos += 6;
+      doc.setFontSize(10);
+      doc.text(`Name: ${data.buyer.name}`, 10, yPos);
+      yPos += 5;
+      doc.text(`Contact: ${data.buyer.contact}`, 10, yPos);
+      yPos += 5;
+      const buyerAddressLines = doc.splitTextToSize(`Address: ${data.buyer.address || "N/A"}`, 180);
+      buyerAddressLines.forEach((line) => {
+        doc.text(line, 10, yPos);
+        yPos += 5;
+      });
+
+      yPos += 4;
+      doc.text(
+        `Report Period: ${formatDateStr(finalStart)} to ${formatDateStr(finalEnd)}`,
+        10,
+        yPos,
+      );
+      yPos += 10;
+
+      const records = data.records || [];
+      const headers = ["Date", "Description", "Debit", "Credit", "Balance"];
+
+      doc.setFont("helvetica", "bold");
+      let xOffsets = [10, 40, 90, 130, 170];
+
+      headers.forEach((h, i) => doc.text(h, xOffsets[i], yPos));
+      yPos += 5;
+      doc.line(10, yPos, 200, yPos);
+      yPos += 7;
+
+      doc.setFont("helvetica", "normal");
+      records.forEach((rec) => {
+        if (yPos > 270) {
+          doc.addPage();
+          yPos = 20;
+        }
+        let row = [
           formatDate(rec.date),
           rec.description || "N/A",
           `Rs. ${rec.debit || 0}`,
           `Rs. ${rec.credit || 0}`,
           `Rs. ${rec.balance || 0}`,
         ];
-      }
-      row.forEach((cell, i) => doc.text(String(cell), xOffsets[i], yPos));
-      yPos += 8;
-    });
+        row.forEach((cell, i) => doc.text(String(cell), xOffsets[i], yPos));
+        yPos += 8;
+      });
 
-    // Totals
-    doc.line(10, yPos, 200, yPos);
-    yPos += 7;
-    doc.setFont("helvetica", "bold");
-    doc.text(data.totalLabel || "TOTAL", xOffsets[0], yPos);
-    doc.text(
-      `Rs. ${data.totalValue || 0}`,
-      xOffsets[xOffsets.length - 1],
-      yPos,
-    );
+      // Totals
+      doc.line(10, yPos, 200, yPos);
+      yPos += 7;
+      doc.setFont("helvetica", "bold");
+      doc.text(data.totalLabel || "TOTAL", xOffsets[0], yPos);
+      doc.text(
+        `Rs. ${data.totalValue || 0}`,
+        xOffsets[xOffsets.length - 1],
+        yPos,
+      );
+    }
 
     doc.save(`Buyer_Report_${data.buyer.name}_${Date.now()}.pdf`);
     toast.success("PDF Downloaded successfully");
@@ -718,6 +983,13 @@ function BuyerDetails() {
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
+                            className="icon-btn view"
+                            onClick={() => handleViewBuyer(buyer)}
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
                             className="icon-btn edit"
                             onClick={() => openEditBuyerModal(buyer)}
                             title="Edit Buyer"
@@ -735,29 +1007,6 @@ function BuyerDetails() {
                           </button>
                         </div>
                       </div>
-
-                      <div className="data-card-body">
-                        <div className="data-row">
-                          <span className="data-label">Location</span>
-                          <span className="data-value">
-                            {[buyer.city, buyer.state]
-                              .filter(Boolean)
-                              .join(", ") ||
-                              buyer.address ||
-                              "N/A"}
-                          </span>
-                        </div>
-                        <div className="data-row">
-                          <span className="data-label">Login Access</span>
-                          <span
-                            className={`data-value badge ${buyer.status === "inactive" ? "badge-error" : "badge-success"}`}
-                          >
-                            {buyer.status === "inactive"
-                              ? "Disabled"
-                              : "Enabled"}
-                          </span>
-                        </div>
-                      </div>
                     </div>
                   ))
               )}
@@ -767,59 +1016,49 @@ function BuyerDetails() {
           /* Detailed View */
           <div className="fade-in">
             <div
-              className="card buyer-profile-container"
+              className="card profile-container"
               style={{ marginBottom: "2rem" }}
             >
-              <div className="buyer-profile-layout">
-                <div className="buyer-profile-info">
-                  <div className="data-row" style={{ marginBottom: "0.25rem" }}>
-                    <span className="data-label"></span>
+              <div className="profile-layout-vertical">
+                <div className="profile-header">
+                  <div className="profile-name-section">
+                    <span className="profile-detail-label">Buyer Name</span>
+                    <h2 className="profile-name">{selectedBuyer.name}</h2>
+                  </div>
+                  <button
+                    className="icon-btn edit"
+                    onClick={() => openEditBuyerModal(selectedBuyer)}
+                    title="Edit Buyer"
+                    style={{ width: "32px", height: "32px" }}
+                  >
+                    <Pencil size={16} />
+                  </button>
+                </div>
+                <div className="profile-info-grid">
+                  <div className="profile-detail-item">
+                    <span className="profile-detail-label">Contact</span>
+                    <span className="profile-detail-value">{selectedBuyer.contact}</span>
+                  </div>
+                  <div className="profile-detail-item">
+                    <span className="profile-detail-label">Mail Id</span>
+                    <span className="profile-detail-value">{selectedBuyer.email || "N/A"}</span>
+                  </div>
+                  <div className="profile-detail-item">
+                    <span className="profile-detail-label">State</span>
+                    <span className="profile-detail-value">{selectedBuyer.state || "N/A"}</span>
+                  </div>
+                  <div className="profile-detail-item">
+                    <span className="profile-detail-label">City</span>
+                    <span className="profile-detail-value">{selectedBuyer.city || "N/A"}</span>
+                  </div>
+                  <div className="profile-detail-item span-2">
+                    <span className="profile-detail-label">Address</span>
+                    <span className="profile-detail-value">{selectedBuyer.address || "N/A"}</span>
+                  </div>
+                  {/* <div className="profile-detail-item">
+                    <span className="profile-detail-label">Total Outstanding</span>
                     <span
-                      className="data-value"
-                      style={{ display: "flex", justifyContent: "flex-end" }}
-                    >
-                      <button
-                        className="icon-btn edit"
-                        onClick={() => openEditBuyerModal(selectedBuyer)}
-                        title="Edit Buyer"
-                        style={{ width: "28px", height: "28px" }}
-                      >
-                        <Pencil size={14} />
-                      </button>
-                    </span>
-                  </div>
-                  <div className="data-row">
-                    <span className="data-label">Contact</span>
-                    <span className="data-value">{selectedBuyer.contact}</span>
-                  </div>
-                  <div className="data-row">
-                    <span className="data-label">Email</span>
-                    <span className="data-value">
-                      {selectedBuyer.email || "N/A"}
-                    </span>
-                  </div>
-                  <div className="data-row">
-                    <span className="data-label">State</span>
-                    <span className="data-value">
-                      {selectedBuyer.state || "N/A"}
-                    </span>
-                  </div>
-                  <div className="data-row">
-                    <span className="data-label">City</span>
-                    <span className="data-value">
-                      {selectedBuyer.city || "N/A"}
-                    </span>
-                  </div>
-                  <div className="data-row">
-                    <span className="data-label">Address</span>
-                    <span className="data-value">
-                      {selectedBuyer.address || "N/A"}
-                    </span>
-                  </div>
-                  <div className="data-row">
-                    <span className="data-label">Total Outstanding</span>
-                    <span
-                      className={`data-value ${selectedBuyer.balance > 0 ? "text-error" : "text-success"}`}
+                      className={`profile-detail-value ${selectedBuyer.balance > 0 ? "text-error" : "text-success"}`}
                       style={{ fontWeight: "bold" }}
                     >
                       {selectedBuyer.balance <= 0
@@ -827,49 +1066,38 @@ function BuyerDetails() {
                         : `₹${(selectedBuyer.balance || 0).toLocaleString()}`}
                     </span>
                   </div>
-                  <div className="data-row">
-                    <span className="data-label">Advance / Excess</span>
+                  <div className="profile-detail-item">
+                    <span className="profile-detail-label">Advance / Excess</span>
                     <span
-                      className="data-value text-success"
+                      className="profile-detail-value text-success"
                       style={{ fontWeight: "bold" }}
                     >
                       ₹{(selectedBuyer.advanceAmount || 0).toLocaleString()}
                     </span>
                   </div>
-                  <div className="data-row">
-                    <span className="data-label">Login Access</span>
-                    <span
-                      onClick={() =>
-                        handleToggleStatus(
-                          selectedBuyer._id || selectedBuyer.id,
-                        )
-                      }
-                      className={`cursor-pointer badge btn ${selectedBuyer.status === "inactive" ? "btn-success" : "btn-error"} buyer-status-toggle-btn`}
-                    >
-                      {selectedBuyer.status === "inactive"
-                        ? "Enable Login"
-                        : "Disable Login"}
+                  <div className="profile-detail-item">
+                    <span className="profile-detail-label" style={{ marginBottom: "0.25rem" }}>Login Access</span>
+                    <span className="profile-detail-value">
+                      <span
+                        onClick={() =>
+                          handleToggleStatus(
+                            selectedBuyer._id || selectedBuyer.id,
+                          )
+                        }
+                        className={`cursor-pointer badge btn ${selectedBuyer.status === "inactive" ? "btn-success" : "btn-error"} buyer-status-toggle-btn`}
+                        style={{ display: "inline-flex", padding: "0.4rem 1rem", fontSize: "0.8rem", width: "auto", minWidth: "120px", justifyContent: "center" }}
+                      >
+                        {selectedBuyer.status === "inactive"
+                          ? "Enable Login"
+                          : "Disable Login"}
+                      </span>
                     </span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
 
-            <div
-              className="detail-actions-bar"
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "1.5rem",
-                gap: "1rem",
-                flexWrap: "wrap",
-                background: "white",
-                padding: "0.75rem 1.25rem",
-                borderRadius: "10px",
-                boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
-              }}
-            >
+            <div className="detail-actions-row-1">
               <div
                 className="filter-controls"
                 style={{ display: "flex", gap: "10px", alignItems: "center" }}
@@ -910,27 +1138,22 @@ function BuyerDetails() {
                   </div>
                 )}
               </div>
+            </div>
 
-              <div
-                className="action-buttons"
-                style={{ display: "flex", gap: "10px" }}
+            <div className="detail-actions-row-2">
+              <button
+                className="btn btn-primary"
+                onClick={openPaymentModal}
               >
-                <button className="btn btn-primary" onClick={openPaymentModal}>
-                  <Plus size={16} style={{ marginRight: "5px" }} /> Pay In
-                </button>
-                {/* <button
-                  className="btn btn-secondary"
-                  title="Download PDF"
-                  onClick={handleDownloadPDF}
-                  disabled={fetchingPdf}
-                >
-                  {fetchingPdf ? (
-                    <Loader size={18} className="spin" />
-                  ) : (
-                    <Download size={18} />
-                  )}
-                </button> */}
-              </div>
+                <Plus size={16} style={{ marginRight: "5px" }} /> Pay In
+              </button>
+
+              <button
+                className="btn btn-secondary"
+                onClick={openBillingModal}
+              >
+                <Download size={16} style={{ marginRight: "5px" }} /> Bill
+              </button>
             </div>
 
             <div className="buyer-history-tabs">
@@ -955,16 +1178,14 @@ function BuyerDetails() {
                     <tr>
                       <th>Date</th>
                       <th>Product</th>
-                      <th>Total Bill</th>
-                      <th>Paid</th>
-                      <th>Balance</th>
+                      <th>Quality</th>
                       <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredProducts.length === 0 ? (
                       <tr>
-                        <td colSpan="6" className="empty-td">
+                        <td colSpan="4" className="empty-td">
                           No purchases found for this date
                         </td>
                       </tr>
@@ -973,23 +1194,32 @@ function BuyerDetails() {
                         <tr key={p.id}>
                           <td>{formatDate(p.date)}</td>
                           <td className="bold-product">
-                            {p.name || "Unknown"}
+                            {capitalizeFirst(p.name)}
                           </td>
-                          <td>₹{(p.totalGross || 0).toLocaleString()}</td>
-                          <td className="text-success">
-                            ₹{(p.totalPaid || 0).toLocaleString()}
-                          </td>
-                          <td
-                            className={`text-error ${p.totalBalance > 0 ? "font-bold" : ""}`}
-                          >
-                            ₹{Math.max(0, p.totalBalance || 0).toLocaleString()}
+                          <td>
+                            {p.variants && p.variants.length > 0 ? (
+                              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                {p.variants
+                                  .filter((v) => v.purchaseQuantity > 0 || (v.quantity > 0 && !v.hasOwnProperty('purchaseQuantity')))
+                                  .map((v) => (
+                                    <div
+                                      key={v._id || v.id || Math.random()}
+                                      style={{ fontSize: "0.85rem" }}
+                                    >
+                                      {capitalizeFirst(v.variety)} - {getQualityLabel(v.quality)} - {v.purchaseQuantity || v.quantity || 0} {v.unit}
+                                    </div>
+                                  ))}
+                              </div>
+                            ) : (
+                              "-"
+                            )}
                           </td>
                           <td>
                             <div style={{ display: "flex", gap: "5px" }}>
                               <button
-                                className="btn btn-sm btn-info"
+                                className="icon-btn view"
                                 onClick={() => handleViewProduct(p.id)}
-                                title="View"
+                                title="View Details"
                               >
                                 <Eye size={16} />
                               </button>
@@ -1008,23 +1238,6 @@ function BuyerDetails() {
                       ))
                     )}
                   </tbody>
-                  {filteredProducts.length > 0 && (
-                    <tfoot
-                      style={{ background: "#f8f9fa", fontWeight: "bold" }}
-                    >
-                      <tr>
-                        <td colSpan="2">TOTAL</td>
-                        <td>₹{totalBills.toLocaleString()}</td>
-                        <td className="text-success">
-                          ₹{totalPaid.toLocaleString()}
-                        </td>
-                        <td className="text-error">
-                          ₹{totalBalance.toLocaleString()}
-                        </td>
-                        <td></td>
-                      </tr>
-                    </tfoot>
-                  )}
                 </table>
               </div>
             ) : (
@@ -1318,42 +1531,50 @@ function BuyerDetails() {
             </div>
             <form onSubmit={handleAddBuyer}>
               <div className="modal-body">
-                <div className="form-group">
-                  <label className="form-label">Name *</label>
-                  <input
-                    type="text"
-                    value={newBuyer.name}
-                    onChange={(e) => {
-                      setNewBuyer({ ...newBuyer, name: e.target.value });
-                      setBuyerFormErrors((p) => ({ ...p, name: "" }));
-                    }}
-                    placeholder="Full Name"
-                    className={buyerFormErrors.name ? "input-error" : ""}
-                  />
-                  {buyerFormErrors.name && (
-                    <small className="field-error">
-                      {buyerFormErrors.name}
-                    </small>
-                  )}
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Phone Number *</label>
-                  <input
-                    type="tel"
-                    value={newBuyer.contact}
-                    onChange={(e) => {
-                      setNewBuyer({ ...newBuyer, contact: e.target.value });
-                      setBuyerFormErrors((p) => ({ ...p, contact: "" }));
-                    }}
-                    placeholder="10-digit Mobile Number"
-                    maxLength={10}
-                    className={buyerFormErrors.contact ? "input-error" : ""}
-                  />
-                  {buyerFormErrors.contact && (
-                    <small className="field-error">
-                      {buyerFormErrors.contact}
-                    </small>
-                  )}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "0.75rem",
+                  }}
+                >
+                  <div className="form-group">
+                    <label className="form-label">Name *</label>
+                    <input
+                      type="text"
+                      value={newBuyer.name}
+                      onChange={(e) => {
+                        setNewBuyer({ ...newBuyer, name: e.target.value });
+                        setBuyerFormErrors((p) => ({ ...p, name: "" }));
+                      }}
+                      placeholder="Full Name"
+                      className={buyerFormErrors.name ? "input-error" : ""}
+                    />
+                    {buyerFormErrors.name && (
+                      <small className="field-error">
+                        {buyerFormErrors.name}
+                      </small>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Phone Number *</label>
+                    <input
+                      type="tel"
+                      value={newBuyer.contact}
+                      onChange={(e) => {
+                        setNewBuyer({ ...newBuyer, contact: e.target.value });
+                        setBuyerFormErrors((p) => ({ ...p, contact: "" }));
+                      }}
+                      placeholder="10-digit Mobile Number"
+                      maxLength={10}
+                      className={buyerFormErrors.contact ? "input-error" : ""}
+                    />
+                    {buyerFormErrors.contact && (
+                      <small className="field-error">
+                        {buyerFormErrors.contact}
+                      </small>
+                    )}
+                  </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">
@@ -1493,48 +1714,56 @@ function BuyerDetails() {
             </div>
             <form onSubmit={handleEditBuyer}>
               <div className="modal-body">
-                <div className="form-group">
-                  <label className="form-label">Name *</label>
-                  <input
-                    type="text"
-                    value={editingBuyer.name}
-                    onChange={(e) => {
-                      setEditingBuyer({
-                        ...editingBuyer,
-                        name: e.target.value,
-                      });
-                      setBuyerFormErrors((p) => ({ ...p, name: "" }));
-                    }}
-                    placeholder="Full Name"
-                    className={buyerFormErrors.name ? "input-error" : ""}
-                  />
-                  {buyerFormErrors.name && (
-                    <small className="field-error">
-                      {buyerFormErrors.name}
-                    </small>
-                  )}
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Contact Number *</label>
-                  <input
-                    type="tel"
-                    value={editingBuyer.contact}
-                    onChange={(e) => {
-                      setEditingBuyer({
-                        ...editingBuyer,
-                        contact: e.target.value,
-                      });
-                      setBuyerFormErrors((p) => ({ ...p, contact: "" }));
-                    }}
-                    placeholder="10-digit Mobile Number"
-                    maxLength={10}
-                    className={buyerFormErrors.contact ? "input-error" : ""}
-                  />
-                  {buyerFormErrors.contact && (
-                    <small className="field-error">
-                      {buyerFormErrors.contact}
-                    </small>
-                  )}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "0.75rem",
+                  }}
+                >
+                  <div className="form-group">
+                    <label className="form-label">Name *</label>
+                    <input
+                      type="text"
+                      value={editingBuyer.name}
+                      onChange={(e) => {
+                        setEditingBuyer({
+                          ...editingBuyer,
+                          name: e.target.value,
+                        });
+                        setBuyerFormErrors((p) => ({ ...p, name: "" }));
+                      }}
+                      placeholder="Full Name"
+                      className={buyerFormErrors.name ? "input-error" : ""}
+                    />
+                    {buyerFormErrors.name && (
+                      <small className="field-error">
+                        {buyerFormErrors.name}
+                      </small>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Contact Number *</label>
+                    <input
+                      type="tel"
+                      value={editingBuyer.contact}
+                      onChange={(e) => {
+                        setEditingBuyer({
+                          ...editingBuyer,
+                          contact: e.target.value,
+                        });
+                        setBuyerFormErrors((p) => ({ ...p, contact: "" }));
+                      }}
+                      placeholder="10-digit Mobile Number"
+                      maxLength={10}
+                      className={buyerFormErrors.contact ? "input-error" : ""}
+                    />
+                    {buyerFormErrors.contact && (
+                      <small className="field-error">
+                        {buyerFormErrors.contact}
+                      </small>
+                    )}
+                  </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">
@@ -1771,6 +2000,105 @@ function BuyerDetails() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* ── Billing Modal ── */}
+      {showBillingModal && selectedBuyer && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowBillingModal(false)}
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Generate Bill - {selectedBuyer.name}</h3>
+              <button
+                className="modal-close"
+                onClick={() => setShowBillingModal(false)}
+              >
+                <X />
+              </button>
+            </div>
+            <form onSubmit={handleGenerateBillSubmit}>
+              <div className="modal-body">
+                <div className="fade-in" style={{ padding: '0 5px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Bill Type</label>
+                    <select
+                      className="form-control"
+                      value={billType}
+                      onChange={(e) => setBillType(e.target.value)}
+                    >
+                      <option value="purchase_history">Purchase Products Bill</option>
+                      <option value="payments_history">Ledger / Payments Statement</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group" style={{ marginTop: '15px' }}>
+                    <label className="form-label">Date Filter</label>
+                    <select
+                      className="form-control"
+                      value={billDateFilter}
+                      onChange={(e) => setBillDateFilter(e.target.value)}
+                    >
+                      <option value="all">All Time</option>
+                      <option value="today">Today</option>
+                      <option value="selected">Selected Date</option>
+                      <option value="range">Date Range</option>
+                    </select>
+                  </div>
+
+                  {billDateFilter !== "all" && billDateFilter !== "today" && (
+                    <div style={{ display: 'flex', gap: '15px', marginTop: '15px' }} className="commission-date-row">
+                      <div className="form-group">
+                        <label className="form-label">Start Date</label>
+                        <input
+                          type="date"
+                          className="form-control"
+                          value={billStartDate}
+                          onChange={(e) => setBillStartDate(e.target.value)}
+                        />
+                      </div>
+                      {billDateFilter === "range" && (
+                        <div className="form-group">
+                          <label className="form-label">End Date</label>
+                          <input
+                            type="date"
+                            className="form-control"
+                            value={billEndDate}
+                            onChange={(e) => setBillEndDate(e.target.value)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowBillingModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={fetchingPdf}
+                >
+                  {fetchingPdf ? (
+                    <>
+                      <Loader size={14} className="spin" style={{ marginRight: '5px' }} /> Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Download size={14} style={{ marginRight: '5px' }} /> Download PDF
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
