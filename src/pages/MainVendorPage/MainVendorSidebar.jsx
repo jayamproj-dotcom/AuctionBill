@@ -22,7 +22,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { clearVendorAuthData } from "../../redux/slices/vendorAuthSlice";
 import { mainVendorLogout } from "../../api/mainVendorApi";
 
-const MainVendorSidebar = ({ isOpen, onClose }) => {
+const MainVendorSidebar = ({ isOpen, onClose, isExpired: propIsExpired }) => {
+  const isExpired = propIsExpired || sessionStorage.getItem("vendorSubExpired") === "true";
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
@@ -58,208 +59,233 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
       </div>
 
       <nav className="sidebar-nav">
-        <div className="sidebar-label">Management</div>
-        <NavLink
-          to="/mainvendor/dashboard"
-          className={({ isActive }) => `nav-item ${isActive || location.pathname === "/mainvendor" || location.pathname === "/mainvendor/" ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <House />
-          </span>
-          <span>Dashboard</span>
-        </NavLink>
-
-        {branchCount > 0 && (
+        {isExpired ? (
           <>
+            <div className="sidebar-label">Account</div>
             <NavLink
-              to="/mainvendor/branches"
+              to="/mainvendor/subscription"
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
               onClick={onClose}
             >
               <span className="nav-icon">
-                <Building />
+                <Gem />
               </span>
-              <span>Branches</span>
+              <span>Subscription</span>
+            </NavLink>
+
+            <a href="/" className="nav-item text-danger" onClick={handleLogout}>
+              <span className="nav-icon">
+                <LogOut />
+              </span>
+              <span>Logout</span>
+            </a>
+          </>
+        ) : (
+          <>
+            <div className="sidebar-label">Management</div>
+            <NavLink
+              to="/mainvendor/dashboard"
+              className={({ isActive }) => `nav-item ${isActive || location.pathname === "/mainvendor" || location.pathname === "/mainvendor/" ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <House />
+              </span>
+              <span>Dashboard</span>
+            </NavLink>
+
+            {branchCount > 0 && (
+              <>
+                <NavLink
+                  to="/mainvendor/branches"
+                  className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+                  onClick={onClose}
+                >
+                  <span className="nav-icon">
+                    <Building />
+                  </span>
+                  <span>Branches</span>
+                </NavLink>
+
+                <NavLink
+                  to="/mainvendor/sellers"
+                  className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+                  onClick={onClose}
+                >
+                  <span className="nav-icon">
+                    <UserCog />
+                  </span>
+                  <span>All Sellers</span>
+                </NavLink>
+
+                <NavLink
+                  to="/mainvendor/buyers"
+                  className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+                  onClick={onClose}
+                >
+                  <span className="nav-icon">
+                    <ShoppingCart />
+                  </span>
+                  <span>All Buyers</span>
+                </NavLink>
+
+                <NavLink
+                  to="/mainvendor/commission"
+                  className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+                  onClick={onClose}
+                >
+                  <span className="nav-icon">
+                    <Handshake />
+                  </span>
+                  <span>All Commission</span>
+                </NavLink>
+
+                <NavLink
+                  to="/mainvendor/main-history"
+                  className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+                  onClick={onClose}
+                >
+                  <span className="nav-icon">
+                    <History />
+                  </span>
+                  <span>All History</span>
+                </NavLink>
+              </>
+            )}
+
+            <div className="sidebar-label">My Operations</div>
+            
+            <NavLink
+              to="/mainvendor/add-product"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <PackagePlus />
+              </span>
+              <span>Product List</span>
             </NavLink>
 
             <NavLink
-              to="/mainvendor/sellers"
+              to="/mainvendor/today-auction"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <ChartSpline />
+              </span>
+              <span>Today Auction</span>
+            </NavLink>
+
+            <NavLink
+              to="/mainvendor/today-products"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <ClipboardList />
+              </span>
+              <span>Today's Products</span>
+            </NavLink>
+
+            <NavLink
+              to="/mainvendor/pending-products"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <PackageSearch />
+              </span>
+              <span>Pending Products</span>
+            </NavLink>
+
+            <NavLink
+              to="/mainvendor/seller-details"
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
               onClick={onClose}
             >
               <span className="nav-icon">
                 <UserCog />
               </span>
-              <span>All Sellers</span>
+              <span>My Sellers</span>
             </NavLink>
 
             <NavLink
-              to="/mainvendor/buyers"
+              to="/mainvendor/buyer-details"
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
               onClick={onClose}
             >
               <span className="nav-icon">
                 <ShoppingCart />
               </span>
-              <span>All Buyers</span>
+              <span>My Buyers</span>
             </NavLink>
 
             <NavLink
-              to="/mainvendor/commission"
+              to="/mainvendor/commission-record"
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
               onClick={onClose}
             >
               <span className="nav-icon">
                 <Handshake />
               </span>
-              <span>All Commission</span>
+              <span>My Commission</span>
             </NavLink>
 
             <NavLink
-              to="/mainvendor/main-history"
+              to="/mainvendor/billing"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <FileText />
+              </span>
+              <span>Billing & Invoices</span>
+            </NavLink>
+
+            <NavLink
+              to="/mainvendor/history"
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
               onClick={onClose}
             >
               <span className="nav-icon">
                 <History />
               </span>
-              <span>All History</span>
+              <span>My History</span>
             </NavLink>
+
+            <div className="sidebar-label">Account</div>
+
+            <NavLink
+              to="/mainvendor/subscription"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <Gem />
+              </span>
+              <span>Subscription</span>
+            </NavLink>
+
+            <NavLink
+              to="/mainvendor/manage"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+              onClick={onClose}
+            >
+              <span className="nav-icon">
+                <User />
+              </span>
+              <span>Profile</span>
+            </NavLink>
+
+            <a href="/" className="nav-item text-danger" onClick={handleLogout}>
+              <span className="nav-icon">
+                <LogOut />
+              </span>
+              <span>Logout</span>
+            </a>
           </>
         )}
-
-        <div className="sidebar-label">My Operations</div>
-        
-        <NavLink
-          to="/mainvendor/add-product"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <PackagePlus />
-          </span>
-          <span>Product List</span>
-        </NavLink>
-
-        <NavLink
-          to="/mainvendor/today-auction"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <ChartSpline />
-          </span>
-          <span>Today Auction</span>
-        </NavLink>
-
-        <NavLink
-          to="/mainvendor/today-products"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <ClipboardList />
-          </span>
-          <span>Today's Products</span>
-        </NavLink>
-
-        <NavLink
-          to="/mainvendor/pending-products"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <PackageSearch />
-          </span>
-          <span>Pending Products</span>
-        </NavLink>
-
-        <NavLink
-          to="/mainvendor/seller-details"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <UserCog />
-          </span>
-          <span>My Sellers</span>
-        </NavLink>
-
-        <NavLink
-          to="/mainvendor/buyer-details"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <ShoppingCart />
-          </span>
-          <span>My Buyers</span>
-        </NavLink>
-
-        <NavLink
-          to="/mainvendor/commission-record"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <Handshake />
-          </span>
-          <span>My Commission</span>
-        </NavLink>
-
-        <NavLink
-          to="/mainvendor/billing"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <FileText />
-          </span>
-          <span>Billing & Invoices</span>
-        </NavLink>
-
-        <NavLink
-          to="/mainvendor/history"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <History />
-          </span>
-          <span>My History</span>
-        </NavLink>
-
-        <div className="sidebar-label">Account</div>
-
-        <NavLink
-          to="/mainvendor/subscription"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <Gem />
-          </span>
-          <span>Subscription</span>
-        </NavLink>
-
-        <NavLink
-          to="/mainvendor/manage"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <User />
-          </span>
-          <span>Profile</span>
-        </NavLink>
-
-        <a href="/" className="nav-item text-danger" onClick={handleLogout}>
-          <span className="nav-icon">
-            <LogOut />
-          </span>
-          <span>Logout</span>
-        </a>
       </nav>
     </aside>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import MainVendorSidebar from "./MainVendorSidebar.jsx";
 import "./MainVendor.css";
 import logo from "../../assets/images/logo.png";
@@ -18,6 +18,17 @@ const MainVendorLayout = () => {
   const profileRef = useRef(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
+
+  const [isExpired, setIsExpired] = useState(
+    sessionStorage.getItem("vendorSubExpired") === "true"
+  );
+
+  useEffect(() => {
+    if (isExpired && location.pathname !== "/mainvendor/subscription") {
+      navigate("/mainvendor/subscription");
+    }
+  }, [isExpired, location.pathname, navigate]);
 
   // Assuming reuse vendor auth for now, or create mainVendor slice later
   const {
@@ -72,15 +83,17 @@ const MainVendorLayout = () => {
             const expiryDate = activeSub?.endDate || currentVendor.planEndDate;
 
             if (expiryDate) {
-              const today = new Date();
-              const expiry = new Date(expiryDate);
-              const diffTime = expiry - today;
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-              if (diffDays <= 0) {
+              if (new Date() > new Date(expiryDate)) {
                 console.log("Subscription expired");
-                handleLogout();
+                setIsExpired(true);
+                sessionStorage.setItem("vendorSubExpired", "true");
+              } else {
+                setIsExpired(false);
+                sessionStorage.setItem("vendorSubExpired", "false");
               }
+            } else {
+              setIsExpired(false);
+              sessionStorage.setItem("vendorSubExpired", "false");
             }
           }
         } catch (error) {
@@ -171,26 +184,30 @@ const MainVendorLayout = () => {
                   <div className="profile-dropdown-email">{userEmail}</div>
                 </div>
 
-                <div
-                  className="dropdown-item"
-                  onClick={() => {
-                    navigate("/mainvendor/manage");
-                    setProfileOpen(false);
-                  }}
-                >
-                  <User size={16} />
-                  <span>My Profile</span>
-                </div>
-                <div
-                  className="dropdown-item"
-                  onClick={() => {
-                    navigate("/mainvendor/change-password");
-                    setProfileOpen(false);
-                  }}
-                >
-                  <KeyRound size={16} />
-                  <span>Change Password</span>
-                </div>
+                {!isExpired && (
+                  <>
+                    <div
+                      className="dropdown-item"
+                      onClick={() => {
+                        navigate("/mainvendor/manage");
+                        setProfileOpen(false);
+                      }}
+                    >
+                      <User size={16} />
+                      <span>My Profile</span>
+                    </div>
+                    <div
+                      className="dropdown-item"
+                      onClick={() => {
+                        navigate("/mainvendor/change-password");
+                        setProfileOpen(false);
+                      }}
+                    >
+                      <KeyRound size={16} />
+                      <span>Change Password</span>
+                    </div>
+                  </>
+                )}
                 <div
                   className="dropdown-item text-danger"
                   onClick={handleLogout}
@@ -211,7 +228,7 @@ const MainVendorLayout = () => {
       ></div>
 
       {/* Sidebar */}
-      <MainVendorSidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+      <MainVendorSidebar isOpen={sidebarOpen} onClose={closeSidebar} isExpired={isExpired} />
 
       {/* Main Content */}
       <main className="main-content">

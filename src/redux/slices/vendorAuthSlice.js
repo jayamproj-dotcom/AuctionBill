@@ -48,6 +48,17 @@ const vendorAuthSlice = createSlice({
             sessionStorage.setItem('vendorUserPhone', user.phone || '');
             sessionStorage.setItem('vendorUserAddress', user.address || '');
             sessionStorage.setItem('branchCount', (user.plan?.branchCount || 0).toString());
+
+            // Compute subscription expiration and store it
+            const activeSub = user.activeSubscription;
+            const expiryDate = activeSub?.endDate || user.planEndDate;
+            let isExpired = false;
+            if (expiryDate) {
+              if (new Date() > new Date(expiryDate)) {
+                isExpired = true;
+              }
+            }
+            sessionStorage.setItem('vendorSubExpired', isExpired ? 'true' : 'false');
         },
         setVendorBranchCount: (state, action) => {
             state.branchCount = action.payload;
@@ -95,6 +106,7 @@ const vendorAuthSlice = createSlice({
             sessionStorage.removeItem('vendorUserPhone');
             sessionStorage.removeItem('vendorUserAddress');
             sessionStorage.removeItem('branchCount');
+            sessionStorage.removeItem('vendorSubExpired');
 
             localStorage.removeItem('vendorLoggedIn');
             localStorage.removeItem('vendorUserEmail');

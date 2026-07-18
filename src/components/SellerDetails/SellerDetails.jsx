@@ -576,36 +576,11 @@ function SellerDetails() {
     setShowRecordPaymentModal(true);
   };
 
-  const openProductPaymentModal = (product) => {
-    setPaymentConfig({
-      type: "product",
-      targetId: product.id,
-      targetName: product.name,
-      maxAmount: Math.max(0, product.totalBalance || 0),
-      isGlobalPay: false,
-    });
-    setPaymentAmount(Math.max(0, product.totalBalance || 0).toString());
-    setPaymentDate(new Date().toISOString().split("T")[0]);
-    setPaymentMethod("Cash");
-    setPaymentNote(`Payment for ${product.name}`);
-    setShowRecordPaymentModal(true);
-  };
-
   const handleRecordPayment = async (e) => {
     e.preventDefault();
     const amount = parseFloat(paymentAmount);
     if (isNaN(amount) || amount <= 0) {
       toast.error("Please enter a valid amount.");
-      return;
-    }
-    if (
-      paymentConfig?.type === "product" &&
-      paymentConfig.maxAmount !== undefined &&
-      amount > paymentConfig.maxAmount
-    ) {
-      toast.error(
-        `Payment cannot exceed ₹${paymentConfig.maxAmount.toLocaleString()}`,
-      );
       return;
     }
 
@@ -614,18 +589,13 @@ function SellerDetails() {
       const payload = {
         vendorId: currentVendorId,
         sellerId: selectedSeller._id || selectedSeller.id,
-        productId:
-          paymentConfig.type === "product" ? paymentConfig.targetId : null,
-        isGlobalPay: paymentConfig.isGlobalPay || false,
+        productId: null,
+        isGlobalPay: true,
         date: paymentDate,
         amount,
         method: paymentMethod,
-        type: paymentConfig.type === "product" ? "Sale" : "Payment",
-        note:
-          paymentNote ||
-          (paymentConfig.type === "product"
-            ? `Payment for ${paymentConfig.targetName}`
-            : "Global Payment"),
+        type: "Payment",
+        note: paymentNote || "Global Payment",
         reference: `PAY-${Date.now()}`,
       };
 
@@ -1591,15 +1561,6 @@ function SellerDetails() {
                               >
                                 <Eye size={16} />
                               </button>
-                              {p.totalBalance > 0 && (
-                                <button
-                                  className="icon-btn pay"
-                                  onClick={() => openProductPaymentModal(p)}
-                                  title="Pay"
-                                >
-                                  <CreditCard size={16} />
-                                </button>
-                              )}
                             </div>
                           </td>
                         </tr>
@@ -1955,21 +1916,6 @@ function SellerDetails() {
                           ₹{(viewingProduct.stats?.net || 0).toLocaleString()}
                         </b>
                       </div>
-                      <div className="text-success">
-                        Already Paid:{" "}
-                        <b>
-                          ₹{(viewingProduct.stats?.paid || 0).toLocaleString()}
-                        </b>
-                      </div>
-                      <div className="text-error">
-                        Total Balance:{" "}
-                        <b>
-                          ₹
-                          {(
-                            viewingProduct.stats?.balance || 0
-                          ).toLocaleString()}
-                        </b>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -2143,49 +2089,25 @@ function SellerDetails() {
             </div>
             <form onSubmit={handleRecordPayment}>
               <div className="modal-body">
-                {paymentConfig?.type === "product" ? (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "0.75rem",
-                      marginBottom: "0.75rem",
-                    }}
-                  >
-                    <div className="data-row payment-modal-row">
-                      <span className="data-label">Product Name</span>
-                      <span className="data-value">
-                        {paymentConfig.targetName}
-                      </span>
-                    </div>
-                    <div className="data-row payment-modal-row">
-                      <span className="data-label">Pending Balance</span>
-                      <span className="data-value text-error">
-                        ₹{paymentConfig?.maxAmount?.toLocaleString() || 0}
-                      </span>
-                    </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "0.75rem",
+                    marginBottom: "0.75rem",
+                  }}
+                >
+                  <div className="data-row payment-modal-row">
+                    <span className="data-label">Seller Name</span>
+                    <span className="data-value">{selectedSeller.name}</span>
                   </div>
-                ) : (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "0.75rem",
-                      marginBottom: "0.75rem",
-                    }}
-                  >
-                    <div className="data-row payment-modal-row">
-                      <span className="data-label">Seller Name</span>
-                      <span className="data-value">{selectedSeller.name}</span>
-                    </div>
-                    <div className="data-row payment-modal-row">
-                      <span className="data-label">Pay Amount To</span>
-                      <span className="data-value text-error">
-                        ₹{selectedSeller.balance?.toLocaleString() || 0}
-                      </span>
-                    </div>
+                  <div className="data-row payment-modal-row">
+                    <span className="data-label">Pay Amount To</span>
+                    <span className="data-value text-error">
+                      ₹{selectedSeller.balance?.toLocaleString() || 0}
+                    </span>
                   </div>
-                )}
+                </div>
                 <div
                   style={{
                     display: "grid",

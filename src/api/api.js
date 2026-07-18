@@ -131,7 +131,11 @@ api.interceptors.response.use(
 
       // 🟡 SUBSCRIPTION EXPIRED
       if (data?.planExpired) {
-        triggerAccountStatusError('expired', data.message || "Your subscription has expired");
+        const currentPath = window.location.pathname;
+        const isMainVendorContext = currentPath.includes("/mainvendor");
+        if (!isMainVendorContext) {
+          triggerAccountStatusError('expired', data.message || "Your subscription has expired");
+        }
         return Promise.reject(error);
       }
 

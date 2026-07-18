@@ -255,8 +255,6 @@ function BuyerDetails() {
     const errors = {};
     if (!data.name?.trim()) errors.name = "Name is required";
     if (!data.contact?.trim()) errors.contact = "Contact number is required";
-    else if (!/^\d{10}$/.test(data.contact.trim()))
-      errors.contact = "Contact must be exactly 10 digits";
     if (data.email?.trim() && !/^[^@]+@gmail\.com$/i.test(data.email.trim()))
       errors.email = "Email must end with @gmail.com";
     return errors;
@@ -355,14 +353,12 @@ function BuyerDetails() {
       await addBuyerPayment({
         vendorId,
         buyerId: selectedBuyer._id || selectedBuyer.id,
-        productId: paymentConfig.productId || null,
-        isGlobalPay: paymentConfig.isGlobalPay || false,
+        productId: null,
+        isGlobalPay: true,
         date: paymentDate,
         amount: amount,
         method: paymentMethod,
-        note:
-          paymentNote ||
-          (paymentConfig.isGlobalPay ? "Global Payment" : "Product Payment"),
+        note: paymentNote || "Global Payment",
         reference: `PAY-${Date.now()}`,
       });
       loadBuyers();
@@ -378,7 +374,6 @@ function BuyerDetails() {
       toast.error("Failed to record payment");
     }
   };
-
   const openPaymentModal = () => {
     setPaymentConfig({
       targetName: selectedBuyer.name,
@@ -390,21 +385,6 @@ function BuyerDetails() {
     setPaymentDate(new Date().toISOString().split("T")[0]);
     setPaymentMethod("Cash");
     setPaymentNote("");
-    setShowRecordPaymentModal(true);
-  };
-
-  const handlePayProduct = (product) => {
-    setPaymentConfig({
-      targetName: product.name,
-      maxAmount: product.totalBalance,
-      productId: product.id,
-      isGlobalPay: false,
-      type: "product",
-    });
-    setPaymentAmount(product.totalBalance?.toString() || "");
-    setPaymentDate(new Date().toISOString().split("T")[0]);
-    setPaymentMethod("Cash");
-    setPaymentNote(`Payment for ${product.name}`);
     setShowRecordPaymentModal(true);
   };
 
@@ -1226,15 +1206,6 @@ function BuyerDetails() {
                               >
                                 <Eye size={16} />
                               </button>
-                              {p.totalBalance > 0 && (
-                                <button
-                                  className="icon-btn pay"
-                                 onClick={() => handlePayProduct(p)}
-                                  title="Pay"
-                                >
-                                  <CreditCard size={16} />
-                                </button>
-                              )}
                             </div>
                           </td>
                         </tr>
@@ -1327,49 +1298,25 @@ function BuyerDetails() {
             </div>
             <form onSubmit={handleRecordPayment}>
               <div className="modal-body">
-                {paymentConfig?.type === "product" ? (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "0.75rem",
-                      marginBottom: "0.75rem",
-                    }}
-                  >
-                    <div className="data-row payment-modal-row">
-                      <span className="data-label">Product Name</span>
-                      <span className="data-value">
-                        {paymentConfig.targetName}
-                      </span>
-                    </div>
-                    <div className="data-row payment-modal-row">
-                      <span className="data-label">Pending Balance</span>
-                      <span className="data-value text-error">
-                        ₹{paymentConfig?.maxAmount?.toLocaleString() || 0}
-                      </span>
-                    </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "0.75rem",
+                    marginBottom: "0.75rem",
+                  }}
+                >
+                  <div className="data-row payment-modal-row">
+                    <span className="data-label">Buyer Name</span>
+                    <span className="data-value">{selectedBuyer.name}</span>
                   </div>
-                ) : (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "0.75rem",
-                      marginBottom: "0.75rem",
-                    }}
-                  >
-                    <div className="data-row payment-modal-row">
-                      <span className="data-label">Buyer Name</span>
-                      <span className="data-value">{selectedBuyer.name}</span>
-                    </div>
-                    <div className="data-row payment-modal-row">
-                      <span className="data-label">Outstanding Balance</span>
-                      <span className="data-value text-error">
-                        ₹{selectedBuyer.balance?.toLocaleString() || 0}
-                      </span>
-                    </div>
+                  <div className="data-row payment-modal-row">
+                    <span className="data-label">Outstanding Balance</span>
+                    <span className="data-value text-error">
+                      ₹{selectedBuyer.balance?.toLocaleString() || 0}
+                    </span>
                   </div>
-                )}
+                </div>
                 <div
                   style={{
                     display: "grid",
@@ -1618,8 +1565,8 @@ function BuyerDetails() {
                         setNewBuyer({ ...newBuyer, contact: e.target.value });
                         setBuyerFormErrors((p) => ({ ...p, contact: "" }));
                       }}
-                      placeholder="10-digit Mobile Number"
-                      maxLength={10}
+                      placeholder="Mobile Number"
+                      maxLength={15}
                       className={buyerFormErrors.contact ? "input-error" : ""}
                     />
                     {buyerFormErrors.contact && (
@@ -1989,21 +1936,6 @@ function BuyerDetails() {
                         <b>
                           ₹
                           {(viewingProduct.stats?.amount || 0).toLocaleString()}
-                        </b>
-                      </div>
-                      <div className="text-success">
-                        Total Paid:{" "}
-                        <b>
-                          ₹{(viewingProduct.stats?.paid || 0).toLocaleString()}
-                        </b>
-                      </div>
-                      <div className="text-error">
-                        Total Balance:{" "}
-                        <b>
-                          ₹
-                          {(
-                            viewingProduct.stats?.balance || 0
-                          ).toLocaleString()}
                         </b>
                       </div>
                     </div>
