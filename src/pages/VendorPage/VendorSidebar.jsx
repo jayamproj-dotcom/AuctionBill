@@ -15,6 +15,7 @@ import {
   LogOut,
   X,
   FileText,
+  ClipboardList,
 } from "lucide-react";
 import logo from "../../assets/images/logo-sidebar.png";
 import { useDispatch } from "react-redux";
@@ -81,6 +82,17 @@ const VendorSidebar = ({ isOpen, onClose }) => {
             <ChartSpline />
           </span>
           <span>Today Auction</span>
+        </NavLink>
+
+        <NavLink
+          to="/vendor/today-products"
+          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          onClick={onClose}
+        >
+          <span className="nav-icon">
+            <ClipboardList />
+          </span>
+          <span>Today's Products</span>
         </NavLink>
 
         <NavLink

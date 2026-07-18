@@ -73,8 +73,6 @@ function SellerDetails() {
     const errors = {};
     if (!data.name?.trim()) errors.name = "Name is required";
     if (!data.contact?.trim()) errors.contact = "Contact number is required";
-    else if (!/^\d{15}$/.test(data.contact.trim()))
-      errors.contact = "Contact must be exactly 15 digits";
     if (data.email?.trim() && !/^[^@]+@gmail\.com$/i.test(data.email.trim()))
       errors.email = "Email must end with @gmail.com";
     return errors;
@@ -140,7 +138,7 @@ function SellerDetails() {
   const [showProductViewModal, setShowProductViewModal] = useState(false);
 
   // -- Date Filter --
-  const [dateFilter, setDateFilter] = useState("today"); // today, selected, range, all
+  const [dateFilter, setDateFilter] = useState("all"); // today, selected, range, all
   const [startDate, setStartDate] = useState(
     new Date().toISOString().split("T")[0],
   );
@@ -1254,32 +1252,36 @@ function SellerDetails() {
             </div>
 
             {/* Search */}
-            <div className="card fade-in search-card">
-              <div className="form-group search-form-group">
-                <div style={{ position: "relative", width: "100%" }}>
-                  <Search
-                    size={20}
-                    style={{
-                      position: "absolute",
-                      left: "12px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: "#9ca3af",
-                    }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search seller by name..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="search-input"
-                    style={{ paddingLeft: "40px", paddingRight: "40px", width: "100%" }}
-                  />
-                  {/* <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
-                    <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
-                  </div> */}
-                </div>
-              </div>
+            <div style={{ position: "relative", marginBottom: "16px" }}>
+              <Search
+                size={18}
+                style={{
+                  position: "absolute",
+                  left: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--text-muted, #888)",
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Search seller by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+                style={{
+                  width: "100%",
+                  paddingLeft: "38px",
+                  paddingRight: "12px",
+                  borderRadius: "8px",
+                  background: "transparent",
+                  boxSizing: "border-box",
+                }}
+              />
+              {/* <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
+              </div> */}
             </div>
 
             {/* Seller Cards */}
@@ -1954,7 +1956,7 @@ function SellerDetails() {
                         </b>
                       </div>
                       <div className="text-success">
-                        Total Paid:{" "}
+                        Already Paid:{" "}
                         <b>
                           ₹{(viewingProduct.stats?.paid || 0).toLocaleString()}
                         </b>
@@ -2142,7 +2144,14 @@ function SellerDetails() {
             <form onSubmit={handleRecordPayment}>
               <div className="modal-body">
                 {paymentConfig?.type === "product" ? (
-                  <>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "0.75rem",
+                      marginBottom: "0.75rem",
+                    }}
+                  >
                     <div className="data-row payment-modal-row">
                       <span className="data-label">Product Name</span>
                       <span className="data-value">
@@ -2155,9 +2164,16 @@ function SellerDetails() {
                         ₹{paymentConfig?.maxAmount?.toLocaleString() || 0}
                       </span>
                     </div>
-                  </>
+                  </div>
                 ) : (
-                  <>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "0.75rem",
+                      marginBottom: "0.75rem",
+                    }}
+                  >
                     <div className="data-row payment-modal-row">
                       <span className="data-label">Seller Name</span>
                       <span className="data-value">{selectedSeller.name}</span>
@@ -2168,50 +2184,67 @@ function SellerDetails() {
                         ₹{selectedSeller.balance?.toLocaleString() || 0}
                       </span>
                     </div>
-                  </>
+                  </div>
                 )}
-                <div className="form-group">
-                  <label className="form-label">Payment Date</label>
-                  <input
-                    type="date"
-                    value={paymentDate}
-                    onChange={(e) => setPaymentDate(e.target.value)}
-                    required
-                  />
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "0.75rem",
+                    marginBottom: "0.75rem",
+                  }}
+                >
+                  <div className="form-group">
+                    <label className="form-label">Payment Date</label>
+                    <input
+                      type="date"
+                      value={paymentDate}
+                      onChange={(e) => setPaymentDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Payment Method</label>
+                    <select
+                      className="form-control"
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                    >
+                      <option value="Cash">Cash</option>
+                      <option value="Gpay">Gpay</option>
+                      <option value="UPI">UPI</option>
+                      <option value="Check">Check</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Description</label>
-                  <input
-                    type="text"
-                    value={paymentNote}
-                    onChange={(e) => setPaymentNote(e.target.value)}
-                    placeholder="e.g. Note"
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Payment Method</label>
-                  <select
-                    className="form-control"
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  >
-                    <option value="Cash">Cash</option>
-                    <option value="Gpay">Gpay</option>
-                    <option value="UPI">UPI</option>
-                    <option value="Check">Check</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Amount (₹)</label>
-                  <input
-                    type="number"
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                    min="1"
-                    placeholder="Enter amount"
-                    required
-                    autoFocus
-                  />
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "0.75rem",
+                  }}
+                >
+                  <div className="form-group">
+                    <label className="form-label">Amount (₹)</label>
+                    <input
+                      type="number"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      min="1"
+                      placeholder="Enter amount"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Description</label>
+                    <input
+                      type="text"
+                      value={paymentNote}
+                      onChange={(e) => setPaymentNote(e.target.value)}
+                      placeholder="e.g. Note"
+                    />
+                  </div>
                 </div>
               </div>
               <div className="modal-footer">

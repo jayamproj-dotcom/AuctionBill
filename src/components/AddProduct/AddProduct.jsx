@@ -195,7 +195,7 @@ function AddProduct() {
                 </div>
 
                 {/* Search Bar */}
-                <div className="card fade-in search-card">
+                <div className="fade-in" style={{ marginBottom: '16px' }}>
                     <div className="form-group search-form-group">
                         <div className="search-icon-container">
                             <div className="search-input-wrapper" style={{ position: 'relative', flex: 1 }}>
@@ -208,9 +208,9 @@ function AddProduct() {
                                     className="search-input"
                                     style={{ paddingLeft: '40px', paddingRight: '40px' }}
                                 />
-                                <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                                {/* <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
                                     <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     </div>

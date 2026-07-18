@@ -15,6 +15,7 @@ import {
   ChartSpline,
   PackageSearch,
   FileText,
+  ClipboardList,
 } from "lucide-react";
 import logo from "../../assets/images/logo-sidebar.png";
 import { useDispatch, useSelector } from "react-redux";
@@ -153,6 +154,17 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
         </NavLink>
 
         <NavLink
+          to="/mainvendor/today-products"
+          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          onClick={onClose}
+        >
+          <span className="nav-icon">
+            <ClipboardList />
+          </span>
+          <span>Today's Products</span>
+        </NavLink>
+
+        <NavLink
           to="/mainvendor/pending-products"
           className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
           onClick={onClose}
@@ -161,17 +173,6 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
             <PackageSearch />
           </span>
           <span>Pending Products</span>
-        </NavLink>
-
-        <NavLink
-          to="/mainvendor/billing"
-          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          onClick={onClose}
-        >
-          <span className="nav-icon">
-            <FileText />
-          </span>
-          <span>Billing & Invoices</span>
         </NavLink>
 
         <NavLink
@@ -205,6 +206,17 @@ const MainVendorSidebar = ({ isOpen, onClose }) => {
             <Handshake />
           </span>
           <span>My Commission</span>
+        </NavLink>
+
+        <NavLink
+          to="/mainvendor/billing"
+          className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          onClick={onClose}
+        >
+          <span className="nav-icon">
+            <FileText />
+          </span>
+          <span>Billing & Invoices</span>
         </NavLink>
 
         <NavLink

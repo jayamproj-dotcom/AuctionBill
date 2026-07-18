@@ -40,6 +40,7 @@ import Buyers from "./pages/MainVendorPage/Buyers.jsx";
 import Subscription from "./pages/MainVendorPage/Subscription.jsx";
 import Commission from "./pages/MainVendorPage/Commission.jsx";
 import MainVendorHistory from "./pages/MainVendorPage/MainVendorHistory.jsx";
+import TodayProductList from "./components/TodayProductList/TodayProductList.jsx";
 
 import Profile from "./pages/MainVendorPage/Profile.jsx";
 
@@ -76,6 +77,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="add-product" element={<AddProduct />} />
             <Route path="today-auction" element={<TodayAuction />} />
+            <Route path="today-products" element={<TodayProductList />} />
             <Route path="pending-products" element={<PendingProducts />} />
             <Route path="history" element={<History />} />
             <Route path="seller-details" element={<SellerDetails />} />
@@ -114,6 +116,7 @@ function App() {
             {/* Operational Routes for Main Vendor */}
             <Route path="add-product" element={<AddProduct />} />
             <Route path="today-auction" element={<TodayAuction />} />
+            <Route path="today-products" element={<TodayProductList />} />
             <Route path="pending-products" element={<PendingProducts />} />
             <Route path="history" element={<History />} />
             <Route path="seller-details" element={<SellerDetails />} />

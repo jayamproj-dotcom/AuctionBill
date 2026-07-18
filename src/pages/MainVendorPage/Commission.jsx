@@ -15,7 +15,7 @@ function Commission() {
   const [customDate, setCustomDate] = useState(
     new Date().toISOString().split("T")[0],
   );
-  
+
   const [branches, setBranches] = useState([
     { id: "all", name: "All Branches" },
   ]);
@@ -130,9 +130,9 @@ function Commission() {
   });
 
   // Calculate searched total
-  const displayTotalCommission = searchTerm 
-      ? filteredCommissions.reduce((sum, comm) => sum + (comm.amount || 0), 0)
-      : totalCommission;
+  const displayTotalCommission = searchTerm
+    ? filteredCommissions.reduce((sum, comm) => sum + (comm.amount || 0), 0)
+    : totalCommission;
 
 
   // Use same date formatter as history
@@ -176,8 +176,8 @@ function Commission() {
         <div className="stats-grid" style={{ marginBottom: "1rem" }}>
           <div className="stat-card" style={{ borderLeftColor: '#eab308', borderLeftStyle: 'solid', borderLeftWidth: '3px' }}>
             <div className="stat-header">
-              <div 
-                className="stat-icon flex items-center justify-center p-2 rounded" 
+              <div
+                className="stat-icon flex items-center justify-center p-2 rounded"
                 style={{ backgroundColor: "rgba(234, 179, 8, 0.12)", color: "#eab308" }}
               >
                 <HandCoins size={24} />
@@ -196,19 +196,36 @@ function Commission() {
         <div className="cr-filter-row" style={{ marginBottom: '1.5rem' }}>
           {/* Search */}
           <div className="cr-search-wrap" style={{ flex: 1 }}>
-            <div className="search-input-wrapper" style={{ position: 'relative', flex: 1 }}>
-              <Search size={15} className="cr-search-icon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+            <div style={{ position: "relative" }}>
+              <Search
+                size={18}
+                style={{
+                  position: "absolute",
+                  left: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--text-muted, #888)",
+                  pointerEvents: "none",
+                }}
+              />
               <input
                 type="text"
-                className="cr-search-input"
-                style={{ paddingLeft: '35px', paddingRight: '40px', width: '100%' }}
+                className="search-input"
+                style={{
+                  width: "100%",
+                  paddingLeft: "38px",
+                  paddingRight: "38px",
+                  borderRadius: "8px",
+                  background: "transparent",
+                  boxSizing: "border-box",
+                }}
                 placeholder="Search product or seller…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+              {/* <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
                 <VoiceSearch onSearch={(text) => setSearchTerm(text)} minimal={true} />
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -247,7 +264,7 @@ function Commission() {
 
         <div className="section-header cr-section-header" style={{ marginBottom: "1rem", marginTop: "1rem" }}>
           <h3 className="section-title">
-            Commission Details 
+            Commission Details
           </h3>
           <span className="badge" style={{ backgroundColor: 'rgba(245, 158, 11, 0.12)', color: 'var(--primary-amber)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
             {filteredCommissions.length} records
@@ -255,7 +272,7 @@ function Commission() {
         </div>
 
         {loading ? (
-           <LoadingSpinner message="Fetching commission data..." />
+          <LoadingSpinner message="Fetching commission data..." />
         ) : filteredCommissions.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">💰</div>

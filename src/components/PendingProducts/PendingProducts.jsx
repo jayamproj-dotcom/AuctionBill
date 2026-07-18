@@ -166,24 +166,35 @@ function PendingProducts() {
                 </div>
 
                 {/* Search Bar */}
-                <div className="card fade-in search-card">
-                    <div className="form-group search-form-group">
-                        <div className="search-icon-container">
-                            <div className="search-input-wrapper" style={{ position: 'relative', flex: 1 }}>
-                                <Search size={20} className="search-icon-absolute" style={{ left: '12px', right: 'auto' }} />
-                                <input
-                                    type="text"
-                                    placeholder="Search by product, seller"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="search-input"
-                                    style={{ paddingLeft: '40px', paddingRight: '40px' }}
-                                />
-                                <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
-                                    <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
-                                </div>
-                            </div>
-                        </div>
+                <div style={{ position: "relative", marginBottom: "16px" }}>
+                    <Search
+                        size={18}
+                        style={{
+                            position: "absolute",
+                            left: "12px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "var(--text-muted, #888)",
+                            pointerEvents: "none",
+                        }}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Search by product, seller..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="search-input"
+                        style={{
+                            width: "100%",
+                            paddingLeft: "38px",
+                            paddingRight: "38px",
+                            borderRadius: "8px",
+                            background: "transparent",
+                            boxSizing: "border-box",
+                        }}
+                    />
+                    <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                        <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
                     </div>
                 </div>
 

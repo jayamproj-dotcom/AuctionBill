@@ -454,16 +454,24 @@ function TodayAuction() {
 
       if (productResponse.success) {
         const mappedProducts = productResponse.data.map((p) => {
-          // Only variants with quantity > 0 count as real stock.
-          // A variant with quantity=0 satisfies 0>=0=true which would wrongly mark the product sold-out.
           const stockVariants = (p.variants || []).filter((v) => (v.quantity || 0) > 0);
           const isSoldOut =
             stockVariants.length > 0 &&
             stockVariants.every((v) => (v.sellQuantity || 0) >= v.quantity);
           return { ...p, status: isSoldOut ? "soldout" : p.status };
         });
-        setProducts(mappedProducts);
-        return mappedProducts;
+
+        const sortedProducts = mappedProducts.sort((a, b) => {
+          const aSold = a.status === "soldout" ? 1 : 0;
+          const bSold = b.status === "soldout" ? 1 : 0;
+          if (aSold !== bSold) return aSold - bSold;
+
+          const aActive = a.isActive !== false ? 1 : 0;
+          const bActive = b.isActive !== false ? 1 : 0;
+          return bActive - aActive;
+        });
+        setProducts(sortedProducts);
+        return sortedProducts;
       }
       return [];
     } catch (error) {

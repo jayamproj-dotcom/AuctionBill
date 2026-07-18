@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Phone, Mail, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Phone, Mail, Pencil, Trash2, Loader2, Search } from "lucide-react";
 import LoadingSpinner from "../../components/Common/LoadingSpinner";
 import ConfirmationModal from "../../components/Common/ConfirmationModal";
 import SearchableSelect from "../../components/Common/SearchableSelect";
@@ -113,20 +113,36 @@ function Sellers() {
             disabled={fetchingBranches}
           />
         </div>
-        <div className="form-group" style={{ marginBottom: "1rem" }}>
-          <div style={{ position: 'relative', width: '100%' }}>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Search sellers by name, email or phone…"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingRight: '40px' }}
-            />
-            <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
-              <VoiceSearch onSearch={(text) => setSearchTerm(text)} minimal={true} />
-            </div>
-          </div>
+        <div style={{ position: "relative", marginBottom: "16px" }}>
+          <Search
+            size={18}
+            style={{
+              position: "absolute",
+              left: "12px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "var(--text-muted, #888)",
+              pointerEvents: "none",
+            }}
+          />
+          <input
+            type="text"
+            placeholder="Search sellers by name, email or phone…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+            style={{
+              width: "100%",
+              paddingLeft: "38px",
+              paddingRight: "38px",
+              borderRadius: "8px",
+              background: "transparent",
+              boxSizing: "border-box",
+            }}
+          />
+          {/* <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+            <VoiceSearch onSearch={(text) => setSearchTerm(text)} minimal={true} />
+          </div> */}
         </div>
 
         {loading ? (

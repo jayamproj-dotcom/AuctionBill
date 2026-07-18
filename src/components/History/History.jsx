@@ -226,23 +226,40 @@ function History() {
         </div>
 
         {/* Filters */}
-        <div className="card fade-in cr-filter-card">
+        <div className="">
           <div className="cr-filter-row">
             {/* Search */}
             <div className="cr-search-wrap" style={{ flex: 1 }}>
-              <div className="search-input-wrapper" style={{ position: 'relative', flex: 1 }}>
-                <Search size={15} className="cr-search-icon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+              <div style={{ position: "relative" }}>
+                <Search
+                  size={18}
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "var(--text-muted, #888)",
+                    pointerEvents: "none",
+                  }}
+                />
                 <input
                   type="text"
-                  className="cr-search-input"
-                  style={{ paddingLeft: '35px', paddingRight: '40px', width: '100%' }}
+                  className="search-input"
+                  style={{
+                    width: "100%",
+                    paddingLeft: "38px",
+                    paddingRight: "38px",
+                    borderRadius: "8px",
+                    background: "transparent",
+                    boxSizing: "border-box",
+                  }}
                   placeholder="Search product, seller, buyer…"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                {/* <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
                   <VoiceSearch onSearch={(text) => setSearchTerm(text)} minimal={true} />
-                </div>
+                </div> */}
               </div>
             </div>
 

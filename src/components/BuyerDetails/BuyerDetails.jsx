@@ -24,6 +24,7 @@ import {
   Eye,
   Download,
   Loader,
+  CreditCard,
 } from "lucide-react";
 import SearchableSelect from "../Common/SearchableSelect";
 import LoadingSpinner from "../Common/LoadingSpinner";
@@ -613,9 +614,9 @@ function BuyerDetails() {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(8);
       doc.text("Item", 5, yPos);
-      doc.text("Qty", 37, yPos);
-      doc.text("Rate", 50, yPos);
-      doc.text("Price", 77, yPos, { align: "right" });
+      doc.text("Qty", 32, yPos);
+      doc.text("Rate", 44, yPos);
+      doc.text("Amount", 77, yPos, { align: "right" });
 
       yPos += 4;
       doc.text("--------------------------------", centerX, yPos, {
@@ -643,20 +644,18 @@ function BuyerDetails() {
             (varnt) =>
               (varnt._id || varnt.id).toString() === r.variantId.toString(),
           );
+          const qualityLabel = { quality1: "Q1", quality2: "Q2", quality3: "Q3" }[v?.quality] || "";
           return v
             ? {
-                name: `${v.variety || ""} ${v.quality || ""}`.trim(),
+                name: `${v.variety || ""} ${qualityLabel}`.trim(),
                 unit: v.unit || "",
               }
             : { name: "N/A", unit: "" };
         };
 
         const vInfo = getVariantInfo(rec);
-        const variantSuffix = vInfo.name !== "N/A" ? `(${vInfo.name})` : "";
-        const productName = truncate(
-          `${rec.productId?.name || "N/A"}${variantSuffix}`,
-          22,
-        );
+        const itemName = (vInfo.name && vInfo.name !== "N/A") ? vInfo.name : (rec.productId?.name || "N/A");
+        const displayItemName = truncate(itemName, 22);
 
         const qty = rec.quantity || 0;
         const rate = rec.rate || 0;
@@ -669,10 +668,10 @@ function BuyerDetails() {
         totalGross += price;
         totalPaid += paid;
 
-        // Item line
-        doc.text(`${productName}`, 5, yPos);
-        doc.text(`${qty}${vInfo.unit}`, 37, yPos);
-        doc.text(`${rate}`, 50, yPos);
+        // Two-line layout per item: name on its own line, numbers below
+        doc.text(displayItemName, 5, yPos);
+        yPos += 4;
+        doc.text(`${qty} ${vInfo.unit || ""} x Rs.${rate}`, 8, yPos);
         doc.text(`Rs.${price}`, 77, yPos, { align: "right" });
         yPos += 6;
       });
@@ -921,31 +920,35 @@ function BuyerDetails() {
               <h3 className="section-title">All Buyers ({buyers.length})</h3>
             </div>
 
-            <div className="card fade-in buyer-search-card">
-              <div className="form-group buyer-search-form-group">
-                <div style={{ position: "relative", width: "100%" }}>
-                  <Search
-                    size={20}
-                    style={{
-                      position: "absolute",
-                      left: "12px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: "#9ca3af",
-                    }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search buyer by name..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="buyer-search-input"
-                    style={{ paddingLeft: "40px", paddingRight: "40px", width: "100%" }}
-                  />
-                  <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
-                    <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
-                  </div>
-                </div>
+            <div style={{ position: "relative", marginBottom: "16px" }}>
+              <Search
+                size={18}
+                style={{
+                  position: "absolute",
+                  left: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--text-muted, #888)",
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Search buyer by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+                style={{
+                  width: "100%",
+                  paddingLeft: "38px",
+                  paddingRight: "38px",
+                  borderRadius: "8px",
+                  background: "transparent",
+                  boxSizing: "border-box",
+                }}
+              />
+              <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}>
+                <VoiceSearch onSearch={(text) => setSearchQuery(text)} minimal={true} />
               </div>
             </div>
             <div className="card-list fade-in">
@@ -1225,11 +1228,11 @@ function BuyerDetails() {
                               </button>
                               {p.totalBalance > 0 && (
                                 <button
-                                  className="btn btn-sm btn-primary"
-                                  onClick={() => handlePayProduct(p)}
+                                  className="icon-btn pay"
+                                 onClick={() => handlePayProduct(p)}
                                   title="Pay"
                                 >
-                                  Pay
+                                  <CreditCard size={16} />
                                 </button>
                               )}
                             </div>
@@ -1324,58 +1327,108 @@ function BuyerDetails() {
             </div>
             <form onSubmit={handleRecordPayment}>
               <div className="modal-body">
-                <div className="data-row payment-modal-row">
-                  <span className="data-label">Buyer Name</span>
-                  <span className="data-value">{selectedBuyer.name}</span>
-                </div>
-                <div className="data-row payment-modal-row">
-                  <span className="data-label">Outstanding Balance</span>
-                  <span className="data-value text-error">
-                    ₹{selectedBuyer.balance.toLocaleString()}
-                  </span>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Payment Date</label>
-                  <input
-                    type="date"
-                    value={paymentDate}
-                    onChange={(e) => setPaymentDate(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Description</label>
-                  <input
-                    type="text"
-                    value={paymentNote}
-                    onChange={(e) => setPaymentNote(e.target.value)}
-                    placeholder="e.g. Received via..."
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Payment Method</label>
-                  <select
-                    className="form-control"
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
+                {paymentConfig?.type === "product" ? (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "0.75rem",
+                      marginBottom: "0.75rem",
+                    }}
                   >
-                    <option value="Cash">Cash</option>
-                    <option value="Gpay">Gpay</option>
-                    <option value="UPI">UPI</option>
-                    <option value="Check">Check</option>
-                  </select>
+                    <div className="data-row payment-modal-row">
+                      <span className="data-label">Product Name</span>
+                      <span className="data-value">
+                        {paymentConfig.targetName}
+                      </span>
+                    </div>
+                    <div className="data-row payment-modal-row">
+                      <span className="data-label">Pending Balance</span>
+                      <span className="data-value text-error">
+                        ₹{paymentConfig?.maxAmount?.toLocaleString() || 0}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "0.75rem",
+                      marginBottom: "0.75rem",
+                    }}
+                  >
+                    <div className="data-row payment-modal-row">
+                      <span className="data-label">Buyer Name</span>
+                      <span className="data-value">{selectedBuyer.name}</span>
+                    </div>
+                    <div className="data-row payment-modal-row">
+                      <span className="data-label">Outstanding Balance</span>
+                      <span className="data-value text-error">
+                        ₹{selectedBuyer.balance?.toLocaleString() || 0}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "0.75rem",
+                    marginBottom: "0.75rem",
+                  }}
+                >
+                  <div className="form-group">
+                    <label className="form-label">Payment Date</label>
+                    <input
+                      type="date"
+                      value={paymentDate}
+                      onChange={(e) => setPaymentDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Payment Method</label>
+                    <select
+                      className="form-control"
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                    >
+                      <option value="Cash">Cash</option>
+                      <option value="Gpay">Gpay</option>
+                      <option value="UPI">UPI</option>
+                      <option value="Check">Check</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Amount (₹)</label>
-                  <input
-                    type="number"
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                    min="1"
-                    placeholder="Enter amount"
-                    required
-                    autoFocus
-                  />
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "0.75rem",
+                  }}
+                >
+                  <div className="form-group">
+                    <label className="form-label">Amount (₹)</label>
+                    <input
+                      type="number"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      min="1"
+                      placeholder="Enter amount"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Description</label>
+                    <input
+                      type="text"
+                      value={paymentNote}
+                      onChange={(e) => setPaymentNote(e.target.value)}
+                      placeholder="e.g. Received via..."
+                    />
+                  </div>
                 </div>
               </div>
               <div className="modal-footer">
